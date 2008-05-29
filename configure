@@ -18,3 +18,4 @@ cd ..
 cd ffmpeg
 ./configure --enable-static --disable-shared --enable-memalign-hack
 cd ..
+
