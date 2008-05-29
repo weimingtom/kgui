@@ -1,0 +1,26 @@
+#
+# kgui - documentation
+#
+
+Follow these steps to build the kgui library
+
+1) For building using the GNU compiler launch a shell ( use MSYS/Mingw for windows )
+
+There is also a visual studio solution called "kgui" that you can comnpile with visual studio.
+Note: ffmpeg cannot be compiled with visual studio and must be compiled with MSYS/Mingw
+
+2) ./configure
+
+This is for configuring the other libraries that kgui uses like zlib, jpeg, freetype, ffmpeg
+
+3) make other
+
+This builds all the other libraries 
+
+4) make
+
+This builds kgui and once finished then the kgui library is ready to be linked with your application
+
+
+5) There are also small sample programs in the samples directory, the Visual Studio solution will
+ automatically make them, for the GUI compiler just go into each directory and type 'make'
