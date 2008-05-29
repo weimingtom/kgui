@@ -523,6 +523,12 @@ LRESULT kGUISystemWin::Event(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		case VK_F12:
 			key=GUIKEY_F12;
 		break;
+		case 187:	//'ctrl +'
+			key=GUIKEY_CTRL_PLUS;
+		break;
+		case 189:	//'ctrl -'
+			key=GUIKEY_CTRL_MINUS;
+		break;
 		}
 		if(key)
 			kGUI::KeyPressed(key);
