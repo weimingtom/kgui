@@ -27,6 +27,7 @@
 
 unsigned int kGUICSVRow::Load(kGUIString *split,kGUIString *line)
 {
+	m_fields.SetIgnoreEmpty(false);
 	return(m_fields.Split(line,split->GetString()));
 }
 

@@ -29,9 +29,9 @@ endif
 
 # don't use `:=' here since the path stuff will be included after this file
 #
-FTSYS_SRC = $(BASE_DIR)/ftsystem.c
+FTSYS_SRC = $(BUILD_DIR)/ftsystem.c
 
-INSTALL         := /bin/install -c
+INSTALL         := /usr/bin/install -c
 INSTALL_DATA    := ${INSTALL} -m 644
 INSTALL_PROGRAM := ${INSTALL}
 INSTALL_SCRIPT  := ${INSTALL}
@@ -86,7 +86,7 @@ LIB_DIR := $(OBJ_DIR)
 # The SYSTEM_ZLIB macro is defined if the user wishes to link dynamically
 # with its system wide zlib. If SYSTEM_ZLIB is 'yes', the zlib part of the
 # ftgzip module is not compiled in.
-SYSTEM_ZLIB := 
+SYSTEM_ZLIB := yes
 
 
 # The NO_OUTPUT macro is appended to command lines in order to ignore

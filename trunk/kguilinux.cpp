@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <unistd.h>
-
+#include <errno.h>
 
 //printing
 #include <cups/cups.h>
@@ -88,8 +88,10 @@ public:
 	void Sleep(int ms);
 	bool MakeDirectory(const char *name);
 	long FileTime(const char *fn);
+	void ShowWindow(void);	
+	void HideWindow(void);	
 	void ReDraw(void);
-	void ChangeMouse(void);
+	void ChangeMouse(void) {}
 	void ShowMouse(bool show);
 	void AdjustMouse(int dx,int dy) {/*printf("adjust dx=%d,dy=%d\n",dx,dy);*/m_mousex+=dx;m_mousey+=dy;}
 	void GetWindowPos(int *x,int *y,int *w,int *h);
@@ -108,6 +110,7 @@ public:
 	class kGUIPrintJob *AllocPrintJob(void) {kGUIPrintJob *pj;pj=new kGUIPrintJobCups(); return pj;}
 
 private:
+	void UpdateMouse(void);
 	Display *m_display;
 	int m_x11_fd;
 	Window m_rootwin;
@@ -122,6 +125,7 @@ private:
 	int m_screen;
 	GC m_gc;
 	int m_mousex,m_mousey,m_mousewheel;
+	bool m_showwindow;	
 	bool m_mouseleft,m_mouseright;
 	int m_lastcursor;
 	Atom m_wmp;
@@ -142,6 +146,8 @@ private:
 
 kGUISystemX *g_sys;
 bool g_userabort=false;
+int g_abortcount=0;
+int g_debug=0;
 
 static void sigint_handler(int sig)  //static declaration
 {
@@ -150,7 +156,11 @@ static void sigint_handler(int sig)  //static declaration
 	{  // interrupt signal detected
 	case SIGINT: 
 		g_userabort=true;
-		printf("Break detected, program shutting down!\n");
+		printf("Break detected, program shutting down, debug=%d!\n",g_debug);
+
+		//after 5 tries, fopr abort NOW!
+		if(++g_abortcount==5)
+			exit(1);
 	break;
 	}
 }
@@ -178,9 +188,10 @@ bool kGUISystemX::Init(void)
 {
 	int startwidth,startheight;
 	int maximages;
-	XEvent e;
+	//XEvent e;
 	XSetWindowAttributes attributes;
 
+	m_showwindow=false;
 	m_mousex=0;
 	m_mousey=0;
 	m_mousewheel=0;
@@ -254,8 +265,8 @@ bool kGUISystemX::Init(void)
 	/* used by the clipboard */
 	m_wclip=XInternAtom(m_display,"FL_CLIPBOARD",false);
 
-	//todo: this need a kGUISystem api call for setting the same as the root window title	
-	XStoreName(m_display, m_win, "GPS Turbo");
+	//APPNAME needs to be defined by the app code before including kguisys.cpp	
+	XStoreName(m_display, m_win, APPNAME);
 
 	m_gc=XCreateGC(m_display, m_win, 0, NULL);
 	XSetForeground(m_display, m_gc, WhitePixel(m_display, m_screen));
@@ -316,6 +327,7 @@ bool kGUISystemX::Init(void)
 
 	kGUI::Trace(" AppInit();\n");
 
+#if 0
 	XMapWindow(m_display, m_win);
 	XFlush(m_display);
 
@@ -324,11 +336,9 @@ bool kGUISystemX::Init(void)
 	{
 		XNextEvent(m_display,&e);
 	}while(e.type!=MapNotify);
-
+#endif
 
 	/* the default position is not always set by CreateWindow so let's set it's position again! */
-	SetWindowPos(m_winx,m_winy);
-	XFlush(m_display);
 
 	AppInit();
 
@@ -435,6 +445,7 @@ void kGUISystemX::Loop(void)
 	while(kGUI::IsAppClosed()==false)
 	{
 again:;
+		g_debug=0;
 //		printf("loop %d\n",random());
 
 		/* has user pressed ctrl-c on the root window?, if so quit */
@@ -452,14 +463,30 @@ again:;
 			tv.tv_usec=1000000/60;/* 60 re-draws per second */
 
 		forceupdate=false;
+
+		/* clear the list of file descriptors */
 		FD_ZERO(&in_fds);
+		/* add the one we are tracking to the list */
 		FD_SET(m_x11_fd,&in_fds);
 
-		if(select(m_x11_fd+1,&in_fds,0,0,&tv))
+		g_debug=1;
+		/* wait for data ready from descriptor or timeout */
+		select(m_x11_fd+1,&in_fds,0,0,&tv);
+
+//		if(FD_ISSET(m_x11_fd,&in_fds))
+#if DEBUGPRINT
+		printf("Check for pending events\n");
+#endif
+		if(XPending(m_display))
 		{
 			shortdelay=true;
 			/* event */
+			g_debug=2;
+#if DEBUGPRINT
+			printf("Get next event\n");
+#endif
 			XNextEvent(m_display, &m_e);
+			g_debug=3;
 #if DEBUGPRINT
 			printf("event=%d\n",m_e.type);
 #endif
@@ -468,8 +495,14 @@ again:;
 			case GraphicsExpose:
 			case Expose:
 				/* copy area from my image to the xwindow display */
+#if DEBUGPRINT
+				printf("inDraw x,y(%d-%d) w,h(%d-%d)\n",m_e.xexpose.x, m_e.xexpose.y, m_e.xexpose.width, m_e.xexpose.height);
+#endif
 				XPutImage(m_display, m_win, m_gc, m_image, m_e.xexpose.x, m_e.xexpose.y, m_e.xexpose.x, m_e.xexpose.y, m_e.xexpose.width, m_e.xexpose.height);
 				XFlush(m_display);
+#if DEBUGPRINT
+				printf("outDraw\n");
+#endif
 			break;
 			case ClientMessage:
 				if(((unsigned int)m_e.xclient.message_type==(unsigned int)m_wmp) && ((unsigned int)m_e.xclient.data.l[0]==(unsigned int)m_wdw))
@@ -810,7 +843,7 @@ checkmouseagain:		if(m_numoldwindowpositions)
 				if(!t)
 					kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
 			}
-			kGUI::ChangeMouse();
+			UpdateMouse();
 
 #if DEBUGPRINT
 			gettimeofday(&ustart,0);
@@ -840,32 +873,41 @@ void kGUISystemX::Draw(void)
 {
 int dw,dh;
 kGUICorners c;
+char *idata;
 
 	c.lx=0;
 	c.rx=0;
 	c.ty=0;
 	c.by=0;
 
-	while(kGUI::GetInDraw()==true || kGUI::GetInThread()==true)
-	{
-#if DEBUGPRINT
-		printf("indraw=%d, inthread=%d\n",kGUI::GetInDraw(),kGUI::GetInThread());
-#endif
-		kGUI::Sleep(1);
-	}
-	kGUI::SetInDraw(true);
-	m_image->data=(char *)kGUI::Draw(&c);
-	kGUI::SetInDraw(false);
+	//returns null if couldn't get mutex lock
+	idata=(char *)kGUI::Draw(&c);
+	if(!idata)
+		return;
+
+	m_image->data=idata;
+
+	if(c.lx<0)
+		c.lx=0;
+	if(c.ty<0)
+		c.ty=0;
+	if(c.rx>m_fullwidth)
+		c.rx=m_fullwidth;
+	if(c.by>m_fullheight)
+		c.rx=m_fullheight;
 
 	dw=c.rx-c.lx;
 	dh=c.by-c.ty;
 	if(dw>0 && dh>0)
 	{
 #if DEBUGPRINT
-		printf("draw x(%d,%d) - y(%d,%d) w=%d,h=%d\n",c.lx,c.rx,c.ty,c.by,dw,dh);
+		printf("inDraw x(%d,%d) - y(%d,%d) w=%d,h=%d\n",c.lx,c.rx,c.ty,c.by,dw,dh);
 #endif
 		XPutImage(m_display,m_win,m_gc,m_image,c.lx,c.ty,c.lx,c.ty,dw,dh);
 		XFlush(m_display);
+#if DEBUGPRINT
+		printf("outDraw\n");
+#endif
 	}
 }
 
@@ -944,12 +986,14 @@ void kGUISystemX::ReDraw(void)
 #if DEBUGPRINT
 	printf("Force redraw to screen\n");
 #endif
+	if(m_showwindow==false)
+		ShowWindow();
 	Draw();
 }
 
 /* change mouse pointer shape to current shape type */
 
-void kGUISystemX::ChangeMouse(void)
+void kGUISystemX::UpdateMouse(void)
 {
 	Cursor c;
 
@@ -972,6 +1016,9 @@ void kGUISystemX::ChangeMouse(void)
 	if(m_lastcursor!=kGUI::GetMouseCursor())
 	{
 //		printf("Setting cursor to %d\n",m_lastcursor);
+#if DEBUGPRINT
+		printf("Setting mouse cursor\n");
+#endif
 		c=XCreateFontCursor(m_display,mousecursors[kGUI::GetMouseCursor()]);
 		if(c)
 		{
@@ -985,6 +1032,9 @@ void kGUISystemX::ChangeMouse(void)
 			printf("Error setting Cursor %d\n",kGUI::GetMouseCursor());
 #endif
 		}
+#if DEBUGPRINT
+		printf("doneSetting mouse cursor\n");
+#endif
 	}
 }
 
@@ -996,6 +1046,9 @@ void kGUISystemX::GetWindowPos(int *x,int *y,int *w,int *h)
 {
 #if 1
 	XWindowAttributes wa;
+
+	//flush any pending window size changes
+	XFlush(m_display);
 
 	XGetWindowAttributes(m_display,m_win,&wa);
 	m_winx=wa.x;
@@ -1068,6 +1121,46 @@ void kGUISystemX::SetWindowSize(int w,int h)
 	m_winh=h;
 }
 
+void kGUISystemX::ShowWindow(void)
+{
+	XEvent e;
+
+	if(m_showwindow==false)
+	{
+		XMapWindow(m_display, m_win);
+		XFlush(m_display);
+
+		/* eat events until we get a MapNotify event saying out screen is up and ready to go! */
+		do
+		{
+			XNextEvent(m_display,&e);
+		}while(e.type!=MapNotify);
+
+		SetWindowPos(m_winx,m_winy);
+		XFlush(m_display);
+		m_showwindow=true;
+	}
+}
+
+void kGUISystemX::HideWindow(void)
+{
+	XEvent e;
+
+	if(m_showwindow==true)
+	{
+		XUnmapWindow(m_display, m_win);
+		XFlush(m_display);
+
+		/* eat events until we get a MapNotify event saying out screen is up and ready to go! */
+		do
+		{
+			XNextEvent(m_display,&e);
+		}while(e.type!=UnmapNotify);
+		m_showwindow=false;
+	}
+}
+
+
 void kGUISystemX::Minimize(void)
 {
 	XIconifyWindow(m_display,m_win,0);
@@ -1091,8 +1184,13 @@ bool kGUISystemX::IsDir(const char *fn)
 #if 1
     struct stat sb;
 
+	printf("isdir(%s)\n",fn);
     if (stat(fn, &sb) < 0)
-		return (false);
+	{
+	printf("error getting stat, files doesn't exist? err=%d\n",errno);
+	return (false);
+	}
+	printf("isdir %d?\n",S_ISDIR(sb.st_mode));
     return (S_ISDIR(sb.st_mode));
 #else
 	int dir_handle;
@@ -1277,6 +1375,80 @@ bool kGUIPrintJobCups::Start(kGUIPrinter *p,const char *jobname,int numpages,int
 		fprintf(m_handle,"%%%%BoundingBox: %d %d %d %d\n",0,0,ppw,pph);
 		fprintf(m_handle,"%%%%Pages: %d\n",m_numpages);
 		fprintf(m_handle,"%%%%EndComments\n");
+
+#if 1
+		fprintf(m_handle,"/setupLatin1 {\n");
+		fprintf(m_handle,"mark\n");
+		fprintf(m_handle,"/EncodingVector 256 array def\n");
+		fprintf(m_handle,"EncodingVector 0\n");
+		fprintf(m_handle,"\n"); 
+		fprintf(m_handle,"ISOLatin1Encoding 0 255 getinterval putinterval\n");
+		fprintf(m_handle,"\n");
+		fprintf(m_handle,"EncodingVector\n");
+		fprintf(m_handle,"  dup 306 /AE\n");
+		fprintf(m_handle,"  dup 301 /Aacute\n");
+		fprintf(m_handle,"  dup 302 /Acircumflex\n");
+ 		fprintf(m_handle,"  dup 304 /Adieresis\n");
+		fprintf(m_handle,"  dup 300 /Agrave\n");
+ 		fprintf(m_handle,"  dup 305 /Aring\n");
+		fprintf(m_handle,"  dup 303 /Atilde\n");
+		fprintf(m_handle,"  dup 307 /Ccedilla\n");
+		fprintf(m_handle,"  dup 311 /Eacute\n");
+		fprintf(m_handle,"  dup 312 /Ecircumflex\n");
+		fprintf(m_handle,"  dup 313 /Edieresis\n");
+ 		fprintf(m_handle,"  dup 310 /Egrave\n");
+		fprintf(m_handle,"  dup 315 /Iacute\n");
+		fprintf(m_handle,"  dup 316 /Icircumflex\n");
+ 		fprintf(m_handle,"  dup 317 /Idieresis\n");
+ 		fprintf(m_handle,"  dup 314 /Igrave\n");
+		fprintf(m_handle,"  dup 334 /Udieresis\n");
+		fprintf(m_handle,"  dup 335 /Yacute\n");
+		fprintf(m_handle,"  dup 376 /thorn\n");
+		fprintf(m_handle,"  dup 337 /germandbls\n");
+		fprintf(m_handle,"  dup 341 /aacute\n");
+		fprintf(m_handle,"  dup 342 /acircumflex\n");
+		fprintf(m_handle,"  dup 344 /adieresis\n");
+		fprintf(m_handle,"  dup 346 /ae\n");
+		fprintf(m_handle,"  dup 340 /agrave\n");
+		fprintf(m_handle,"  dup 345 /aring\n");
+		fprintf(m_handle,"  dup 347 /ccedilla\n");
+		fprintf(m_handle,"  dup 351 /eacute\n");
+		fprintf(m_handle,"  dup 352 /ecircumflex\n");
+		fprintf(m_handle,"  dup 353 /edieresis\n");
+		fprintf(m_handle,"  dup 350 /egrave\n");
+		fprintf(m_handle,"  dup 355 /iacute\n");
+		fprintf(m_handle,"  dup 356 /icircumflex\n");
+		fprintf(m_handle,"  dup 357 /idieresis\n");
+		fprintf(m_handle,"  dup 354 /igrave\n");
+		fprintf(m_handle,"  dup 360 /dcroat\n");
+		fprintf(m_handle,"  dup 361 /ntilde\n");
+		fprintf(m_handle,"  dup 363 /oacute\n");
+		fprintf(m_handle,"  dup 364 /ocircumflex\n");
+		fprintf(m_handle,"  dup 366 /odieresis\n");
+		fprintf(m_handle,"  dup 362 /ograve\n");
+		fprintf(m_handle,"  dup 365 /otilde\n");
+		fprintf(m_handle,"  dup 370 /oslash\n");
+		fprintf(m_handle,"  dup 372 /uacute\n");
+		fprintf(m_handle,"  dup 373 /ucircumflex\n");
+		fprintf(m_handle,"  dup 374 /udieresis\n");
+		fprintf(m_handle,"  dup 371 /ugrave\n");
+		fprintf(m_handle,"  dup 375 /yacute\n");
+		fprintf(m_handle,"  dup 377 /ydieresis\n");
+		fprintf(m_handle,"\n");
+		fprintf(m_handle,"%% Set up ISO Latin 1 character encoding\n");
+		fprintf(m_handle,"/starnetISO {\n");
+		fprintf(m_handle,"        dup dup findfont dup length dict begin\n");
+		fprintf(m_handle,"        { 1 index /FID ne { def }{ pop pop } ifelse\n");
+		fprintf(m_handle,"        } forall\n");
+		fprintf(m_handle,"        /Encoding EncodingVector def\n");
+		fprintf(m_handle,"        currentdict end definefont\n");
+		fprintf(m_handle,"} def\n");
+		fprintf(m_handle,"/Arial starnetISO def\n");
+		fprintf(m_handle,"/Arial-Bold starnetISO def\n");
+		fprintf(m_handle,"cleartomark\n");
+		fprintf(m_handle,"} bind def\n");
+#endif
+
 		return(true);
 	}
 	else
@@ -1326,36 +1498,33 @@ void kGUIPrintJobCups::DrawRect(int lx,int rx,int ty,int by,kGUIColor color)
 	fprintf(m_handle,"fill\n");
 }
 
+//char oktext[]={"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ()#*+,?-./:;!@[]'"};
+
+
 void kGUIPrintJobCups::DrawTextList(int pointsize,const char *fontname,int num, Array<PRINTFONTCHAR_DEF> *list)
 {
 	int i;
 	int r,g,b;
 	PRINTFONTCHAR_DEF pfc;
 	double left,right,top,bottom;
-	bool setfont=false;
 	int correctedpointsize;
 	int correctedpointsizepix;
 	kGUIString correctedfontname;
+	bool special;
 
 	correctedfontname.SetString(fontname);
 	correctedfontname.Replace(" ","-");
 	correctedpointsize=(int)(pointsize*m_scaleh/* *1.10f*/);
 	correctedpointsizepix=correctedpointsize;	//(int)(correctedpointsize*0.85f);
 
-	if(strcmp(correctedfontname.GetString(),m_lastfont.GetString()))
+	if( (strcmp(correctedfontname.GetString(),m_lastfont.GetString())) || (correctedpointsize!=m_lastfontsize) )
 	{
 		fprintf(m_handle,"/%s findfont\n",correctedfontname.GetString());
 		m_lastfont.SetString(correctedfontname.GetString());
-		setfont=true;
-	}
-	if((correctedpointsize!=m_lastfontsize) || setfont)
-	{
 		fprintf(m_handle,"%d scalefont\n",correctedpointsize);
 		m_lastfontsize=correctedpointsize;
-		setfont=true;
-	} 
-	if(setfont==true)
 		fprintf(m_handle,"setfont\n");
+	}
 
 	for(i=0;i<num;++i)
 	{
@@ -1378,21 +1547,28 @@ void kGUIPrintJobCups::DrawTextList(int pointsize,const char *fontname,int num, 
 
 		DrawColorToRGB(pfc.fgcol,r,g,b);
 
-		if(pfc.c!='(' && pfc.c!=')')
+		special=false;
+		if( (pfc.c=='(') || (pfc.c==')') || (pfc.c=='\\') || (pfc.c>'z') || (pfc.c<' '))
+			special=true;
+		else
+			special=false;
+
+		//todo: only send rgbcolor if changed
+		fprintf(m_handle,"%f %f %f setrgbcolor\n",(double)r/256.0f,(double)g/256.0f,(double)b/256.0f);
+		if(m_landscape)
 		{
-			//todo: only send rgbcolor if changed
-			fprintf(m_handle,"%f %f %f setrgbcolor\n",(double)r/256.0f,(double)g/256.0f,(double)b/256.0f);
-			if(m_landscape)
-			{
-				fprintf(m_handle,"%f %f moveto\n",left-correctedpointsizepix,top);
-				fprintf(m_handle,"270 rotate\n");
-			}
-			else
-				fprintf(m_handle,"%f %f moveto\n",left,top-correctedpointsizepix);
-			fprintf(m_handle,"(%c) show\n",pfc.c);
-			if(m_landscape)
-				fprintf(m_handle,"-270 rotate\n");
+			fprintf(m_handle,"%f %f moveto\n",left-correctedpointsizepix,top);
+			fprintf(m_handle,"270 rotate\n");
 		}
+		else
+			fprintf(m_handle,"%f %f moveto\n",left,top-correctedpointsizepix);
+
+		if(special==false)
+			fprintf(m_handle,"(%c) show\n",pfc.c);
+		else
+			fprintf(m_handle,"<%4x> show\n",pfc.c);
+		if(m_landscape)
+			fprintf(m_handle,"-270 rotate\n");
 	}
 }
 
@@ -1410,98 +1586,97 @@ void kGUIPrintJobCups::DrawImage(kGUIDrawSurface *s,int lx,int rx,int ty,int by)
 	int r,g,b;
 	double dlx,drx,dty,dby;
 
-	/* calc destination coords on printer */
-	if((m_landscape==false))
+	/* if image is too wide or too tall then split in half */
+	if((rx-lx)>64)
 	{
-		dlx=(lx*m_scalew)+m_lmp;
-		drx=(rx*m_scalew)+m_lmp;
-		dty=(m_dh+m_tmp+m_bmp)-((ty*m_scaleh)+m_tmp);
-		dby=(m_dh+m_tmp+m_bmp)-((by*m_scaleh)+m_tmp);
-
-		fprintf(m_handle,"gsave\n");
-		fprintf(m_handle,"%f %f translate\n",dlx,dby);
-		fprintf(m_handle,"%f %f scale\n",drx-dlx,dty-dby);
-
-		fprintf(m_handle,"%d %d 8 [%d 0 0 %d 0 0]\n",rx-lx,by-ty,rx-lx,by-ty);
-		fprintf(m_handle,"{<\n");
-
-		for(y=by-1;y>=ty;--y)
-		{
-			n=0;
-			for(x=lx;x<rx;++x)
-			{
-				color=*(s->GetSurfacePtrABS(x,y));
-				DrawColorToRGB(color,r,g,b);
-				fprintf(m_handle,"%02x%02x%02x",r,g,b);
-				if(++n==32)
-				{
-					n=0;
-					fprintf(m_handle,"\n");
-				}
-			}
-			if(n)
-				fprintf(m_handle,"\n");
-		}
-
-		fprintf(m_handle,">}\n");
-		fprintf(m_handle,"false 3 colorimage\n");
-		fprintf(m_handle,"grestore\n");
+		/* split into two */
+		int cx=(rx+lx)>>1;
+		
+		DrawImage(s,lx,cx,ty,by);
+		DrawImage(s,cx,rx,ty,by);
+	}
+	else if((by-ty)>64)
+	{
+		/* split into two */
+		int cy=(by+ty)>>1;
+		
+		DrawImage(s,lx,rx,ty,cy);
+		DrawImage(s,lx,rx,cy,by);
 	}
 	else
 	{
-		dlx=(m_dh+m_tmp+m_bmp)-((ty*m_scaleh)+m_tmp);
-		drx=(m_dh+m_tmp+m_bmp)-((by*m_scaleh)+m_tmp);
-		dty=(m_dw+m_rmp)-(rx*m_scalew);
-		dby=(m_dw+m_rmp)-(lx*m_scalew);
-
-		fprintf(m_handle,"gsave\n");
-		fprintf(m_handle,"%f %f translate\n",dlx,dby);
-		fprintf(m_handle,"%f %f scale\n",drx-dlx,dty-dby);
-
-		fprintf(m_handle,"%d %d 8 [%d 0 0 %d 0 0]\n",by-ty,rx-lx,by-ty,rx-lx);
-		fprintf(m_handle,"{<\n");
-
-		for(x=lx;x<rx;++x)
+		/* calc destination coords on printer */
+		if((m_landscape==false))
 		{
-			for(y=ty;y<by;++y)
-			{
-				color=*(s->GetSurfacePtrABS(x,y));
-				DrawColorToRGB(color,r,g,b);
-				fprintf(m_handle,"%02x%02x%02x",r,g,b);
-			}
-			fprintf(m_handle,"\n");
-		}
+			dlx=(lx*m_scalew)+m_lmp;
+			drx=(rx*m_scalew)+m_lmp;
+			dty=(m_dh+m_tmp+m_bmp)-((ty*m_scaleh)+m_tmp);
+			dby=(m_dh+m_tmp+m_bmp)-((by*m_scaleh)+m_tmp);
+		
+			fprintf(m_handle,"gsave\n");
+			fprintf(m_handle,"%f %f translate\n",dlx,dby);
+			fprintf(m_handle,"%f %f scale\n",drx-dlx,dty-dby);
 
-		fprintf(m_handle,">}\n");
-		fprintf(m_handle,"false 3 colorimage\n");
-		fprintf(m_handle,"grestore\n");
+			fprintf(m_handle,"%d %d 8 [%d 0 0 %d 0 0]\n",rx-lx,by-ty,rx-lx,by-ty);
+			fprintf(m_handle,"{<\n");	
+
+			for(y=by-1;y>=ty;--y)
+			{
+				n=0;
+				for(x=lx;x<rx;++x)
+				{
+					color=*(s->GetSurfacePtrABS(x,y));
+					DrawColorToRGB(color,r,g,b);
+					fprintf(m_handle,"%02x%02x%02x",r,g,b);
+					if(++n==32)
+					{
+						n=0;
+						fprintf(m_handle,"\n");
+					}
+				}
+				if(n)
+					fprintf(m_handle,"\n");
+			}
+
+			fprintf(m_handle,">}\n");
+			fprintf(m_handle,"false 3 colorimage\n");
+			fprintf(m_handle,"grestore\n");
+		}	
+		else
+		{
+			dlx=(m_dh+m_tmp+m_bmp)-((ty*m_scaleh)+m_tmp);
+			drx=(m_dh+m_tmp+m_bmp)-((by*m_scaleh)+m_tmp);
+			dty=(m_dw+m_rmp)-(rx*m_scalew);
+			dby=(m_dw+m_rmp)-(lx*m_scalew);
+
+			fprintf(m_handle,"gsave\n");
+			fprintf(m_handle,"%f %f translate\n",dlx,dby);
+			fprintf(m_handle,"%f %f scale\n",drx-dlx,dty-dby);
+
+			fprintf(m_handle,"%d %d 8 [%d 0 0 %d 0 0]\n",by-ty,rx-lx,by-ty,rx-lx);
+			fprintf(m_handle,"{<\n");
+
+			for(x=lx;x<rx;++x)
+			{	
+				for(y=ty;y<by;++y)
+				{
+					color=*(s->GetSurfacePtrABS(x,y));
+					DrawColorToRGB(color,r,g,b);
+					fprintf(m_handle,"%02x%02x%02x",r,g,b);
+				}
+				fprintf(m_handle,"\n");
+			}	
+
+			fprintf(m_handle,">}\n");
+			fprintf(m_handle,"false 3 colorimage\n");
+			fprintf(m_handle,"grestore\n");
+		}
 	}
 }
 
 void kGUIPrintJobCups::PrintSurface(kGUIDrawSurface *surface)
 {
-	int x,y;
-	int lx,rx,ty,by;
-	int sw,sh;
-
-	/* split into 64x64 images as too large of an image will crash postscript */
-	sw=surface->GetWidth();
-	sh=surface->GetHeight();
-	for(y=0;y<sh;y+=64)
-	{
-		ty=y;
-		by=y+64;
-		if(by>sh)
-			by=sh;
-		for(x=0;x<sw;x+=64)
-		{
-			lx=x;
-			rx=x+64;
-			if(rx>sw)
-				rx=sw;
-			DrawImage(surface,lx,rx,ty,by);
-		}
-	}
+	DrawImage(surface,0,0,surface->GetWidth(),surface->GetHeight());
 }
 
 void kGUIPrintJobCups::EndPage(void)
@@ -1527,7 +1702,7 @@ bool kGUIPrintJobCups::End(void)
 	num_options = cupsAddOption("copies", numcopies.GetString(), num_options, &options);
 	jobid = cupsPrintFile(m_p->GetName(),m_filename.GetString(),m_jobname.GetString(), num_options, options);
 	cupsFreeOptions(num_options, options);
-	kGUI::FileDelete(m_filename.GetString());
+//	kGUI::FileDelete(m_filename.GetString());
 
         if (jobid == 0)
         {
@@ -1538,3 +1713,4 @@ bool kGUIPrintJobCups::End(void)
 
 	return(!m_error);
 }
+
