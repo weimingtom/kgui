@@ -72,7 +72,7 @@ T := -o$(space)
 #
 #   We use our own FreeType configuration file.
 #
-CFLAGS := -c -Wall  -g -O2 -DDARWIN_NO_CARBON \
+CFLAGS := -c -Wall  -g -O2 -DFT_CONFIG_OPTION_SYSTEM_ZLIB -DDARWIN_NO_CARBON \
           -DFT_CONFIG_CONFIG_H="<ftconfig.h>"
 
 # ANSIFLAGS: Put there the flags used to make your compiler ANSI-compliant.
@@ -87,7 +87,7 @@ CC    := $(LIBTOOL) --mode=compile $(CCraw)
 
 # Linker flags.
 #
-LDFLAGS := 
+LDFLAGS :=  -lz
 
 
 # Library linking

@@ -14,9 +14,9 @@ exec_prefix=${prefix}
 exec_prefix_set=no
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
-enable_shared=no
-wl=
-hardcode_libdir_flag_spec='-L$libdir'
+enable_shared=yes
+wl=-Wl,
+hardcode_libdir_flag_spec='${wl}--rpath ${wl}$libdir'
 
 usage()
 {
@@ -141,7 +141,7 @@ if test "$echo_libs" = "yes" ; then
   if test "$enable_shared" = "yes" ; then
     eval "rpath=\"$hardcode_libdir_flag_spec\""
   fi
-  libs="-lfreetype "
+  libs="-lfreetype -lz"
   if test "$libdir" != "/usr/lib" && test "$libdir" != "/usr/lib64"; then
     echo -L$libdir $rpath $libs
   else
