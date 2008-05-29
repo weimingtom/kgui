@@ -85,7 +85,7 @@ bool kGUIMutex::TryLock(void)
 	if(status==WAIT_ABANDONED || status==WAIT_TIMEOUT)
 		return(false);
 #elif defined(LINUX) || defined(MACINTOSH)
-	if(pthread_mutex_lock(&m_mutex)!=0?)
+	if(pthread_mutex_lock(&m_mutex)!=0)
 		return(false);
 #else
 #error

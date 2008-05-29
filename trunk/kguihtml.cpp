@@ -3019,6 +3019,7 @@ comperr:;
 				s2.m_selector=CSSSELECTOR_DESCENDANT;
 				s2.m_compare=0;	//not used, set so compiler stops complaining
 				s2.m_value=0;	//not used, set so compiler stops complaining
+				s2.m_not=false;	//not used, set so compiler stops complaining
 				m_entries.SetEntry(m_numentries,s2);
 				m_sorder.SetEntry(m_numentries,m_numentries);
 				m_numentries++;

@@ -1059,7 +1059,7 @@ public:
 	void CalcChildZone(void);
 	void CalcChildZone(int yoff);
 	bool UpdateInput(void) {return UpdateInputC(0);}
-	kGUIHTMLObj *kGUIHTMLObj::GetParentObj(void);
+	kGUIHTMLObj *GetParentObj(void);
 
 	void SavePosition(void);
 	void ComparePosition(void);
