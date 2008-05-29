@@ -4539,59 +4539,6 @@ int kGUIBasic::exp_vardelta(kGUIBasicVarObj *v1,kGUIBasicVarObj *v2)
 	return(0);	/* never gets here, just making the compiler stop complaining */
 }
 
-#if 0
-/* -1=root level priority */
-void kGUIBasic::exp_getfast(kGUIBasicVarObj *result,int priority)
-{
-	int nextpri;
-
-	GetToken();
-	exp_primitive(result);
-
-	/* if there an operator and if so does it have a higher priority? */
-	nextpri=m_exppri[m_tok];
-	if(!nextpri)
-		return;		/* token is not an operator so expression is done! */
-	if(nextpri>priority)
-	{
-
-	}
-
-	switch(m_tok)
-	{
-		'?'
-	case BASICTOKEN_LOGICALOR:
-	case BASICTOKEN_LOGICALAND:
-	case BASICTOKEN_BITWISEOR:
-	case BASICTOKEN_BITWISEEXCLUSIVEOR:
-	case BASICTOKEN_BITWISEAND:
-
-	case BASICTOKEN_TESTEQUAL:
-	case BASICTOKEN_EQUALS:
-	case BASICTOKEN_TESTNOTEQUAL:
-
-	case BASICTOKEN_TESTLESSTHAN:
-	case BASICTOKEN_TESTLESSTHANOREQUAL:
-	case BASICTOKEN_TESTGREATERTHAN:
-	case BASICTOKEN_TESTGREATERTHANOREQUAL:
-
-	case BASICTOKEN_BITWISESHIFTLEFT:
-	case BASICTOKEN_BITWISESHIFTRIGHT:
-	case BASICTOKEN_ADD:
-	case BASICTOKEN_SUBTRACT:
-	case BASICTOKEN_MULTIPLY:
-	case BASICTOKEN_DIVIDE:
-	case BASICTOKEN_MODULO:
-	case BASICTOKEN_EXPONENT:	
-	case BASICTOKEN_NOT:
-		/* unary, */
-		/* () */
-		fuck
-	break;
-	}
-}
-#endif
-
 //	"id++", "id--"		[post-increment and post-decrement]
 //	"++id", "--id"		[pre-increment and pre-decrement]
 //	"-", "+"		[(unary operators)]
