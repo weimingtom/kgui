@@ -1,0 +1,59 @@
+# 1 "c:\\source\\ffmpeg//"
+vhook/fish.o: vhook/fish.c c:/source/ffmpeg/libavformat/framehook.h \
+  c:/source/ffmpeg/libavcodec/avcodec.h \
+  c:/source/ffmpeg/libavutil/avutil.h c:/source/ffmpeg/libavutil/common.h \
+  c:/source/ffmpeg/config.h c:/source/ffmpeg/libavutil/internal.h \
+  c:/source/ffmpeg/libavutil/intreadwrite.h \
+  c:/source/ffmpeg/libavutil/bswap.h c:/source/ffmpeg/libavutil/mem.h \
+  c:/source/ffmpeg/libavutil/mathematics.h \
+  c:/source/ffmpeg/libavutil/rational.h \
+  c:/source/ffmpeg/libavutil/integer.h \
+  c:/source/ffmpeg/libavutil/intfloat_readwrite.h \
+  c:/source/ffmpeg/libavutil/log.h c:/source/ffmpeg/libavcodec/dsputil.h \
+  c:/source/ffmpeg/libavcodec/avcodec.h \
+  c:/source/ffmpeg/libavformat/avformat.h \
+  c:/source/ffmpeg/libavformat/avio.h c:/source/ffmpeg/libavformat/rtp.h \
+  c:/source/ffmpeg/libavformat/avformat.h \
+  c:/source/ffmpeg/libavformat/rtsp.h \
+  c:/source/ffmpeg/libavformat/rtspcodes.h \
+  c:/source/ffmpeg/libavformat/os_support.h \
+  c:/source/ffmpeg/libswscale/swscale.h \
+  c:/source/ffmpeg/libavutil/avutil.h
+# 1 "c:\\source\\ffmpeg//"
+vhook/null.o: vhook/null.c c:/source/ffmpeg/libavformat/framehook.h \
+  c:/source/ffmpeg/libavcodec/avcodec.h \
+  c:/source/ffmpeg/libavutil/avutil.h c:/source/ffmpeg/libavutil/common.h \
+  c:/source/ffmpeg/config.h c:/source/ffmpeg/libavutil/internal.h \
+  c:/source/ffmpeg/libavutil/intreadwrite.h \
+  c:/source/ffmpeg/libavutil/bswap.h c:/source/ffmpeg/libavutil/mem.h \
+  c:/source/ffmpeg/libavutil/mathematics.h \
+  c:/source/ffmpeg/libavutil/rational.h \
+  c:/source/ffmpeg/libavutil/integer.h \
+  c:/source/ffmpeg/libavutil/intfloat_readwrite.h \
+  c:/source/ffmpeg/libavutil/log.h c:/source/ffmpeg/libswscale/swscale.h \
+  c:/source/ffmpeg/libavutil/avutil.h
+# 1 "c:\\source\\ffmpeg//"
+vhook/watermark.o: vhook/watermark.c c:/source/ffmpeg/libavutil/common.h \
+  c:/source/ffmpeg/config.h c:/source/ffmpeg/libavutil/internal.h \
+  c:/source/ffmpeg/libavutil/intreadwrite.h \
+  c:/source/ffmpeg/libavutil/bswap.h c:/source/ffmpeg/libavutil/common.h \
+  c:/source/ffmpeg/libavutil/mem.h \
+  c:/source/ffmpeg/libavformat/avformat.h \
+  c:/source/ffmpeg/libavcodec/avcodec.h \
+  c:/source/ffmpeg/libavutil/avutil.h \
+  c:/source/ffmpeg/libavutil/mathematics.h \
+  c:/source/ffmpeg/libavutil/rational.h \
+  c:/source/ffmpeg/libavutil/integer.h \
+  c:/source/ffmpeg/libavutil/intfloat_readwrite.h \
+  c:/source/ffmpeg/libavutil/log.h c:/source/ffmpeg/libavformat/avio.h \
+  c:/source/ffmpeg/libavformat/rtp.h \
+  c:/source/ffmpeg/libavformat/avformat.h \
+  c:/source/ffmpeg/libavformat/rtsp.h \
+  c:/source/ffmpeg/libavformat/rtspcodes.h \
+  c:/source/ffmpeg/libavformat/os_support.h \
+  c:/source/ffmpeg/libavformat/framehook.h c:/source/ffmpeg/cmdutils.h \
+  c:/source/ffmpeg/libswscale/swscale.h \
+  c:/source/ffmpeg/libavutil/avutil.h
+# 1 "c:\\source\\ffmpeg//"
+# 1 "c:\\source\\ffmpeg//"
+# 1 "c:\\source\\ffmpeg//"

@@ -1,0 +1,136 @@
+##############################################################################
+#
+# this is the Makefile Include for the kgui library and apps using the library
+#
+# it is defined for having the app at the same directory level as the
+# kgui source, for example '/source/kgui' and '/source/app'
+#
+# the apps makefile should include this file with 'include $(KGUILOC)makefile.in'
+#
+# this file then defines the various compiler/linker and other varaibles for
+# the apps makefile to use
+#
+# kgui can be used with other libraries for more functionality like:
+#
+# for movie playing it references the ffmpeg library
+# for database access it references the mysql library
+#
+# the defines for these optional extras are in seperate vars to allow apps
+# that don't use these extras to compile without having these libs installed
+#
+##############################################################################
+
+TARGET_OS=$(shell uname -s)
+TARGET_CHIP=$(shell uname -m)
+
+ifeq ($(findstring MINGW,$(TARGET_OS)),MINGW)
+
+#############################################
+# MINGW
+#############################################
+
+SYS=-DMINGW
+OBJDIR=omingw
+CC=g++
+CCOPTS= -Wall -O3 -D_FILE_OFFSET_BITS=64
+LINK=g++
+MAKELIB=ar
+RANLIB=ranlib
+EXE=.exe
+RM=rm
+LDFLAGS= -mwindows
+
+KGUILIB_INCLUDES = -I$(KGUILOC)
+KGUILIB_LIBPATHS=-L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBS=-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_SYSLIBS=-lws2_32 -lwinspool -lz
+
+KGUILIBDB_INCLUDES = -I"$(KGUILOC)mysql/include/"
+KGUILIBDB_LIBPATHS =-L/usr/lib/mysql/
+KGUILIBDB_LIBS =-lmysqlclient -lmysqld
+
+KGUILIBMOVIE_INCLUDES =
+KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
+KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
+
+else
+ifeq ($(findstring Linux,$(TARGET_OS)),Linux)
+
+#############################################
+# Linux
+#############################################
+
+SYS=-DLINUX
+OBJDIR=olinux
+CC=g++
+CCOPTS= -Wall -O3 -D_FILE_OFFSET_BITS=64
+LINK=g++
+MAKELIB=ar
+RANLIB=ranlib
+EXE=
+RM=rm
+LDFLAGS=
+
+KGUILIB_INCLUDES = -I$(KGUILOC)
+KGUILIB_LIBPATHS = -L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_SYSLIBS =-lcups -lX11 -lz
+
+KGUILIBDB_INCLUDES = -I"/usr/include/mysql"
+KGUILIBDB_LIBPATHS =-L/usr/lib/mysql/
+KGUILIBDB_LIBS =-lmysqlclient -lmysqld
+
+KGUILIBMOVIE_INCLUDES =
+KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
+KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
+
+else
+ifeq ($(findstring Darwin,$(TARGET_OS)),Darwin)
+
+#############################################
+# Macintosh
+#############################################
+
+SYS=-DMACINTOSH
+OBJDIR=omac
+CC=g++
+CCOPTS= -Wall -O3 -DUSE_EXTERNAL_DATA
+LINK=g++
+MAKELIB=ar
+RANLIB=ranlib
+EXE=
+RM=rm
+LDFLAGS=
+
+KGUILIB_INCLUDES = -I$(KGUILOC)
+KGUILIB_LIBPATHS = -L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_SYSLIBS =-lcups -lz -framework Carbon -framework ApplicationServices
+
+KGUILIBDB_INCLUDES = -I"/usr/include/mysql"
+KGUILIBDB_LIBPATHS =-L/usr/lib/mysql/
+KGUILIBDB_LIBS =-lmysqlclient -lmysqld
+
+KGUILIBMOVIE_INCLUDES =
+KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
+KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
+
+else
+
+#############################################
+# unknown machine
+#############################################
+
+@echo "Unknown Machine"
+SYS= error
+CC=error
+LINK=error
+RANLIB=error
+
+endif
+endif
+endif
+
+#dependency that can be used by app to detect if the libs have been updated
+
+KGUILIB_DEP= $(KGUILOC)$(OBJDIR)/libkgui.a

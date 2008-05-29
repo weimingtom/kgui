@@ -1,0 +1,20 @@
+#
+# kgui configuration file, created May 12, 2008 by Kevin Pickell
+# kgui itself doesn't need a config file but it's sub-projects do so this will
+# configure them
+
+cd zlib
+./configure
+cd ..
+
+cd jpeg
+./configure
+cd ..
+
+cd freetype
+./configure --enable-static --disable-shared
+cd ..
+
+cd ffmpeg
+./configure --enable-static --disable-shared --enable-memalign-hack
+cd ..
