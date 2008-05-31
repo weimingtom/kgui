@@ -305,7 +305,7 @@ void kGUICookieJar::Save(kGUIXMLItem *root)
 //todo: add list of known invalid subdomains ".co.ok" etc
 void kGUICookieJar::GetSubDomain(kGUIString *domain,kGUIString *subdomain)
 {
-	char *cp;
+	const char *cp;
 
 	subdomain->Clear();
 	cp=strstr(domain->GetString(),".");
@@ -357,7 +357,7 @@ void kGUICookieJar::SetCookie(kGUIString *s,kGUIString *domain,kGUIString *url)
 	kGUICookie *c;
 	bool gotname;
 	unsigned int *ci;
-	char *cp;
+	const char *cp;
 
 	/* the Set-Cookie string can contain multiple cookies */
 	/* the first name/value pair needs to be the cookie name and value */

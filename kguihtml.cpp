@@ -13787,7 +13787,7 @@ void kGUIHTMLPageObj::FixCodes(kGUIString *s)
 {
 	unsigned int sindex;
 	unsigned int eindex;
-	char *cp;
+	const char *cp;
 	char c;
 	int v;
 	int numd;
