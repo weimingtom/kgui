@@ -810,9 +810,8 @@ void kGUIXMLItem::Copy(kGUIXMLItem *copy)
 		delete m_children.GetEntry(i);
 
 	m_parm=copy->m_parm;
-//	m_name.SetString(copy->m_name.GetString());
 	m_name=copy->m_name;
-	m_value.SetString(copy->m_value.GetString());
+	m_value.SetString(&copy->m_value);
 
 	m_numchildren=copy->m_numchildren;
 	m_children.Alloc(m_numchildren);

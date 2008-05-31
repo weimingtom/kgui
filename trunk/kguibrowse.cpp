@@ -598,7 +598,7 @@ void kGUIBrowseObj::UpdateButtons(void)
 void kGUIBrowseObj::Goto(void)
 {
 	PageInfo *p=m_pages+m_pageindex-1;
-	char *cp;
+	const char *cp;
 	kGUIString llname;
 
 	m_url.SetString(p->GetURL());
@@ -696,7 +696,7 @@ void kGUIBrowseObj::Click(kGUIString *url,kGUIString *referrer,kGUIString *post)
 void kGUIBrowseObj::Load(void)
 {
 	kGUIString url;
-	char *cp;
+	const char *cp;
 
 	m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
 	if(m_dl.GetAsyncActive()==true)
