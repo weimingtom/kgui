@@ -24,7 +24,4 @@ copy libavformat\libavformat.a ..\wiffmeg
 copy libavutil\libavutil.a ..\wiffmeg
 cd ..
 
-
-
-
 #endif

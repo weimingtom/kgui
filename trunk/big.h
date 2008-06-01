@@ -9,8 +9,9 @@
 /* size of subsequent directory blocks */
 #define DBLOCKSIZE 65536
 
-/****************************************************/
-
+/*! @internal @struct BIGHEADER_DEF
+	@brief This is the header block of each directory 
+    @ingroup BigFile */
 typedef struct
 {
 	unsigned int offset;	/* offset to me */
@@ -20,6 +21,9 @@ typedef struct
 	unsigned int fntail;				/* offset to lowest filename in this block */
 }BIGHEADER_DEF;
 
+/*! @internal @struct BIGENTRY_DEF
+	@brief This is the data block of each file inside the bigfile directory block 
+    @ingroup BigFile */
 typedef struct
 {
 	unsigned int nameoffset;	/* offset within this block */
@@ -29,9 +33,20 @@ typedef struct
 	unsigned int crc;					/* to make sure data is ok? */
 }BIGENTRY_DEF;
 
-/* this is the data that is added to the hash table */
+/*! @internal @struct DIRINFO_DEF
+	@brief This is the memory sructure for each directory block inside the bigfile 
+    @ingroup BigFile */
+typedef struct
+{
+	bool changed;				/* does this need to be rewritten to the file? */
+	unsigned long offset;		/* offset into file */
+	char *data;
+	unsigned long size;			/* size of this directory block */
+}DIRINFO_DEF;
 
-/*! This is the individual file directory block within the bigfile */
+/*! @internal @class BigFileEntry
+	@brief This is the individual file directory block within the bigfile 
+    @ingroup BigFile */
 class BigFileEntry
 {
 public:
@@ -45,20 +60,11 @@ public:
 	int m_time;						/* time */
 };
 
-/*! This is the header block of each directory inside the bigfile */
-typedef struct
-{
-	bool changed;				/* does this need to be rewritten to the file? */
-	unsigned long offset;		/* offset into file */
-	char *data;
-	unsigned long size;			/* size of this directory block */
-}DIRINFO_DEF;
-
-
 /*! @class BigFile
 	@brief This is the class for reading from and writing to big files
 	it uses the DataHandle class so the big file can be a disk based file,
-	or memory resident or inside another big file */
+	or memory resident or inside another big file
+    @ingroup BigFile */
 class BigFile : public DataHandle
 {
 public:

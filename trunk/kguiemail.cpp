@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -21,6 +21,9 @@
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 /*                                                                                */
 /**********************************************************************************/
+
+/* this only has a windows version implemented for now, will get around to this */
+/* at some point when it is needed */
 
 #include "kgui.h"
 #include "kguiemail.h"

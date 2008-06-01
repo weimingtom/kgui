@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,17 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* These are classes for attaching to a mysql database. As well as the usual      */
+/* queries, they can also load and save records and generate the sql strings to   */
+/* send to the database based on only the fields that have changed.               */
+/*                                                                                */
+/* Todo: handle different database encodings UTF-8 etc.                           */
+/* Todo: handle database disconnect errors more gracefully                        */
 /*                                                                                */
 /**********************************************************************************/
 
@@ -96,24 +107,11 @@ tryagain:;
 
 unsigned int kGUIDbQuery::GetIndex(const char *fieldname)
 {
-#if 1
 	unsigned int *ip;
 
 	ip=(unsigned int *)m_fi.Find(fieldname);
 	assert(ip!=0,"Field not found!");
 	return(ip[0]);
-#else
-	int i;
-	int nf=GetNumFields();
-	
-	for(i=0;i<nf;++i)
-	{
-		if(!strcmp(fieldname,GetFieldName(i)))
-			return(i);
-	}
-	assert(0,"Field not found!!!!!!!");
-	return(-1);
-#endif
 }
 
 kGUIDb::kGUIDb()

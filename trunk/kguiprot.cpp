@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,31 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is a simple encryption class, it works as follows:                        */
+/* Encryption and Decryption needs 3 inputs, 1 - a keyfile, 2 a numeric offset    */
+/* into  that file and 3 a numeric length.  The keyfile can be any file. For      */
+/* example it could be a jpeg image, a pdf file, a text file, essentially anything*/
+/* it also doesn't even have to reside on the hard drive but could live on a      */
+/* plugged in USB drive                                                           */
+/*                                                                                */
+/* The encrypt/decrypt code then gets the size of the object being encoded or     */
+/* decoded and uses that as an offset from the other two key offset values to     */
+/* read from the keyfile and populate the random number generators seed.          */
+/*                                                                                */
+/* Then the encrypt/decrypt code reads from the random number generator and       */
+/* mixes the values with the data.                                                */
+/*                                                                                */
+/* Also to note: this class can be attached to a bigfile so items in the bigfile  */
+/* can be automagically be encrypted as they are added and decrypted as they are  */
+/* loaded. All objects that use the DataHandle class like showing images or       */
+/* the movie player can handle encrypted files automatically with this mechanism  */
+/*                                                                                */
+/* It is not as strong as true encryption but much faster and good enough.        */
 /*                                                                                */
 /**********************************************************************************/
 
@@ -92,12 +117,6 @@ bool kGUIProt::LoadSeed(kGUIRandom *r,unsigned int offset)
 			return(false);
 
 		keyfilesize=dh.GetSize();
-//		file=fopen(m_keyfilename.GetString(),"rb");
-//		if(!file)
-//			return(false);
-
-//		fseek (file,0l,SEEK_END);
-//		keyfilesize=(long)ftell(file);
 	}
 	else
 		keyfilesize=m_keyfilesize;
@@ -107,10 +126,7 @@ bool kGUIProt::LoadSeed(kGUIRandom *r,unsigned int offset)
 		keystartindex-=keyfilesize;
 
 	if(!m_keyfile)
-	{
-//		fseek (file,keystartindex,SEEK_SET);
 		dh.Seek(keystartindex);
-	}
 
 	for(i=0;i<m_keylen;++i)
 	{
@@ -118,7 +134,6 @@ bool kGUIProt::LoadSeed(kGUIRandom *r,unsigned int offset)
 		if(!m_keyfile)
 		{
 			/* read 1 byte from the keyfile */
-//			fread (&keychar,1,1,file);
 			dh.Read(&keychar,(unsigned long)1);
 		}
 		else
@@ -129,17 +144,11 @@ bool kGUIProt::LoadSeed(kGUIRandom *r,unsigned int offset)
 		{
 			keystartindex=0;
 			if(!m_keyfile)
-			{
-//				fseek (file,keystartindex,SEEK_SET);
 				dh.Seek((long long)0);
-			}
 		}
 	}
 	if(!m_keyfile)
-	{
-//		fclose(file);
 		dh.Close();
-	}
 	return(true);
 }
 
@@ -213,7 +222,10 @@ const char *kGUIProt::DecryptFromHex(const char *in,int insize, int *outlen)
 	return(outbuffer);
 }
 
-/* this needs to be sped up since it runs slow on very large files */
+/* initially this called the random number generator for every byte in the */
+/* file being encrypted / decrypted. This was pretty slow on very large files so... */
+/* now it uses 2 smaller buffers (EMAXBUFFER/PMAXBUFFER) and inter mixes them */
+/* so it has a lot less calls to the random number generator */
 
 #define EMAXBUFFER 8192
 #define PMAXBUFFER 1024
@@ -258,8 +270,6 @@ const unsigned char *kGUIProt::Encrypt(const unsigned char *in,long insize)
 		c+=in[i];
 		*(ob++)=c;
 		eindex+=in[i]+1;
-//		if(insize==12)
-//			printf("bef=%02x,aft=%02x,index=%04x\n",in[i],c,eindex);
 		if(eindex>=EMAXBUFFER)
 			eindex-=EMAXBUFFER;
 		if(++ecount==EMAXBUFFER)

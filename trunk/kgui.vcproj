@@ -132,9 +132,6 @@ Debug\bintoc kguidata.big kguidata.cpp
 				RelativePath=".\big.cpp">
 			</File>
 			<File
-				RelativePath=".\buildinst.cpp">
-			</File>
-			<File
 				RelativePath=".\datahandle.cpp">
 			</File>
 			<File

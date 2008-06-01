@@ -24,3 +24,34 @@ This builds kgui and once finished then the kgui library is ready to be linked w
 
 5) There are also small sample programs in the samples directory, the Visual Studio solution will
  automatically make them, for the GUI compiler just go into each directory and type 'make'
+
+
+----------------------------------------------------------------------------
+
+6) If you are using the movie player then there are some special items for
+integrating ffmpeg into your program
+
+todo: this needs to be updated!
+
+
+cd ffmpeg
+./configure --enable-shared --disable-static --enable-memalign-hack
+make clean
+make
+copy libavcodec\avcodec-51.lib ..\wiffmeg
+copy libavcodec\avcodec-51.dll ..\wiffmeg
+copy libavformat\avformat-51.lib ..\wiffmeg
+copy libavformat\avformat-51.dll ..\wiffmeg
+copy libavutil\avutil-49.lib ..\wiffmeg
+copy libavutil\avutil-49.dll ..\wiffmeg
+cd ..
+
+for release build ( windows )
+cd ffmpeg
+./configure --enable-memalign-hack
+make clean
+make
+copy libavcodec\libavcodec.a ..\wiffmeg
+copy libavformat\libavformat.a ..\wiffmeg
+copy libavutil\libavutil.a ..\wiffmeg
+cd ..

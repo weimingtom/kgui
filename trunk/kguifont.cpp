@@ -1,9 +1,9 @@
 /**********************************************************************************/
-/* kGUI - kguifont.cpp                                                           */
+/* kGUI - kguifont.cpp                                                            */
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -22,12 +22,19 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/**********************************************************************************/
+/*                                                                                */
+/* This is the font rendering code, it uses the FreeType library.                 */
+/* It has a build-in caching system so commonly used fonts/size/char cominations  */
+/* are not generated over and over but refer to the cached bitmaps                */
+/*                                                                                */
+/**********************************************************************************/
+
+//hmmm, this probably should not be set for LINUX or MACINTOSH modes
 #define _WIN32_WINNT 0x0500
 
 #include "kgui.h"
 
-//windows only, used for register font with system
-//#include <wingdi.h>
 #include <math.h>
 
 #ifndef PI

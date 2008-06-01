@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://www.scale18.com/cgi-bin/page/kgui.html                                 */
+/* http://code.google.com/p/kgui/                                                */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -17,24 +17,31 @@
 /*    http://www.gnu.org/licenses/lgpl.txt                                       */
 /*                                                                               */
 /*    You should have received a copy of the GNU General Public License          */
-/*    along with GPSTurbo; if not, write to the Free Software                    */
+/*    along with kGUI; if not, write to the Free Software                        */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 /*                                                                               */
 /*********************************************************************************/
 
-#include "kgui.h"
+/*********************************************************************************/
+/*                                                                               */
+/* A controlbox is just a conatiner that holds other 'child' controls            */
+/* it used used for automatic layout of object positions so you don't have to    */
+/* 'hard code' the positions of all the child objects, it automatically          */
+/* positions them in rows based on their sizes. Child objects can be added to the*/
+/* control object one at a time or in groups.                                    */
+/*                                                                               */
+/* todo: allow re-layout if control area has been made smaller or larger         */
+/*                                                                               */
+/*********************************************************************************/
 
-/* a controlbox is just a conatiner that holds other 'child' controls */
-/* it used used for automatic layout of object positions so you don't have to */
-/* 'hard code' the positions of all the child objects, it automatically */
-/* positions them in rows based on their sizes. Child objects can be added to the */
-/* control object one at a time or in groups. */
+#include "kgui.h"
 
 kGUIControlBoxObj::kGUIControlBoxObj()
 {
 	m_drawframe=true;
 	m_bgcolor=DrawColor(230,230,230);
 
+	/* default to full screen if not overwritten */
 	m_maxwidth=kGUI::GetFullScreenWidth();
 	m_maxheight=kGUI::GetFullScreenHeight();
 
@@ -53,14 +60,13 @@ void kGUIControlBoxObj::Reset(void)
 	m_fixedobjects.Init(2,2);
 }
 
-/* use the whole thing! */
+/* calc available space for child objects! */
 void kGUIControlBoxObj::CalcChildZone(void)
 {
 	SetChildZone(m_bordergap,m_bordergap,GetZoneW()-(m_bordergap<<1),GetZoneH()-(m_bordergap<<1));
 }
 
 /* force next controls to start back on the left edge */
-
 void kGUIControlBoxObj::NextLine(void)
 {
 	int newh;
@@ -137,7 +143,7 @@ again:;
 			SetSize(neww,GetZoneH());
 		else
 		{
-			objx=0;		//m_bordergap;
+			objx=0;
 			if(m_currenty)
 				m_currenty+=m_objectgap;
 			m_currenty+=m_tallest;

@@ -1,9 +1,9 @@
 /**********************************************************************************/
-/* kGUI - kguiimage.cpp                                                            */
+/* kGUI - kguiimage.cpp                                                           */
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,20 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is class that decompresses images. All images are decompressed to a       */
+/* standard RGBA format and that way the render code doesn't have to know about   */
+/* all the different formats. This code uses libjpg, libpng for decoding          */
+/*                                                                                */
+/* The image class also handles caching of uncompressed images to reduce memory.  */
+/* For exmaple: if you have a table and it has 15,000 unique images, one per row  */
+/* then the system will not uncompress each one, only the ones visible as the     */
+/* user scrolls through the table will be decompressed and as they scroll off the */
+/* screen then they can be flushed to free up memory.                             */
 /*                                                                                */
 /**********************************************************************************/
 
@@ -58,7 +72,6 @@ kGUIImage::kGUIImage()
 	m_bpp=0;
 	m_stepx=1.0f;
 	m_stepy=1.0f;
-//	m_asyncactive=false;
 	m_numframes=0;
 	m_imagedata.Init(1,4);
 	m_delays.Init(1,4);
@@ -226,7 +239,7 @@ void kGUIImage::SetRaw(unsigned char *raw)
 	ImageChanged();
 }
 
-#if 1
+/* this gets called automatically when the attached DataHandle is modified */
 void kGUIImage::HandleChanged(void)
 {
 	Purge();	/* purge previous image if there was one */
@@ -241,45 +254,6 @@ void kGUIImage::HandleChanged(void)
 	LoadImage(true);	/* don't load image, just set it's size */
 	ImageChanged();
 }
-
-#else
-void kGUIImage::SetMemory(const unsigned char *memory,unsigned long filesize)
-{
-	Purge();	/* purge previous image if there was one */
-
-	Link(m_unloadedends.GetHead());
-
-	DataHandle::SetMemory(memory,filesize);
-	m_memimage=false;
-	m_allocmemimage=false;
-	m_imagewidth=0;
-	m_imageheight=0;
-
-	LoadImage(true);	/* don't load image, just set it's size */
-	ImageChanged();
-}
-
-void kGUIImage::SetFilename(const char *fn,bool loadpixels)
-{
-	if(strcmp(GetFilename(),fn))
-	{
-		Purge();	/* purge previous image if there was one */
-
-		DataHandle::SetFilename(fn);
-		m_memimage=false;
-		m_allocmemimage=false;
-		m_imagewidth=0;
-		m_imageheight=0;
-
-		/* add me to the unloaded list */
-		Link(m_unloadedends.GetHead());
-		LoadImage(true);	/* don't load image, just set it's size */
-	}
-	if(loadpixels==true)
-		LoadPixels();
-	ImageChanged();
-}
-#endif
 
 template<int imagetype>
 inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
@@ -372,12 +346,10 @@ inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
 				}
 			}
 			pw-=xweight;
-//			xweight=min(1.0f,min(sub->pixelwidth,pw));
 			xweight=min(1.0f,pw);
 		}while(pw>0.001f);
 
 		ph-=yweight;
-//		yweight=min(1.0f,min(sub->pixelheight,ph));
 		yweight=min(1.0f,ph);
 		sli+=sub->rowadd;	
 	}while(ph>0.0001f);

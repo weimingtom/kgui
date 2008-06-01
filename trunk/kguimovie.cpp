@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://www.scale18.com/cgi-bin/page/kgui.html                                 */
+/* http://code.google.com/p/kgui/                                 */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -17,8 +17,14 @@
 /*    http://www.gnu.org/licenses/lgpl.txt                                       */
 /*                                                                               */
 /*    You should have received a copy of the GNU General Public License          */
-/*    along with GPSTurbo; if not, write to the Free Software                    */
+/*    along with kGUI; if not, write to the Free Software                        */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/*                                                                               */
+/*********************************************************************************/
+
+/*********************************************************************************/
+/*                                                                               */
+/* This is the interface to the ffmpeg movie player                              */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -108,14 +114,6 @@ int kGUIMovieLocal::kg_read(URLContext *h, unsigned char *buf, int size)
     DataHandle *dh = (DataHandle *)h->priv_data;
 
 	return(dh->Read(buf,(unsigned long)size));
-#if 0
-	if(stream_eof(stream)) //needed?
-        return -1;
-    ret=stream_read(stream, buf, size);
-
-    kg_msg(MSGT_HEADER,MSGL_DBG2,"%d=kg_read(%p, %p, %d), eof:%d\n", ret, h, buf, size, stream->eof);
-    return ret;
-#endif
 }
 
 int kGUIMovieLocal::kg_write(URLContext *h, unsigned char *buf, int size)
@@ -183,8 +181,6 @@ void kGUIMovie::PurgeGlobals(void)
 	m_initglobals=false;
 }
 
-
-
 kGUIMovie::kGUIMovie()
 {
 	m_local=new kGUIMovieLocal();
@@ -234,6 +230,7 @@ void kGUIMovie::OpenMovie(void)
 	m_ptime=0;
 	m_frameready=false;
 
+	/* filename is actually a pointer to a datahandle */
 	fn.Sprintf("kg:%d",(DataHandle *)this);
 
 	// Open video file

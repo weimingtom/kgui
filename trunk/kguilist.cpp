@@ -1,9 +1,9 @@
 /*********************************************************************************/
-/* kGUI - kguilist.cpp                                                          */
+/* kGUI - kguilist.cpp                                                           */
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://www.scale18.com/cgi-bin/page/kgui.html                                 */
+/* http://code.google.com/p/kgui/                                                */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -17,17 +17,19 @@
 /*    http://www.gnu.org/licenses/lgpl.txt                                       */
 /*                                                                               */
 /*    You should have received a copy of the GNU General Public License          */
-/*    along with GPSTurbo; if not, write to the Free Software                    */
+/*    along with kGUI; if not, write to the Free Software                        */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 /*                                                                               */
 /*********************************************************************************/
 
+/*********************************************************************************/
+/*                                                                               */
+/* This is a list-box, it is essentially a combobox but instead of popping up it */
+/* is a fixed size. Also you can (if enabled) select mutiple entries             */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
-
-//todo, change to show as many as it can fit on the screen based on the row height
-//etc and not on an arbitrary limit.
-
-#define MAXSHOWCOMBO 16
 
 enum
 {
