@@ -49,7 +49,6 @@ public:
 	int Sprintf(const char *fmt,...);
 	int ASprintf(const char *fmt,...);
 	void AVSprintf(const char *fmt,va_list args);
-//	void NewAVSprintf(const char *fmt,va_list args);
 	inline void Clear(void) {Clip(0);}
 	inline unsigned int GetLen(void) {return m_len;}
 
@@ -72,6 +71,12 @@ public:
 	inline void RecalcLen(void) {m_len=(int)strlen(m_string);}	/* used if external code changes the string */
 
 	bool RemoveQuotes(void);	/* remove quotes and return true if there was any */
+
+	/* string compare functions */
+	int StrStr(kGUIString *ss,unsigned int offset=0);
+	int StrIStr(kGUIString *ss,unsigned int offset=0);
+	int StrStr(const char *ss,unsigned int offset=0);
+	int StrIStr(const char *ss,unsigned int offset=0);
 
 	/* encoding handling */
 	unsigned int GetEncoding(void) {return m_encoding;}

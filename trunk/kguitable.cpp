@@ -22,6 +22,22 @@
 /*                                                                               */
 /*********************************************************************************/
 
+/*********************************************************************************/
+/*                                                                               */
+/* This is the table class. It is used for tables, doh! It is also used by kgui  */
+/* for rendering comboboxes, listboxes and popup menus.                          */
+/* A table holds a list of table row objects and each of those holds a list of   */
+/* of regular kgui objects that are used for the cells.                          */
+/*                                                                               */
+/* Tables handle scrolling up/down/left/right                                    */
+/* Adding and deleteing rows                                                     */
+/* Selecting and unselecting rows                                                */
+/* Rearranging columns and hide/show columns (also save/load settings in XML)    */
+/* Callbacks can be trigerred as the user moves the cursor around in the table   */
+/* and also as table data is edited.                                             */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
 /* this is used for the loadconfig / saveconfig for saving users table layout */
 #include "kguixml.h"

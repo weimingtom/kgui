@@ -22,6 +22,26 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/**********************************************************************************/
+/*                                                                                */
+/* This is the class that handles printing reports.                               */
+/* The report class uses the kGUIReportObj class for all iof the objects that     */
+/* are printed. kGUI has report objects verions for all the regular gui objects   */
+/* and for printing your own custom items like generated graphs or maps you can   */
+/* make your own report objects                                                   */
+/*                                                                                */
+/* Reports can be printed in both regular and landscape mode                      */
+/* Reports can be printed at a different % size for smaller or larger printing    */
+/* Reports can be printed with 2 or 4 report pages to be printed on a printer     */
+/* page.                                                                          */
+/*                                                                                */
+/* Also, the report class handles print-preview so you can see what the report    */
+/* will look like with different settings, and applications can add their own     */
+/* settings ( like tick boxes, comboboxs, inputboxes etc. ) to the print preview  */
+/* panel so the user can have many customization options for printing reports     */
+/*                                                                                */
+/**********************************************************************************/
+
 #include "kgui.h"
 #include "kguireport.h"
 
@@ -812,7 +832,7 @@ void kGUIReport::Preview(void)
 	m_pagenumcaption.SetPos(0,0);
 	m_pagenumcaption.SetString(kGUI::GetString(KGUISTRING_CURRENT));
 	m_pagenumbox.SetPos(0,15);
-	m_pagenumbox.SetSize(60,20);
+	m_pagenumbox.SetSize(80,20);
 	m_pagenumbox.SetLocked(true);
 	m_controls.AddObjects(2,&m_pagenumcaption,&m_pagenumbox);
 

@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://code.google.com/p/kgui/	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,18 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is the string handling class. It handles all allocation for holding a     */
+/* string. strings can have different encodings. There are also a sprintf and     */
+/* asprintf (append sprintf) members that handle allocation as strings grow       */
+/*                                                                                */
+/* There is also s stringsplit class that splits strings based on a               */
+/* 'split string' typically a comma or a tab character, but it can also be a      */
+/* multi character string too.                                                    */
 /*                                                                                */
 /**********************************************************************************/
 
@@ -935,10 +947,6 @@ void kGUIString::CheckBOM(void)
 	}
 }
 
-
-
-
-
 unsigned int kGUIString::GetEncoding(const char *s)
 {
 	if(!stricmp(s,"UTF-8"))
@@ -949,6 +957,53 @@ unsigned int kGUIString::GetEncoding(const char *s)
 	/* unknown/unhandled format, return 8bit */
 	return(ENCODING_8BIT);
 }
+
+/* return character index */
+int kGUIString::StrStr(const char *ss,unsigned int offset)
+{
+	const char *cp;
+
+	assert(offset<m_len,"Searching off of end of string!");
+	cp=strstr(m_string+offset,ss);
+	if(!cp)
+		return(-1);
+	return((int)(cp-m_string));
+}
+
+int kGUIString::StrIStr(const char *ss,unsigned int offset)
+{
+	const char *cp;
+
+	assert(offset<m_len,"Searching off of end of string!");
+	cp=strstri(m_string+offset,ss);
+	if(!cp)
+		return(-1);
+	return((int)(cp-m_string));
+}
+
+int kGUIString::StrStr(kGUIString *ss,unsigned int offset)
+{
+	assert(offset<m_len,"Searching off of end of string!");
+	if(GetEncoding()==ss->GetEncoding())
+		return(StrStr(ss->GetString(),offset));
+
+	/* different encoding, must match encoding first */
+	assert(false,"Todo!");
+	return(-1);
+}
+
+int kGUIString::StrIStr(kGUIString *ss,unsigned int offset)
+{
+	assert(offset<m_len,"Searching off of end of string!");
+	if(GetEncoding()==ss->GetEncoding())
+		return(StrIStr(ss->GetString(),offset));
+
+	/* different encoding, must match encoding first */
+	assert(false,"Todo!");
+	return(-1);
+}
+
+/*******************************************************************************/
 
 /* helper class for splitting strings */
 

@@ -1,8 +1,34 @@
 #ifndef __BIG__
 #define __BIG__
 
-/*! The BigFile is a class used to manipulate .big files. Bigfiles are files that contain
-    other files within them. */
+/**********************************************************************************/
+/* kGUI - big.h                                                                   */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/*! @file big.h 
+    @brief BigFile class definitions. A big file is essentially a file that contains
+	many other files inside of it. The files can be encrypted if desired using the
+    kGUIProt class. */
 
 /* size of first directory block */
 #define FIRSTDBLOCKSIZE 4096

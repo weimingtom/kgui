@@ -21,6 +21,19 @@
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 /*                                                                                */
 /**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This file contains the generic popup request windows for asking the user for   */
+/* input or displaying a message. It also contains a file requestor so the user   */
+/* can select a file for loading or saving. There is also a date requestor object */
+/* These requestors use all the basic controls and if more complexity is needed   */
+/* the application can easily make a copy of any of these and add their own       */
+/* extra functionality to them                                                    */
+/*                                                                                */
+/**********************************************************************************/
+
+
 #include "kgui.h"
 #include "kguireq.h"
 
@@ -114,7 +127,6 @@ kGUIFileReq::kGUIFileReq(int type,const char *inname,const char *ext,void *codeo
 	m_donecallback.Set(codeobj,code);
 
 	m_controls.SetPos(0,0);
-//	m_controls.SetGrowWidth(true);
 	m_controls.SetMaxWidth(kGUI::GetScreenWidth());
 
 	m_pathlabel.SetFontID(1);

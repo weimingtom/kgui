@@ -31,6 +31,28 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @mainpage kGUI
+  * kGUI is a cross platform framework for writing c++ applications.
+  * It is designed so that your application only needs to referece the kGUI
+  * classes and never needs to reference any system calls directly.
+  * All of the system differences are handled by the kGUI code.
+  * 
+  * It consists of a GUI for screen rendering, a report generator for printing
+  * and many other objects for things like threading, downloading webpages,
+  * viewing webpages,database access etc.
+  * 
+  * It can be built with Visual Studio, or using a makefile for Linux, Macintosh
+  * or using MSYS / MinGW on Windows.
+  * 
+  * Building: view the 'readme' file for building instructions
+  * 
+  * kGUI uses the following external libraries (that are included in it's source)
+  * FreeType - a high quality font decoding engine
+  * Jpeg - jpeg image decompression / compression library
+  * LibPNG - png image decompression / compression library
+  * Zlib - generic compression / decompression library
+  * Cups - common unix printing system ( for Mac and Linux only, no included) */
+
 #include "kgui.h"
 #include "kguiprot.h"
 #include <math.h>

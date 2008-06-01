@@ -22,6 +22,24 @@
 /*                                                                               */
 /*********************************************************************************/
 
+/*********************************************************************************/
+/*                                                                               */
+/* This is the tab object class. It can generate mutiple rows of tabs if there   */
+/* more than can fit on the screen. It can also have a different number of       */
+/* 'child areas' than tabs so you can create your own xref between tabs and      */
+/* child areas for example:                                                      */
+/*                                                                               */
+/* You can have n tabs and n child areas, this is the most common case.          */
+/* You can have n tabs and 1 child area, changing tabs would trigger a load of   */
+/* new items into the objects in the child area (handled by the users code).     */
+/* Essentially you can control what tab maps to what child area when it is       */
+/* selected.                                                                     */
+/*                                                                               */
+/* known issues: if you have a lot of tabs ( like 200 or more ) and they take up */
+/* a large amount of screen, there is no mechanism for scrolling them            */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
 
 kGUITabObj::kGUITabObj()

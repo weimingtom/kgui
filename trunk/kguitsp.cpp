@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Wrapped by Kevin Pickell ( main code by K. Helsgaun, see below )               */
 /*                                                                                */
-/* http://code.google.com/p/kgui/	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,15 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is a travelling salesman function. I have no idea how it works. :-)       */
+/*                                                                                */
+/* Todo: make an async version that is given an amount of 'time' to process       */
 /*                                                                                */
 /**********************************************************************************/
 
