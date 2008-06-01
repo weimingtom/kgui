@@ -1,7 +1,35 @@
-// kgui.cpp : Defines the entry point for the application.
-//
+/**********************************************************************************/
+/* kGUI - kgui.cpp                                                                */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
 
-//"freetype\objs\freetype2110_D.lib"
+/**********************************************************************************/
+/*                                                                                */
+/* This is the main static framework class for kGUI.                              */
+/*                                                                                */
+/* It contains most of the draw functions, mouse functions, root control for      */
+/* rendering objects and passing input to objects                                 */
+/*                                                                                */
+/**********************************************************************************/
 
 #include "kgui.h"
 #include "kguiprot.h"
@@ -27,9 +55,6 @@ bool kGUI::m_xmouseleft;
 bool kGUI::m_xmouseright;
 bool kGUI::m_mouseleftdoubleclick;
 bool kGUI::m_mouserightdoubleclick;
-//volatile bool kGUI::m_inupdate;
-//volatile bool kGUI::m_indraw;
-//volatile bool kGUI::m_inthread;
 kGUIMutex kGUI::m_busymutex;
 bool kGUI::m_allowdraw;
 bool kGUI::m_trace;
@@ -314,9 +339,6 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_trace=false;		/* trace mode, triggers internal code to trace settings */
 	m_fastdraw=false;
 	m_allowdraw=false;
-//	m_inupdate=false;
-//	m_indraw=false;
-//	m_inthread=false;
 	m_mousecursor=MOUSECURSOR_DEFAULT;
 	m_tempmouse=false;
 	m_closeapp=false;
@@ -693,12 +715,6 @@ void kGUI::DrawRect(int x1,int y1,int x2,int y2,kGUIColor color)
 	int skip;
 	int offx,offy;
 
-	/* add scroll offsets */
-//	x1+=offx;
-//	x2+=offx;
-//	y1+=offy;
-//	y2+=offy;
-
 	if(OffClip(x1,y1,x2,y2)==true)
 		return;
 
@@ -1023,8 +1039,6 @@ void kGUI::UpdateInput(void)
 
 	if(m_busymutex.TryLock()==false)
 		return;
-
-//	SetInUpdate(true);
 
 	/* update the cursor flash */
 
@@ -2228,24 +2242,7 @@ void kGUI::DelEvent(void *codeobj,void (*code)(void *))
 /* this is only to be used by external threads that need to access the gui */
 void kGUI::GetAccess(void)
 {
-	/* wait until main app code is not active and no other threads have access */
-//	printf("GetAccess!\n");
-//	fflush(stdout);
-
-#if 0
-	while(GetInThread()==true || GetInDraw()==true || GetInUpdate()==true)
-	{
-//		printf("Waiting Access!\n");
-//		fflush(stdout);
-		Sleep(1);
-	}
-//	printf("doneGetAccess!\n");
-//	fflush(stdout);
-
-	SetInThread(true);
-#else
 	m_busymutex.Lock();
-#endif
 }
 
 bool kGUI::TryAccess(void)
@@ -2253,33 +2250,16 @@ bool kGUI::TryAccess(void)
 	bool rc;
 
 	/* return false if not able to get access right away */
-//	printf("TryAccess!\n");
-//	fflush(stdout);
-#if 1
 	rc=m_busymutex.TryLock();
 	if(rc==false)
 		Sleep(1);
 	return(rc);
-#else
-	if(GetInThread()==true || GetInDraw()==true || GetInUpdate()==true)
-	{
-	    Sleep(1);
-//		printf("done TryAccess (false)!\n");
-//		fflush(stdout);
-		return(false);
-	}
-	SetInThread(true);
-//	printf("done TryAccess (true)!\n");
-//	fflush(stdout);
-	return(true);
-#endif
 }
 
 
 void kGUI::ReleaseAccess(void)
 {
 	m_busymutex.UnLock();
-//	SetInThread(false);
 }
 
 /***********************************************************************/
@@ -2503,18 +2483,6 @@ void kGUI::MakeFilename(kGUIString *path,kGUIString *shortfn,kGUIString *longfn)
 		longfn->SetString(shortfn);
 
 	longfn->Replace(DIRCHAR DIRCHAR ,DIRCHAR);
-
-#if 0
-#if defined(LINUX) || defined(MACINTOSH)
-	longfn->Sprintf("%s/%s",path->GetString(),shortfn->GetString());
-	longfn->Replace("\\","/");
-	longfn->Replace("//","/");
-#else
-	longfn->Sprintf("%s\\%s",path->GetString(),shortfn->GetString());
-	longfn->Replace("/","\\");
-	longfn->Replace("\\\\","\\");
-#endif
-#endif
 }
 
 /* recalc child areas since border art might have changed size */
@@ -2959,8 +2927,8 @@ unsigned int kGUIBitStream::ReadU(int nbits)
 	unsigned int val=0;
 	unsigned int valbit=1;
 
+	/* optimize for a popular case */
 	/* are all the bits available in the remaining byte? */
-#if 1
 	if((nbits<=m_bits) && m_revi==false && m_revo==false)
 	{
 		val=(m_buf[0]>>(8-m_bits))&bitmasks[nbits];
@@ -2975,8 +2943,8 @@ unsigned int kGUIBitStream::ReadU(int nbits)
 		}
 		return(val);
 	}
-#endif
 
+	/* not optimal case so get a bit at a time */
 	while(nbits--)
 	{
 		if(m_revo==false)

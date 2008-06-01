@@ -12,7 +12,6 @@
 /*! @internal @class PageInfo 
 	@brief info for a page in the browser 
     @ingroup kGUIBrowseObj */
-
 class PageInfo
 {
 public:
@@ -273,8 +272,9 @@ private:
 	int m_pid;
 };
 
-/*! @class AuthenticateWindow
-	@brief Internal */
+/*! @internal @class AuthenticateWindow 
+	@brief Internal Popup window for entering name & password for webpage authentication 
+    @ingroup kGUIBrowseObj */
 class AuthenticateWindow
 {
 public:

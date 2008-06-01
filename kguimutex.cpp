@@ -1,9 +1,9 @@
 /**********************************************************************************/
-/* kGUI - kguimutex.cpp                                                              */
+/* kGUI - kguimutex.cpp                                                           */
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -21,6 +21,19 @@
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 /*                                                                                */
 /**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is a mutex class and is NOT re-entrant from within the same thread.       */
+/* It is used internally by KGUI to make sure that the Draw and UpdateInput       */
+/* is never re-entered, it is also used by the AsyncDownload code to fix          */
+/* possible re-entry problems with DNS lookups.                                   */
+/*                                                                                */
+/* It is needed to manually stop same thread re-entry as in some cases Windows    */
+/* can try and re-enter the Screen Update code from within the same thread.       */
+/*                                                                                */
+/**********************************************************************************/
+
 #include "kgui.h"
 
 #if defined(LINUX) || defined(MACINTOSH)

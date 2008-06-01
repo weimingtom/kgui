@@ -1,3 +1,38 @@
+/*********************************************************************************/
+/* kGUI - kguicookies.cpp                                                        */
+/*                                                                               */
+/* Initially Designed and Programmed by Kevin Pickell                            */
+/*                                                                               */
+/* http://code.google.com/p/kgui/                                                */
+/*                                                                               */
+/*    kGUI is free software; you can redistribute it and/or modify               */
+/*    it under the terms of the GNU Lesser General Public License as published by*/
+/*    the Free Software Foundation; version 2.                                   */
+/*                                                                               */
+/*    kGUI is distributed in the hope that it will be useful,                    */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              */
+/*    GNU General Public License for more details.                               */
+/*                                                                               */
+/*    http://www.gnu.org/licenses/lgpl.txt                                       */
+/*                                                                               */
+/*    You should have received a copy of the GNU General Public License          */
+/*    along with kGUI; if not, write to the Free Software                        */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/*                                                                               */
+/*********************************************************************************/
+
+/*********************************************************************************/
+/*                                                                               */
+/* This is the cookie handler. It needs to be 'attached' to the kGUI framework   */
+/* by calling SetCookieJar. The download class then uses the current CookieJar   */
+/* for reading and writing cookies. Any applications that use this and need to   */
+/* have persistent cookies need to load and save the cookies to a XML file       */
+/* ( usually a preferences file for the app ) using the Load and Save cookies    */
+/* functions.                                                                    */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
 #include "kguicookies.h"
 

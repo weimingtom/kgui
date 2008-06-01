@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -22,10 +22,18 @@
 /*                                                                                */
 /**********************************************************************************/
 
-//todo: some webpages refer to gzipped css file so we need to ungzip it before processing
-
-//todo: in the position pass there should be NO calls to FindAttrib, these should only be
-//      done on the minmax pass
+/**********************************************************************************/
+/*                                                                                */
+/* This is my attempt at a HTML renderer, yes it is all in one source-file. :-)   */
+/*                                                                                */
+/* The parsing engine is very nice if I do say so myself, the layout part on the  */
+/* other hand needs a fair bit of re-work to get it compliant.                    */
+/*                                                                                */
+/* todo: some webpages refer to gzipped css file so we need to ungzip it before processing */
+/* todo: in the position pass there should be NO calls to FindAttrib, these should only be */
+/*      done on the minmax pass													  */
+/*                                                                                */
+/**********************************************************************************/
 
 
 #include "kgui.h"

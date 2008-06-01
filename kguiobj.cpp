@@ -1,62 +1,37 @@
+/**********************************************************************************/
+/* kGUI - kguiobj.cpp                                                             */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
 
-/*********************************************************************/
-/**																	**/
-/** kGUIObj.cpp - the kGUI "object"	code							**/
-/**																	**/
-/**	The code in this file is for the basic gui objects 				**/
-/**																	**/
-/**	kGUIObj - the "base" class object, all objects muse be derived  **/
-/**			  from it.												**/
-/**																	**/
-/**	kGUIContainerObj - the "base" class used for all objects that   **/
-/**                    contain other objects, like windows, tables. **/
-/**																	**/
-/**	kGUIWindowObj - the window class								**/
-/**																	**/
-/**	kGUIControlBoxObj - this is used for automated positioning of   **/
-/**	                    multiple childobjects. It allows objects to **/
-/**                     be added one or more at a time and handles  **/
-/**						wrapping if the control object(s) will go   **/
-/**					    off of the edge of the control area         **/
-/**																	**/
-/**	kGUITextObj - static text object								**/
-/**																	**/
-/**	kGUITickBoxObj - a simple tickbox								**/
-/**																	**/
-/**	kGUIRadioObj - a simple radio button							**/
-/**																	**/
-/**	kGUIButtonObj - simple text or image button						**/
-/**																	**/
-/**	kGUITabObj - tab object that can handle many tabs (uses multiple**/
-/**           rows for tabs if tabs are wider than the object width **/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**	kGUIEditTableColObj - this is a simple popup window for use in  **/
-/**                       tables that allows the user to hide,      **/
-/**                       show, adjust width and rearrange columns  **/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**	kGUIComboBoxObj - the list combo box. This one only allows      **/
-/**	                  selection from a list of entries and no       **/
-/**                   custom user entry (typing) is allowed.        **/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/**																	**/
-/*********************************************************************/
+/**********************************************************************************/
+/*                                                                                */
+/* This contains the shared/common functions for the kGUIObj and kGUIContainerObj */
+/* renderable gui objects. This is the code to handle screen positioning,         */
+/* event handling, update calling and other basic control functions               */
+/*                                                                                */
+/**********************************************************************************/
 
 #include "kgui.h"
 #include <math.h>
-
-/***************** common object functions **********************/
 
 /* if this object is currently the "active" object then unactive it */
 /* if it has a parent, then tell the parent that it is going bye bye! */
@@ -71,17 +46,22 @@ kGUIObj::~kGUIObj()
 		m_parent->DelObject(this);
 }
 
+/* this is a virtual function that is replaced for Container objects and can be */
+/* replaced for other custom objects */
 void kGUIObj::Control(unsigned int command,KGCONTROL_DEF *data)
 {
 	switch(command)
 	{
 	case KGCONTROL_GETISCONTAINER:
+		/* is this a single object or a container? */
 		data->m_bool=false;
 	break;
 	case KGCONTROL_GETSKIPTAB:
+		/* should we skip this when the user tabs onto it? */
 		data->m_bool=false;
 	break;
 	case KGCONTROL_GETENABLED:
+		/* is it enabled (editable) or disabled (locked)? */
 		data->m_bool=true;
 	break;
 	default:
@@ -164,7 +144,8 @@ bool kGUIObj::ImCurrent(void)
 
 
 /* calculate the 4 corners of the object by traversing the parent */
-/* containers and adding their positions */
+/* containers and adding their positionsas each childs position is */
+/* relative to each of it's parents */
 
 void kGUIObj::GetCorners(kGUICorners *c)
 {
@@ -174,6 +155,8 @@ void kGUIObj::GetCorners(kGUICorners *c)
 	/* get my x,y offsets from my parents position */
 	lx=GetZoneX();
 	ty=GetZoneY();
+
+	/* get my parent */
 	p=GetParent();
 	while(p)
 	{
@@ -219,18 +202,18 @@ void kGUIObj::Dirty(void)
 	if(c.by>kGUI::GetSurfaceHeight())
 		c.by=kGUI::GetSurfaceHeight();
 
-#if 1
 	root=kGUI::GetRootObject();
 	rootparent=this;
 	do
 	{
 		if(!rootparent->m_parent)
-			return;
+			return;						/* not attached to render tree yet */
 		if(rootparent->m_parent==root)
-			break;
+			break;						/* yes we are attached to the render tree */
 		rootparent=rootparent->m_parent;
 	}while(1);
 
+	/* check to see if this dirty area is hidden under a higher priority window */
 	nc=root->GetNumChildren();
 	for(i=0;i<nc;++i)
 	{
@@ -243,7 +226,6 @@ void kGUIObj::Dirty(void)
 	}
 
 	/* todo: check for overlap and reduce size if just sticking out? */
-#endif
 
 	kGUI::Dirty(&c);
 }

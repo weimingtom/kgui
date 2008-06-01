@@ -2,10 +2,10 @@
 /* kGUI - kguirandom.cpp                                                          */
 /*                                                                                */
 /* Programmed by Kevin Pickell ( and others )                                     */
-/* the main chunk of the random number routine was taken from the linux random    */
-/* number generator	                                                              */
+/* the main chunk of the random number routine was taken from the Linux random    */
+/* number generator. I just wrapped it up into a neat c++ class                   */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */

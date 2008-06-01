@@ -3,7 +3,7 @@
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://www.scale18.com/cgi-bin/page/kgui.html	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -21,6 +21,19 @@
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 /*                                                                                */
 /**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is a browser object that you can have in your own application             */
+/* It uses the kGUIHTMLObj for rendering and uses the download class to download */
+/* files from the internet. By default it doesn't use the movie player but there  */
+/* is a movie player plugin class that can be 'attached' so it will also play     */
+/* movies. The reason it is seperate is that the movie player is very large so    */
+/* this way you can decide to include it or not.                                  */
+/*                                                                                */
+/**********************************************************************************/
+
+
 #include "kgui.h"
 #include "kguibrowse.h"
 

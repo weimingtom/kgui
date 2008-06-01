@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://www.scale18.com/cgi-bin/page/kgui.html                                 */
+/* http://code.google.com/p/kgui/                                 */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -17,21 +17,26 @@
 /*    http://www.gnu.org/licenses/lgpl.txt                                       */
 /*                                                                               */
 /*    You should have received a copy of the GNU General Public License          */
-/*    along with GPSTurbo; if not, write to the Free Software                    */
+/*    along with kGUI; if not, write to the Free Software                        */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/*                                                                               */
+/*********************************************************************************/
+
+/*********************************************************************************/
+/*                                                                               */
+/* a radio button is essentially a tickbox but with different graphics, it is    */
+/* mainly used when turning one on will then turn another off                    */
+/*                                                                               */
+/* radio buttons have no built-in mechanism for turning another radio object     */
+/* off if one is pressed, you need to have the logic for exclusive or multiple   */
+/* button selection controlled in your own code that would be triggered by the   */
+/* radio object afterupdate callback. Doing it this way gives you the most       */
+/* flexability for implementing your own set of rules.                           */
 /*                                                                               */
 /*********************************************************************************/
 
 #include "kgui.h"
 
-/* a radio button is essentially a tickbox but with different graphics, it is */
-/* mainly used when turning one on will then turn another off */
-
-/* radio buttons have no built-in mechanism for turning another radio object */
-/* off if one is pressed, you need to have the logic for exclusive or multiple */
-/* button selection controlled in your own code that would be triggered by the */
-/* radio object afterupdate callback. Doing it this way gives you the most */
-/* flexability for implementing your own set of rules. */
 
 kGUIRadioObj::kGUIRadioObj()
 {

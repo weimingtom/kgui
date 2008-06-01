@@ -1,24 +1,42 @@
 #ifndef __KGUI__
 #define __KGUI__
 
-/**************************************************************************/
-/**                                                                      **/
-/*! kGUI - A generic "windows" style gui that is very easy to use and    !*/
-/*!        designed to be platform independent.                          !*/
-/*!                                                                      !*/
-/*!        Programmed by Kevin Pickell, started September 2005           !*/
-/**                                                                      **/
-/** Other libraries needed:         FreeType, Jpeg, PNG, mySQL           **/
-/**                                                                      **/
-/* todo: wish list														 **/
-/**       Full menus (not just popup menus )                             **/
-/**       nested folder lists, just like on the left side of the screen  **/
-/**		  add tearaways to system so items can be "torn" from one        **/
-/**		  object and dropped onto another.						         **/
-/**                                                                      **/
-/**                                                                      **/
-/**************************************************************************/
+/**********************************************************************************/
+/* kGUI - kgui.h                                                                  */
+/*                                                                                */
+/* Programmed by Kevin Pickell, started September 2005                            */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
 
+/**********************************************************************************/
+/*                                                                                */
+/* kGUI - A generic "windows" style gui, and framework, designed to be platform   */
+/*        independent.                                                            */
+/*                                                                                */
+/* pronunciation: "kay gooey"                                                     */
+/*                                                                                */
+/* Other libraries needed:  FreeType, Jpeg, PNG, zlib, mySQL,ffmpeg               */
+/*                          on Linux/Mac - cups (for printing)                    */
+/*                                                                                */
+/*                                                                                */
+/**********************************************************************************/
  
 #define NOLINKS 1
 #define SOFTSCROLL 1
@@ -1755,7 +1773,8 @@ GUIINPUTTYPE_INT,
 GUIINPUTTYPE_DOUBLE
 };
 
-/*! this is an inputbox gui object, it can be a single line or multiple lines with scrollbars.
+/*! @class kGUIInputBoxObj
+	@brief this is an inputbox gui object, it can be a single line or multiple lines with scrollbars.
     it can contain plain text with a single font, color and point size, or it can contain rich
 	text where each character can be a different font/color/size. It can be in password mode where
 	charcters are shown as asterisks.
@@ -1872,7 +1891,8 @@ private:
 	kGUIScroll *m_scroll;
 };
 
-/*! this is an scrolltext gui object. It is essentially static text with left and right
+/*! @class kGUIScrollTextObj
+	@brief this is an scrolltext gui object. It is essentially static text with left and right
     scroll buttons on the ends and when the buttons are pressed the attached callback
 	can change the text contents.
 	@ingroup kGUIObjects */
@@ -1902,7 +1922,8 @@ COMBOTYPE_NUM,
 COMBOTYPE_STRING
 };
 
-/*! this is an combobox gui object. 
+/*! @class kGUIComboBoxObj
+	@brief this is an combobox gui object. 
 	@ingroup kGUIObjects */
 class kGUIComboBoxObj : public kGUIObj, public kGUIFontInfo
 {
@@ -2015,7 +2036,8 @@ private:
 	kGUIComboTableRowObj **m_poptableentries;
 };
 
-/*! this is an shared combobox gui object. It references externally shared entries. It is useful
+/*! @class kGUISharedComboboxObj
+	@brief this is an shared combobox gui object. It references externally shared entries. It is useful
     for a combo box that is replicated in a table over and over and therefore takes a lot
 	less memory than having it's own entries.
 	@ingroup kGUIObjects */
@@ -2058,7 +2080,9 @@ class kGUIMenuEntryObj;
 /* "selectreturn" mode where a click or a enter will close the */
 /* table and return "active" status to it's parent, the menucol box */
 
-/*! this is an popup menu gui object. Since it is a popup menu it only has one list
+
+/*! @class kGUIMenuColObj
+	@brief this is a popup menu gui object. Since it is a popup menu it only has one list
 	and is not heiarchical.
 	@ingroup kGUIObjects */
 class kGUIMenuColObj : public kGUIObj
@@ -2102,7 +2126,9 @@ private:
 	kGUIMenuEntryObj **m_poptableentries;
 };
 
-/* this object is the root object for an object that can contain sub objects like a window or tab panel */
+/*! @class kGUIContainerObj
+	@brief this object is the root object for an object that can contain child objects like a window or tab panel
+	@ingroup kGUIObjects */
 class kGUIContainerObj : public kGUIObj
 {
 public:
@@ -2183,7 +2209,8 @@ private:
 	bool m_containchildren:1;		/* allow children to go beyond parent */
 };
 
-/*! this is root gui object. All other gui objects are attached to it.
+/*! @class kGUIRootObj
+	@brief this is root gui object. All other gui objects are attached to it.
 	@ingroup kGUIObjects */
 class kGUIRootObj : public kGUIContainerObj
 {
@@ -2197,7 +2224,8 @@ private:
 	void CalcChildZone(void);
 };
 
-/*! this is tab gui object. It can have multiple rows of tabs and each tab can correspond to
+/*! @class kGUITabObj
+	@brief this is tab gui object. It can have multiple rows of tabs and each tab can correspond to
     it's own child area or share child areas with other tabs using a cross reference list between
 	tabs and child areas. In typical use you would have n tabs and n child areas or n tabs and 1 child area.
 	@ingroup kGUIObjects */
@@ -2351,7 +2379,8 @@ private:
 	class kGUITableObj *m_t;
 };
 
-/*! this is table gui object. The table is a scrollable grid of child cells,
+/*! @class kGUITableObj
+	@brief this is table gui object. The table is a scrollable grid of child cells,
     each cell can contain any kGUIObj class object. A table could theoretically contain
 	another table inside of a cell. The table can have horizontal or verical scroll bars
 	if desired, it also can handle re-ordering of the columns and re-sorting of the rows.
@@ -2539,7 +2568,8 @@ private:
 	kGUIScroll m_scroll;	/* table pixel scroll values */
 };
 
-/*! this is listbox gui object. The listbox is just like a combobox except 
+/*! @class kGUIListboxObj
+	@brief this is listbox gui object. The listbox is just like a combobox except 
     that it is a fixed size and doesn't pop up. Also it can optionally allow
 	selection of multiple entries if desired.
 	@ingroup kGUIObjects */
@@ -2620,7 +2650,8 @@ private:
 	class kGUIWindowObj *m_w;
 };
 
-/*! this is window gui object. 
+/*! @class kGUIWindowObj
+	@brief this is window gui object. 
 	@ingroup kGUIObjects */
 class kGUIWindowObj : public kGUIContainerObj
 {

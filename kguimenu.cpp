@@ -1,9 +1,9 @@
 /*********************************************************************************/
-/* kGUI - kguimenu.cpp                                                            */
+/* kGUI - kguimenu.cpp                                                           */
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://www.scale18.com/cgi-bin/page/kgui.html                                 */
+/* http://code.google.com/p/kgui/                                                */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -17,8 +17,14 @@
 /*    http://www.gnu.org/licenses/lgpl.txt                                       */
 /*                                                                               */
 /*    You should have received a copy of the GNU General Public License          */
-/*    along with GPSTurbo; if not, write to the Free Software                    */
+/*    along with kGUI; if not, write to the Free Software                        */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/*                                                                               */
+/*********************************************************************************/
+
+/*********************************************************************************/
+/*                                                                               */
+/* This is a single column popup menu, it uses the table code extensively        */
 /*                                                                               */
 /*********************************************************************************/
 
