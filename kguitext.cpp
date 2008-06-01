@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://code.google.com/p/kgui/                                 */
+/* http://code.google.com/p/kgui/                                                */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -22,8 +22,26 @@
 /*                                                                               */
 /*********************************************************************************/
 
+/*********************************************************************************/
+/*                                                                               */
+/* This is the static text object, static text can have a single font/color/size */
+/* or can be 'rich' and each character can have it's own font/color/size         */
+/*                                                                               */
+/* There is also a scroll text object                                            */
+/* a scroll text object is just static text with a left arrow on the             */
+/* left and a right arrow on the right, if either of these arrows are            */
+/* pressed then a callback is triggered allowing the users code to change        */
+/* the text. An example would be for users selecting a "month", the text         */
+/* would default to a particular month, then pressing the left button would      */
+/* have the month decrement down to January and if the right arrow is pressed    */
+/* it would increment up to December. The callback would be the code to change   */
+/* the text itself.                                                              */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
 
+//this should not have m_ since that is the member prefix!
 #define m_xoff 3
 #define m_yoff 3
 
@@ -75,7 +93,6 @@ void kGUITextObj::Draw(void)
 	/* is there anywhere to draw? */
 	if(kGUI::ValidClip())
 	{
-//		if(kGUI::GetCurrentObj()==this)
 		if(ImCurrent())
 			SetRevRange(0,GetLen());
 		else
@@ -103,14 +120,6 @@ bool kGUITextObj::UpdateInput(void)
 
 /********************************************************************/
 
-/* a scroll text object is just static text with a left arrow on the */
-/* left and a right arrow on the right, if either of these arrows are */
-/* pressed then a callback is triggered allowing the users code to change */
-/* the text. An example would be for users selecting a "month", the text */
-/* would default to a particular month, then pressing the left button would */
-/* have the month decrement down to January and if the right arrow is pressed */
-/* it would increment up to December. The callback would be the code to change */
-/* the text itself. */
 
 kGUIScrollTextObj::kGUIScrollTextObj()
 {
@@ -156,6 +165,6 @@ void kGUIScrollTextObj::Draw(void)
 
 	GetCorners(&c);
 	kGUI::GetSkin()->DrawScrollHoriz(&c);
-	SetColor(DrawColor(0,0,0));
+	SetColor(DrawColor(0,0,0));	//should this be here??? should use the defined color not force black
 	kGUIText::Draw(c.lx,c.ty,c.rx-c.lx,c.by-c.ty);
 }

@@ -966,6 +966,7 @@ void kGUICallBackPtrPtrPtr<T,U,V>::Set(void *o,void (*f)(void *,T *,U *,V *))
 
 class kGUI;
 
+#define MAXFONTSIZE 512
 /*! this contains font id, color and style info for drawing text */
 class kGUIFontInfo
 {
@@ -977,7 +978,7 @@ public:
 	inline void SetFontID(int id) {m_fontid=id;FontChanged();}
 	/*! set the font size
 	    @param s font size in points */
-	inline void SetFontSize(int s) {m_size=s;FontChanged();}
+	inline void SetFontSize(int s) {m_size=min(s,MAXFONTSIZE);FontChanged();}
 	/*! return the font size
 	    @return font size in points */
 	inline const int GetFontSize(void) {return m_size;}
@@ -3387,13 +3388,7 @@ public:
 	static long FileCRC(const char *filename);
 	static void FileCopy(const char *fromname,const char *toname);
 
-//	static kGUIFile *FOpenFile(const char *filename);
 	static unsigned char *LoadFile(const char *filename,long *filesize=0);
-
-
-	/* bigfile handling */
-//	static void AddBigFile(kGUIBigfile *bf);
-//	static void DelBigFile(kGUIBigfile *bf);
 
 	static void SetInputCallback(void *codeobj,void (*code)(void *)) {m_inputcallback.Set(codeobj,code);}
 

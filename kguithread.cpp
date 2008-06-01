@@ -1,3 +1,43 @@
+/*********************************************************************************/
+/* kGUI - kguithread.cpp                                                         */
+/*                                                                               */
+/* Initially Designed and Programmed by Kevin Pickell                            */
+/*                                                                               */
+/* http://code.google.com/p/kgui/                                                */
+/*                                                                               */
+/*    kGUI is free software; you can redistribute it and/or modify               */
+/*    it under the terms of the GNU Lesser General Public License as published by*/
+/*    the Free Software Foundation; version 2.                                   */
+/*                                                                               */
+/*    kGUI is distributed in the hope that it will be useful,                    */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              */
+/*    GNU General Public License for more details.                               */
+/*                                                                               */
+/*    http://www.gnu.org/licenses/lgpl.txt                                       */
+/*                                                                               */
+/*    You should have received a copy of the GNU General Public License          */
+/*    along with kGUI; if not, write to the Free Software                        */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
+/*                                                                               */
+/*********************************************************************************/
+
+/*********************************************************************************/
+/*                                                                               */
+/* This is the thread class wrapper.                                             */
+/* It is essentially a wrapper over the system thread class and is only here so  */
+/* the application doesn't have to know about the differences between the systems*/
+/*                                                                               */
+/* Note that if your thread needs to call any of the kGUI functions it MUST first*/
+/* call GetAccess ( or TryAccess ) to get exclusivce access to the system        */
+/* and then call ReleaseAccess when it is finished.                              */
+/*                                                                               */
+/* There is also a callthread class for calling external programs                */
+/* It also can also if desired send output to the thread or read the output      */
+/* from the thread.                                                              */
+/*                                                                               */
+/*********************************************************************************/
+
 #include "kgui.h"
 #include "kguithread.h"
 

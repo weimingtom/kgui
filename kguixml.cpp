@@ -1,9 +1,9 @@
 /**********************************************************************************/
-/* kGUI - kguixml.cpp                                                          */
+/* kGUI - kguixml.cpp                                                             */
 /*                                                                                */
 /* Programmed by Kevin Pickell                                                    */
 /*                                                                                */
-/* http://code.google.com/p/kgui/	                              */
+/* http://code.google.com/p/kgui/	                                              */
 /*                                                                                */
 /*    kGUI is free software; you can redistribute it and/or modify                */
 /*    it under the terms of the GNU Lesser General Public License as published by */
@@ -19,6 +19,15 @@
 /*    You should have received a copy of the GNU General Public License           */
 /*    along with kGUI; if not, write to the Free Software                         */
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/**********************************************************************************/
+/*                                                                                */
+/* This is a simple XML class, it handles reading and writing XML files.          */
+/* It is NOT a full implementation by any means just a simple reader / writer     */
+/*                                                                                */
+/* It also handles encoding/decoding for special &xxx; characters                 */
 /*                                                                                */
 /**********************************************************************************/
 
@@ -289,8 +298,6 @@ static CODES_DEF hcodes[] = {
 	{1,"clubs",  	9827},  
 	{1,"hearts",  	9829},  
 	{1,"diams",  	9830},  
-
-
 };
 
 void kGUIXMLCODES::Init(void)
@@ -361,12 +368,15 @@ void kGUIXMLCODES::Purge(void)
 		delete m_longhash;
 }
 
+/* code assumed that shrinked string will never be longer than the source string */
+/* except: in the case detailed below */
+
 /* hmmm, I've come across an interesting issue, */
 /* when shrinking a string that is in 8bit and it has an encoded char >8 bit then */
 /* we need to convert from 8 to UTF-8 and in that case the destination string can be */
-/* larger than the source string, for example */
-/* in - 8bit {0xff,0xff,"&bull;", 0xff,0xff}; in = 10 characters */
-/* out - utf8 { 11 characters } */
+/* larger than the source string. */
+/* so, if the encoding is changed from 8bit to UTF-8 then it allocates a 2x size for output */
+/* just to be on the safe side */
 
 void kGUIXMLCODES::Shrink(kGUIString *from,kGUIString *to)
 {

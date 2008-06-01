@@ -22,6 +22,11 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @file big.cpp 
+    @brief This is the BigFile class. A big file is essentially a file that contains
+	many other files inside of it. The files can be encrypted if desired using the
+    kGUIProt class. */
+
 #include "kgui.h"
 
 /* todo: if waste>10% then compress and rebuild file */

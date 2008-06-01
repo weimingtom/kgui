@@ -45,7 +45,6 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-#define MAXFONTSIZE 512
 #define MAXQUICKSIZE 24
 
 #define MAXCCACHE 128

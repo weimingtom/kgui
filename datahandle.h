@@ -1,13 +1,37 @@
 #ifndef __DATAHANDLE__
 #define __DATAHANDLE__
 
-/****************************************************************************/
-/* datahandle																*/
-/*																			*/
-/* This is a class used for handling loading of data from various devices   */
-/* The default is from a filesystem but it can also be from memory or any   */
-/* other futurer device type.												*/
-/****************************************************************************/
+/**********************************************************************************/
+/* kGUI - datahandle.h                                                            */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/*! @file datahandle.h 
+    @brief DataHandle class definitions. A DataHandle is the class that is used for
+	loading and or saving data. A datahandle can directly reference a file, or a chunk
+	of memory, or a file within a bigfile. A DataHandle can also reference encrypted
+	data using the attached kGUIProt class. All of the internal functions in kGUI that
+	reference files use the DataHandle class for input so for example the movie player
+	can play a movie that is encrypted and inside of a bigfile. */
 
 enum
 {
@@ -16,6 +40,10 @@ enum
 	DATATYPE_UNDEFINED
 };
 
+/*! @class DataHandle
+	@brief This is the DataHandle class. It is used as a container class for all objects
+	that read / write files. It can reference a disk file, memory, or a file inside of a 
+	bigfile. Also DataHandles can be encrypted by simply attaching a kGUIProt class */
 class DataHandle
 {
 public:
