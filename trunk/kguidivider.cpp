@@ -24,16 +24,13 @@
 
 #include "kgui.h"
 
-/*********************************************************************************/
-/*                                                                               */
-/* a divider object is just a horizontal bar that you use to move around         */
-/* it can be used as a split object between a table and a map for example and    */
-/* it's callback can be used to resize the table and map whenever the bar is     */
-/* moved by the user                                                             */
-/*                                                                               */
-/* todo: handle vertical divider too                                             */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguidivider.cpp
+    @brief A divider object is just a horizontal bar that you use to move around         
+ it can be used as a split object between a table and a map for example and    
+ it's callback can be used to resize the table and map whenever the bar is     
+ moved by the user */
+
+/*! @todo Code vertical divider as well */
 
 void kGUIDividerObj::Draw(void)
 {

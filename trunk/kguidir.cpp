@@ -22,15 +22,12 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* A simple class for reading directories. Filenames and directory names are      */
-/* added to a hash table. Stored filenames can be local names or full path names. */
-/* It can also scan just the given directory or recursively follow subdirectories */
-/* It can also be given a list of 'extensions' and only collect filenames that    */
-/* use those suffixes.                                                            */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguidir.cpp 
+   @brief A simple class for reading directories. Filenames and directory names are      
+ added to a hash table. Stored filenames can be local names or full path names. 
+ It can also scan just the given directory or recursively follow subdirectories 
+ It can also be given a list of 'extensions' and only collect filenames that    
+ use those suffixes. */
 
 #include "kgui.h"
 

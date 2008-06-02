@@ -22,17 +22,13 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This file contains the generic popup request windows for asking the user for   */
-/* input or displaying a message. It also contains a file requestor so the user   */
-/* can select a file for loading or saving. There is also a date requestor object */
-/* These requestors use all the basic controls and if more complexity is needed   */
-/* the application can easily make a copy of any of these and add their own       */
-/* extra functionality to them                                                    */
-/*                                                                                */
-/**********************************************************************************/
-
+/*! @file kguireq.cpp
+    @brief This file contains the generic popup request windows for asking the user for   
+ input or displaying a message. It also contains a file requestor so the user   
+ can select a file for loading or saving. There is also a date requestor object 
+ These requestors use all the basic controls and if more complexity is needed   
+ the application can easily make a copy of any of these and add their own       
+ extra functionality to them */
 
 #include "kgui.h"
 #include "kguireq.h"

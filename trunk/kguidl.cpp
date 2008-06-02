@@ -25,19 +25,17 @@
 #include "kguidl.h"
 #include "kguicookies.h"
 
-/*********************************************************************************/
-/*                                                                               */
-/* This is a download class for downloading pages and other assets from the      */
-/* internet. It can be run synchronously or asynchronously in it's down thread.  */
-/* It can handle sending and receiving cookies if there is an attached CookieJar */
-/* As well as using GET, it can do a POST and send along POST data with the      */
-/* It can handle redirects, if-modififed since headers automatically as well     */
-/* Content is downloaded to a DataHandle class so it can download to a file, or  */
-/* memory or any other type that DataHandle classes can support.                 */
-/*                                                                               */
-/* todo: secure mode!                                                            */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguidl.cpp 
+    @brief This is a download class for downloading pages and other assets from the      
+ internet. It can be run synchronously or asynchronously in it's down thread.  
+ It can handle sending and receiving cookies if there is an attached CookieJar 
+ As well as using GET, it can do a POST and send along POST data with the request.
+ It can handle redirects, if-modififed since headers automatically as well.     
+ Content is downloaded to a DataHandle class so it can download to a file, or  
+ memory or any other type that DataHandle classes can support. */
+
+/*! @todo Add Secure Certificate handler similar to CookieJar handler for Cookies */
+/*! @todo Add Secure HTTPS mode support */
 
 //make pc version use MINGW version so we do our own cookie handling
 #if defined(WIN32)

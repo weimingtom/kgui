@@ -1,5 +1,30 @@
-// bintoc.cpp : Defines the entry point for the console application.
-//
+/**********************************************************************************/
+/* bintoc - bintoc.cpp                                                            */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/*! @file bintoc.cpp 
+    @brief Bintoc is a stand alone console app that converts a binary data file to
+	a c file so it can be included directly into an application */
 
 #include <iostream>
 #include <sys/stat.h>
@@ -27,11 +52,6 @@ char *loadfilez(char *filename,int *filesize)
 		return (0);
 	}
 	fsize=ftell(fp);
-//if (fgetpozs (fp,&fsize))	
-//	{
-//		//printf("Error: (GETPOS) Unable to open input file '%s'",filename);
-//		return (0);
-//	}
 	fs=(int)fsize;
 	filemem=(char *)malloc(fs);	/* let's allocate the ram to load the file in! */
 	if(!filemem)

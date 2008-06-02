@@ -22,14 +22,10 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is a simple XML class, it handles reading and writing XML files.          */
-/* It is NOT a full implementation by any means just a simple reader / writer     */
-/*                                                                                */
-/* It also handles encoding/decoding for special &xxx; characters                 */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguixml.cpp
+    @brief This is a simple XML class, it handles reading and writing XML files.
+	It is NOT a full implementation by any means just a simple reader / writer
+    It also handles encoding/decoding for special &xxx; characters. */
 
 #include "kgui.h"
 #include "kguixml.h"

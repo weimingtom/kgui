@@ -22,17 +22,13 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is a scrolling grid class where each cell is of a pre-defined size.       */
-/* There is a user-defined callback attached to the cells to render them                                                                                */
-/*                                                                                */
-/* For Example:                                                                   */
-/* It is used in GPSTurbo for the maps where each cell is 256x256 pixels and      */
-/* as the user scrolls the grid around, new cells that appear on the edges are    */
-/* rendered into and as cell scroll off they are freed up for re-use.             */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguigrid.cpp 
+    @brief This is a scrolling grid class where each cell is of a pre-defined size.       
+    There is a user-defined callback attached to the cells to render them                                                                                
+    For Example:                                                                   
+    It is used in GPSTurbo for the maps where each cell is 256x256 pixels and      
+    as the user scrolls the grid around, new cells that appear on the edges are    
+    rendered into and as cell scroll off they are freed up for re-use. */
 
 #include "kgui.h"
 #include "kguigrid.h"

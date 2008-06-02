@@ -22,17 +22,14 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is the string handling class. It handles all allocation for holding a     */
-/* string. strings can have different encodings. There are also a sprintf and     */
-/* asprintf (append sprintf) members that handle allocation as strings grow       */
-/*                                                                                */
-/* There is also s stringsplit class that splits strings based on a               */
-/* 'split string' typically a comma or a tab character, but it can also be a      */
-/* multi character string too.                                                    */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguistring.cpp
+    @brief This is the string handling class. It handles all allocation for holding a     
+ string. strings can have different encodings. There are also a sprintf and     
+ asprintf (append sprintf) members that handle allocation as strings grow       
+                                                                                
+ There is also s stringsplit class that splits strings based on a               
+ 'split string' typically a comma or a tab character, but it can also be a      
+ multi character string too. */
 
 #include "kgui.h"
 

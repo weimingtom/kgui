@@ -22,15 +22,11 @@
 /*                                                                               */
 /*********************************************************************************/
 
-/*********************************************************************************/
-/*                                                                               */
-/* This is the interface to the ffmpeg movie player                              */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguimovie.cpp
+    @brief This is the class wrapper interface to the ffmpeg movie player.
+      special thanks to dranger.com for the online tutorial that I used as the basis for this code. */
 
-//thanks for dranger.com for the online tutorial that I used as the basis for this code.
-
-//todo: audio
+/*! @todo Handle audio for Movie Player */
 
 #include "kgui.h"
 #include "kguimovie.h"

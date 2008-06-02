@@ -115,7 +115,7 @@ void kGUIInputBoxObj::DeleteSelection(void)
 	{
 		if(m_allowundo)
 		{
-			/* todo: save in undo/redo buffer */
+			/*! @todo Handle mulitple Undo/Redo buffer */
 		}
 		Delete(m_hstart,m_hcursor-m_hstart);
 		if(GetUseRichInfo()==true)

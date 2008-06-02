@@ -22,14 +22,10 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is the main static framework class for kGUI.                              */
-/*                                                                                */
-/* It contains most of the draw functions, mouse functions, root control for      */
-/* rendering objects and passing input to objects                                 */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kgui.cpp 
+   @brief This is the main static framework class for kGUI.
+   It contains most of the draw functions, mouse functions, root control for      
+   rendering objects and passing input to objects */
 
 /*! @mainpage kGUI
   * kGUI is a cross platform framework for writing c++ applications.

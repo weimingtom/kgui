@@ -1,15 +1,32 @@
-/*****************************************************************************/
-/**																			**/
-/** kGUIBig - Bigfile generator for use with the kGUI system				**/
-/**																			**/
-/**	Started: Oct / 9 / 2005 - by Kevin Pickell								**/
-/**																			**/
-/**	usage: kguibig bigname.big path [rootname]								**/
-/**																			**/
-/** Adds files to the bigfile if they aren't already there or if they are	**/
-/**	newer																	**/
-/**																			**/
-/*****************************************************************************/
+/**********************************************************************************/
+/* kGUI - kguibig.cpp                                                            */
+/*                                                                                */
+/* Programmed by Kevin Pickell                                                    */
+/*                                                                                */
+/* http://code.google.com/p/kgui/	                                              */
+/*                                                                                */
+/*    kGUI is free software; you can redistribute it and/or modify                */
+/*    it under the terms of the GNU Lesser General Public License as published by */
+/*    the Free Software Foundation; version 2.                                    */
+/*                                                                                */
+/*    kGUI is distributed in the hope that it will be useful,                     */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of              */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               */
+/*    GNU General Public License for more details.                                */
+/*                                                                                */
+/*    http://www.gnu.org/licenses/lgpl.txt                                        */
+/*                                                                                */
+/*    You should have received a copy of the GNU General Public License           */
+/*    along with kGUI; if not, write to the Free Software                         */
+/*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
+/*                                                                                */
+/**********************************************************************************/
+
+/*! @file kguibig.cpp 
+    @brief This is the stand along console app for bigfile generation and extraction.
+	As well as the regular commands like adding, deleting and extracting files from
+	within bigfiles it can also be used to synchronize two bigfiles. It can also be
+	used to add files to encrypted bigfiles or extract files from encrypted bigfiles */
 
 #include "kgui.h"
 #include "kguiprot.h"
@@ -96,7 +113,6 @@ typedef struct
 	char root;
 }FDATA;
 
-
 #ifndef S_ISDIR
 #define S_ISDIR(x) (((x) & S_IFMT) == S_IFDIR)
 #endif
@@ -119,8 +135,6 @@ SOURCE_DIR,
 SOURCE_BIG
 };
 
-//char defp1[]={"e:\\scale18\\scale18.big"};
-
 bool g_userabort=false;
 
 static void sigint_handler(int sig)  //static declaration
@@ -133,22 +147,6 @@ static void sigint_handler(int sig)  //static declaration
 	break;
 	}
 }
-
-#define USETEST 0
-
-#if USETEST
-
-char *testargs[]={
-	"kguibig",
-	"C:\\Documents and Settings\\Kevin\\My Documents\\Visual Studio Projects\\gpsturbo\\data.big",
-	"C:\\Documents and Settings\\Kevin\\My Documents\\Visual Studio Projects\\gpsturbo\\big",
-	"C:\\Documents and Settings\\Kevin\\My Documents\\Visual Studio Projects\\gpsturbo\\big\\"};
-//	"c:\\pview\\pview.big",
-//	"-ks",
-//	"c:\\logo.gif",
-//	"911",
-//	"256"};
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -169,13 +167,8 @@ int main(int argc, char* argv[])
 	DataHandle addhandle;
 	int vargc;
 	char **vargv;
-#if USETEST
-	vargc=sizeof(testargs)/sizeof(char *);
-	vargv=testargs;
-#else
 	vargc=argc;
 	vargv=argv;
-#endif
 
 	/* handle encrypted file */
 	kGUIProt DestProt;

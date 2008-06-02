@@ -22,9 +22,14 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @file hash.cpp 
+    @brief The Hash table can use case sensitive or
+	non-cs strings as indexs or it can use a fixed length binary string as an index too.
+	The hash table can allocate "data" for each entry if desired or just confirm 
+	that an object is already present. */
+
 /* used for array only */
 #include "kgui.h"
-
 #include "hash.h"
 #include "heap.h"
 

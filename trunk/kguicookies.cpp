@@ -22,16 +22,13 @@
 /*                                                                               */
 /*********************************************************************************/
 
-/*********************************************************************************/
-/*                                                                               */
-/* This is the cookie handler. It needs to be 'attached' to the kGUI framework   */
-/* by calling SetCookieJar. The download class then uses the current CookieJar   */
-/* for reading and writing cookies. Any applications that use this and need to   */
-/* have persistent cookies need to load and save the cookies to a XML file       */
-/* ( usually a preferences file for the app ) using the Load and Save cookies    */
-/* functions.                                                                    */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguicookies.cpp 
+   @brief This is the cookie handler. It needs to be 'attached' to the kGUI framework   
+   by calling SetCookieJar. The download class then uses the current CookieJar   
+   for reading and writing cookies. Any applications that use this and need to   
+   have persistent cookies need to load and save the cookies to a XML file       
+   ( usually a preferences file for the app ) using the Load and Save cookies    
+   functions. */
 
 #include "kgui.h"
 #include "kguicookies.h"
@@ -140,7 +137,7 @@ void kGUICookie::SetAttribute(unsigned int att,kGUIString *value,kGUIString *dom
 		m_secure=stricmp(value->GetString(),"true")!=0;
 	break;
 	case COOKIEATT_HTTPONLY:
-		/* todo: */
+		/*! @todo Support HTTP only mode for cookies. */
 	break;
 	case COOKIEATT_COMMENT:
 	case COOKIEATT_VERSION:

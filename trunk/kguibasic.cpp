@@ -22,6 +22,12 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @file kguibasic.cpp 
+   @brief This is a version of the Basic language that can be used as a scripting
+   language in applications. Using it you can add custom app commands and you can
+   also add custom variables for for interacting between your app and the basic
+   language. */
+
 #include "kgui.h"
 #include "kguibasic.h"
 #include "kguithread.h"

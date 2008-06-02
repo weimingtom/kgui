@@ -22,17 +22,13 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is a browser object that you can have in your own application             */
-/* It uses the kGUIHTMLObj for rendering and uses the download class to download */
-/* files from the internet. By default it doesn't use the movie player but there  */
-/* is a movie player plugin class that can be 'attached' so it will also play     */
-/* movies. The reason it is seperate is that the movie player is very large so    */
-/* this way you can decide to include it or not.                                  */
-/*                                                                                */
-/**********************************************************************************/
-
+/*! @file kguibrowse.cpp 
+   @brief This is a browser object that you can have in your own application             
+   It uses the kGUIHTMLObj for rendering and uses the download class to download 
+   files from the internet. By default it doesn't use the movie player but there  
+   is a movie player plugin class that can be 'attached' so it will also play     
+   movies. The reason it is seperate is that the movie player is very large so    
+   this way you can decide to include it or not. */
 
 #include "kgui.h"
 #include "kguibrowse.h"

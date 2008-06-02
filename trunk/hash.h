@@ -26,7 +26,7 @@
 /**********************************************************************************/
 
 /*! @file hash.h 
-    @brief Hash table class deinitions. The Hash table can use case sensitive or
+    @brief Hash table class definitions. The Hash table can use case sensitive or
 	non-cs strings as indexs or it can use a fixed length binary string as an index too.
 	The hash table can allocate "data" for each entry if desired or just confirm 
 	that an object is already present. */

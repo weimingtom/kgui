@@ -255,9 +255,6 @@ Debug\bintoc kguidata.big kguidata.cpp
 				RelativePath=".\kguireq.cpp">
 			</File>
 			<File
-				RelativePath=".\kguiscript.cpp">
-			</File>
-			<File
 				RelativePath=".\kguiskin.cpp">
 			</File>
 			<File

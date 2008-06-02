@@ -22,19 +22,16 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is the default skin renderer, it can be replaced with your own custom     */
-/* renderer if desired or it can be used and have the images replaced.            */
-/*                                                                                */
-/* The default art for kGUI are the images that are in the 'big' folder, these    */
-/* images are all added to a big file by the build process, then converted to     */
-/* inline data by 'bintoc' and reside in the '_data.cpp' file. To add any new     */
-/* images just copy the files into the 'big' folder. On VS a build it will         */
-/* automatically find them, with a makefile you might need to delete _data.big    */
-/* to force it to be regenerated.                                                 */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguiskin.cpp
+    @brief This is the default skin renderer, it can be replaced with your own custom     
+ renderer if desired or it can be used and have the images replaced.            
+                                                                                
+ The default art for kGUI are the images that are in the 'big' folder, these    
+ images are all added to a big file by the build process, then converted to     
+ inline data by 'bintoc' and reside in the '_data.cpp' file. To add any new     
+ images just copy the files into the 'big' folder. On VS a build it will         
+ automatically find them, with a makefile you might need to delete _data.big    
+ to force it to be regenerated. */
 
 #include "kgui.h"
 #include "defskin.h"

@@ -22,22 +22,19 @@
 /*                                                                               */
 /*********************************************************************************/
 
-/*********************************************************************************/
-/*                                                                               */
-/* This is the static text object, static text can have a single font/color/size */
-/* or can be 'rich' and each character can have it's own font/color/size         */
-/*                                                                               */
-/* There is also a scroll text object                                            */
-/* a scroll text object is just static text with a left arrow on the             */
-/* left and a right arrow on the right, if either of these arrows are            */
-/* pressed then a callback is triggered allowing the users code to change        */
-/* the text. An example would be for users selecting a "month", the text         */
-/* would default to a particular month, then pressing the left button would      */
-/* have the month decrement down to January and if the right arrow is pressed    */
-/* it would increment up to December. The callback would be the code to change   */
-/* the text itself.                                                              */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguitext.cpp
+    @brief This is the static text object, static text can have a single font/color/size 
+ or can be 'rich' and each character can have it's own font/color/size         
+                                                                               
+ There is also a scroll text object kGUIScrollTextObj.
+ a scroll text object is just static text with a left arrow on the             
+ left and a right arrow on the right, if either of these arrows are            
+ pressed then a callback is triggered allowing the users code to change        
+ the text. An example would be for users selecting a "month", the text         
+ would default to a particular month, then pressing the left button would      
+ have the month decrement down to January and if the right arrow is pressed    
+ it would increment up to December. The callback would be the code to change   
+ the text itself. */
 
 #include "kgui.h"
 
