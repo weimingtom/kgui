@@ -22,19 +22,15 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is class that decompresses images. All images are decompressed to a       */
-/* standard RGBA format and that way the render code doesn't have to know about   */
-/* all the different formats. This code uses libjpg, libpng for decoding          */
-/*                                                                                */
-/* The image class also handles caching of uncompressed images to reduce memory.  */
-/* For exmaple: if you have a table and it has 15,000 unique images, one per row  */
-/* then the system will not uncompress each one, only the ones visible as the     */
-/* user scrolls through the table will be decompressed and as they scroll off the */
-/* screen then they can be flushed to free up memory.                             */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguiimage.cpp 
+    @brief This is class that decompresses images. All images are decompressed to a       
+    standard RGBA format and that way the render code doesn't have to know about   
+    all the different formats. This code uses libjpg, libpng for decoding.
+    The image class also handles caching of uncompressed images to reduce memory.  
+    For exmaple: if you have a table and it has 15,000 unique images, one per row  
+    then the system will not uncompress each one, only the ones visible as the     
+    user scrolls through the table will be decompressed and as they scroll off the 
+     screen then they can be flushed to free up memory. */
 
 #include "kgui.h"
 
@@ -579,7 +575,7 @@ bool kGUIImage::LoadGIFImage(bool justsize)
 	int pi;					/* palette index */
 	unsigned char *picture;
 	int disposal=0;
-	GifLine *giflines=0;
+	GifLine *giflines;
 	GifLine *gl;
 	static unsigned int intstep[4]={8,8,4,2};
 	static unsigned int intstart[4]={0,4,2,1};
@@ -590,7 +586,6 @@ bool kGUIImage::LoadGIFImage(bool justsize)
 	int lastframe=-1;
 	bool transp=false;
 	Array<unsigned char>xbuf;
-//todo: gifline use array class too
 
 	if(Open()==false)
 		return(false);

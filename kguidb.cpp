@@ -22,16 +22,13 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* These are classes for attaching to a mysql database. As well as the usual      */
-/* queries, they can also load and save records and generate the sql strings to   */
-/* send to the database based on only the fields that have changed.               */
-/*                                                                                */
-/* Todo: handle different database encodings UTF-8 etc.                           */
-/* Todo: handle database disconnect errors more gracefully                        */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguidb.cpp 
+   @brief These are classes for attaching to a mysql database. As well as the usual      
+ queries, they can also load and save records and generate the sql strings to   
+ send to the database based on only the fields that have changed. */
+
+/*! @todo Handle different database encodings UTF-8 etc. */
+/*! @todo Handle database disconnect errors more gracefully. */
 
 #include "kgui.h"
 #include "kguidb.h"

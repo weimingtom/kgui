@@ -22,13 +22,9 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* A simple class for loading data from CSV files. The seperator can also be      */
-/* changed to a different character if desired                                    */
-/*                                                                                */
-/**********************************************************************************/
-
+/*! @file kguicsv.cpp 
+   @brief A simple class for loading data from CSV files. The seperator can also be
+   changed to a different character if desired */
 
 #include "kgui.h"
 #include "kguicsv.h"

@@ -21,6 +21,13 @@
 /*    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  */
 /*                                                                                */
 /**********************************************************************************/
+
+/*! @file heap.cpp 
+    @brief Heap is just a simple class for linearly releasing small chunks of allocated
+	memory (internally it allocates them in large chunks). It is used by the Hash table
+	code or any other object that needs small chunks of data and can free them all at once
+	and not free them individually */
+
 /* used for array template */
 #include "kgui.h"
 #include "heap.h"

@@ -37,7 +37,13 @@
 /*                                                                                */
 /*                                                                                */
 /**********************************************************************************/
- 
+
+/*! @file kgui.h
+    @brief This is the main include file for the kGUI system. It should be the
+	first include file that your source files include, and there should be no need
+	to include stdio.h or other system include files as this one should already include
+	all of the ones you need for most cross platform code. */
+
 #define NOLINKS 1
 #define SOFTSCROLL 1
 #define WINBPP 32

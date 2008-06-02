@@ -22,14 +22,10 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @file kguitsp.cpp
+    @brief This is a travelling salesman function. I have no idea how it works. :-) */
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is a travelling salesman function. I have no idea how it works. :-)       */
-/*                                                                                */
-/* Todo: make an async version that is given an amount of 'time' to process       */
-/*                                                                                */
-/**********************************************************************************/
+/*! @todo make an async version that is given an amount of 'time' to process */
 
 #include "kgui.h"
 #include "kguitsp.h"

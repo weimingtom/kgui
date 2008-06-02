@@ -22,18 +22,14 @@
 /*                                                                                */
 /**********************************************************************************/
 
-/**********************************************************************************/
-/*                                                                                */
-/* This is my attempt at a HTML renderer, yes it is all in one source-file. :-)   */
-/*                                                                                */
-/* The parsing engine is very nice if I do say so myself, the layout part on the  */
-/* other hand needs a fair bit of re-work to get it compliant.                    */
-/*                                                                                */
-/* todo: some webpages refer to gzipped css file so we need to ungzip it before processing */
-/* todo: in the position pass there should be NO calls to FindAttrib, these should only be */
-/*      done on the minmax pass													  */
-/*                                                                                */
-/**********************************************************************************/
+/*! @file kguihtml.cpp 
+    @brief This is my attempt at a HTML renderer, yes it is all in one source-file. :-)   
+    The parsing engine is very nice, and fast, if I do say so myself, the layout part on the  
+    other hand needs a fair bit of re-work to get it compliant. */
+
+/*! @todo Some webpages refer to gzipped css file so we need to ungzip it before processing */
+/*! @todo Optimization: In the position pass there should be NO calls to FindAttrib, these should only be done on the minmax pass */
+/*! @todo Need to add handling of media queries http://www.w3.org/TR/css3-mediaqueries/ */
 
 
 #include "kgui.h"
@@ -1631,9 +1627,6 @@ void kGUIHTMLPageObj::LinkLoaded(kGUIOnlineLink *link)
 	}
 }
 
-/* todo: need to add handling of media queries */
-/* http://www.w3.org/TR/css3-mediaqueries/ */
-
 bool kGUIHTMLPageObj::ValidMedia(kGUIString *m)
 {
 	unsigned int i,num,j,jl;
@@ -1862,7 +1855,7 @@ void kGUIHTMLPageObj::SaveInput(Hash *input,kGUIHTMLFormObj *form,int childnum,k
 				/* make sure name doesn't already exist */
 				if(!input->Find(name.GetString()))
 				{
-					/* todo: hmm, need to also save encoding */
+					/*! @todo Need to Investigate what encoding is to be done on posted form input? Do we default to the page encoding? */
 
 					input->SetDataLen(value.GetLen()+1);
 					input->Add(name.GetString(),value.GetString());

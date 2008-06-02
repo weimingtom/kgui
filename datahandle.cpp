@@ -22,6 +22,15 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/*! @file datahandle.cpp 
+    @brief A DataHandle is a container class for holding data. It can be attached to
+	a disk file, or a section of memory, locally allocated memory or an area within
+	a bigfile. A DataHandle can also contain encrypted data when attached to a
+	kGUIProt class than handles the encryption and decryption automatically. 
+	All objects in kGUI that require data use this class for loading and saving data.
+	That way, for example: images ( or movies ) can be rendered that reside inside
+	encryped bigfiles. */
+
 #include "kgui.h"
 #include "kguiprot.h"
 

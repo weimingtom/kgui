@@ -22,17 +22,14 @@
 /*                                                                               */
 /*********************************************************************************/
 
-/*********************************************************************************/
-/*                                                                               */
-/* A controlbox is just a conatiner that holds other 'child' controls            */
-/* it used used for automatic layout of object positions so you don't have to    */
-/* 'hard code' the positions of all the child objects, it automatically          */
-/* positions them in rows based on their sizes. Child objects can be added to the*/
-/* control object one at a time or in groups.                                    */
-/*                                                                               */
-/* todo: allow re-layout if control area has been made smaller or larger         */
-/*                                                                               */
-/*********************************************************************************/
+/*! @file kguicontrol.cpp 
+   @brief A kGUIControlBoxObj is just a conatiner that holds other 'child' controls            
+ it used used for automatic layout of object positions so you don't have to    
+ 'hard code' the positions of all the child objects, it automatically          
+ positions them in rows based on their sizes. Child objects can be added to the
+ control object one at a time or in groups. */
+
+/* @todo  Allow re-layout if control area has been made smaller or larger */
 
 #include "kgui.h"
 
