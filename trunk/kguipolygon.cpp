@@ -527,6 +527,79 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int 
 		DrawPoly(nvert<<1,nplist,c,alpha);
 }
 
+void kGUI::DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width)
+{
+	unsigned int i;
+	double dx,dy,ldx,ldy;
+	double heading;
+	kGUIPoint2 *nplist;
+	kGUIPoint2 *np1;
+	kGUIPoint2 *np2;
+	kGUIText t;
+	int awidth,bwidth;	/* above, below */
+
+	awidth=width>>1;
+	bwidth=width-awidth;
+
+	if(m_fatpoints.GetNumEntries()<(nvert<<1))
+		m_fatpoints.Alloc(nvert<<1,false);
+
+	nplist=m_fatpoints.GetArrayPtr();
+	np1=nplist;
+	np2=nplist+(nvert<<1);
+
+	/* get heading of first section */
+	dy=point[1].y-point[0].y;
+	dx=point[0].x-point[1].x;
+	heading=atan2(dy,dx)-(2.0f*PI*0.25f);	/* perpendicular */
+	np1->x=(int)(point[0].x+cos(heading)*awidth);
+	np1->y=(int)(point[0].y-sin(heading)*awidth);
+	++np1;
+	--np2;
+	np2->x=(int)(point[0].x-cos(heading)*bwidth);
+	np2->y=(int)(point[0].y+sin(heading)*bwidth);
+	/* average 2 headings for each one in between */
+	ldx=dx;
+	ldy=dy;
+	for(i=1;i<(nvert-1);++i)
+	{
+		dy=point[i+1].y-point[i].y;
+		dx=point[i].x-point[i+1].x;
+		heading=atan2(dy+ldy,dx+ldx)-(2.0f*PI*0.25f);
+		np1->x=(int)(point[i].x+cos(heading)*awidth);
+		np1->y=(int)(point[i].y-sin(heading)*awidth);
+		++np1;
+		--np2;
+		np2->x=(int)(point[i].x-cos(heading)*bwidth);
+		np2->y=(int)(point[i].y+sin(heading)*bwidth);
+		ldx=dx;
+		ldy=dy;
+	}
+	/* do last point */
+	dy=point[nvert-1].y-point[nvert-2].y;
+	dx=point[nvert-2].x-point[nvert-1].x;
+	heading=atan2(dy,dx)-(2.0f*PI*0.25f);	/* perpendicular */
+	np1->x=(int)(point[nvert-1].x+cos(heading)*awidth);
+	np1->y=(int)(point[nvert-1].y-sin(heading)*awidth);
+	--np2;
+	np2->x=(int)(point[nvert-1].x-cos(heading)*bwidth);
+	np2->y=(int)(point[nvert-1].y+sin(heading)*bwidth);
+
+	/* draw outline */
+	np1=nplist;
+	np2=nplist+1;
+	nvert<<=1;
+	for(i=0;i<nvert;++i)
+	{
+		if(i==nvert-1)
+			np2=nplist;
+		DrawLine(np1->x,np1->y,np2->x,np2->y,c);
+		++np1;
+		++np2;
+	}
+}
+
+
 //
 //  The function will return TRUE if the point x,y is inside the
 //  polygon, or FALSE if it is not. If the point x,y is exactly on

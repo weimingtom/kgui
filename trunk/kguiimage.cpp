@@ -575,7 +575,7 @@ bool kGUIImage::LoadGIFImage(bool justsize)
 	int pi;					/* palette index */
 	unsigned char *picture;
 	int disposal=0;
-	GifLine *giflines;
+	GifLine *giflines=0;
 	GifLine *gl;
 	static unsigned int intstep[4]={8,8,4,2};
 	static unsigned int intstart[4]={0,4,2,1};
@@ -2028,6 +2028,9 @@ bool kGUIImage::LoadWINICOImage(bool justsize)
 	return(true);
 }
 
+/*! @internal @struct BMP_Header
+    @brief Internal struct used by the kGUIImage class
+	@ingroup kGUIImage */
 typedef struct
 {
 	unsigned char type[2];

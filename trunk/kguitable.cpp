@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://code.google.com/p/kgui/                                 */
+/* http://code.google.com/p/kgui/                                                */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -143,18 +143,6 @@ kGUITableObj::kGUITableObj()
 	/* one entry per row, onlt used for select mode tables ( combo box/menus etc ) */
 	m_available.SetGrow(true);
 	m_scroll.SetEventHandler(this,CALLBACKNAME(Scrolled));
-}
-
-kGUITableObj::~kGUITableObj()
-{
-	int i;
-	int n=m_coltitles.GetNumEntries();
-
-	for(i=0;i<n;++i)
-	{
-		delete m_coltitles.GetEntry(i);
-		delete m_colhints.GetEntry(i);
-	}
 }
 
 int kGUITableObj::GetRowSelectorWidth(void)
@@ -346,7 +334,7 @@ void kGUITableObj::CalcChildZone(void)
 		y=0;
 		for(i=0;i<m_numcols;++i)
 		{
-			t=m_coltitles.GetEntry(i);
+			t=m_coltitles.GetEntryPtr(i);
 			h=t->GetHeight()+3+3;
 			if(h>y)
 				y=h;
@@ -394,23 +382,13 @@ void kGUITableObj::SetNumCols(unsigned int n)
 {
 	unsigned int i;
 	kGUITableColTitleObj *t;
-	kGUIString *s;
-	
-	/* if table is changing, then purge old entries */
-	for(i=0;i<m_numcols;++i)
-	{
-		t=m_coltitles.GetEntry(i);
-		delete t;
-		s=m_colhints.GetEntry(i);
-		delete s;
-	}
 	
 	m_numcols=n;
 	m_colorder.Alloc(n);
 	m_colwidths.Alloc(n);
-	m_coltitles.Alloc(n);
-	m_colhints.Alloc(n);
 	m_showcols.Alloc(n);
+	m_coltitles.Init(n,1);
+	m_colhints.Init(n,1);
 
 	m_cxs.Alloc(n);
 	m_cwidths.Alloc(n);
@@ -420,12 +398,8 @@ void kGUITableObj::SetNumCols(unsigned int n)
 	{
 		m_colorder.SetEntry(i,i);
 		m_colwidths.SetEntry(i,100);
-
-		t=new kGUITableColTitleObj();
+		t=m_coltitles.GetEntryPtr(i);
 		t->SetTable(this);
-		m_coltitles.SetEntry(i,t);
-		s=new kGUIString;
-		m_colhints.SetEntry(i,s);
 		m_showcols.SetEntry(i,true);
 	}
 }
@@ -438,8 +412,8 @@ void kGUITableObj::CalculateColWidth(int col)
 	int maxw;
 	kGUITableRowObj *rowobj;
 
-	if(m_coltitles.GetEntry(col))
-		maxw=m_coltitles.GetEntry(col)->GetWidth()+3+3;
+	if(m_coltitles.GetEntryPtr(col))
+		maxw=m_coltitles.GetEntryPtr(col)->GetWidth()+3+3;
 	else
 		maxw=10;
 
@@ -971,8 +945,8 @@ void kGUITableObj::Draw(void)
 					h=m_colheaderheight;
 //					h=kGUI::GetSkin()->GetTableColHeaderHeight();
 					kGUI::DrawRectBevel(x,y,x+w,y+h,false);
-					if(m_coltitles.GetEntry(xcol))
-						m_coltitles.GetEntry(xcol)->Draw(x+3,y+3,x+w,y+h);
+					if(m_coltitles.GetEntryPtr(xcol))
+						m_coltitles.GetEntryPtr(xcol)->Draw(x+3,y+3,x+w,y+h);
 				}
 			}
 		}
@@ -1566,7 +1540,7 @@ abort:;
 						if(kGUI::MouseOver(&c2))
 						{
 							if(kGUI::WantHint()==true)
-								kGUI::SetHintString(c2.lx,c2.ty-15,m_colhints.GetEntry(xcol)->GetString());
+								kGUI::SetHintString(c2.lx,c2.ty-15,m_colhints.GetEntryPtr(xcol)->GetString());
 							if(kGUI::GetMouseX()>(c2.rx-10))	/* adjust width? */
 							{
 								kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTHORIZ);

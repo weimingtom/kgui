@@ -36,7 +36,8 @@
 #define DBLOCKSIZE 65536
 
 /*! @internal @struct BIGHEADER_DEF
-	@brief This is the header block of each directory 
+	@brief Internal struct used by the BigFile class. 
+	This is the header block of each directory 
     @ingroup BigFile */
 typedef struct
 {
@@ -48,7 +49,8 @@ typedef struct
 }BIGHEADER_DEF;
 
 /*! @internal @struct BIGENTRY_DEF
-	@brief This is the data block of each file inside the bigfile directory block 
+	@brief Internal struct used by the BigFile class. 
+	This is the data block of each file inside the bigfile directory block 
     @ingroup BigFile */
 typedef struct
 {
@@ -60,7 +62,8 @@ typedef struct
 }BIGENTRY_DEF;
 
 /*! @internal @struct DIRINFO_DEF
-	@brief This is the memory sructure for each directory block inside the bigfile 
+	@brief Internal struct used by the BigFile class. 
+	This is the memory sructure for each directory block inside the bigfile 
     @ingroup BigFile */
 typedef struct
 {
@@ -71,7 +74,8 @@ typedef struct
 }DIRINFO_DEF;
 
 /*! @internal @class BigFileEntry
-	@brief This is the individual file directory block within the bigfile 
+	@brief Internal class used by the BigFile class. 
+	This is the individual file directory block within the bigfile 
     @ingroup BigFile */
 class BigFileEntry
 {

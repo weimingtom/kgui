@@ -121,6 +121,9 @@ void kGUIMenuColObj::SetNumEntries(int n)
 void kGUIMenuColObj::SetEntry(int index,kGUIString *entryname,int entryval)
 {
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
+	if(entryval==-1)
+		entryval=index;
+
 	m_poptableentries[index]->SetFontInfo(&m_fontinfo);
 	m_poptableentries[index]->SetString(entryname);
 	m_poptableentries[index]->SetRowHeight(m_poptableentries[index]->GetHeight()+4);
@@ -131,6 +134,8 @@ void kGUIMenuColObj::SetEntry(int index,kGUIString *entryname,int entryval)
 void kGUIMenuColObj::SetEntry(int index,const char *entryname,int entryval)
 {
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
+	if(entryval==-1)
+		entryval=index;
 	m_poptableentries[index]->SetFontInfo(&m_fontinfo);
 	m_poptableentries[index]->SetString(entryname);
 	m_poptableentries[index]->SetRowHeight(m_poptableentries[index]->GetHeight()+4);
