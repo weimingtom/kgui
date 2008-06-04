@@ -36,7 +36,8 @@ OWNER_NUM
 };
 
 /*! @internal @struct TAGLIST_DEF
-	@brief Structure defining HTML tags names and their associated information */
+	@brief Internal struct used by the kGUIHTMLPageObj class.
+	Structure defining HTML tags names and their associated information */
 typedef struct
 {
 	bool noclose;
@@ -207,7 +208,8 @@ UNITS_UNDEFINED
 };
 
 /*! @internal @class kGUIUnits
-	@brief class for CSS Units, px, cm, mm, % etc. 
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	Class for CSS Units, px, cm, mm, % etc. 
     @ingroup kGUIHTMLObjects */
 class kGUIUnits
 {
@@ -240,7 +242,8 @@ class kGUIHTMLPageObj;
 class kGUIHTMLObj;
 
 /*! @internal @class kGUIHTMLLinkObj
-	@brief url link object class, for clickable links
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	Url link object class, for clickable links
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLLinkObj
 {
@@ -268,7 +271,8 @@ private:
 };
 
 /*! @internal @class kGUIHTMLTextObj
-	@brief HTML static text
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML static text
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLTextObj : public kGUITextObj
 {
@@ -314,7 +318,8 @@ WHITESPACE_PRELINE,
 };
 
 /*! @internal @class kGUIHTMLTextGroup
-	@brief HTML static text group, this contains text before whitespace and transform rules have been applied
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML static text group, this contains text before whitespace and transform rules have been applied
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLTextGroup : public kGUIString
 {
@@ -335,7 +340,8 @@ private:
 };
 
 /*! @internal @class kGUIHTMLContentGroup
-	@brief HTML content group, this contains before and after content before it is processed into text / images etc
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML content group, this contains before and after content before it is processed into text / images etc
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLContentGroup : public kGUIReadString
 {
@@ -372,7 +378,8 @@ LISTSTYLE_INSIDE,
 LISTSTYLE_OUTSIDE};
 
 /*! @internal @class kGUIHTMLLIPrefix
-	@brief HTML list prefix for inserting list text
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML list prefix for inserting list text
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLLIPrefix
 {
@@ -398,7 +405,8 @@ private:
 };
 
 /*! @internal @class kGUIHTMLShapeObj
-	@brief HTML list prefix for inserting a list image
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML list prefix for inserting a list image
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLShapeObj: public kGUIObj
 {
@@ -413,7 +421,8 @@ private:
 };
 
 /*! @internal @class kGUIHTMLButtonTextObj
-	@brief HTML text button object for use in forms
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML text button object for use in forms
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLButtonTextObj : public kGUIHTMLTextObj
 {
@@ -428,7 +437,8 @@ private:
 };
 
 /*! @internal @class kGUIHTMLInputBoxObj
-	@brief HTML inputbox object for use in forms
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML inputbox object for use in forms
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLInputBoxObj : public kGUIInputBoxObj
 {
@@ -449,7 +459,8 @@ FORMMODE_POST
 };
 
 /*! @internal @class kGUIHTMLFormObj
-	@brief HTML form object, contains all form elements like inputboxes, buttons, etc.
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML form object, contains all form elements like inputboxes, buttons, etc.
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLFormObj
 {
@@ -993,7 +1004,8 @@ public:
 };
 
 /*! @internal @class kGUIHTMLObj
-	@brief HTML object class, this is the object generated for each html tag
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML object class, this is the object generated for each html tag
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLObj : public kGUIStyleObj, public kGUIContainerObj
 {
@@ -1198,7 +1210,8 @@ private:
 };
 
 /*! @internal @struct ATTLIST_DEF
-	@brief List of Attribute names and their associated IDs */
+	@brief Internal struct used by the kGUIHTMLPageObj class.
+	List of Attribute names and their associated IDs */
 typedef struct
 {
 	const char *name;
@@ -1206,7 +1219,8 @@ typedef struct
 }ATTLIST_DEF;
 
 /*! @internal @struct CONSTLIST_DEF
-	@brief List of Constant names and their associated IDs */
+	@brief Internal struct used by the kGUIHTMLPageObj class.
+	List of Constant names and their associated IDs */
 typedef struct
 {
 	const char *name;
@@ -1214,7 +1228,8 @@ typedef struct
 }CONSTLIST_DEF;
 
 /*! @internal @struct STYLERESTORE_DEF
-	@brief Structure for popping css styles off of the save/restore stack */
+	@brief Internal sruct used by the kGUIHTMLPageObj class.
+	Structure for popping css styles off of the save/restore stack */
 typedef struct
 {
 	void *place;
@@ -1222,7 +1237,8 @@ typedef struct
 }STYLERESTORE_DEF;
 
 /*! @internal @struct POPLIST_DEF
-	@brief Structure for child tags that are not allowed inside the associated parent tag */
+	@brief Internal struct used by the kGUIHTMLPageObj class.
+	Structure for child tags that are not allowed inside the associated parent tag */
 typedef struct
 {
 unsigned int parenttagid;
@@ -1426,7 +1442,8 @@ HTMLATT_ERROR,	/* internal code used for content before/after/not allowed*/
 HTMLATT_NUM};
 
 /*! @internal @class AsyncLoadInfo
-	@brief Async info for what to do when async file has finished loading */
+	@brief Internal class used by the kGUIHTMLPageObj class.
+    Async info for what to do when async file has finished loading */
 class AsyncLoadInfo
 {
 public:
@@ -1437,7 +1454,8 @@ public:
 
 
 /*! @internal @class kGUIHTMLRuleList 
-	@brief HTML rule list class, holds an array of rule list object pointers
+	@brief Internal class used by the kGUIHTMLPageObj class.
+	HTML rule list class, holds an array of rule list object pointers
     @ingroup kGUIHTMLObjects */
 class kGUIHTMLRuleList
 {

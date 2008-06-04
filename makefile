@@ -4,7 +4,7 @@ include makefile.in
 
 LIB_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kgui.cpp kguibasic.cpp kguibrowse.cpp kguibsp.cpp kguicolors.cpp kguicsv.cpp \
 kguidb.cpp kguidir.cpp kguifont.cpp kguigrid.cpp kguihtml.cpp kguiimage.cpp kguilist.cpp kguiobj.cpp \
-kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguiscript.cpp kguistring.cpp \
+kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistring.cpp \
 kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp \
 kguibutton.cpp kguicombo.cpp kguicontrol.cpp kguidivider.cpp kguiinput.cpp \
 kguimenu.cpp kguimcontrol.cpp kguimovie.cpp kguiradio.cpp kguitab.cpp kguitable.cpp kguiwindow.cpp kguitext.cpp \

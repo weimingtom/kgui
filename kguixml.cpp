@@ -25,7 +25,7 @@
 /*! @file kguixml.cpp
     @brief This is a simple XML class, it handles reading and writing XML files.
 	It is NOT a full implementation by any means just a simple reader / writer
-    It also handles encoding/decoding for special &xxx; characters. */
+    It also handles encoding/decoding for special &amp;xxx; characters. */
 
 #include "kgui.h"
 #include "kguixml.h"
@@ -36,6 +36,10 @@ unsigned int kGUIXMLCODES::m_maxcode=0;
 XCODE_DEF *kGUIXMLCODES::m_xcodes=0;
 Hash *kGUIXMLCODES::m_longhash=0;
 kGUIString *kGUIXMLCODES::m_utflist=0;
+
+/*! @internal @struct CODES_DEF
+    @brief Internal struct used by the kGUIXMLCODES class.
+	This table contains the ampersand encoded strings and their equivalents. */
 
 typedef struct
 {

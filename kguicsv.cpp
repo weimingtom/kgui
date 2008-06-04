@@ -29,12 +29,6 @@
 #include "kgui.h"
 #include "kguicsv.h"
 
-unsigned int kGUICSVRow::Load(kGUIString *split,kGUIString *line)
-{
-	m_fields.SetIgnoreEmpty(false);
-	return(m_fields.Split(line,split->GetString()));
-}
-
 kGUICSV::kGUICSV()
 {
 	m_numrows=0;
@@ -45,6 +39,22 @@ kGUICSV::kGUICSV()
 	/* default to comma, allow override */
 	m_split.SetString(",");
 }
+
+void kGUICSV::Init(unsigned int numrows,unsigned int numcols)
+{
+	kGUICSVRow *row;
+
+	PurgeRows();
+
+	m_maxcols=numcols;
+
+	while(m_numrows<numrows)
+	{
+		row=new kGUICSVRow(numcols);
+		m_rows.SetEntry(m_numrows++,row);
+	}
+}
+
 
 kGUICSV::~kGUICSV()
 {
@@ -65,22 +75,26 @@ bool kGUICSV::Load(void)
 {
 	unsigned int maxcols;
 	unsigned int numcols;
+	unsigned int n;
 	kGUIString line;
 	kGUICSVRow *row;
-
-	PurgeRows();
+	kGUIStringSplit sl;
 
 	if(Open()==false)
 		return(false);		/* can't open file for read */
 
+	sl.SetIgnoreEmpty(false);
 	maxcols=0;
 	do
 	{
 		ReadLine(&line);
 		if(line.GetLen())
 		{
-			row=new kGUICSVRow();
-			numcols=row->Load(&m_split,&line);
+			numcols=sl.Split(&line,m_split.GetString());
+			row=new kGUICSVRow(numcols);
+			for(n=0;n<numcols;++n)
+				row->GetFieldPtr(n)->SetString(sl.GetWord(n));
+
 			m_rows.SetEntry(m_numrows++,row);
 			if(numcols>maxcols)
 				maxcols=numcols;
@@ -89,4 +103,45 @@ bool kGUICSV::Load(void)
 	Close();
 	m_maxcols=maxcols;
 	return(true);
+}
+
+/* save to current datahandle */
+bool kGUICSV::Save(void)
+{
+	unsigned int r,c;
+	kGUICSVRow *row;
+	kGUIString cell;
+	char q;
+
+	if(OpenWrite("wb",32768)==false)
+		return(false);
+
+	/*! @todo what to do about encoding? */
+
+	for(r=0;r<m_numrows;++r)
+	{
+		row=m_rows.GetEntry(r);
+		for(c=0;c<m_maxcols;++c)
+		{
+			row->GetField(c,&cell);
+			if(c)
+				Write(",",1);
+
+			if(cell.StrStr(",")<0)
+				Write(cell.GetString(),cell.GetLen());
+			else
+			{
+				/* must enclose in quotes */
+				if(cell.StrStr("\"")<0)
+					q='\"';
+				else
+					q='\'';
+				Write(&q,1);
+				Write(cell.GetString(),cell.GetLen());
+				Write(&q,1);
+			}
+		}
+		Write("\n",(int)strlen("\n"));
+	}
+	return(Close());
 }

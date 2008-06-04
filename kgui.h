@@ -192,7 +192,8 @@ if(result==false)\
 #define CALLBACKNAME(func) CB_ ## func
 #define CALLBACKCLASSNAME(classname,func) classname::CB_ ## func
 
-/*! simple mutex class, it doesn't allow multiple entry from the same thread either */
+/*! @class kGUIMutex
+    @brief simple mutex class, it doesn't allow multiple entry from the same thread either */
 class kGUIMutex
 {
 public:
@@ -792,7 +793,8 @@ typedef struct
 /* this is what is generated at runtime by adding the zone above to */
 /* an objects parent's position */
 
-/*! struct screen corners generated from kGUIObj zones */
+/*! @struct kGUICorners
+    @brief screen corners generated from kGUIObj zones */
 typedef struct
 {
 	/*! left screen x */
@@ -805,7 +807,9 @@ typedef struct
 	int by;
 }kGUICorners;
 
-/*! a simple delay class */
+/*! @class kGUIDelay
+    @brief a simple delay class, can count up or down. Used internally for flashing
+	cursor counter. */
 class kGUIDelay
 {
 public:
@@ -825,7 +829,8 @@ private:
 	int m_left;
 };
 
-/*! a callback class that takes no parameters*/
+/*! @class kGUICallBack
+    @brief a callback class that takes no parameters */
 class kGUICallBack
 {
 public:
@@ -851,7 +856,8 @@ private:
 	void (*m_func)(void *);
 };
 
-/*! a callback class that takes 1 integer as a parameter*/
+/*! @class kGUICallBackInt
+    @brief a callback class that takes 1 integer as a parameter*/
 class kGUICallBackInt
 {
 public:
@@ -864,7 +870,8 @@ private:
 	void (*m_func)(void *,int);
 };
 
-/*! a callback class that takes 2 integers as a parameters */
+/*! @class kGUICallBackIntInt
+    @brief a callback class that takes 2 integers as a parameters */
 class kGUICallBackIntInt
 {
 public:
@@ -973,7 +980,8 @@ void kGUICallBackPtrPtrPtr<T,U,V>::Set(void *o,void (*f)(void *,T *,U *,V *))
 class kGUI;
 
 #define MAXFONTSIZE 512
-/*! this contains font id, color and style info for drawing text */
+/*! @class kGUIFontInfo
+    @brief this contains font id, color and style info for drawing text */
 class kGUIFontInfo
 {
 public:
@@ -1019,6 +1027,8 @@ private:
 #include "datahandle.h"
 #include "big.h"
 
+/*! @internal @class kGUIInputLineInfo
+    @brief This is a line break class used for static text and input boxes */
 class kGUIInputLineInfo
 {
 public:
@@ -1055,6 +1065,9 @@ typedef struct
 	kGUIColor bgcolor;
 }RICHINFO_DEF;
 
+/*! @class kGUIText
+    @brief This is the text class. It it is a string with attached font info,
+	line break info and it can also be in "rich text" mode */
 class kGUIText : public kGUIFontInfo, public kGUIString
 {
 public:
@@ -1141,7 +1154,8 @@ private:
 	Array<RICHINFO_DEF> m_richinfo;
 };
 
-/* this class is used to store a relative position and object size ( in pixels ) */
+/* @class kGUIZone
+   @brief this class is used to store a relative position and object size ( in pixels ) */
 class kGUIZone
 {
 public:
@@ -1155,7 +1169,6 @@ public:
 	inline void SetZoneH(int h) {if(m_h!=h){ZonePreChanged();m_h=h;ZoneChanged();}}
 	inline void SetPos(int x,int y) {if((m_x!=x) || (m_y!=y)){ZonePreChanged();m_x=x;m_y=y;ZoneChanged();}}
 	inline void SetSize(int w,int h) {if((m_w!=w) || (m_h!=h)){ZonePreChanged();m_w=w;m_h=h;ZoneChanged();}}
-//	inline void SetSizeNC(int w,int h) {m_w=w;m_h=h;}
 	inline void SetZone(int x,int y,int w,int h) {if((m_x!=x) || (m_y!=y) || (m_w!=w) || (m_h!=h)){ZonePreChanged();m_x=x;m_y=y;m_w=w;m_h=h;ZoneChanged();}}
 	inline void SetZone(kGUIZone *z) {if((m_x!=z->m_x) || (m_y!=z->m_y) || (m_w!=z->m_w) || (m_h!=z->m_h)){ZonePreChanged();m_x=z->m_x;m_y=z->m_y;m_w=z->m_w;m_h=z->m_h;ZoneChanged();}}
 	/* movezone is the same as SetZone but without doing the callbacks */
@@ -1221,6 +1234,9 @@ EVENT_PRESSRETURN,			/* trigerred by the input box after a change or nochange ev
 EVENT_NUMEVENTS
 };
 
+/*! @class kGUIEvent
+    @brief This is the callback event object class, it contains the callbacks info on what
+	the event was and associated values */
 class kGUIEvent
 {
 public:
@@ -1247,7 +1263,8 @@ private:
 	bool m_geteventcalled:1;
 };
 
-/* sine dampened scrolling */
+/* @class kGUIScroll
+   @brief Sine dampened scrolling class, moves from current x,y to dest x,y */
 class kGUIScroll
 {
 public:
@@ -1448,7 +1465,9 @@ typedef struct
 
 #include "kguithread.h"
 
-/* image or shape */
+/*! @class kGUIImage
+    @brief This is the image class. It currently handles: Jpeg, Gif, Animated Gif,
+	PNG, ICO and BMP formats */
 class kGUIImage  : public Links<class kGUIImage>, public DataHandle
 {
 public:
@@ -1630,7 +1649,8 @@ private:
 };
 
 
-/*! this is the moveable divider gui object, it is used for making the items above it and below it
+/*! @class kGUIDividerObj
+	@brief this is the moveable divider gui object, it is used for making the items above it and below it
     (or left and right of it) larger or smaller by dragging it back and forth
 	@ingroup kGUIObjects */
 class kGUIDividerObj : public kGUIObj
@@ -1647,7 +1667,8 @@ SCROLLMODE_CLICK,
 SCROLLMODE_ADJUST
 };
 
-/*! this is the scrollbar object, it can be either vertical or horizontal
+/*! @class kGUIScrollBarObj
+    @brief this is the scrollbar object, it can be either vertical or horizontal
 	@ingroup kGUIObjects */
 class kGUIScrollBarObj : public kGUIObj
 {
@@ -1681,8 +1702,9 @@ private:
 	int m_botoffset;
 };
 
-/*! this is an image gui object, it can be static or animated and can also be a different size
-    than the attached image if desired
+/*! @class kGUIImageObj
+    @brief This is an image gui object, it can be static or animated and can also be a different size
+    than the attached image if desired.
 	@ingroup kGUIObjects */
 class kGUIImageObj : public kGUIObj, public kGUIImage
 {
@@ -1735,7 +1757,8 @@ private:
 	kGUIString *m_hint;
 };
 
-/*! this is an image reference gui object, it can be static or animated and can also be a different size
+/*! @class kGUIImageRefObj
+    @brief This is an image reference gui object, it can be static or animated and can also be a different size
     than the referenced image if desired, it contains a reference to an image so many of these can share a common image.
 	useful for tables or webpages where the same image can be drawn many times over and over
 	@ingroup kGUIObjects */
@@ -1985,10 +2008,10 @@ private:
 	kGUIComboTableRowObj **m_poptableentries;
 };
 
-/* shared combo entries/object are designed to be used in tables where */
-/* many rows all share the same combo and can therefore reduce the */
-/* memory footprint by sharing the combo entries and data */
-
+/*! @internal @class kGUISharedComboEntries
+    @brief The shared combo entries are designed to be used in tables where
+    many rows all share the same combo and can therefore reduce the
+    memory footprint by sharing the combo entries and data */
 class kGUISharedComboEntries : public kGUIFontInfo
 {
 public:
@@ -2104,8 +2127,8 @@ public:
 	void Init(int num, kGUIString *strings, int *nums);
 	void Activate(int x,int y);	/* screen position to pop up at */
 	void SetNumEntries(int n);
-	void SetEntry(int index,kGUIString *entryname,int entryval);
-	void SetEntry(int index,const char *entryname,int entryval);
+	void SetEntry(int index,kGUIString *entryname,int entryval=-1);
+	void SetEntry(int index,const char *entryname,int entryval=-1);
 	void SetEntryEnable(int index,bool e,bool updatecolor=true);
 	int GetWidest(void);
 	void Draw(void) {};
@@ -2397,7 +2420,7 @@ class kGUITableObj : public kGUIContainerObj
 {
 public:
 	kGUITableObj();
-	~kGUITableObj();
+	~kGUITableObj() {}
 	void SetSize(int w,int h) {kGUIContainerObj::SetSize(w,h);SizeDirty();}
 
 	void AddObject(kGUIObj *obj);
@@ -2410,16 +2433,17 @@ public:
 	void DeleteRow(kGUITableRowObj *obj,bool purge=true);
 	void SetNumCols(unsigned int n);
 	void SetColWidth(int n,int w) {m_colwidths.SetEntry(n,w);m_sizechanged=true;m_positionsdirty=true;}
-	void SetColTitle(int n,const char *t) {m_coltitles.GetEntry(n)->SetString(t);m_positionsdirty=true;}
-	void SetColHint(int n,const char *t) {m_colhints.GetEntry(n)->SetString(t);}
-	void SetColHint(int n,kGUIString *t) {m_colhints.GetEntry(n)->SetString(t);}
-	kGUIText *GetColHeaderTextPtr(int n) {return m_coltitles.GetEntry(n);}
+	void SetColTitle(int n,const char *t) {m_coltitles.GetEntryPtr(n)->SetString(t);m_positionsdirty=true;}
+	void SetColHint(int n,const char *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
+	void SetColHint(int n,kGUIString *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
+	kGUIText *GetColHeaderTextPtr(int n) {return m_coltitles.GetEntryPtr(n);}
 	int GetNumCols(void) {return m_numcols;}
+	int GetNumRows(void) {return GetNumChildren();}
 	int GetColWidth(int n) {return m_colwidths.GetEntry(n);}
 	unsigned int GetColOrder(int n) {return m_colorder.GetEntry(n);}
 	bool GetColShow(int n) {return m_showcols.GetEntry(n);}
 	int GetColTitleIndex(const char *name);
-	const char *GetColTitle(int n) {return m_coltitles.GetEntry(n)->GetString();}
+	const char *GetColTitle(int n) {return m_coltitles.GetEntryPtr(n)->GetString();}
 
 	void SetColOrder(unsigned int n,unsigned int x) {m_colorder.SetEntry(n,x);m_sizechanged=true;m_positionsdirty=true;Dirty();}
 	void SetColShow(int n,bool s) {m_showcols.SetEntry(n,s);if(m_showcols.GetEntry(m_colorder.GetEntry(m_cursorcol))==false)MoveCol(-1);m_sizechanged=true;m_positionsdirty=true;Dirty();}
@@ -2448,7 +2472,6 @@ public:
 	inline void ClearOver(void) {m_wasover=false;m_releasecount=0;}
 	inline void GotoRow(unsigned int r,bool clearsel=true) {MoveRow((int)(r-m_cursorrow),clearsel);}
 	void CallAfterUpdate(void);
-	kGUITableRowObj *GetCursorRowObj(void) {return static_cast<kGUITableRowObj *>(GetChild(m_cursorrow));}
 	void SetAllowAdjustRowHeights(bool allow) {m_allowadjrowheights=allow;}
 	void SetAllowAdjustColWidths(bool allow) {m_allowadjcolwidths=allow;}
 
@@ -2458,8 +2481,11 @@ public:
 	CALLBACKGLUEVAL(kGUITableObj,MoveCol,int)
 
 	unsigned int CalcRowHeight(unsigned int n);
-	int GetRowHeight(unsigned int n) {return static_cast<kGUITableRowObj *>(GetChild(n))->GetRowHeight();}
-	void SetRowHeight(unsigned int n,int h) {static_cast<kGUITableRowObj *>(GetChild(n))->SetRowHeight(h);}
+
+	kGUITableRowObj *GetRow(unsigned int r) {return static_cast<kGUITableRowObj *>(GetChild(r));}
+	kGUITableRowObj *GetCursorRowObj(void) {return GetRow(m_cursorrow);}
+	int GetRowHeight(unsigned int n) {return GetRow(n)->GetRowHeight();}
+	void SetRowHeight(unsigned int n,int h) {GetRow(n)->SetRowHeight(h);}
 
 	int GetRowSelectorWidth(void);
 
@@ -2514,8 +2540,8 @@ private:
 	Array<int>m_colwidths;
 	Array<unsigned int>m_colorder;
 	Array<bool>m_showcols;
-	Array<kGUITableColTitleObj *>m_coltitles;
-	Array<kGUIString *>m_colhints;
+	ClassArray<kGUITableColTitleObj>m_coltitles;
+	ClassArray<kGUIString>m_colhints;
 
 	/* these are recalculated whenever the column order is changed, resized or hidden/shown */
 	Array<int>m_cxs;
@@ -2707,9 +2733,11 @@ private:
 	kGUIZone m_savezone;			/* saved window zone when minimized or full */	
 };
 
-/*! this is control box gui object. The controlbox object is used to automatically
+/*! @class kGUIControlBoxObj 
+	@brief this is control box gui object. The controlbox object is used to automatically
     position child objects within it for easy screen layout.
-	@ingroup kGUIObjects */
+	@ingroup kGUIObjects 
+	@todo  Allow re-layout if control area has been made smaller or larger */
 class kGUIControlBoxObj : public kGUIContainerObj
 {
 public:
@@ -2753,7 +2781,8 @@ private:
 
 class kGUIMovie;
 
-/*! this is movie control gui object. This is essentially a movie object
+/*! @class kGUIMovieControlObj
+	@brief this is movie control gui object. This is essentially a movie object
     along with the associated controls for playing the movie.
 	@ingroup kGUIObjects */
 class kGUIMovieControlObj : public kGUIContainerObj
@@ -3383,6 +3412,7 @@ public:
 	static bool ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPolyLine(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width,double alpha=1.0f);
+	static void DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width);
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIPoint2 *point);
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIDPoint2 *point);
 

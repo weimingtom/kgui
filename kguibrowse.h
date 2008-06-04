@@ -273,7 +273,8 @@ private:
 };
 
 /*! @internal @class AuthenticateWindow 
-	@brief Internal Popup window for entering name & password for webpage authentication 
+	@brief Internal class used by the kGUIBrowseObj class.
+	Popup window for entering users name & password for webpage authentication. 
     @ingroup kGUIBrowseObj */
 class AuthenticateWindow
 {

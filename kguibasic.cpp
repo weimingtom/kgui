@@ -1287,6 +1287,8 @@ void kGUIBasicFuncObj::AddParm(const char *name,kGUIBasicVarObj *var,int bymode)
 	m_parms.SetEntry(m_numparms++,pa);
 }
 
+/*! @internal @struct COMMANDLIST_DEF
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	const char *name;
@@ -1294,19 +1296,24 @@ typedef struct
 	void (kGUIBasic::*vcodev)(void);
 }COMMANDLIST_DEF;
 
+/*! @internal @struct COMMANDVERBLIST_DEF
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	const char *name;
 	int tokenid;
 }COMMANDVERBLIST_DEF;
 
+/*! @internal @struct OPERATORLIST_DEF
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	const char *name;
 	int tokenid;
 }OPERATORLIST_DEF;
 
-/* function with no parameters */
+/*! @internal @struct FUNCLIST_DEF
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	int minnumparms;
@@ -1316,7 +1323,8 @@ typedef struct
 	const char *parmdef;
 }FUNCLIST_DEF;
 
-/* constants with integer values */
+/*! @internal @struct CONSTLISTINT_DEF
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	const char *name;
@@ -5717,6 +5725,9 @@ DATE_GETLONGDATE,
 DATE_ADDDAYS,
 DATE_NUMCOMMANDS};
 
+/*! @internal @class BasicDate
+    @brief Internal class used by the kGUIBasic class.
+	Date class for basic programs. */
 class BasicDate : public kGUIBasicClassObj
 {
 public:

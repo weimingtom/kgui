@@ -250,6 +250,9 @@ private:
 	int m_type;
 };
 
+/*! @internal @struct BTOK_DEF
+    @brief Internal struct used by the kGUIBasic class
+	This struct contains the list of keywords or tokens and their associated information. */
 typedef struct
 {
 	int type;
@@ -570,7 +573,8 @@ private:
 	Hash m_fieldhash;			/* small hash list for field name to index conversion */
 };
 
-/* used for internal basic commands */
+/*! @internal @class kGUIBasicCommandObj
+    @brief Internal struct used by the kGUIBasic class */
 class kGUIBasicCommandObj : public kGUIBasicObj, public ParmDef
 {
 public:
@@ -602,6 +606,8 @@ private:
 	kGUIBasicCommandObj *m_extra;	/* duplicate thingy sharing this name */
 };
 
+/*! @internal @struct for_stack
+    @brief Internal struct used by the kGUIBasic class */
 typedef struct
 {
 	int level;			/* sub/function level */
@@ -610,6 +616,9 @@ typedef struct
 	kGUIBasicVarObj *step;		/* step value */
 	const BTOK_DEF *loc;	/* loop back to address */
 }for_stack;
+
+/*! @internal @struct call_def
+    @brief Internal struct used by the kGUIBasic class */
 
 typedef struct
 {
