@@ -1,5 +1,5 @@
 /**********************************************************************************/
-/* kGUI - kguipolygon.                                                            */
+/* kGUI - kguipolygon.cpp                                                         */
 /*                                                                                */
 /* Programmed by (See below)                                                      */
 /*                                                                                */
@@ -63,9 +63,6 @@ from "Graphics Gems", Academic Press, 1990
 #define min(a, b)	((a) < (b) ? (a) : (b))
 #endif
 
-#define ALLOC(ptr, type, n) \
-		  ASSERT(ptr = (type *)malloc((n)*sizeof(type)))
-
 typedef struct {		/* a polygon edge */
     double x;	/* x coordinate of edge's intersection with current scanline */
     double dx;	/* change in x with respect to y */
@@ -91,7 +88,7 @@ static Edge *active;	/* active edge list:edges crossing scanline y */
 #endif
 
 /* comparison routines for qsort */
-int compare_ind(const void *u, const void *v)
+static int compare_ind(const void *u, const void *v)
 {
 	const int *iu=(const int *)u;
 	const int *iv=(const int *)v;
@@ -101,7 +98,7 @@ int compare_ind(const void *u, const void *v)
 	return pt[*iu].y < pt[*iv].y ? -1 : 1;
 }
 
-int compare_active(const void *u, const void *v)
+static int compare_active(const void *u, const void *v)
 {
 	const Edge *eu=(const Edge *)u;
 	const Edge *ev=(const Edge *)v;
@@ -353,7 +350,6 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha)
 	delete active;
 }
 
-
 /* read the screen and return false if any pixel is not "c" */
 
 bool kGUI::ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
@@ -461,10 +457,168 @@ void kGUI::DrawPolyLine(int nvert,kGUIPoint2 *point,kGUIColor c)
 		DrawLine((int)point[i].x,(int)point[i].y,(int)point[i+1].x,(int)point[i+1].y,c);
 }
 
+#define MAXENDPOINTS 20
+
+static void Proj(kGUIPoint2 *out,int x,int y,double r,double a)
+{
+	out->x=x-(int)((cos(a)*r)+0.5f);
+	out->y=y-(int)((sin(a)*r)+0.5f);
+}
+
+void kGUI::DrawFatLine(int x1,int y1,int x2,int y2,kGUIColor c,double radius,double alpha)
+{
+	kGUIPoint2 ends[2];
+
+	ends[0].x=x1;
+	ends[0].y=y1;
+	ends[1].x=x2;
+	ends[1].y=y2;
+	DrawFatPolyLine(2,ends,c,radius,alpha);
+}
+
+static double Diff(double h1,double h2)
+{
+	double d;
+
+	d=h1-h2;
+	while(d>PI)
+		d-=(PI*2);
+	while(d<(-PI))
+		d+=(PI*2);
+	return(d);
+}
+
+static double Cross(kGUIPoint2 *p1,kGUIPoint2 *p2,kGUIPoint2 *p3)
+{
+	return ( ((double)p2->x - p1->x)*((double)p3->y - p1->y) - ((double)p2->y - p1->y)*((double)p3->x - p1->x) );
+}
+
 /* convert to a polygon then draw using the poly code */
 
-void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width,double alpha)
+void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha)
 {
+#if 1
+	unsigned int i,j,numep,numinsidepoints,numcp,pass;
+	unsigned int numout;
+	double lastheading,heading,hdelta;
+	double step,estep;
+	double h,dist;
+	kGUIPoint2 ip2;
+	kGUIPoint2 *p1;
+	kGUIPoint2 *p2;
+	kGUIPoint2 *op;
+
+	/* last point */
+	numinsidepoints=nvert-2;
+	p1=point;
+	p2=point+1;
+
+	/* make the number of endpoints vary depending on thickness */
+	numep=min(MAXENDPOINTS,(int)(radius+1.0f));
+	/* end point step to cover 180 degrees */
+	estep=PI/(numep-1);
+
+	if(m_fatpoints.GetNumEntries()<(MAXENDPOINTS*nvert))
+		m_fatpoints.Alloc(MAXENDPOINTS*nvert,false);
+
+	/* number of out points */
+	numout=0;
+	op=m_fatpoints.GetArrayPtr();
+
+	heading=atan2((double)p2->y-p1->y,(double)p2->x-p1->x);
+	for(pass=0;pass<2;++pass)
+	{
+		/* build curved end for first point */
+		h=(heading-(PI/2));
+		for(i=0;i<numep;++i)
+		{
+			if(!pass)
+				Proj(op,p1->x,p1->y,radius,h);
+			else
+				Proj(op,p2->x,p2->y,radius,h);
+			++op;
+			++numout;
+			h+=estep;
+		}
+
+		/* ok, generate top edge */
+		for(j=0;j<numinsidepoints;++j)
+		{
+			lastheading=heading;
+			if(pass)
+			{
+				--p1;
+				--p2;
+			}
+			else
+			{
+				++p1;
+				++p2;
+			}
+			if(!pass)
+				heading=atan2((double)p2->y-p1->y,(double)p2->x-p1->x);
+			else
+				heading=atan2((double)p1->y-p2->y,(double)p1->x-p2->x);
+			h=(lastheading+(PI/2));
+			hdelta=Diff(heading,lastheading);
+			numcp=min(MAXENDPOINTS,(int)abs(hdelta*radius)+3);			/* number of points inserted  for the curve curved points */
+			step=hdelta/(numcp-1);
+
+			/* is this an inside or outside angle? */
+			Proj(op,p1->x,p1->y,0.0f,0.0f);
+			Proj(op+1,p1->x,p1->y,radius,h);
+			Proj(op+2,p1->x,p1->y,radius,h+hdelta);
+			if((Cross(op,op+1,op+2)<0.0f))
+			{
+				dist=-(radius*.5)*tan(hdelta*.5f);
+				if(!pass)
+					Proj(&ip2,p1->x,p1->y,(dist+radius)*2,h+hdelta*0.5f);
+				else
+					Proj(&ip2,p2->x,p2->y,(dist+radius)*2,h+hdelta*0.5f);
+				h+=PI;
+				for(i=0;i<numcp;++i)
+				{
+					Proj(op,ip2.x,ip2.y,radius,h);
+					++op;
+					++numout;
+					h+=step;
+				}
+			}
+			else
+			{
+				for(i=0;i<numcp;++i)
+				{
+					if(!pass)
+						Proj(op,p1->x,p1->y,radius,h);
+					else
+						Proj(op,p2->x,p2->y,radius,h);
+					++op;
+					++numout;
+					h+=step;
+				}
+			}
+		}
+
+		heading+=PI;	/* go back 180 degrees */
+	}
+	assert(numout<(MAXENDPOINTS*nvert),"Not enough allocated error!");
+	op=m_fatpoints.GetArrayPtr();
+	if(alpha==1.0f)
+		DrawPoly(numout,op,c);
+	else
+		DrawPoly(numout,op,c,alpha);
+#else
+#if 1
+	unsigned int i;
+	kGUIPoint2 *p;
+
+	p=point;
+	for(i=0;i<(nvert-1);++i)
+	{
+		DrawFatLine(p->x,p->y,(p+1)->x,(p+1)->y,c,radius,alpha);
+		++p;
+	}
+#else
 	unsigned int i;
 	double dx,dy,ldx,ldy;
 	double heading;
@@ -525,8 +679,11 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int 
 		DrawPoly(nvert<<1,nplist,c);
 	else
 		DrawPoly(nvert<<1,nplist,c,alpha);
+#endif
+#endif
 }
 
+#if 0
 void kGUI::DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width)
 {
 	unsigned int i;
@@ -598,7 +755,7 @@ void kGUI::DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,i
 		++np2;
 	}
 }
-
+#endif
 
 //
 //  The function will return TRUE if the point x,y is inside the

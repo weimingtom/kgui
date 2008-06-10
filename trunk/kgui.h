@@ -3229,6 +3229,41 @@ protected:
 	bool m_landscape;
 };
 
+/* used for draw functions that use sub pixel ( anti-alias ) rendering */
+typedef struct SUBLINEPIX_DEF
+{
+	SUBLINEPIX_DEF *next;
+	double weight;
+	double leftx,width;
+}SUBLINEPIX_DEF;
+
+typedef struct
+{
+	SUBLINEPIX_DEF *chunk;
+	double leftx,rightx;
+}SUBLINE_DEF;
+
+class kGUISubPixelCollector
+{
+public:
+	kGUISubPixelCollector();
+	void SetBounds(double y1,double y2);
+	void SetColor(kGUIColor c,double alpha);
+	void AddRect(double x,double y,double w,double h);
+	void Draw(void);
+private:
+	void AddChunk(int y,double lx,double rx,double weight);
+	double m_red;
+	double m_green;
+	double m_blue;
+	double m_alpha;
+	int m_topy;
+	int m_bottomy;
+	Array<SUBLINE_DEF>m_lines;
+	Array<SUBLINEPIX_DEF>m_chunks;
+	int m_chunkindex;
+};
+
 class kGUICookieJar;
 
 class kGUI
@@ -3407,14 +3442,26 @@ public:
 	static void TranslatePoints(int nvert,kGUIPoint2 *inpoints,kGUIPoint2 *outpoints,kGUIPoint2 *xlate);
 	static double CalcAngle(double dx,double dy);
 	static int FastHypot(int dx,int dy);
+
+	/* integer coords draws */
 	static void DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha);
 	static bool ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPolyLine(int nvert,kGUIPoint2 *point,kGUIColor c);
-	static void DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width,double alpha=1.0f);
-	static void DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,int width);
+	static void DrawFatLine(int x1,int y1,int x2,int y2,kGUIColor c,double radius,double alpha=1.0f);
+	static void DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
+
+	/* double coord draws, anti-aliased edges */
+
+	static bool DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double alpha=1.0f);
+	static void DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha=1.0f);
+	static void DrawPolyLine(int nvert,kGUIDPoint2 *point,kGUIColor c);
+	static void DrawFatLine(double x1,double y1,double x2,double y2,kGUIColor c,double radius,double alpha=1.0f);
+	static void DrawFatPolyLine(unsigned int nvert,kGUIDPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
+
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIPoint2 *point);
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIDPoint2 *point);
+
 
 	/* filehandling and bigfile entry points */
 	static void FileDelete(const char *filename);
@@ -3563,6 +3610,8 @@ public:
 	static kGUIString *GetString(unsigned int num) {return &m_strings[num];}
 
 	static kGUIObj *m_forcecurrentobj;
+	/* current clip corners */
+	static kGUICorners m_clipcorners;
 private:
 	static kGUISystem *m_sys;
 	static kGUIDrawSurface *m_currentsurface;
@@ -3627,8 +3676,6 @@ private:
 	/* dirty zone array variables */
 	static int m_dirtyindex;
 	static kGUICorners m_dirtycorners[MAXDIRTY];
-	/* current clip corners */
-	static kGUICorners m_clipcorners;
 	/* clip stack */
 	static int m_clipindex;
 
@@ -3659,6 +3706,8 @@ private:
 	static char *m_imagesizefilename;
 	static Hash m_imagesizehash;
 	static Array<kGUIPoint2>m_fatpoints;
+	static Array<kGUIDPoint2>m_dfatpoints;
+	static kGUISubPixelCollector m_subpixcollector;
 
 	static bool m_trace;
 	static kGUICallBack m_inputcallback;

@@ -142,6 +142,8 @@ kGUIDrawSurface kGUI::m_screensurface;
 kGUIDrawSurface *kGUI::m_currentsurface;
 
 Array<kGUIPoint2>kGUI::m_fatpoints;
+Array<kGUIDPoint2>kGUI::m_dfatpoints;
+kGUISubPixelCollector kGUI::m_subpixcollector;
 
 kGUICallBack kGUI::m_inputcallback;
 kGUISkin *kGUI::m_skin;
