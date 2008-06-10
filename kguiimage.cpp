@@ -37,6 +37,7 @@
 #define XMD_H
 extern "C" {
 #undef FAR
+#define HAVE_BOOLEAN
 #include "jpeglib.h"
 #include "png.h"
 }
