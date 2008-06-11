@@ -541,10 +541,10 @@ long kGUISystemBig::FileTime(const char *fn)
 #endif
 }
 
-unsigned char *kGUI::LoadFile(const char *filename,long *filesize)
+unsigned char *kGUI::LoadFile(const char *filename,unsigned long *filesize)
 {
 	unsigned char *fm;
-	long long fs;
+	unsigned long fs;
 	DataHandle dh;
 
 	if(filesize)
@@ -556,7 +556,7 @@ unsigned char *kGUI::LoadFile(const char *filename,long *filesize)
 		return(0);	/* file not found or empty file */
 	}
 
-	fs=dh.GetSize();
+	fs=dh.GetLoadableSize();
 	/* allocate space for file to load info */
 	fm=new unsigned char[fs+1];
 	if(!fm)

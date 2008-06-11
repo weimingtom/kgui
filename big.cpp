@@ -203,7 +203,7 @@ unsigned long BigFile::CrcBuffer(long startcrc,const unsigned char *buf,unsigned
 bool BigFile::CheckDuplicate(DataHandle *af)
 {
 	unsigned long crc;
-	unsigned long fs;
+	unsigned long long fs;
 	int e,nums;
 	HashEntry *she;
 	BigFileEntry *sfe;
@@ -222,8 +222,8 @@ bool BigFile::CheckDuplicate(DataHandle *af)
 	/* read remainder */
 	if(fs>0)
 	{
-		af->Read(crcbuf,fs);
-		crc=CrcBuffer(crc,crcbuf,fs);
+		af->Read(crcbuf,(unsigned long)fs);
+		crc=CrcBuffer(crc,crcbuf,(unsigned long)fs);
 	}
 	af->Close();
 	fs=af->GetSize();
@@ -251,7 +251,7 @@ bool BigFile::AddFile(const char *fn,DataHandle *af,bool updatedir)
 	DataHandle section;
 	DIRINFO_DEF di;
 	char *dirblock;
-	unsigned long asize=af->GetSize();
+	unsigned long asize=af->GetLoadableSize();
 	long ft=af->GetTime();
 	unsigned long wasize;
 

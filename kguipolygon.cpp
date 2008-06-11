@@ -54,10 +54,6 @@ from "Graphics Gems", Academic Press, 1990
 #include "kgui.h"
 #include <math.h>
 
-#ifndef PI
-#define PI 3.1415926535f
-#endif
-
 #if !defined(max)
 #define max(a, b)	((a) > (b) ? (a) : (b))
 #define min(a, b)	((a) < (b) ? (a) : (b))

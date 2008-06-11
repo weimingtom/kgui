@@ -56,6 +56,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 #define _vsnprintf vsnprintf
 #define stricmp strcasecmp
@@ -67,6 +68,8 @@
 /*******************************************/
 /**************** Windows MinGW ************/
 /*******************************************/
+
+#define _CRT_SECURE_NO_WARNINGS
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
@@ -86,6 +89,8 @@
 #include <shellapi.h>
 #include <winuser.h>
 #include <winbase.h>
+#include <math.h>
+
 #define DIRCHAR "\\"
 #undef WIN32
 
@@ -97,6 +102,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 //mac has a DataHandle so rename ours to avoid a conflict
 #define DataHandle kDataHandle
@@ -113,12 +119,21 @@
 
 #define DIRCHAR "\\"
 
+#define _CRT_SECURE_NO_WARNINGS
 #ifndef WINVER
 #define WINVER 0x0501
 #endif
 
 #include <afxwin.h>
 #define new DEBUG_NEW
+
+#include <math.h>
+
+//stop windows from complaining "The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name" 
+#define stricmp _stricmp
+#define strnicmp _strnicmp
+#define hypot _hypot
+#define fseek _fseeki64
 
 #else
 
@@ -128,6 +143,10 @@
 #endif
 
 #undef assert
+
+#ifndef PI
+#define PI 3.141592653589793f
+#endif
 
 #ifndef min
 #define min(x,y) ((x)>(y)?(y):(x))
@@ -1084,8 +1103,6 @@ public:
 	void Draw(int x,int y,int w,int h,kGUIColor color);
 	void DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight);
 	void DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight,kGUIColor color);
-	void DrawRot(int x,int y,double angle,kGUIColor color) {DrawSectionRot(0,GetLen(),x,x,y,angle,color);}
-	void DrawSectionRot(int sstart,int slen,int sx,int x,int y,double angle,kGUIColor color);
 	void DrawChar(char * src, int x,int y,int w,int h,kGUIColor color);
 	const unsigned int CalcFitWidth(unsigned int sstart,unsigned int slen,const unsigned int maxwidth,unsigned int *pixwidth=0);
 	int CalcLineList(int w);
@@ -1093,6 +1110,11 @@ public:
 	int GetLineNum(unsigned int ypos);
 	int GetLineNumPix(int y);
 	int GetTabWidth(int localx);
+
+	/* these are sub-pixel anti-aliased versions that use the kGUISubPixelCollector class */
+	void DrawRot(double x,double y,double angle,kGUIColor color,double alpha=1.0f) {DrawSectionRot(0,GetLen(),x,y,angle,color,alpha);}
+	void DrawSectionRot(int sstart,int slen,double x,double y,double angle,kGUIColor color,double alpha=1.0f);
+	void DrawChar(char * src, double x,double y,double w,double h,kGUIColor color,double apha);
 
 	kGUIInputLineInfo *GetLineInfo(int line) {return m_linelist.GetEntry(line);}
 	int CalcHeight(int width);	/* return height for a given width */
@@ -3471,7 +3493,7 @@ public:
 	static long FileCRC(const char *filename);
 	static void FileCopy(const char *fromname,const char *toname);
 
-	static unsigned char *LoadFile(const char *filename,long *filesize=0);
+	static unsigned char *LoadFile(const char *filename,unsigned long *filesize=0);
 
 	static void SetInputCallback(void *codeobj,void (*code)(void *)) {m_inputcallback.Set(codeobj,code);}
 
@@ -3612,6 +3634,7 @@ public:
 	static kGUIObj *m_forcecurrentobj;
 	/* current clip corners */
 	static kGUICorners m_clipcorners;
+	static kGUISubPixelCollector m_subpixcollector;
 private:
 	static kGUISystem *m_sys;
 	static kGUIDrawSurface *m_currentsurface;
@@ -3707,7 +3730,6 @@ private:
 	static Hash m_imagesizehash;
 	static Array<kGUIPoint2>m_fatpoints;
 	static Array<kGUIDPoint2>m_dfatpoints;
-	static kGUISubPixelCollector m_subpixcollector;
 
 	static bool m_trace;
 	static kGUICallBack m_inputcallback;

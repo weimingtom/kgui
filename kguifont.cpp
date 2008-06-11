@@ -31,47 +31,7 @@
 #define _WIN32_WINNT 0x0500
 
 #include "kgui.h"
-
-#include <math.h>
-
-#ifndef PI
-#define PI 3.1415926535f
-#endif
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-
-#define MAXQUICKSIZE 24
-
-#define MAXCCACHE 128
-
-class kGUIFace
-{
-	friend class kGUI;
-	friend class kGUIText;
-public:
-	~kGUIFace();
-	int LoadFont(const char *filename);
-	void Purge(void);
-	inline const FT_Face GetFace(void) {return m_ftface;}
-	inline FT_Face *GetFacePtr(void) {return &m_ftface;}
-	int GetCharWidth(unsigned int ch);
-	inline int GetPixHeight(int size) {CalcHeight(size);return m_pixabove[size]+m_pixbelow[size];}
-	inline int GetPixAscHeight(int size) {CalcHeight(size);return m_pixabove[size];}
-	inline int GetPixDescHeight(int size) {CalcHeight(size);return m_pixbelow[size];}
-	inline unsigned int *GetQuickWidths(int size) {if((size)>=MAXQUICKSIZE) return 0;return m_quickwidths[size];}
-	unsigned char *m_memfile;
-	const char *GetName(void) {return m_name.GetString();}
-	void CalcHeight(unsigned int size);
-private:
-	FT_Face m_ftface;
-	kGUIString m_name;
-	int m_pixabove[MAXFONTSIZE];
-	int m_pixbelow[MAXFONTSIZE];
-	unsigned int m_quickwidths[MAXQUICKSIZE][MAXCCACHE];
-	int *m_quickcache[MAXQUICKSIZE][MAXCCACHE];
-};
+#include "kguifont.h"
 
 kGUIFace::~kGUIFace()
 {
@@ -90,46 +50,6 @@ kGUIFace::~kGUIFace()
 	}
 }
 
-class kGUIFontFileInfo
-{
-public:
-	void SetFilename(const char *s) {m_filename.SetString(s);} 
-	void SetFacename(const char *s) {m_facename.SetString(s);} 
-	void SetStyle(const char *s) {m_style.SetString(s);} 
-
-	kGUIString *GetFilename(void) {return &m_filename;}
-	kGUIString *GetFacename(void) {return &m_facename;}
-	kGUIString *GetStyle(void) {return &m_style;}
-private:
-	kGUIString m_filename;
-	kGUIString m_facename;
-	kGUIString m_style;
-};
-
-class kGUIFont
-{
-	friend class kGUI;
-public:
-	static kGUIFace *GetFace(const unsigned int n)	{/*assert(n<m_numfonts,"Error Bad Font Reference");*/return &m_faces[n];}
-	static inline FT_Library GetLibrary(void) {return m_library;}
-
-#if defined(WIN32) || defined(MINGW) 
-	static DWORD m_numreg;			/* number of fonts registered to system (pc only) */
-#elif defined(LINUX) || defined(MACINTOSH)
-#else
-#error
-#endif
-
-private:
-	static FT_Library m_library;    /* the FreeType library */
-	static unsigned int m_numfonts;			/* number of fonts allocated */
-	static kGUIFace m_faces[MAXFONTS]; /* the font faces */
-	static FT_Error m_error;        /* error returned by FreeType? */
-	static kGUIFace *m_lastface;
-	static unsigned int m_lastsize;
-	static ClassArray<kGUIFontFileInfo>m_ffilist;
-	static unsigned int m_ffinumentries;
-};
 
 kGUIFont kguifont;
 
@@ -181,7 +101,7 @@ void kGUI::AddFontDir(const char *path)
 {
 	unsigned int i,n;
 	kGUIDir dir;
-	long fontfilesize;
+	unsigned long fontfilesize;
 	unsigned char *mem;
 	kGUIFontFileInfo *ffi;
 	FT_Face ftface;
@@ -319,7 +239,7 @@ int kGUIFace::LoadFont(const char *filename)
 	int size,glyph_index;	//,above,below,maxabove,maxbelow;
 	int advance;
 	unsigned int c;
-	long fontfilesize;
+	unsigned long fontfilesize;
 
 	/* handle bigfile based fonts */
 	m_memfile=kGUI::LoadFile(filename,&fontfilesize);
@@ -1610,76 +1530,3 @@ done:;
 		kGUI::GetPrintJob()->DrawTextList(size,face->GetName(),nc,&pfclist);
 }
 
-/* draw rotated font */
-
-void kGUIText::DrawSectionRot(int sstart,int slen,int sx,int x,int y,double angle,kGUIColor color)
-{
-	kGUIFace *face=kGUIFont::GetFace(GetFontID());
-	int glyph_index;
-	const unsigned char *t;
-	int font_height,font_above,font_below;
-	FT_Face ftface;
-	int size;
-	FT_Glyph   glyph2;
-	FT_Matrix  matrix;
-	FT_BitmapGlyph  bit;
-	int dx,dy,adv;
-	double advsin,advcos;
-	double fax,fay;	/* rotated font above */
-
-	ftface=face->GetFace();
-	size=GetFontSize();
-	if(!size)
-		return;
-	assert(size>0,"Cannot print size 0\n");
-
-	font_height=face->GetPixHeight(size);
-	font_above = face->GetPixAscHeight(size);
-	font_below = face->GetPixDescHeight(size);
-	kGUI::SelectFont(face,size);
-
-	matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
-	matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
-	matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
-	matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L );
-
-	adv=0;
-	advsin=sin(angle);
-	advcos=cos(angle);
-	fax=sin(angle-(2*PI)*0.025f)*font_above;
-	fay=-(cos(angle-(2*PI)*0.025f)*font_above);
-
-	t=(const unsigned char *)GetString();
-	if(!t)
-		return;
-	t+=sstart;
-	while(t[0] && slen)
-	{
-		/* todo, handle tabs, handle encoding  */
-		glyph_index = FT_Get_Char_Index( ftface, t[0] );
-		if(glyph_index>0)
-		{
-			FT_Load_Glyph(ftface,glyph_index,FT_LOAD_DEFAULT);
-			FT_Get_Glyph( ftface->glyph, &glyph2 );
-			FT_Glyph_Transform( glyph2, &matrix, 0 );
-			FT_Glyph_To_Bitmap( &glyph2, ft_render_mode_normal,0, 1);
-			
-			/* draw to screen using writepixel */
-			bit = (FT_BitmapGlyph)glyph2;
-
-			dx=x+(int)((advcos*adv)+fax);
-			dy=y-(int)((advsin*adv)+fay);
-			DrawChar( (char *)bit->bitmap.buffer,
-						dx + bit->left,
-						dy/*+font_above */ -bit->top,
-						bit->bitmap.width, bit->bitmap.rows,
-						color);
-
-			adv+=ftface->glyph->advance.x >> 6;
-			adv+=m_letterspacing;
-			FT_Done_Glyph(glyph2);
-		}
-		++t;
-		--slen;
-	}
-}
