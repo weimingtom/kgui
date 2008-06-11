@@ -68,7 +68,9 @@ public:
 	/* initialize a new datahandle for the sub-area of this one at the dest class */	
 	void CopyArea(DataHandle *dest,unsigned long offset, unsigned long size,long time);
 
-	long long GetSize(void) {return m_filesize;}
+	unsigned long long GetSize(void) {return m_filesize;}
+	/* if larger than 'loadable' then assert */
+	unsigned long GetLoadableSize(void);
 	long GetTime(void) {return m_filetime;}
 
 	bool Open(void);
@@ -77,8 +79,8 @@ public:
 	unsigned long Read(kGUIString *s,unsigned long numbytes);		/* returns number of bytes read */
 
 	/* these are there to stop the warnings */
-	unsigned long Read(void *dest,long long numbytes) {return(Read(dest,(unsigned long)numbytes));}
-	unsigned long Read(kGUIString *s,long long numbytes) {return(Read(s,(unsigned long)numbytes));}
+	unsigned long Read(void *dest,unsigned long long numbytes) {return(Read(dest,(unsigned long)numbytes));}
+	unsigned long Read(kGUIString *s,unsigned long long numbytes) {return(Read(s,(unsigned long)numbytes));}
 
 	void ReadLine(kGUIString *line);
 	void ReadHtmlString(kGUIString *s);
@@ -86,8 +88,8 @@ public:
 	unsigned char ReadChar(void);
 
 	bool Seek(const char *string);
-	void Seek(long long index);
-	long long GetOffset(void) {return m_offset;}
+	void Seek(unsigned long long index);
+	unsigned long long GetOffset(void) {return m_offset;}
 	bool Eof(void) {return (m_offset==m_filesize);}
 	FILE *GetHandle(void);	/* only valid for filesystem based data */
 
@@ -117,11 +119,11 @@ private:
 	kGUIString m_fn;		/* filename (or bigfilename if in bigfile) */
 	kGUIString m_ufn;		/* unique filename */
 	const unsigned char *m_memory;	/* address of file, only valid for a memory based file */
-	long long m_filesize;		/* size of file */
-	long long m_startoffset;		/* start offset into file, used for bigfiles */
-	long long m_offset;			/* current offset into file */
+	unsigned long long m_filesize;		/* size of file */
+	unsigned long long m_startoffset;		/* start offset into file, used for bigfiles */
+	unsigned long long m_offset;			/* current offset into file */
 	class kGUIProt *m_prot;		/* encryption */
-	long long m_writebufferlen;
+	unsigned long long m_writebufferlen;
 	Array<unsigned char>m_writebuffer;
 
 	static int m_numbigfiles;					/* number of registered bigfiles */

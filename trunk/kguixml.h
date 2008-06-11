@@ -88,7 +88,7 @@ public:
 	const char *CacheName(const char *name);
 private:
 	char *m_fd;
-	long m_filesize;
+	unsigned long m_filesize;
 	unsigned int m_encoding;
 	kGUIXMLItem *m_root;
 	kGUICallBackIntInt m_loadcallback;

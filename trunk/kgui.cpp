@@ -1999,7 +1999,7 @@ void kGUI::FileDelete(const char *filename)
 
 void kGUI::FileCopy(const char *fromname,const char *toname)
 {
-	long fs;
+	unsigned long fs;
 	unsigned char *buf;
 	FILE *cf;
 
@@ -2084,10 +2084,10 @@ long kGUI::FileTime(const char *filename)
 	return(ft);
 }
 
-unsigned char *kGUI::LoadFile(const char *filename,long *filesize)
+unsigned char *kGUI::LoadFile(const char *filename,unsigned long *filesize)
 {
 	unsigned char *fm;
-	long long fs;
+	unsigned long fs;
 	DataHandle dh;
 
 	m_random->AddEntropy(filename,(int)strlen(filename));
@@ -2098,7 +2098,7 @@ unsigned char *kGUI::LoadFile(const char *filename,long *filesize)
 	if(dh.Open()==false)
 		return(0);	/* file not found or empty file */
 	
-	fs=dh.GetSize();
+	fs=dh.GetLoadableSize();
 	/* allocate space for file to load info */
 	fm=new unsigned char[(unsigned long)fs+1];
 	if(!fm)

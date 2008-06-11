@@ -29,7 +29,6 @@
 
 #include "kgui.h"
 #include "kguitsp.h"
-#include <math.h>
 #include <limits.h>
 //only needed for DBL_MAX
 #include <float.h>
@@ -2961,7 +2960,7 @@ long kGUITSP::c_EUC_3D(Node * Na, Node * Nb)
     return (long)(dx * Precision + Na->Pi + Nb->Pi);
 }
 
-#define PI 3.141592
+//#define PI 3.141592
 #define RRR 6378.388
 
 long kGUITSP::c_GEO(Node * Na, Node * Nb)
@@ -3413,7 +3412,7 @@ long kGUITSP::Distance_EUC_3D(Node * Na, Node * Nb)
     return (long)(sqrt(xd * xd + yd * yd + zd * zd) + 0.5);
 }
 
-#define PI 3.141592
+//#define PI 3.141592
 #define RRR 6378.388
 
 long kGUITSP::Distance_GEO(Node * Na, Node * Nb)

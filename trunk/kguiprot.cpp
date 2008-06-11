@@ -144,7 +144,7 @@ bool kGUIProt::LoadSeed(kGUIRandom *r,unsigned int offset)
 		{
 			keystartindex=0;
 			if(!m_keyfile)
-				dh.Seek((long long)0);
+				dh.Seek((unsigned long long)0);
 		}
 	}
 	if(!m_keyfile)

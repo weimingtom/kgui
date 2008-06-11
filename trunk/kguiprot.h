@@ -19,7 +19,7 @@ private:
 	unsigned int m_keystart;
 	unsigned int m_keylen;
 	const char *m_keyfile;
-	long m_keyfilesize;
+	unsigned long m_keyfilesize;
 };
 
 #endif

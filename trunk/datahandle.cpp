@@ -150,6 +150,15 @@ void DataHandle::SetFilename(const char *fn)
 	HandleChanged();
 }
 
+unsigned long DataHandle::GetLoadableSize(void)
+{
+	if(m_filesize>((unsigned long long)1<<32))
+		assert(false,"File is too long to be loaded into memory!");
+
+	return((unsigned long)m_filesize);
+}
+
+
 void DataHandle::SetMemory(void)
 {
 	/* make sure file is closed */
@@ -233,16 +242,18 @@ bool DataHandle::Open(void)
 
 			if(m_prot)	/* is this file encrypted? */
 			{
-				unsigned char *encdata=new unsigned char[m_filesize];
-				long long numread;
+				unsigned long loadablefilesize=GetLoadableSize();
+				unsigned char *encdata;
+				unsigned long numread;
 
-				numread=(long long)fread(encdata,1,m_filesize,m_handle);
-				assert(numread==m_filesize,"Error reading data!");
+				encdata=new unsigned char[loadablefilesize];
+				numread=(unsigned long)fread(encdata,1,loadablefilesize,m_handle);
+				assert(numread==loadablefilesize,"Error reading data!");
 				fclose(m_handle);
 				m_handle=0;
 				
 				/* only handle files less than 2gb size */
-				m_memory=(const unsigned char *)m_prot->Decrypt(encdata,(long)m_filesize);
+				m_memory=(const unsigned char *)m_prot->Decrypt(encdata,(unsigned long)loadablefilesize);
 				delete []encdata;
 				m_offset=0;
 			}
@@ -407,7 +418,7 @@ bool DataHandle::Close(bool error)
 	return(ok);
 }
 
-void DataHandle::Seek(long long index)
+void DataHandle::Seek(unsigned long long index)
 {
 	int sok;
 	assert(m_open==true,"File not open error!");
