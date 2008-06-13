@@ -99,7 +99,7 @@ void kGUIText::DrawSectionRot(int sstart,int slen,double x,double y,double angle
 						(double)bit->bitmap.width, (double)bit->bitmap.rows,
 						color,alpha);
 
-			adv+=ftface->glyph->advance.x >> 6;
+			adv+=ftface->glyph->advance.x/64.0f;
 			adv+=m_letterspacing;
 			FT_Done_Glyph(glyph2);
 		}
