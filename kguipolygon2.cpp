@@ -490,8 +490,8 @@ void kGUISubPixelCollector::SetBounds(double y1,double y2)
 	if(m_topy<kGUI::m_clipcorners.ty)
 		m_topy=kGUI::m_clipcorners.ty;
 	m_bottomy=(int)max(y1,y2)+1;
-	if(m_bottomy>kGUI::m_clipcorners.by)
-		m_bottomy=kGUI::m_clipcorners.by;
+	if(m_bottomy>=kGUI::m_clipcorners.by)
+		m_bottomy=kGUI::m_clipcorners.by-1;
 	list=m_lines.GetArrayPtr();
 	for(y=m_topy;y<=m_bottomy;++y)
 	{
@@ -600,7 +600,7 @@ void kGUISubPixelCollector::Draw(void)
 	kGUIColor *cp;
 
 	lines=m_lines.GetArrayPtr();
-	for(y=m_topy;y<m_bottomy;++y)
+	for(y=m_topy;y<=m_bottomy;++y)
 	{
 		assert(y>=0 && y<kGUI::m_clipcorners.by,"Error!");
 		/* process a raster line */
