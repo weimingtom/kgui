@@ -201,7 +201,7 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 	    	if (xr>(double)m_clipcorners.rx)
 				xr = (double)m_clipcorners.rx;
 	    	if (xl<=xr)
-				m_subpixcollector.AddRect(xl,y,xr-xl,1.0f);
+				m_subpixcollector.AddRect(xl,y,xr-xl,1.0f,1.0f);
 			/* increment edge coords */
 	    	active[j].x += active[j].dx;
 	    	active[j+1].x += active[j+1].dx;
@@ -435,7 +435,7 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 		do
 		{
 			size=min(length,1.0f);
-			m_subpixcollector.AddRect(x,y,size,size);
+			m_subpixcollector.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;
@@ -460,7 +460,7 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 		do
 		{
 			size=min(length,1.0f);
-			m_subpixcollector.AddRect(x,y,size,size);
+			m_subpixcollector.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;
@@ -511,10 +511,10 @@ void kGUISubPixelCollector::SetColor(kGUIColor c,double alpha)
 	m_alpha=alpha;
 }
 
-void kGUISubPixelCollector::AddRect(double x,double y,double w,double h)
+void kGUISubPixelCollector::AddRect(double x,double y,double w,double h,double weight)
 {
 	int ty,by;
-	double rx,weight;
+	double rx,th;
 
 	/* todo, in init code copy clipcorners and make doubles */
 	rx=x+w;
@@ -531,22 +531,22 @@ void kGUISubPixelCollector::AddRect(double x,double y,double w,double h)
 
 	/* is this all on a single line? */
 	if(ty==by)
-		AddChunk(ty,x,rx,h);
+		AddChunk(ty,x,rx,h*weight);
 	else
 	{
 		/* calc weight of top line */
-		weight=(double)(ty+1)-y;
-		AddChunk(ty,x,rx,weight);
-		h-=weight;
+		th=(double)(ty+1)-y;
+		AddChunk(ty,x,rx,weight*th);
+		h-=th;
 
 		/* add full chunks */
 		while(h>=1.0f)
 		{
-			AddChunk(++ty,x,rx,1.0f);
+			AddChunk(++ty,x,rx,weight);
 			h-=1.0f;
 		}
 		if(h>0.0f)
-			AddChunk(++ty,x,rx,h);
+			AddChunk(++ty,x,rx,h*weight);
 	}
 }
 
@@ -619,21 +619,29 @@ void kGUISubPixelCollector::Draw(void)
 				width=chunk->width;
 				crx=(int)(chunk->leftx+width);
 				if(clx==crx)
+				{
 					m_weights[clx]+=width*weight;
+//					assert(m_weights[clx]<=1.0f,"Overflow!");
+				}
 				else
 				{
 					fwidth=1.0f-(chunk->leftx-(double)clx);
 					m_weights[clx]+=fwidth*weight;
+//					assert(m_weights[clx]<=1.01f,"Overflow!");
 					++clx;
 					width-=fwidth;
 					while(width>=1.0f)
 					{
 						m_weights[clx]+=weight;
+//						assert(m_weights[clx]<=1.01f,"Overflow!");
 						width-=1.0f;
 						++clx;
 					}
 					if(width>0.0f)
+					{
 						m_weights[clx]+=width*weight;
+//						assert(m_weights[clx]<1.01f,"Overflow!");
+					}
 				}
 				chunk=chunk->next;
 			}while(chunk);
@@ -644,14 +652,22 @@ void kGUISubPixelCollector::Draw(void)
 			{
 				assert(x>=0 && x<kGUI::m_clipcorners.rx,"Error!");
 
-				weight=m_weights[x]*m_alpha;
-				bweight=1.0f-weight;
+				weight=m_weights[x];
+				if(weight>1.0f)
+					weight=1.0f;
+				weight*=m_alpha;
+				if(weight>0.0f)
+				{
+					bweight=1.0f-weight;
 
-				DrawColorToRGB(*(cp),br,bg,bb);
-				newr=(int)((m_red*weight)+(br*bweight));
-				newg=(int)((m_green*weight)+(bg*bweight));
-				newb=(int)((m_blue*weight)+(bb*bweight));
-				*(cp++)=DrawColor(newr,newg,newb);
+					DrawColorToRGB(*(cp),br,bg,bb);
+					newr=(int)((m_red*weight)+(br*bweight));
+					newg=(int)((m_green*weight)+(bg*bweight));
+					newb=(int)((m_blue*weight)+(bb*bweight));
+					*(cp++)=DrawColor(newr,newg,newb);
+				}
+				else
+					++cp;
 			}
 
 		}
