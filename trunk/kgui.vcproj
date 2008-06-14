@@ -204,6 +204,9 @@ Debug\bintoc kguidata.big kguidata.cpp
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\kguifont2.cpp">
+			</File>
+			<File
 				RelativePath=".\kguigrid.cpp">
 			</File>
 			<File

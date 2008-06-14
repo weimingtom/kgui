@@ -137,7 +137,7 @@ void kGUIText::DrawChar( char * src, double x,double y,double w,double h,kGUICol
 			if(s)
 			{
 				weight=(double)s/255.0f;
-				kGUI::m_subpixcollector.AddRect(cx,cy,weight,weight);
+				kGUI::m_subpixcollector.AddRect(cx,cy,1.0,1.0f,weight);
 			}
 		}
 	}

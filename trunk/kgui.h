@@ -133,7 +133,7 @@
 #define stricmp _stricmp
 #define strnicmp _strnicmp
 #define hypot _hypot
-#define fseek _fseeki64
+//#define fseek _fseeki64
 
 #else
 
@@ -3271,7 +3271,7 @@ public:
 	kGUISubPixelCollector();
 	void SetBounds(double y1,double y2);
 	void SetColor(kGUIColor c,double alpha);
-	void AddRect(double x,double y,double w,double h);
+	void AddRect(double x,double y,double w,double h,double weight);
 	void Draw(void);
 private:
 	void AddChunk(int y,double lx,double rx,double weight);
