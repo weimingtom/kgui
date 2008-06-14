@@ -8,7 +8,7 @@ kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistrin
 kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp \
 kguibutton.cpp kguicombo.cpp kguicontrol.cpp kguidivider.cpp kguiinput.cpp \
 kguimenu.cpp kguimcontrol.cpp kguimovie.cpp kguiradio.cpp kguitab.cpp kguitable.cpp kguiwindow.cpp kguitext.cpp \
-kguitick.cpp kguibusy.cpp kguimutex.cpp kguicookies.cpp kguiskin.cpp kguimovieplugin.cpp kguifont2.cpp
+kguitick.cpp kguibusy.cpp kguimutex.cpp kguicookies.cpp kguiskin.cpp kguimovieplugin.cpp kguipolygon2.cpp kguifont2.cpp
 
 FIXDEP_SRC=fixdep.cpp
 
