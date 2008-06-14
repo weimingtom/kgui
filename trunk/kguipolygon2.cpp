@@ -328,7 +328,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIDPoint2 *point,kGUIColor c,dou
 			len=hypot(p1->y-p2->y,p1->x-p2->x);
 			h=(lastheading+(PI/2));
 			hdelta=Diff(heading,lastheading);
-			numcp=min(MAXENDPOINTS,(int)abs(hdelta*radius*0.35f)+3);			/* number of points inserted  for the curve curved points */
+			numcp=min(MAXENDPOINTS,abs((int)(hdelta*radius*0.35f))+3);			/* number of points inserted  for the curve curved points */
 			step=hdelta/(numcp-1);
 
 			/* is this an inside or outside angle? */
@@ -418,12 +418,12 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 	dx=x2-x1;
 	dy=y2-y1;
 
-	if(abs(dx)>abs(dy))
+	if(fabs(dx)>fabs(dy))
 	{
 		double x,stepx;
-		double stepy=dy/abs(dx);
+		double stepy=dy/fabs(dx);
 		double y;
-		double length=abs(dx);
+		double length=fabs(dx);
 		double size;
 
 		if(dx>0.0f)
@@ -444,9 +444,9 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 	else
 	{
 		double y,stepy;
-		double stepx=(double)dx/(double)abs(dy);
+		double stepx=(double)dx/(double)fabs(dy);
 		double x;
-		double length=abs(dy);
+		double length=fabs(dy);
 		double size;
 
 		if(dy>0)

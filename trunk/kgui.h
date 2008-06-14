@@ -1114,7 +1114,7 @@ public:
 	/* these are sub-pixel anti-aliased versions that use the kGUISubPixelCollector class */
 	void DrawRot(double x,double y,double angle,kGUIColor color,double alpha=1.0f) {DrawSectionRot(0,GetLen(),x,y,angle,color,alpha);}
 	void DrawSectionRot(int sstart,int slen,double x,double y,double angle,kGUIColor color,double alpha=1.0f);
-	void DrawChar(char * src, double x,double y,double w,double h,kGUIColor color,double apha);
+	void DrawChar(char * src, double x,double y,int w,int h,kGUIColor color,double apha);
 
 	kGUIInputLineInfo *GetLineInfo(int line) {return m_linelist.GetEntry(line);}
 	int CalcHeight(int width);	/* return height for a given width */

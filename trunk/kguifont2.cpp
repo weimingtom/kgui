@@ -96,7 +96,7 @@ void kGUIText::DrawSectionRot(int sstart,int slen,double x,double y,double angle
 			DrawChar( (char *)bit->bitmap.buffer,
 						dx + bit->left,
 						dy -bit->top,
-						(double)bit->bitmap.width, (double)bit->bitmap.rows,
+						bit->bitmap.width, bit->bitmap.rows,
 						color,alpha);
 
 			adv+=ftface->glyph->advance.x/64.0f;
@@ -108,10 +108,11 @@ void kGUIText::DrawSectionRot(int sstart,int slen,double x,double y,double angle
 		kGUI::DrawLine(x+fax,y-fay,x+((advcos*adv)+fax),y-((advsin*adv)+fay),color,alpha);
 }
 
-void kGUIText::DrawChar( char * src, double x,double y,double w,double h,kGUIColor color,double alpha)
+void kGUIText::DrawChar( char * src, double x,double y,int w,int h,kGUIColor color,double alpha)
 {
+	int ix,iy;
 	double cx,cy;
-	double lx,rx,ty,by;
+	double lx,ty,by;
 	unsigned char s;
 	double weight;
 
@@ -123,15 +124,16 @@ void kGUIText::DrawChar( char * src, double x,double y,double w,double h,kGUICol
 
 	lx=x;
 	ty=y;
-	rx=lx+w;
 	by=ty+h;
 
 	kGUI::m_subpixcollector.SetBounds(ty,by);
 	kGUI::m_subpixcollector.SetColor(color,alpha);
 
-	for(cy=ty;cy<by;cy+=1.0f)
+	cy=ty;
+	for(iy=0;iy<h;++iy)
 	{
-		for(cx=lx;cx<rx;cx+=1.0f)
+		cx=lx;
+		for(ix=0;ix<w;++ix)
 		{
 			s=*(src++);
 			if(s)
@@ -139,7 +141,9 @@ void kGUIText::DrawChar( char * src, double x,double y,double w,double h,kGUICol
 				weight=(double)s/255.0f;
 				kGUI::m_subpixcollector.AddRect(cx,cy,1.0,1.0f,weight);
 			}
+			cx+=1.0f;
 		}
+		cy+=1.0f;
 	}
 	kGUI::m_subpixcollector.Draw();
 }
