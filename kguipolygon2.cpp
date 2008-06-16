@@ -126,7 +126,7 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
     int k, i, j;
 	double y, y0,y1,xl,xr;
 	int *ind;	/* list of vertex indices, sorted by pt[ind[j]].y */
-	double height;
+	double rowheight;
 
 	n = nvert;
     pt = point;
@@ -154,8 +154,8 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 	m_subpixcollector.SetColor(c,alpha);
 	m_subpixcollector.SetBounds(y0,y1);
 
-	height=y1-y0;
-	for (y=y0; y<=y1; y+=1.0f,height-=1.0f)
+	y=y0;
+	do
 	{
 		/* step through scanlines */
 
@@ -191,6 +191,8 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 		/* sort active edge list by active[j].x */
 		qsort(active, nact, sizeof active[0], compare_active);
 
+		rowheight=0.1f;	//min(pt[ind[k]].y-y,1.0f);
+
 		/* draw horizontal segments for scanline y */
 		for (j=0; j<nact; j+=2)
 		{ /* draw horizontal segments */
@@ -204,12 +206,13 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 	    	if (xr>m_clipcornersd.rx)
 				xr = m_clipcornersd.rx;
 	    	if (xl<=xr)
-				m_subpixcollector.AddRect(xl,y,xr-xl,min(height,1.0f),1.0f);
+				m_subpixcollector.AddRect(xl,y,xr-xl,rowheight,1.0f);
 			/* increment edge coords */
-	    	active[j].x += active[j].dx;
-	    	active[j+1].x += active[j+1].dx;
+	    	active[j].x += active[j].dx*rowheight;
+	    	active[j+1].x += active[j+1].dx*rowheight;
 		  }
-    }
+		y+=rowheight;
+    }while(y<y1);
 	delete ind;
 	delete active;
 	m_subpixcollector.Draw();
