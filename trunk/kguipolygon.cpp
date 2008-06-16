@@ -597,7 +597,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 
 		heading+=PI;	/* go back 180 degrees */
 	}
-	assert(numout<(MAXENDPOINTS*nvert),"Not enough allocated error!");
+	assert(numout<=(MAXENDPOINTS*nvert*2),"Not enough allocated error!");
 	op=m_fatpoints.GetArrayPtr();
 	if(alpha==1.0f)
 		DrawPoly(numout,op,c);
