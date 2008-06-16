@@ -117,7 +117,6 @@ bool kGUITextObj::UpdateInput(void)
 
 /********************************************************************/
 
-
 kGUIScrollTextObj::kGUIScrollTextObj()
 {
 	SetHAlign(FT_CENTER);

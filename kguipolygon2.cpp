@@ -126,11 +126,13 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
     int k, i, j;
 	double y, y0,y1,xl,xr;
 	int *ind;	/* list of vertex indices, sorted by pt[ind[j]].y */
+	double height;
 
 	n = nvert;
     pt = point;
 
-    assert (n>1,"not enough points in polygon!");
+	if(n<2)
+		return;
 	
 	ind=new int[n];
 	active = new Edge[n];
@@ -145,14 +147,15 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (max((double)m_clipcorners.ty, pt[ind[0]].y));
+    y0 = (max(m_clipcornersd.ty, pt[ind[0]].y));
 										/* ymin of polygon */
-    y1 = (min((double)m_clipcorners.by, pt[ind[n-1]].y));
+    y1 = (min(m_clipcornersd.by, pt[ind[n-1]].y));
 										/* ymax of polygon */
 	m_subpixcollector.SetColor(c,alpha);
 	m_subpixcollector.SetBounds(y0,y1);
 
-	for (y=y0; y<=y1; y+=1.0f)
+	height=y1-y0;
+	for (y=y0; y<=y1; y+=1.0f,height-=1.0f)
 	{
 		/* step through scanlines */
 
@@ -194,14 +197,14 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 		/* span 'tween j & j+1 is inside, span tween */
 		/* j+1 & j+2 is outside */
 	    	xl = active[j].x;	/* left end of span */
-	    	if (xl<(double)m_clipcorners.lx)
-				xl = (double)m_clipcorners.lx;
+	    	if (xl<m_clipcornersd.lx)
+				xl = m_clipcornersd.lx;
 	    	xr = active[j+1].x;
 										/* right end of span */
-	    	if (xr>(double)m_clipcorners.rx)
-				xr = (double)m_clipcorners.rx;
+	    	if (xr>m_clipcornersd.rx)
+				xr = m_clipcornersd.rx;
 	    	if (xl<=xr)
-				m_subpixcollector.AddRect(xl,y,xr-xl,1.0f,1.0f);
+				m_subpixcollector.AddRect(xl,y,xr-xl,min(height,1.0f),1.0f);
 			/* increment edge coords */
 	    	active[j].x += active[j].dx;
 	    	active[j+1].x += active[j+1].dx;
@@ -252,7 +255,7 @@ static double Diff(double h1,double h2)
 
 static double Cross(kGUIDPoint2 *p1,kGUIDPoint2 *p2,kGUIDPoint2 *p3)
 {
-	return ( ((double)p2->x - p1->x)*((double)p3->y - p1->y) - ((double)p2->y - p1->y)*((double)p3->x - p1->x) );
+	return ( (p2->x - p1->x)*(p3->y - p1->y) - (p2->y - p1->y)*(p3->x - p1->x) );
 }
 
 /* convert to a polygon then draw using the poly code */
@@ -444,7 +447,7 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 	else
 	{
 		double y,stepy;
-		double stepx=(double)dx/(double)fabs(dy);
+		double stepx=dx/fabs(dy);
 		double x;
 		double length=fabs(dy);
 		double size;
@@ -472,10 +475,22 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 
 /*******************************************************************/
 
+#define DEFGAMMA 2.2f
+
 kGUISubPixelCollector::kGUISubPixelCollector()
 {
+	SetGamma(DEFGAMMA);
 	m_lines.Init(2048,256);
-	m_chunks.Init(8192,256);
+	m_chunks.SetBlockSize(65536);
+}
+
+void kGUISubPixelCollector::SetGamma(double g)
+{
+	unsigned int i;
+
+	/* build a gamma correction table*/
+	for (i=0;i<=256;i++)
+		m_gamma256[256-i]=1.0f-pow((double)i/256.0f, g);
 }
 
 void kGUISubPixelCollector::SetBounds(double y1,double y2)
@@ -516,12 +531,11 @@ void kGUISubPixelCollector::AddRect(double x,double y,double w,double h,double w
 	int ty,by;
 	double rx,th;
 
-	/* todo, in init code copy clipcorners and make doubles */
 	rx=x+w;
-	if(x<(double)kGUI::m_clipcorners.lx)
-		x=(double)kGUI::m_clipcorners.lx;
-	if(rx>(double)kGUI::m_clipcorners.rx)
-		rx=(double)kGUI::m_clipcorners.rx;
+	if(x<kGUI::m_clipcornersd.lx)
+		x=kGUI::m_clipcornersd.lx;
+	if(rx>kGUI::m_clipcornersd.rx)
+		rx=kGUI::m_clipcornersd.rx;
 	if(rx<=x)
 		return;	/* off */
 
@@ -565,13 +579,13 @@ void kGUISubPixelCollector::AddChunk(int y,double lx,double rx,double weight)
 	line=m_lines.GetEntryPtr(lineindex);
 	prev=line->chunk;
 
-	chunk=m_chunks.GetEntryPtr(m_chunkindex++);
+	chunk=(SUBLINEPIX_DEF *)m_chunks.Alloc(sizeof(SUBLINEPIX_DEF));
 	chunk->next=prev;
 	chunk->weight=weight;
 	chunk->leftx=lx;
 	chunk->width=rx-lx;
 
-	if(rx==(double)kGUI::m_clipcorners.rx)
+	if(rx==kGUI::m_clipcornersd.rx)
 		rx-=1.0f;
 
 	line->chunk=chunk;
@@ -595,7 +609,8 @@ void kGUISubPixelCollector::Draw(void)
 	SUBLINE_DEF *lines;
 	SUBLINEPIX_DEF *chunk;
 	int x,y,lx,rx,clx,crx;
-	double m_weights[1024];
+	int gindex;
+	double m_weights[2048];
 	double weight,bweight,width,fwidth;
 	kGUIColor *cp;
 
@@ -650,11 +665,16 @@ void kGUISubPixelCollector::Draw(void)
 			cp=kGUI::GetSurfacePtrC(lx,y);
 			for(x=lx;x<=rx;++x)
 			{
-				assert(x>=0 && x<kGUI::m_clipcorners.rx,"Error!");
-
 				weight=m_weights[x];
-				if(weight>1.0f)
-					weight=1.0f;
+
+				/* ok now do gamma correction */
+				gindex=(int)(weight*256.0f);
+				if(gindex<0)
+					gindex=0;
+				else if(gindex>256)
+					gindex=256;
+				weight=m_gamma256[gindex];
+
 				weight*=m_alpha;
 				if(weight>0.0f)
 				{
