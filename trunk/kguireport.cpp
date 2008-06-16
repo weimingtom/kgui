@@ -1214,6 +1214,7 @@ bool kGUIReport::Print(int startpage,int endpage)
 	kGUIDrawSurface m_rotateddrawsurface;
 	kGUIPrinter *p;
 	bool prerotate;
+	bool rc;
 
 	/* this will draw in one of two modes */
 
@@ -1255,29 +1256,36 @@ bool kGUIReport::Print(int startpage,int endpage)
 	if(!endpage)
 		endpage=m_numgrouppages;
 
-	if(m_printjob->Start(p,GetName(),(endpage+1)-startpage,GetNumCopies(),GetPPI(),GetLeftMargin(),GetRightMargin(),GetTopMargin(),GetBottomMargin(),&m_drawsurface,m_landscape)==false)
-		return(false);
-
-	for(i=startpage;i<=endpage;++i)
+	rc=m_printjob->Start(p,GetName(),(endpage+1)-startpage,GetNumCopies(),GetPPI(),GetLeftMargin(),GetRightMargin(),GetTopMargin(),GetBottomMargin(),&m_drawsurface,m_landscape);
+	if(rc==true)
 	{
-		m_printjob->StartPage();
-		if(m_bitmapmode==false)
-			m_drawsurface.SetPrintJob(m_printjob);
-		DrawPage(i);
-		if(m_bitmapmode==true)
+		for(i=startpage;i<=endpage;++i)
 		{
-			if(prerotate==true)
+			m_printjob->StartPage();
+			if(m_bitmapmode==false)
+				m_drawsurface.SetPrintJob(m_printjob);
+			DrawPage(i);
+			if(m_bitmapmode==true)
 			{
-				m_rotateddrawsurface.UnRotateSurface(&m_drawsurface);
-				m_printjob->PrintSurface(&m_rotateddrawsurface);
+				if(prerotate==true)
+				{
+					m_rotateddrawsurface.UnRotateSurface(&m_drawsurface);
+					m_printjob->PrintSurface(&m_rotateddrawsurface);
+				}
+				else
+					m_printjob->PrintSurface(&m_drawsurface);
 			}
-			else
-				m_printjob->PrintSurface(&m_drawsurface);
+			m_drawsurface.SetPrintJob(0);
+			m_printjob->EndPage();
 		}
-		m_drawsurface.SetPrintJob(0);
-		m_printjob->EndPage();
+		rc=m_printjob->End();
 	}
-	return(m_printjob->End());
+
+	/* if landscape was turned off then put it back on when done */
+	if(prerotate)
+		m_landscape=true;
+
+	return(rc);
 }
 
 void kGUIReport::DrawPage(int grouppage)

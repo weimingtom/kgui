@@ -107,6 +107,7 @@ int kGUI::m_dirtyindex;
 kGUICorners kGUI::m_dirtycorners[MAXDIRTY];
 
 kGUICorners kGUI::m_clipcorners;
+kGUIDCorners kGUI::m_clipcornersd;
 int kGUI::m_clipindex;
 kGUICorners kGUI::m_clipstack[MAXCLIPS];
 int kGUI::m_numevents;
@@ -950,6 +951,11 @@ void kGUI::ResetClip(void)
 	m_clipcorners.rx=w;
 	m_clipcorners.ty=0;
 	m_clipcorners.by=h;
+
+	m_clipcornersd.lx=0.0f;
+	m_clipcornersd.rx=(double)w;
+	m_clipcornersd.ty=0.0f;
+	m_clipcornersd.by=(double)h;
 }
 
 
@@ -972,6 +978,12 @@ void kGUI::SetClip(void)
 		m_clipcorners.rx=w;
 	if(m_clipcorners.by>h)
 		m_clipcorners.by=h;
+
+	/* make copy using doubles for the anti-alias draw code */
+	m_clipcornersd.lx=(double)m_clipcorners.lx;
+	m_clipcornersd.rx=(double)m_clipcorners.rx;
+	m_clipcornersd.ty=(double)m_clipcorners.ty;
+	m_clipcornersd.by=(double)m_clipcorners.by;
 }
 
 kGUIColor *kGUI::Draw(kGUICorners *c)

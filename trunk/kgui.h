@@ -506,6 +506,9 @@ T Array<T>::GetEntry(unsigned int num)
 template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
 {
+	if(num>=m_numentries && m_grow==true)
+		Alloc(num+m_growsize,true);
+
 	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
 	return(m_array+num);
 };
@@ -825,6 +828,20 @@ typedef struct
 	/*! bottom screen y */
 	int by;
 }kGUICorners;
+
+/*! @struct kGUIDCorners
+    @brief screen corners generated from kGUIObj zones (uses doubles not ints) */
+typedef struct
+{
+	/*! left screen x */
+	double lx;	
+	/*! top screen y */
+	double ty;
+	/*! right screen x */
+	double rx;
+	/*! bottom screen y */
+	double by;
+}kGUIDCorners;
 
 /*! @class kGUIDelay
     @brief a simple delay class, can count up or down. Used internally for flashing
@@ -3265,16 +3282,20 @@ typedef struct
 	double leftx,rightx;
 }SUBLINE_DEF;
 
+#include "heap.h"
+
 class kGUISubPixelCollector
 {
 public:
 	kGUISubPixelCollector();
+	void SetGamma(double g);
 	void SetBounds(double y1,double y2);
 	void SetColor(kGUIColor c,double alpha);
 	void AddRect(double x,double y,double w,double h,double weight);
 	void Draw(void);
 private:
 	void AddChunk(int y,double lx,double rx,double weight);
+	double m_gamma256[256+1];
 	double m_red;
 	double m_green;
 	double m_blue;
@@ -3282,7 +3303,8 @@ private:
 	int m_topy;
 	int m_bottomy;
 	Array<SUBLINE_DEF>m_lines;
-	Array<SUBLINEPIX_DEF>m_chunks;
+	Heap m_chunks;
+//	Array<SUBLINEPIX_DEF>m_chunks;
 	int m_chunkindex;
 };
 
@@ -3634,6 +3656,7 @@ public:
 	static kGUIObj *m_forcecurrentobj;
 	/* current clip corners */
 	static kGUICorners m_clipcorners;
+	static kGUIDCorners m_clipcornersd;
 	static kGUISubPixelCollector m_subpixcollector;
 private:
 	static kGUISystem *m_sys;

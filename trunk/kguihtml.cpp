@@ -5292,6 +5292,7 @@ typedef struct
 	kGUIHTMLObj *tagparent;
 	bool skip:1;
 	bool optend:1;
+	bool inserted:1;
 }TAGSTACK_DEF;
 
 #define PopTag() \
@@ -5313,6 +5314,7 @@ typedef struct
 	missingtag.tagparent=tagparent;\
 	missingtag.tagid=tag->tokenid;\
 	missingtag.skip=true;\
+	missingtag.inserted=false;\
 	missingtag.optend=false;\
 	tagstack.SetEntry(numtags++,missingtag);\
 	tag=0;\
@@ -5331,6 +5333,7 @@ typedef struct
 	missingtag.renderparent=renderparent;\
 	missingtag.tagparent=tagparent;\
 	missingtag.tagid=(*(tagptr2))->tokenid;\
+	missingtag.inserted=true;\
 	missingtag.skip=false;\
 	missingtag.optend=true;\
 	renderparent=newobj;\
@@ -7207,7 +7210,7 @@ ignoretext:;
 								CheckTags();
 								if(numtags!=(n-1))
 								{
-									if(closetag.optend==false)
+									if(closetag.optend==false && closetag.inserted==false && closetag.skip==false)
 									{
 										if(printclose==false)
 										{
@@ -7318,6 +7321,7 @@ abortclose:;
 		curtag.renderparent=renderparent;
 		curtag.tagparent=tagparent;
 		curtag.skip=false;
+		curtag.inserted=false;
 		curtag.optend=false;
 
 		SetNoCloseNeeded(false);
