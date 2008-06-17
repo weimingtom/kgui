@@ -523,6 +523,7 @@ void kGUISubPixelCollector::SetColor(kGUIColor c,double alpha)
 	int r,g,b;
 
 	DrawColorToRGB(c,r,g,b);
+	m_color=c;
 	m_red=(double)r;
 	m_green=(double)g;
 	m_blue=(double)b;
@@ -669,7 +670,7 @@ void kGUISubPixelCollector::Draw(void)
 			for(x=lx;x<=rx;++x)
 			{
 				weight=m_weights[x];
-
+#if 0
 				/* ok now do gamma correction */
 				gindex=(int)(weight*256.0f);
 				if(gindex<0)
@@ -677,9 +678,11 @@ void kGUISubPixelCollector::Draw(void)
 				else if(gindex>256)
 					gindex=256;
 				weight=m_gamma256[gindex];
-
+#endif
 				weight*=m_alpha;
-				if(weight>0.0f)
+				if(weight>=1.0f)
+					*(cp++)=m_color;
+				else if(weight>0.0f)
 				{
 					bweight=1.0f-weight;
 

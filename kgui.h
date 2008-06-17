@@ -3296,6 +3296,7 @@ public:
 private:
 	void AddChunk(int y,double lx,double rx,double weight);
 	double m_gamma256[256+1];
+	kGUIColor m_color;
 	double m_red;
 	double m_green;
 	double m_blue;

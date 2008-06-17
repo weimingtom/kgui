@@ -34,6 +34,24 @@ public:
 private:
 };
 
+class GammaHalfBox : public kGUIObj
+{
+public:
+	void Draw(void);
+	bool UpdateInput(void) {return false;}
+private:
+};
+
+
+class GammaTextBox : public kGUIObj
+{
+public:
+	void Draw(void);
+	bool UpdateInput(void) {return false;}
+private:
+};
+
+
 class GammaSample
 {
 public:
@@ -47,6 +65,8 @@ private:
 
 	GammaHorizBox m_hbox;
 	GammaVertBox m_vbox;
+	GammaHalfBox m_hbox2;
+	GammaTextBox m_tbox;
 };
 
 GammaSample *g_GammaSample;
@@ -79,12 +99,20 @@ GammaSample::GammaSample()
 	background->AddObject(&m_gamma);
 
 	m_hbox.SetPos(20,48);
-	m_hbox.SetSize(512,512);
+	m_hbox.SetSize(256,256);
 	background->AddObject(&m_hbox);
 
-	m_vbox.SetPos(40+512,48);
-	m_vbox.SetSize(512,512);
+	m_vbox.SetPos(40+256,48);
+	m_vbox.SetSize(256,256);
 	background->AddObject(&m_vbox);
+
+	m_tbox.SetPos(80+512,48);
+	m_tbox.SetSize(256,256);
+	background->AddObject(&m_tbox);
+
+	m_hbox2.SetPos(120+768,48);
+	m_hbox2.SetSize(256,256);
+	background->AddObject(&m_hbox2);
 
 	m_gamma.SetEventHandler(this,CALLBACKNAME(GammaEvent));
 }
@@ -159,4 +187,33 @@ void GammaVertBox::Draw(void)
 		}
 	}
 	kGUI::m_subpixcollector.Draw();
+}
+
+void GammaTextBox::Draw(void)
+{
+	double x,y;
+	kGUICorners c;
+	kGUIText t;
+
+	GetCorners(&c);
+	kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(255,255,255));
+
+	y=(double)c.ty;
+	x=(double)c.lx;
+	t.SetFontSize(9);
+	t.SetString("Hello World!!!!!!!!!!!");
+	do
+	{
+		t.DrawRot(x,y,0.0f,DrawColor(0,0,0));
+		y+=t.GetHeight();
+		x+=0.25f;
+	}while(y<(double)c.by);
+}
+
+void GammaHalfBox::Draw(void)
+{
+	kGUICorners c;
+
+	GetCorners(&c);
+	kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(128,128,128));
 }
