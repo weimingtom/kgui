@@ -557,7 +557,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 				heading=atan2((double)p1->y-p2->y,(double)p1->x-p2->x);
 			h=(lastheading+(PI/2));
 			hdelta=Diff(heading,lastheading);
-			numcp=min(MAXENDPOINTS,(int)abs(hdelta*radius)+3);			/* number of points inserted  for the curve curved points */
+			numcp=min(MAXENDPOINTS,(int)fabs(hdelta*radius)+3);			/* number of points inserted  for the curve curved points */
 			step=hdelta/(numcp-1);
 
 			/* is this an inside or outside angle? */
