@@ -92,7 +92,7 @@ public:
 	class kGUIPrintJob *AllocPrintJob(void) {kGUIPrintJob *pj;pj=new kGUIPrintJobWin(); return pj;}
 
 	LRESULT Event(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	void CreateHDC(const char *printerName,int numcopies,HDC *hdc);
+	bool CreateHDC(const char *printerName,int numcopies,HDC *hdc);
 private:
 	void GetPrinters(void);
 	int m_mousex;
@@ -982,9 +982,10 @@ void kGUISystemWin::GetPrinters(void)
 int numcopiesreq;		/* num copies asked to print */
 int numcopiessent;		/* num printer per data send ( usually 1 or num asked for ) */
 
-void kGUISystemWin::CreateHDC(const char *printerName,int numcopies,HDC *hdc)
+bool kGUISystemWin::CreateHDC(const char *printerName,int numcopies,HDC *hdc)
 {
 	HANDLE hPrinter;
+	bool ok=false;
 
 	if (OpenPrinter(const_cast<TCHAR*>(printerName),&hPrinter,NULL))
 	{
@@ -1016,11 +1017,13 @@ void kGUISystemWin::CreateHDC(const char *printerName,int numcopies,HDC *hdc)
 				lpPrinterInfo2->pDevMode->dmCopies=1;
 			}
 			*(hdc)=CreateDC(lpPrinterInfo2->pDriverName, lpPrinterInfo2->pPrinterName, NULL, lpPrinterInfo2->pDevMode);
+			ok=true;
 		}
 
 		delete[] lpPrinterInfo2;
 		lpPrinterInfo2=NULL;
 	}
+	return(ok);
 }; 
 
 void kGUISystemWin::GetPrinterInfo(const char *name,int *pw,int *ph,int *ppih,int *ppiv)
@@ -1053,8 +1056,14 @@ bool kGUIPrintJobWin::Start(kGUIPrinter *p,const char *jobname,int numpages,int 
 
 	m_landscape=landscape;
 	m_p=p;
+
+	if(!g_sys->CreateHDC(p->GetName(),numcopies,&m_printerHDC))
+	{
+		m_error=true;
+		return(false);
+	}
+
 	m_error=false;
-	g_sys->CreateHDC(p->GetName(),numcopies,&m_printerHDC);
 	m_pdc.Attach (m_printerHDC);
 
 	::ZeroMemory (&m_pdi, sizeof (DOCINFO));
@@ -1141,6 +1150,7 @@ bool kGUIPrintJobWin::Start(kGUIPrinter *p,const char *jobname,int numpages,int 
 	if(m_pdc.StartDoc (&m_pdi) <= 0)
 	{
 		m_error=true;
+		m_pdc.Detach();
 		return(false);
 	}
 	return(true);
@@ -1364,7 +1374,10 @@ void kGUIPrintJobWin::PrintSurface(kGUIDrawSurface *surface)
 void kGUIPrintJobWin::EndPage(void)
 {
 	if (m_pdc.EndPage ()<=0)
+	{
 		m_error=true;
+		m_pdc.Detach();
+	}
 }
 
 /* false=error, true=ok */
