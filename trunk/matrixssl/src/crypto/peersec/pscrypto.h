@@ -490,12 +490,14 @@ typedef union {
 	fix for MSVC ...evil!
  */
 #ifdef WIN32
+#ifndef __MINGW32__
 #ifdef _MSC_VER
 	#define CONST64(n) n ## ui64
 	typedef unsigned __int64 ulong64;
 #else
 	#define CONST64(n) n ## ULL
 	typedef unsigned long long ulong64;
+#endif
 #endif
 #endif /* WIN32 */
 
