@@ -1902,6 +1902,8 @@ public:
 
 	/* only 8 bits to max 255 pixels, if more is needed then change bitsize on m_xoff */
 	void SetXOffset(unsigned int xoff) {m_xoff=xoff;}
+
+	bool MoveCursorRow(int delta);
 private:
 	CALLBACKGLUEPTR(kGUIInputBoxObj,ScrollMoveRow,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIInputBoxObj,ScrollMoveCol,kGUIEvent)
@@ -1912,7 +1914,6 @@ private:
 	void Changed(void);
 	void PutCursorOnScreen(void);
 	void MoveRow(int delta);
-	bool MoveCursorRow(int delta);
 	void MoveCol(int delta);
 	void CalcLines(bool full);
 	void DeleteSelection(void);
@@ -3121,6 +3122,7 @@ public:
 	virtual void DrawWindow(kGUIWindowObj *obj,kGUICorners *c,int allow,int over)=0;
 	virtual void DrawWindowNoFrame(kGUIWindowObj *obj,kGUICorners *c)=0;
 	virtual void DrawBusy(kGUICorners *c)=0;
+	virtual void DrawBusy2(kGUICorners *c,int offset)=0;
 
 	virtual void GetTabSize(int *expand,int *left,int *right,int *height)=0;
 	virtual void DrawTab(kGUIText *obj,int x,int y,bool current,bool over)=0;
@@ -3310,6 +3312,7 @@ private:
 };
 
 class kGUICookieJar;
+class kGUISSLManager;
 
 class kGUI
 {
@@ -3580,6 +3583,13 @@ public:
 	    @return pointer to the current cookiejar class object */
 	static kGUICookieJar *GetCookieJar(void) {return m_cookiejar;}
 
+	/*! set the global ssl manager object, this is used by the download class,
+	    @param ssl pointer to the sslmanager class object */
+	static void SetSSLManager(kGUISSLManager *sslmanager) {m_sslmanager=sslmanager;}
+	/*! get the global ssl manager object, if null, then none is active
+	    @return pointer to the current sslmanager class object */
+	static kGUISSLManager *GetSSLManager(void) {return m_sslmanager;}
+
 	/*! This needs to be called by threads before they can get exclusive access any of the static kgui functions */
 	static void GetAccess(void);
 	/*! This needs to be called by threads before they can get exclusive access any of the static kgui functions, and only if they got true as a result */
@@ -3759,7 +3769,8 @@ private:
 	static kGUICallBack m_inputcallback;
 	static kGUISkin *m_skin;			/* pointer to current gui skin */
 	static kGUIRandom *m_random;		/* default random number generator */
-	static class kGUICookieJar *m_cookiejar;
+	static kGUICookieJar *m_cookiejar;
+	static kGUISSLManager *m_sslmanager;
 };
 
 class kGUIBitStream
@@ -3805,11 +3816,18 @@ private:
 	Array<T>m_array;
 };
 
+/* bar true = size changes to show progress, bar = false means animates as size stays the same */
 class kGUIBusyRectObj : public kGUIObj
 {
 public:
+	kGUIBusyRectObj() {m_offset=0;m_isbar=true;}
+	void SetIsBar(bool isbar) {m_isbar=isbar;}
+	void Animate(void) {m_offset+=kGUI::GetET();Dirty();}
 	void Draw(void);
 	bool UpdateInput(void) {return true;}
+private:
+	int m_offset;	/* used for animating bar only */
+	bool m_isbar;
 };
 
 

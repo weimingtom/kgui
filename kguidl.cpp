@@ -24,6 +24,8 @@
 #include "kgui.h"
 #include "kguidl.h"
 #include "kguicookies.h"
+#define _WINSOCK2API_
+#include "kguissl.h"
 
 /*! @file kguidl.cpp 
     @brief This is a download class for downloading pages and other assets from the      
@@ -268,6 +270,7 @@ void kGUIDownloadEntry::Download(void)
 	kGUIString cc;
 	kGUIString authorization;
 	kGUICookieJar *jar=kGUI::GetCookieJar();
+	kGUISSL *ssl=0;
 
 	assert(m_dh->GetDataType()!=DATATYPE_UNDEFINED,"No destination format selected, use SetMemory or SetFilename");
 
@@ -337,7 +340,16 @@ again:;
 	}
 	else if(strncmp(fullurl,"https://",8)==0)
 	{
+		kGUISSLManager *sslmanager=kGUI::GetSSLManager();
 		mode=MODE_HTTPS;
+
+		if(!sslmanager)
+		{
+			//cannot do SSL as there is no SSL handler attached, use 
+			//kGUI::SetSSL(); to attach a SLL handler
+			goto done;
+		}
+		ssl=sslmanager->GetSSL();
 		cp=strstr(fullurl+10,"/");
 		if(cp)
 		{
@@ -374,11 +386,6 @@ again:;
 	fflush(stdout);
 #endif
 #if defined(LINUX) || defined(MACINTOSH) || defined(MINGW)
-
-	// secure mode is not yet implemented
-	if(mode==MODE_HTTPS)
-		goto done;
-
 	//printf("aaaa\n");
 	memset((void *)&addr,0,sizeof(addr)) ;   /* zero structure */
 	addr.sin_family = AF_INET ;
@@ -411,34 +418,48 @@ again:;
 		m_gethostmutex.UnLock();
 	//printf("aaaa.2\n");
 	}
-	//printf("bbbb\n");
-	/* get a socket */
-	sock=(int)socket(AF_INET, SOCK_STREAM,0);
-	if(sock<0)
-	{
-		printf("Socket failed!\n");
-		goto done;/* socket failed */
-	}
-	//printf("cccc\n");
-	
-	/* try a few times before giving up */
-	tries=2;
-	do
-	{
-		if(connect(sock,(struct sockaddr *)&addr,sizeof(addr))>=0)
-			break;	/* connected! */
 
-		if(m_abort)
+	// secure mode is not yet implemented
+	if(mode==MODE_HTTPS)
+	{
+		kGUIString ips;
+
+		//SSL wants an IP address in format n.n.n.n
+		ips.SetString(inet_ntoa(addr.sin_addr));
+		if(ssl->Connect(&ips)==false)
 			goto done;
-		if(!tries)
+	}
+	else
+	{
+		//printf("bbbb\n");
+		/* get a socket */
+		sock=(int)socket(AF_INET, SOCK_STREAM,0);
+		if(sock<0)
 		{
-			printf("Connect failed sock=%d, addr=%08x!\n",(int)sock,(int)addr.sin_addr.s_addr);
-			goto done;/* connect failed */
+			//printf("Socket failed!\n");
+			goto done;/* socket failed */
 		}
-		/* sleep a bit and then try again */
-		kGUI::Sleep(1);
-		--tries;
-	}while(1);
+		//printf("cccc\n");
+
+		/* try a few times before giving up */
+		tries=2;
+		do
+		{
+			if(connect(sock,(struct sockaddr *)&addr,sizeof(addr))>=0)
+				break;	/* connected! */
+
+			if(m_abort)
+				goto done;
+			if(!tries)
+			{
+				printf("Connect failed sock=%d, addr=%08x!\n",(int)sock,(int)addr.sin_addr.s_addr);
+				goto done;/* connect failed */
+			}
+			/* sleep a bit and then try again */
+			kGUI::Sleep(1);
+			--tries;
+		}while(1);
+	}
 
 	//printf("Connect ok!\n");
 	/* build the string */
@@ -494,32 +515,48 @@ again:;
 
 	request.Append("\r\n");
 	//printf("request='%s'\n",request.GetString());
+	if(mode==MODE_HTTPS)
+	{
+		if(ssl->Write(request.GetString(),request.GetLen())==false)
+			goto done;
+	}
+	else
+	{
 #if defined(MINGW)
-	if(send(sock,request.GetString(),request.GetLen(),0)!=(int)request.GetLen())
+		if(send(sock,request.GetString(),request.GetLen(),0)!=(int)request.GetLen())
 #elif defined(LINUX) || defined(MACINTOSH)
-	if(write(sock,request.GetString(),request.GetLen())!=(int)request.GetLen())
+		if(write(sock,request.GetString(),request.GetLen())!=(int)request.GetLen())
 #else
 #error
 #endif
-	{
-		printf("HTTP Write error!\n");
-		goto done;
+		{
+			//printf("HTTP Write error!\n");
+			goto done;
+		}
 	}
 
 	/* send post data too if applicable */
 	if(m_post.GetLen() && ignorepost==false)
 	{
+		if(mode==MODE_HTTPS)
+		{
+			if(ssl->Write(m_post.GetString(),m_post.GetLen())==false)
+				goto done;
+		}
+		else
+		{
 #if defined(MINGW)
-		if(send(sock,m_post.GetString(),m_post.GetLen(),0)!=(int)m_post.GetLen())
+			if(send(sock,m_post.GetString(),m_post.GetLen(),0)!=(int)m_post.GetLen())
 #elif defined(LINUX) || defined(MACINTOSH)
-		if(write(sock,m_post.GetString(),m_post.GetLen())!=(int)m_post.GetLen())
+			if(write(sock,m_post.GetString(),m_post.GetLen())!=(int)m_post.GetLen())
 #else
 #error
 #endif
-		{
-			printf("HTTP Post Write error!\n");
-			fflush(stdout);
-			goto done;
+			{
+				//printf("HTTP Post Write error!\n");
+				//fflush(stdout);
+				goto done;
+			}
 		}
 	}
 
@@ -527,15 +564,26 @@ again:;
 	got.Clear();
 	do
 	{
+		if(mode==MODE_HTTPS)
+		{
+			b=ssl->Read(filedata,sizeof(filedata));
+			if(b<0)
+				break;
+		}
+		else
+		{
 #if defined(MINGW)
-		b=recv(sock,filedata,sizeof(filedata),0);
+			b=recv(sock,filedata,sizeof(filedata),0);
+			if(b<=0)
+				break;
 #elif defined(LINUX) || defined(MACINTOSH)
-		b=read(sock,filedata,sizeof(filedata));
+			b=read(sock,filedata,sizeof(filedata));
+			if(b<=0)
+				break;
 #else
 #error
 #endif
-		if(b<=0)
-			break;
+		}
 		got.Append(filedata,b);
 	}while(1);
 	//printf("got='%s'\n",got.GetString());
@@ -955,6 +1003,14 @@ rcerror:		m_errorpage.SetString(got.GetString()+b,got.GetLen()-b);
 
 done:;
 #if defined(MINGW) || defined(LINUX) || defined(MACINTOSH)
+	//close sock???
+
+	if(ssl)
+	{
+		if(ssl->IsOpen())
+			ssl->Close();
+		delete ssl;
+	}
 #elif defined(WIN32)
 	if(pFile)
 	{

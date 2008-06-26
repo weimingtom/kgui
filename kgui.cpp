@@ -150,7 +150,8 @@ kGUICallBack kGUI::m_inputcallback;
 kGUISkin *kGUI::m_skin;
 kGUIRandom *kGUI::m_random;
 
-kGUICookieJar *kGUI::m_cookiejar;
+kGUICookieJar *kGUI::m_cookiejar=0;
+kGUISSLManager *kGUI::m_sslmanager=0;
 
 bool kGUI::m_fastdraw;
 
@@ -2304,12 +2305,17 @@ void kGUI::ExtractURL(kGUIString *url,kGUIString *parentbase,kGUIString *parentr
 	unsigned int c;
 	bool isfile;
 	char dirs[]={DIRCHAR};
-
+	bool secure=false;
+	
 	if(!strncmp(url->GetString(),"file://",7))
 		isfile=true;
 	else
+	{
 		isfile=false;
-
+		if(!strncmp(url->GetString(),"https://",8))
+			secure=true;
+	}
+	
 	parentroot->SetString(url);
 	parentbase->SetString(url);
 	l=parentroot->GetLen();
@@ -2330,10 +2336,10 @@ void kGUI::ExtractURL(kGUIString *url,kGUIString *parentbase,kGUIString *parentr
 		{
 			if(parentroot->GetChar(l-1)=='/')
 			{
-				if(l==7)
-				{
+				if(l==7 && secure==false)
 					parentroot->Append("/");		//was "http://www.xxx.com"
-				}
+				else if(l==8 && secure==true)
+					parentroot->Append("/");		//was "https://www.xxx.com"
 				else
 					parentroot->Clip(l);
 				break;

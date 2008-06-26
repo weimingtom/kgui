@@ -312,7 +312,7 @@ bool kGUIInputBoxObj::MoveCursorRow(int delta)
 	if(newline<0)
 		newline=0;
 	else if(newline>=GetNumLines())
-		newline=GetNumLines()-1;
+		newline=max(0,GetNumLines()-1);
 	
 	/* already at top or bottom? */
 	if(newline==line)

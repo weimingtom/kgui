@@ -80,5 +80,8 @@ void kGUIBusyRectObj::Draw(void)
 	kGUICorners c;
 
 	GetCorners(&c);
-	kGUI::GetSkin()->DrawBusy(&c);
+	if(m_isbar==true)
+		kGUI::GetSkin()->DrawBusy(&c);
+	else
+		kGUI::GetSkin()->DrawBusy2(&c,(int)((double)m_offset*(100.0f/TICKSPERSEC)));
 }
