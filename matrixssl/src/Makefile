@@ -17,6 +17,9 @@ E       =
 LIBRARY	= libmatrixssl$(SO)
 STATIC	= libmatrixsslstatic$(A)
 
+#		for linux or mac replace the os/win/win below with this one
+#		os/linux/linux$(O)	\
+
 OBJECTS	= \
 		cipherSuite$(O) \
 		matrixSsl$(O) \
@@ -24,7 +27,7 @@ OBJECTS	= \
 		sslEncode$(O) \
 		sslv3$(O) \
 		os/debug$(O) \
-		os/linux/linux$(O)	\
+		os/win/win$(O)	\
 		crypto/peersec/arc4$(O) \
 		crypto/peersec/base64$(O) \
 		crypto/peersec/des3$(O) \
@@ -69,8 +72,12 @@ endif
 #	Compile options
 #
 SHARED	= -shared
+ifeq ($(findstring MINGW,$(shell uname)),MINGW)
+CFLAGS  = $(DFLAGS) -fPIC -DWIN -I./
+else
 CFLAGS  = $(DFLAGS) -fPIC -DLINUX -I./
 LDFLAGS += -lc -lpthread
+endif
 
 #
 #	Override variables for compilation on Mac OS X (Darwin)
