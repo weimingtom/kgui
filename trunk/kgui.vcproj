@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/o2"
 				Optimization="0"
-				AdditionalIncludeDirectories="jpeg;lpng128;zlib;freetype\include;mysql\include;wiffmpeg;ffmpeg\libavutil;ffmpeg\libavcodec;ffmpeg\libavformat;ffmpeg\libswscale"
+				AdditionalIncludeDirectories="jpeg;lpng128;zlib;freetype\include;matrixssl;mysql\include;wiffmpeg;ffmpeg\libavutil;ffmpeg\libavcodec;ffmpeg\libavformat;ffmpeg\libswscale"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;WINVER=0x500"
 				StringPooling="TRUE"
 				MinimalRebuild="TRUE"
@@ -264,6 +264,9 @@ Debug\bintoc kguidata.big kguidata.cpp
 				RelativePath=".\kguiskin.cpp">
 			</File>
 			<File
+				RelativePath=".\kguissl.cpp">
+			</File>
+			<File
 				RelativePath=".\kguistring.cpp">
 			</File>
 			<File
@@ -363,6 +366,9 @@ Debug\bintoc kguidata.big kguidata.cpp
 			</File>
 			<File
 				RelativePath=".\kguiscript.h">
+			</File>
+			<File
+				RelativePath=".\kguissl.h">
 			</File>
 			<File
 				RelativePath=".\kguistring.h">

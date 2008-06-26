@@ -109,6 +109,7 @@ public:
 	void DrawWindow(kGUIWindowObj *obj,kGUICorners *c,int allow,int over);
 	void DrawWindowNoFrame(kGUIWindowObj *obj,kGUICorners *c);
 	void DrawBusy(kGUICorners *c);
+	void DrawBusy2(kGUICorners *c,int offset);
 	/* tab */
 	void GetTabSize(int *expand,int *left,int *right,int *height);
 	void DrawTab(kGUIText *text,int x,int y,bool current,bool over);

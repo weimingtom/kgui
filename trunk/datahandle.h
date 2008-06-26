@@ -68,6 +68,9 @@ public:
 	/* initialize a new datahandle for the sub-area of this one at the dest class */	
 	void CopyArea(DataHandle *dest,unsigned long offset, unsigned long size,long time);
 
+	/* copy from a different datahandle to memory */
+	void Copy(DataHandle *from);
+
 	unsigned long long GetSize(void) {return m_filesize;}
 	/* if larger than 'loadable' then assert */
 	unsigned long GetLoadableSize(void);
@@ -109,6 +112,9 @@ public:
 	static void AddBig(class BigFile *bf);
 	/* remove bigfile to global scan list */
 	static void RemoveBig(class BigFile *bf);
+
+	/* calc crc for file */
+	long CRC(void);
 private:
 	int m_type;				/* handle or memory based */
 	long m_filetime;		/* filetime */

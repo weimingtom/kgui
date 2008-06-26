@@ -204,6 +204,30 @@ void DataHandle::CopyArea(DataHandle *dest,unsigned long offset, unsigned long s
 	dest->m_prot=m_prot;	/* copy encrtyption model to child */
 }
 
+void DataHandle::Copy(DataHandle *from)
+{
+	unsigned long long i;
+	unsigned long long fs;
+	unsigned char c;
+
+	SetMemory();
+	fs=from->GetSize();
+	if(fs)
+	{
+		from->Open();
+		OpenWrite("wb",fs);
+		for(i=0;i<fs;++i)
+		{
+			from->Read(&c,(unsigned long long)1L);
+			Write(&c,1);
+		}
+		from->Close();
+		Close();
+	}
+}
+
+
+
 bool DataHandle::Open(void)
 {
 	int sok;
@@ -227,6 +251,8 @@ bool DataHandle::Open(void)
 #endif
 		m_offset=0;
 		assert(m_open==false,"Already Open!");
+		assert(m_fn.GetLen(),"No Filename defined!");
+
 		m_handle=fopen(m_fn.GetString(),"rb");
 		if(m_handle)
 		{
@@ -607,4 +633,26 @@ void DataHandle::CopyHandle(DataHandle *from)
 			memcpy(m_writebuffer.GetArrayPtr(),from->m_writebuffer.GetArrayPtr(),m_filesize);
 		}
 	}
+}
+
+long DataHandle::CRC(void)
+{
+	unsigned long long i;
+	unsigned long long fs;
+	long hashcode=0;
+	unsigned char byte;
+
+	if(Open()==false)
+		return(0);
+	fs=GetSize();
+
+	for(i=0;i<fs;++i)
+	{
+		Read(&byte,(unsigned long)1);
+		hashcode=(long)byte^(hashcode<<6);
+		hashcode^=hashcode>>24;
+		hashcode&=0xffffff;
+	}
+	Close();
+	return(hashcode);
 }

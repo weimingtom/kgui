@@ -6007,6 +6007,7 @@ kGUITSP::kGUITSP()
     Heap = 0;
 	BacktrackMove=0;
 
+	m_count=0;
 	m_runs=10;
     Seed = 1;
     MaxTrials = 0;
@@ -6036,6 +6037,8 @@ kGUITSP::kGUITSP()
 
 kGUITSP::~kGUITSP()
 {
+	while(m_thread.GetActive())
+		m_stop=true;
 }
 
 void kGUITSP::Init(int numcoords)
@@ -6045,11 +6048,20 @@ void kGUITSP::Init(int numcoords)
 	m_dimension=numcoords;
 
 	m_numcoords=numcoords;
+	m_curpath.Alloc(m_numcoords);
 	m_bestpath.Alloc(m_numcoords);
 	m_x.Alloc(m_numcoords);
 	m_y.Alloc(m_numcoords);
 	for(i=0;i<m_numcoords;++i)
+	{
 		m_bestpath.SetEntry(i,i);
+		m_curpath.SetEntry(i,i);
+	}
+}
+
+void kGUITSP::AsyncCalc(void)
+{
+	m_thread.Start(this,CALLBACKNAME(Calc));
 }
 
 void kGUITSP::Calc(void)
@@ -6059,13 +6071,17 @@ void kGUITSP::Calc(void)
     long TrialSum, MinTrial, Successes, Run;
     double Cost, CostSum;	//, Time, TimeSum, MinTime;
     Segment *S=0, *SPrev;
-
+#if 1
+	int MoveTypeInc=0;
+	int BacktrackMoveTypeInc=0;
+#endif
+	m_stop=false;
 	/* not enough points? */
 	if(m_numcoords<=2)
 	{
 		for(i=0;i<m_numcoords;++i)
 			m_bestpath.SetEntry(i,i);
-		return;
+		goto done;
 	}
 
     if (!FirstNode)
@@ -6083,7 +6099,8 @@ void kGUITSP::Calc(void)
         N->Z = 0;
     }
     N = FirstNode;
-    do
+
+	do
         if (!N->V && N->Id <= m_dimension)
             break;
     while ((N = N->Suc) != FirstNode);
@@ -6183,7 +6200,8 @@ void kGUITSP::Calc(void)
         BestMove = &kGUITSP::Best5OptMove;
         break;
     }
-    switch (BacktrackMoveType) {
+    switch (BacktrackMoveType)
+	{
     case 2:
         BacktrackMove = &kGUITSP::Backtrack2OptMove;
         break;
@@ -6231,7 +6249,9 @@ void kGUITSP::Calc(void)
 //    TimeSum = 0;
     /* Find a specified number (Runs) of local optima */
 
-	if(m_dimension>40)
+	if(m_thread.GetActive()==true)
+		m_runs=9999999;			/* run till told to stop */
+	else if(m_dimension>40)
 		m_runs=10;
 	else if(m_dimension>25)
 		m_runs=20;
@@ -6239,16 +6259,73 @@ void kGUITSP::Calc(void)
 		m_runs=50;
 	else
 		m_runs=100;
-		
-	for (Run = 1; Run <= m_runs; Run++)
+
+	m_newbest=0;
+	for (Run = 1; (Run <= m_runs) && m_stop==false; Run++,++m_count)
 	{
 //        LastTime = GetTime();
-        Cost = FindTour();      /* using the Lin-Kerninghan heuristics */
+
+#if 1
+		if(++MoveTypeInc==20)
+		{
+			MoveTypeInc=0;
+			switch (++MoveType)
+			{
+			case 2:
+				BestMove = &kGUITSP::Best2OptMove;
+			break;
+			case 3:
+				BestMove = &kGUITSP::Best3OptMove;
+			break;
+			case 4:
+				BestMove = &kGUITSP::Best4OptMove;
+			break;
+			case 5:
+				BestMove = &kGUITSP::Best5OptMove;
+				MoveType=0;
+			break;
+			default:
+				BestMove = &kGUITSP::Best5OptMove;
+			break;
+			}
+		}
+#if 0
+		if(++BacktrackMoveTypeInc==15)
+		{
+			BacktrackMoveTypeInc=0;
+			switch (++BacktrackMoveType)
+			{
+			case 2:
+				BacktrackMove = &kGUITSP::Backtrack2OptMove;
+			break;
+			case 3:
+				BacktrackMove = &kGUITSP::Backtrack3OptMove;
+			break;
+			case 4:
+				BacktrackMove = &kGUITSP::Backtrack4OptMove;
+			break;
+			case 5:
+				BacktrackMove = &kGUITSP::Backtrack5OptMove;
+				BacktrackMoveType=0;
+			break;
+			default:
+				BacktrackMove=0;
+			break;
+			}
+		}
+#endif
+#endif		
+		
+		Cost = FindTour();      /* using the Lin-Kerninghan heuristics */
         if (Cost < BestCost)
 		{
             RecordBestTour();
             BestCost = Cost;
-//            PrintBestTour();
+
+			for(i=0;i<m_numcoords;++i)
+				m_curpath.SetEntry(i,m_besttour[i+1]-1);
+			++m_newbest;
+			//            PrintBestTour();
         }
         /* Update statistics */
         if (Cost > WorstCost)
@@ -6282,6 +6359,8 @@ void kGUITSP::Calc(void)
             }
     //        PrintBestTour();
         }
+
+		/* save current */
     }
     /* Report the resuls */
  //   printf("\nSuccesses/Runs = %ld/%ld \n", Successes, m_runs);
@@ -6311,4 +6390,7 @@ void kGUITSP::Calc(void)
 		m_bestpath.SetEntry(i,m_besttour[i+1]-1);
 
 	FreeStructures();
+done:;
+	if(m_thread.GetActive()==true)
+		m_thread.Close(true);
 }

@@ -350,6 +350,29 @@ void DefSkin::DrawBusy(kGUICorners *c)
 	}
 }
 
+void DefSkin::DrawBusy2(kGUICorners *c,int offset)
+{
+	int x,y;
+	kGUIImage *tm;
+
+	kGUI::PushClip();
+	kGUI::ShrinkClip(c);
+
+	offset=offset%(BUSYBLOCKWIDTH*2+BUSYBLOCKGAP);
+	tm=GetShape(SKIN_WINDOWTOPMIDDLE);
+
+	for(y=c->ty;y<c->by;++y)
+	{
+		for(x=(c->lx-offset);x<c->rx;x+=(BUSYBLOCKWIDTH*2+BUSYBLOCKGAP))
+		{
+			/* draw the top header bar in between */
+			tm->DrawLineRect(0,x,y,x+(BUSYBLOCKWIDTH*2),y+1,true);
+		}
+		++offset;
+	}
+	kGUI::PopClip();
+}
+
 
 #define TABBIGGER 3
 #define TABH 18

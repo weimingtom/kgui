@@ -1,6 +1,8 @@
 #ifndef __KGUITSP__
 #define __KGUITSP__
 
+#include "kguithread.h"
+
 /* The Node structure is used to represent nodes (cities) of the problem */
 
 typedef struct Node {
@@ -71,8 +73,17 @@ public:
 	void Init(int numcoords);
 	void SetCoord(int index,double x,double y) {m_x.SetEntry(index,x);m_y.SetEntry(index,y);}
 	void Calc(void);
+	void AsyncCalc(void);
+	void Stop(void) {m_stop=true;}			/* used to stop search */
 	int GetIndex(int n) {return m_bestpath.GetEntry(n);}
+
+	/* these are to be called to query the current results while it is in async mode */
+	bool GetActive(void) {return m_thread.GetActive();}
+	unsigned int GetCount(void) {return m_count;}
+	int GetNewBest(void) {return m_newbest;}
+	int *GetCurList(void) {return m_curpath.GetArrayPtr();}
 private:
+	CALLBACKGLUE(kGUITSP,Calc);
 	/* heap stuff */
 	void MakeHeap(const long Size);
 	void SiftUp(Node *N);
@@ -195,8 +206,14 @@ private:
 
 	/***********************************/
 
+	unsigned int m_count;
+	kGUIThread m_thread;	/* only used for async */
+
+	bool m_stop;
+	int m_newbest;
 	int m_runs;
 	int m_numcoords;
+	Array<int>m_curpath;
 	Array<int>m_bestpath;
 	Array<double>m_x;
 	Array<double>m_y;

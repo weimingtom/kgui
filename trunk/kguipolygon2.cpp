@@ -613,7 +613,7 @@ void kGUISubPixelCollector::Draw(void)
 	SUBLINE_DEF *lines;
 	SUBLINEPIX_DEF *chunk;
 	int x,y,lx,rx,clx,crx;
-	int gindex;
+	//int gindex;
 	double m_weights[2048];
 	double weight,bweight,width,fwidth;
 	kGUIColor *cp;
