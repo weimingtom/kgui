@@ -30,7 +30,7 @@ private:
 
 #define DLDEBUG 0
 
-class kGUIDownloadEntry //: public DataHandle
+class kGUIDownloadEntry
 {
 public:
 	kGUIDownloadEntry();
@@ -45,7 +45,6 @@ public:
 	bool GetAsyncActive(void) {return m_asyncactive;}
 	void SetURL(kGUIString *url) {m_url.SetString(url);}
 	void SetIfMod(kGUIString *ifmod) {ifmod==0?m_ifmod.Clear():m_ifmod.SetString(ifmod);}
-//	void SetAuthorization(kGUIString *auth) {m_authorization.SetString(auth);};
 	kGUIString *GetURL(void) {return &m_url;}
 	kGUIString *GetExpiry(void) {return &m_expiry;}
 	kGUIString *GetLastModified(void) {return &m_lastmod;}
@@ -53,6 +52,7 @@ public:
 	kGUIString *GetHeader(void) {return &m_header;}
 	kGUIString *GetErrorPage(void) {return &m_errorpage;}
 	unsigned int GetReturnCode(void) {return m_returncode;}
+	bool GetSecure(void) {return m_secure;}
 	void WaitFinished(void);
 	/* this needs to be called before download */
 	void SetReferer(const char *s){m_referer.SetString(s);}
@@ -82,7 +82,7 @@ private:
 	kGUIString m_lastmod;
 	kGUIString m_ifmod;
 	kGUIString m_encoding;
-//	kGUIString m_authorization;
+	bool m_secure:1;
 	unsigned int m_returncode;
 	kGUIString m_errorpage;
 	kGUICallBackInt m_donecallback;

@@ -33,6 +33,7 @@
 
 kGUIControlBoxObj::kGUIControlBoxObj()
 {
+	m_redo=false;
 	m_drawframe=true;
 	m_bgcolor=DrawColor(230,230,230);
 
@@ -179,7 +180,10 @@ void kGUIControlBoxObj::AddObjects(unsigned int num,...)
 	int offx,offy;
 	kGUIObj *obj;
 
-	assert(GetParent()==0,"Control box should not be attached to parent until after child objects have all been added to it!");
+	if(m_redo==false)
+	{
+		assert(GetParent()==0,"Control box should not be attached to parent until after child objects have all been added to it!");
+	}
 	objlist.Alloc(num);
 	va_start(ap, num);
 	for(i=0;i<num;++i)
@@ -216,7 +220,10 @@ void kGUIControlBoxObj::AddObject(kGUIObj *obj)
 {
 	int x,y;
 
-	assert(GetParent()==0,"Control box should not be attached to parent until after child objects have all been added to it!");
+	if(m_redo==false)
+	{
+		assert(GetParent()==0,"Control box should not be attached to parent until after child objects have all been added to it!");
+	}
 
 	AllocSpace(obj->GetZoneW(),obj->GetZoneH(),&x,&y);
 	obj->SetPos(x,y);

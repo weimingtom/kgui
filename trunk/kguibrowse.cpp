@@ -168,6 +168,8 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_forwardimage.SetFilename("_forward.gif");
 	m_reloadimage.SetFilename("_reload.gif");
 	m_reloadimage2.SetFilename("_reload2.gif");
+	m_lockedimage.SetFilename("_locked.gif");
+	m_unlockedimage.SetFilename("_unlocked.gif");
 
 	m_menulabel.SetFontSize(20);
 	m_menulabel.SetFontID(1);
@@ -251,6 +253,13 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_print.SetEventHandler(this,CALLBACKNAME(Print));
 	m_browsecontrols.AddObjects(2,&m_printcaption,&m_print);
 
+	/* the lock showing unsecure / secure mode */
+	m_lock.SetPos(0,15);
+	m_lock.SetImage(&m_unlockedimage);
+	m_lock.SetSize(m_unlockedimage.GetImageWidth(),m_unlockedimage.GetImageHeight());
+	//m_lock.SetHint("Print");
+	m_browsecontrols.AddObjects(1,&m_lock);
+
 	m_urlcaption.SetPos(0,0);
 	m_urlcaption.SetFontSize(SMALLCAPTIONSIZE);
 	m_urlcaption.SetFontID(SMALLCAPTIONFONT);
@@ -258,7 +267,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 
 	m_url.SetString("http://");
 	m_url.SetPos(0,15);
-	m_url.SetSize(800,22);
+	m_url.SetSize(750,22);
 	m_url.SetEventHandler(this,CALLBACKNAME(UrlChanged));
 	m_browsecontrols.AddObjects(2,&m_urlcaption,&m_url);
 	m_browsecontrols.NextLine();
@@ -616,6 +625,10 @@ void kGUIBrowseObj::Goto(void)
 	m_source.SetString(p->GetSource());
 	m_type.SetString(p->GetType());
 	m_header.SetString(p->GetHeader());
+	if(p->GetSecure()==true)
+		m_lock.SetImage(&m_lockedimage);
+	else
+		m_lock.SetImage(&m_unlockedimage);
 
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
 
@@ -912,6 +925,7 @@ void kGUIBrowseObj::PageLoaded(int result)
 		p->SetSource(&m_source);
 		p->SetType(m_dl.GetEncoding());
 		p->SetHeader(m_dl.GetHeader());
+		p->SetSecure(m_dl.GetSecure());
 
 		/* if this was redirected then get the new redirected URL */
 		if(m_dl.GetRedirectURL()->GetLen())

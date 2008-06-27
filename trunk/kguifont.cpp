@@ -241,6 +241,7 @@ int kGUIFace::LoadFont(const char *filename)
 	unsigned int c;
 	unsigned long fontfilesize;
 
+	m_haskerning=false;
 	/* handle bigfile based fonts */
 	m_memfile=kGUI::LoadFile(filename,&fontfilesize);
 	assert(m_memfile!=0,"Couldn't find font!");
@@ -291,6 +292,7 @@ int kGUIFace::LoadFont(const char *filename)
 			}
 		}
 	}
+	m_haskerning = FT_HAS_KERNING( m_ftface )!=0; 
 
 	return(0);	/* ok */
 }
