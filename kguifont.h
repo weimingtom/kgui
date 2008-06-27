@@ -60,6 +60,7 @@ private:
 	int m_pixbelow[MAXFONTSIZE];
 	unsigned int m_quickwidths[MAXQUICKSIZE][MAXCCACHE];
 	int *m_quickcache[MAXQUICKSIZE][MAXCCACHE];
+	bool m_haskerning:1;
 };
 
 class kGUIFontFileInfo

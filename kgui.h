@@ -1807,11 +1807,11 @@ public:
 	kGUIImageRefObj() {m_currentframe=0;m_animate=false;m_animateeventactive=false;m_animdelay=0;m_image=0;m_scalex=1.0f;m_scaley=1.0f;m_alpha=1.0f;}
 	~kGUIImageRefObj();
 	kGUIImage *GetImage(void) {return m_image;}
-	void SetImage(kGUIImage *image) {if(m_image==image) return;m_image=image;m_currentframe=0;m_animdelay=0;}
-	void SetScale(double xscale,double yscale) {m_scalex=xscale;m_scaley=yscale;}
+	void SetImage(kGUIImage *image) {if(m_image==image) return;m_image=image;m_currentframe=0;m_animdelay=0;Dirty();}
+	void SetScale(double xscale,double yscale) {m_scalex=xscale;m_scaley=yscale;Dirty();}
 	double GetScaleX(void) {return m_scalex;}
 	double GetScaleY(void) {return m_scaley;}
-	void SetAlpha(double a) {m_alpha=a;}
+	void SetAlpha(double a) {m_alpha=a;Dirty();}
 
 	unsigned int GetNumFrames(void) {return m_image->GetNumFrames();}
 	void SetAnimate(bool a) {m_animate=a;Dirty();}
@@ -2800,9 +2800,11 @@ public:
 	int GetCurrentY(void) {return m_currenty;}
 	int GetNextY(void) {return m_currenty+m_objectgap+m_objectgap+m_bordergap;}
 	int GetBorderGap(void) {return m_bordergap;}
+	void SetRedo(bool r) {m_redo=r;Dirty();}
 private:
 	void CalcChildZone(void);
 	bool m_drawframe:1;
+	bool m_redo:1;			/* allow objects to be added even if connected */
 	kGUIColor m_bgcolor;
 	int m_currentx;
 	int m_currenty;

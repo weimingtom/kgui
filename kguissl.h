@@ -1,36 +1,26 @@
 #ifndef __KGUISSL__
 #define __KGUISSL__
 
-extern "C" {
-
-#include "matrixssl/MatrixSsl.h"
-#include "matrixssl/examples/sslSocket.h"
-
-}
+/* this is the base class for the SSL handler */
 
 class kGUISSL
 {
 public:
-	kGUISSL(sslKeys_t *keys) {m_keys=keys;m_conn=0;}
-	~kGUISSL() {if(m_conn)Close();}
-	bool Connect(kGUIString *ip);
-	bool Write(const char *buffer,int bytes);
-	int Read(char *buffer,int bytes);
-	void Close(void);
-	bool IsOpen(void) {return m_conn!=0;}
+	virtual ~kGUISSL() {}
+	virtual bool Connect(kGUIString *ip)=0;
+	virtual bool Write(const char *buffer,int bytes)=0;
+	virtual int Read(char *buffer,int bytes)=0;
+	virtual void Close(void)=0;
+	virtual bool IsOpen(void)=0;
 private:
-	sslKeys_t	*m_keys;	/* points to managers keys */
-	sslConn_t	*m_conn;
 };
 
 class kGUISSLManager
 {
 public:
-	kGUISSLManager(const char *cafilename);
-	~kGUISSLManager();
-	kGUISSL *GetSSL(void);
+	virtual ~kGUISSLManager() {}
+	virtual kGUISSL *GetSSL(void)=0;
 private:
-	sslKeys_t	*m_keys;
 };
 
 #endif

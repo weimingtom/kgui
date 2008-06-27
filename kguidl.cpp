@@ -24,7 +24,6 @@
 #include "kgui.h"
 #include "kguidl.h"
 #include "kguicookies.h"
-#define _WINSOCK2API_
 #include "kguissl.h"
 
 /*! @file kguidl.cpp 
@@ -84,6 +83,7 @@ kGUIDownloadEntry::kGUIDownloadEntry()
 	printf("m_debugstate=%d\n",m_debugstate);
 	fflush(stdout);
 #endif
+	m_secure=false;
 	m_dh=0;
 	m_ah=0;		/* authenticate handler */
 	m_allowcookies=true;
@@ -281,6 +281,7 @@ void kGUIDownloadEntry::Download(void)
 	referer.SetString(&m_referer);
 	ifmod.SetString(&m_ifmod);
 
+	m_secure=false;
 	m_newurl.Clear();
 	m_header.Clear();
 	m_expiry.Clear();
@@ -428,6 +429,7 @@ again:;
 		ips.SetString(inet_ntoa(addr.sin_addr));
 		if(ssl->Connect(&ips)==false)
 			goto done;
+		m_secure=true;
 	}
 	else
 	{

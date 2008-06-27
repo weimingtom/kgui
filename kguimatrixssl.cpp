@@ -38,7 +38,7 @@ extern "C" {
 //forward declaration
 int certChecker(sslCertInfo_t *cert, void *arg);
 
-kGUISSLManager::kGUISSLManager(const char *cafilename)
+kGUIMatrixSSLManager::kGUIMatrixSSLManager(const char *cafilename)
 {
 	int rc;
 
@@ -50,20 +50,20 @@ kGUISSLManager::kGUISSLManager(const char *cafilename)
 	}
 }
 
-kGUISSL *kGUISSLManager::GetSSL(void)
+kGUIMatrixSSL *kGUIMatrixSSLManager::GetSSL(void)
 {
-	kGUISSL *ssl;
+	kGUIMatrixSSL *ssl;
 
-	ssl=new kGUISSL(m_keys);
+	ssl=new kGUIMatrixSSL(m_keys);
 	return(ssl);
 }
 
-kGUISSLManager::~kGUISSLManager()
+kGUIMatrixSSLManager::~kGUIMatrixSSLManager()
 {
 	matrixSslFreeKeys(m_keys);
 }
 
-bool kGUISSL::Connect(kGUIString *ip)
+bool kGUIMatrixSSL::Connect(kGUIString *ip)
 {
 	sslSessionId_t		*sessionId=0;
 	short cipherSuite = 0x0000;
@@ -90,7 +90,7 @@ bool kGUISSL::Connect(kGUIString *ip)
 	return(true);
 }
 
-bool kGUISSL::Write(const char *buffer,int bytes)
+bool kGUIMatrixSSL::Write(const char *buffer,int bytes)
 {
 	int rc,status;
 
@@ -111,7 +111,7 @@ bool kGUISSL::Write(const char *buffer,int bytes)
 	}while(1);
 }
 
-int kGUISSL::Read(char *buffer,int bytes)
+int kGUIMatrixSSL::Read(char *buffer,int bytes)
 {
 	int rc,status;
 
@@ -179,7 +179,7 @@ int kGUISSL::Read(char *buffer,int bytes)
 	}
 #endif
 
-void kGUISSL::Close(void)
+void kGUIMatrixSSL::Close(void)
 {
 /*
 		Send a closure alert for clean shutdown of remote SSL connection

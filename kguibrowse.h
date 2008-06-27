@@ -15,7 +15,7 @@
 class PageInfo
 {
 public:
-	PageInfo() {m_input=new Hash();m_input->Init(8,0);}
+	PageInfo() {m_secure=false;m_input=new Hash();m_input->Init(8,0);}
 	~PageInfo() {delete m_input;}
 	void Set(const char *url,const char *post,const char *referer,const char *source,const char *header);
 	void SetSource(kGUIString *source) {m_source.SetString(source);}
@@ -23,7 +23,8 @@ public:
 	void SetTitle(kGUIString *title) {m_title.SetString(title);}
 	void SetURL(kGUIString *url) {m_url.SetString(url);}
 	void SetHeader(kGUIString *header) {m_header.SetString(header);}
-	void Copy(PageInfo *copy) {m_scrolly=copy->m_scrolly;m_title.SetString(&copy->m_title);m_url.SetString(&copy->m_url);m_type.SetString(&copy->m_type);m_referer.SetString(&copy->m_referer);m_post.SetString(&copy->m_post);m_source.SetString(&copy->m_source);m_header.SetString(&copy->m_header);if(m_input)delete m_input;m_input=copy->m_input;copy->m_input=new Hash();copy->m_input->Init(8,0);};
+	void SetSecure(bool s) {m_secure=s;}
+	void Copy(PageInfo *copy) {m_scrolly=copy->m_scrolly;m_title.SetString(&copy->m_title);m_url.SetString(&copy->m_url);m_type.SetString(&copy->m_type);m_referer.SetString(&copy->m_referer);m_post.SetString(&copy->m_post);m_source.SetString(&copy->m_source);m_header.SetString(&copy->m_header);if(m_input)delete m_input;m_input=copy->m_input;copy->m_input=new Hash();copy->m_input->Init(8,0);m_secure=copy->m_secure;};
 
 	kGUIString *GetTitle(void) {return &m_title;}
 	kGUIString *GetURL(void) {return &m_url;}
@@ -32,6 +33,7 @@ public:
 	kGUIString *GetSource(void) {return &m_source;}
 	kGUIString *GetType(void) {return &m_type;}
 	kGUIString *GetHeader(void) {return &m_header;}
+	bool GetSecure(void) {return m_secure;}
 	Hash *GetInput(void) {return m_input;}
 	void SetScrollY(int y) {m_scrolly=y;}
 	int GetScrollY(void) {return m_scrolly;}
@@ -44,7 +46,7 @@ private:
 	kGUIString m_source;
 	kGUIString m_type;
 	kGUIString m_header;	/* we need this incase any stuff is linked in the header */
-	
+	bool m_secure:1;	
 	Hash *m_input;
 };
 
@@ -234,6 +236,10 @@ private:
 
 	kGUITextObj m_printcaption;
 	kGUIButtonObj m_print;
+
+	kGUIImage m_lockedimage;
+	kGUIImage m_unlockedimage;
+	kGUIImageRefObj m_lock;
 
 	kGUITextObj m_urlcaption;
 	kGUIOffsetInputBoxObj m_url;
