@@ -205,7 +205,7 @@ void kGUISystemWin::Init(HINSTANCE hInstance,int nCmdShow)
 #ifdef	DEFSCREENHEIGHT
 	startheight=DEFSCREENHEIGHT;
 #else
-	startheight=fullheight;
+	startheight=fullheight-35;
 #endif
 #ifdef DEFMAXIMAGES
 	maximages=DEFMAXIMAGES;

@@ -1529,7 +1529,7 @@ public:
 	bool DrawAlpha(int frame,int x1,int y1,double alpha);
 	bool TileDraw(int frame,int x1,int y1,int x2,int y2);
 	void DrawLineRect(int frame,int lx,int ty,int rx,int by,bool horiz);
-	void ScaleTo(int w,int h) {SetScale((double)w/(double)m_imagewidth,(double)h/(double)m_imageheight);}
+	void ScaleTo(int w,int h) {SetScale(m_imagewidth==0?1.0f:(double)w/(double)m_imagewidth,m_imageheight==0?1.0f:(double)h/(double)m_imageheight);}
 	void SetScale(double xscale,double yscale) {m_stepx=1.0f/xscale;m_stepy=1.0f/yscale;}
 	double GetScaleX(void) {return 1.0f/m_stepx;}
 	double GetScaleY(void) {return 1.0f/m_stepy;}
@@ -1615,6 +1615,7 @@ public:
 	void Draw(void);
 	bool UpdateInput(void);
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 
 	inline void SetSize(int w,int h) {kGUIObj::SetSize(w,h);Changed();}
 	void SetImage(kGUIImage *image) {m_image=image;MakeDisabledImage(image);Dirty();}
@@ -1656,6 +1657,7 @@ public:
 	bool GetSelected(void) {return m_selected;}
 	void SetLocked(bool l) {m_locked=l;}
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 private:
 	void CallAfterUpdate(void);
 	bool m_selected:1;
@@ -1679,6 +1681,7 @@ public:
 	bool GetSelected(void) {return m_selected;}
 	void SetLocked(bool l) {m_locked=l;}
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 private:
 	void CallAfterUpdate(void);
 	kGUIString *m_hint;
@@ -1772,6 +1775,7 @@ public:
 	void SetDrawModeCrop(void);
 	void UpdateScrollbars(void);
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 private:
 	CALLBACKGLUEPTR(kGUIImageObj,ScrollMoveRow,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIImageObj,ScrollMoveCol,kGUIEvent)
@@ -1874,6 +1878,7 @@ public:
 	void SetInt(int v);
 	void SetLeaveSelection(bool l) {m_leaveselection=l;}
 	void SetAllowUndo(bool u) {m_allowundo=u;}
+	void SetLeaveScroll(bool l) {m_leavescroll=l;}
 
 	void SetInt(const char *v);
 	void SetDouble(const char *f,const char *v);
@@ -1884,6 +1889,7 @@ public:
 	const char *GetValueString(void);
 	void SetWrap(bool w) {m_wrap=w;}
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 
 	void SetLocked(bool l) {m_locked=l;}
 
@@ -1926,6 +1932,7 @@ private:
 	bool m_allowtab:1;
 	bool m_allowcursorexit:1;
 	bool m_leaveselection:1;
+	bool m_leavescroll:1;
 	bool m_usevs:1;
 	bool m_usehs:1;
 	bool m_recalclines:1;
@@ -2025,6 +2032,7 @@ public:
 	kGUIString *GetSelectionStringObj(void);
 	const char *GetSelectionString(void) {return GetSelectionStringObj()->GetString();}
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 	void SetColorMode(unsigned int width);
 	void SetColorBox(unsigned int index,kGUIColor c);
 private:
@@ -2076,6 +2084,7 @@ public:
 	bool GetAllowTyping(void) {return m_allowtyping;}
 
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 	kGUIString *GetHint(void) {return m_hint;}
 
 	void SetColorMode(unsigned int width);
@@ -2166,10 +2175,12 @@ public:
 	void Init(int num, const char **strings, int *nums);
 	void Init(int num, kGUIString *strings, int *nums);
 	void Activate(int x,int y);	/* screen position to pop up at */
+	void SetIconWidth(int w) {m_iconwidth=w;}
 	void SetNumEntries(int n);
 	void SetEntry(int index,kGUIString *entryname,int entryval=-1);
 	void SetEntry(int index,const char *entryname,int entryval=-1);
 	void SetEntryEnable(int index,bool e,bool updatecolor=true);
+	kGUIMenuEntryObj *GetEntry(int index) {return m_poptableentries.GetEntryPtr(index);}
 	int GetWidest(void);
 	void Draw(void) {};
 	bool UpdateInput(void);
@@ -2190,10 +2201,11 @@ private:
 	bool m_isactive:1;
 	int m_numentries;
 	int m_selection;
+	int m_iconwidth;
 	kGUIFontInfo m_fontinfo;
 	int m_popx,m_popy,m_popw,m_poph;	/* popup position */
 	kGUITableObj *m_poptable;		/* use a table for the popup selector */
-	kGUIMenuEntryObj **m_poptableentries;
+	ClassArray<kGUIMenuEntryObj>m_poptableentries;
 };
 
 /*! @class kGUIContainerObj
@@ -2409,8 +2421,8 @@ private:
 class kGUIMenuEntryObj : public kGUITableRowObj
 {
 public:
-	kGUIMenuEntryObj() {m_objptrs[0]=&m_text;SetRowHeight(10);}
-	inline int GetNumObjects(void) {return 1;}
+	kGUIMenuEntryObj() {m_objptrs[0]=&m_icon;m_objptrs[1]=&m_text;SetRowHeight(10);}
+	inline int GetNumObjects(void) {return 2;}
 	kGUIObj **GetObjectList(void) {return m_objptrs;}
 	inline void SetString(const char *t) {m_text.SetString(t);}
 	inline void SetString(kGUIString *t) {m_text.SetString(t);}
@@ -2423,8 +2435,10 @@ public:
 	inline int GetValue(void) {return m_value;}
 	inline int GetHeight(void) {return m_text.GetHeight();}
 	inline int GetWidth(void) {return m_text.GetWidth();}
+	inline kGUIImageObj *GetIconObj(void) {return &m_icon;}
 private:
-	kGUIObj *m_objptrs[1];
+	kGUIObj *m_objptrs[2];
+	kGUIImageObj m_icon;
 	kGUITextObj m_text;
 	int m_value;
 };
@@ -2675,6 +2689,7 @@ public:
 
 	kGUIString *GetSelectionStringObj(unsigned int entry);
 	void SetHint(const char *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
+	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 	void SetColorMode(unsigned int width);
 	void SetColorBox(unsigned int index,kGUIColor c);
 
@@ -2792,6 +2807,7 @@ public:
 	void SetMaxWidth(int mw) {m_maxwidth=mw;}
 	void SetMaxHeight(int mh) {m_maxheight=mh;}
 	void SetBGColor(kGUIColor bgcol) {m_bgcolor=bgcol;Dirty();}
+	void SetDrawBG(bool d) {m_drawbg=d;Dirty();}
 	void SetDrawFrame(bool f) {m_drawframe=f;Dirty();}
 	void Draw(void);
 	bool UpdateInput(void);
@@ -2805,6 +2821,7 @@ private:
 	void CalcChildZone(void);
 	bool m_drawframe:1;
 	bool m_redo:1;			/* allow objects to be added even if connected */
+	bool m_drawbg:1;
 	kGUIColor m_bgcolor;
 	int m_currentx;
 	int m_currenty;
@@ -3520,6 +3537,10 @@ public:
 	static long long FileSize(const char *filename);
 	static long FileCRC(const char *filename);
 	static void FileCopy(const char *fromname,const char *toname);
+
+	/* base64 encode/decode */
+	static unsigned int Base64Decode(unsigned int insize,Array<unsigned char>*in,Array<unsigned char>*out);
+	static unsigned int Base64Encode(unsigned int insize,Array<unsigned char>*in,Array<unsigned char>*out);
 
 	static unsigned char *LoadFile(const char *filename,unsigned long *filesize=0);
 

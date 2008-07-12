@@ -537,7 +537,7 @@ void kGUICookieJar::UpdateCookie(kGUICookie *cookie)
 	m_busymutex.UnLock();
 }
 
-void kGUICookieJar::GetCookies(kGUIString *s,kGUIString *domain,kGUIString *url)
+void kGUICookieJar::GetCookies(kGUIString *s,kGUIString *domain,kGUIString *url,bool issecure)
 {
 	unsigned int i;
 	unsigned int nc;
@@ -582,33 +582,25 @@ void kGUICookieJar::GetCookies(kGUIString *s,kGUIString *domain,kGUIString *url)
 			{
 				if(cookie->GetRemove()==false)
 				{
-					/* now check expiry */
-					if((cookie->GetPermanent()==false) || (cookie->GetExpiry()->GetDiffSeconds(&now)<0))
+					/* skip any 'secure only' cookies if not in secure mode */
+					if((cookie->GetSecure()==false) || (issecure==true))
 					{
-						/* now check path, URLs don't have leading '/', paths Do */
-						pathlen=cookie->GetPath()->GetLen()-1;
-						if(pathlen<=urllen)
+						/* now check expiry */
+						if((cookie->GetPermanent()==false) || (cookie->GetExpiry()->GetDiffSeconds(&now)<0))
 						{
-							if(!strnicmp(url->GetString(),cookie->GetPath()->GetString()+1,pathlen))
+							/* now check path, URLs don't have leading '/', paths Do */
+							pathlen=cookie->GetPath()->GetLen()-1;
+							if(pathlen<=urllen)
 							{
-								/* ok, we have a valid cookie, is it the first? */
-#if 1
-								if(!nc++)
-									s->Append("Cookie: ");
-								else
-									s->Append("; ");
-								s->ASprintf("%s=%s",cookie->GetName()->GetString(),cookie->GetValue()->GetString());
-#else
-								if(!nc++)
-									s->Append("Cookie: $Version=\"1\"; ");
-								else
-									s->Append("; ");
-								s->ASprintf("%s=\"%s\"; $Path=\"%s\"; $Domain=\"%s\"",
-										cookie->GetName()->GetString(),
-										cookie->GetValue()->GetString(),
-										cookie->GetPath()->GetString(),
-										cookie->GetDomain()->GetString());
-#endif
+								if(!strnicmp(url->GetString(),cookie->GetPath()->GetString()+1,pathlen))
+								{
+									/* ok, we have a valid cookie, is it the first? */
+									if(!nc++)
+										s->Append("Cookie: ");
+									else
+										s->Append("; ");
+									s->ASprintf("%s=%s",cookie->GetName()->GetString(),cookie->GetValue()->GetString());
+								}
 							}
 						}
 					}

@@ -1,6 +1,8 @@
 #ifndef __KGUIMATRIXSSL__
 #define __KGUIMATRIXSSL__
 
+#include "kguissl.h"
+
 extern "C" {
 
 #include "matrixssl/MatrixSsl.h"

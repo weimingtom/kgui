@@ -90,11 +90,10 @@ Debug\bintoc _data.big _data.cpp
 				AdditionalOptions="&quot;freetype\objs\freetype2110_D.lib&quot; &quot;jpeg\Release\jpeg.lib&quot;
 &quot;lpng128\projects\visualc71\Win32_LIB_ASM_Debug\libpngd.lib&quot;
 &quot;mysql\lib\opt\mysqlclient.lib&quot;
-libavutil.a
-libavcodec.a
-libavformat.a
-libgcc.a
-libmingwex.a"
+avutil-49.lib 
+avcodec-51.lib 
+avformat-51.lib
+"
 				AdditionalLibraryDirectories="wiffmpeg"
 				IgnoreAllDefaultLibraries="TRUE"
 				IgnoreDefaultLibraryNames="Nafxcw.lib,Libcmt.lib,libc.lib,libcd.lib"/>

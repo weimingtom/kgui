@@ -41,7 +41,7 @@ extern "C" {
 /*
 	OS specific macros
 */
-#if WIN32 || WINCE
+#if WIN32 || WINCE || MINGW
 	#include	<windows.h>
 	#include	<winsock.h>
 	#define		fcntl(A, B, C)

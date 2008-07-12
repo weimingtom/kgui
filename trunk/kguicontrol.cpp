@@ -34,6 +34,7 @@
 kGUIControlBoxObj::kGUIControlBoxObj()
 {
 	m_redo=false;
+	m_drawbg=true;
 	m_drawframe=true;
 	m_bgcolor=DrawColor(230,230,230);
 
@@ -260,10 +261,13 @@ void kGUIControlBoxObj::Draw(void)
 	GetCorners(&c);
 	kGUI::ShrinkClip(&c);
 
-	if(m_drawframe)
-		kGUI::DrawRectFrame(c.lx,c.ty,c.rx,c.by,m_bgcolor,DrawColor(0,0,0));
-	else
-		kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,m_bgcolor);
+	if(m_drawbg)
+	{
+		if(m_drawframe)
+			kGUI::DrawRectFrame(c.lx,c.ty,c.rx,c.by,m_bgcolor,DrawColor(0,0,0));
+		else
+			kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,m_bgcolor);
+	}
 
 	DrawC(0);				/* draw all children */
 	kGUI::PopClip();

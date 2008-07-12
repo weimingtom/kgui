@@ -53,7 +53,7 @@ public:
 	void SetFilename(const char *fn);
 	void SetFilename(kGUIString *fn) {SetFilename(fn->GetString());}
 	void SetMemory(void);	/* write first, then can read from */
-	void SetMemory(const unsigned char *memory,unsigned long filesize);
+	void SetMemory(const void *memory,unsigned long filesize);
 
 	//called whenever the SetFilename or SetMemory is called 
 	virtual void HandleChanged(void) {}
@@ -116,6 +116,7 @@ public:
 	/* calc crc for file */
 	long CRC(void);
 private:
+	kGUIMutex m_openmutex;	/* open mutex */
 	int m_type;				/* handle or memory based */
 	long m_filetime;		/* filetime */
 	bool m_lock;			/* open enable/disable */

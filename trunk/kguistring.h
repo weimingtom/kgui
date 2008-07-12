@@ -15,6 +15,7 @@ ENCODING_UTF8,
 #define TRIM_TAB 2
 #define TRIM_CR 4
 #define TRIM_QUOTES 8
+#define TRIM_NULL 16
 #define TRIM_ALL (TRIM_SPACE|TRIM_TAB|TRIM_CR)
 
 class kGUIString

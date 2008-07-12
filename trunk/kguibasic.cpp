@@ -1831,13 +1831,14 @@ bool kGUIBasic::Compile(kGUIText *source,kGUIString *output)
 								Rewind();
 
 							var=new kGUIBasicVarObj();
-							/* tofix: hmm, if definition error then this is leaked */
+							AddLeak(var);
 							GetVarDef(&varname,var);
 							
 							/* arrays are always passed by reference */
 							if(var->GetIsArray()==true)
 								bymode=BASICTOKEN_BYREF;
 							funcobj->AddParm(varname.GetString(),var,bymode);
+							RemoveLeak(var);
 						}while(1);
 						if(m_tok!=BASICTOKEN_CLOSEBRACKET)
 							basicerror(ERROR_CLOSEBRACKETEXPECTED);
@@ -3990,6 +3991,8 @@ int kGUIBasic::ParseSystemParms(ParmDef *def,CallParms *parms)
 		if(def->GetParmByMode(np)==BASICTOKEN_BYVAL)
 		{
 			var=new kGUIBasicVarObj();
+
+			AddLeak(var);
 			exp_get(var);
 
 			/* make sure type is correct */
@@ -3998,6 +4001,7 @@ int kGUIBasic::ParseSystemParms(ParmDef *def,CallParms *parms)
 				var->ChangeType(vtype);
 
 			parms->AddParm(var,true);
+			RemoveLeak(var);
 		}
 		else
 		{

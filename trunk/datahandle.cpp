@@ -172,13 +172,13 @@ void DataHandle::SetMemory(void)
 	HandleChanged();
 }
 
-void DataHandle::SetMemory(const unsigned char *memory,unsigned long filesize)
+void DataHandle::SetMemory(const void *memory,unsigned long filesize)
 {
 	/* make sure file is closed */
 	assert(m_open==false && m_wopen==false,"Last file needs to be closed before starting a new one!");
 
 	m_type=DATATYPE_MEMORY;
-	m_memory=memory;
+	m_memory=(const unsigned char *)memory;
 	m_offset=0;
 	m_filesize=filesize;
 	m_open=false;
@@ -210,18 +210,20 @@ void DataHandle::Copy(DataHandle *from)
 	unsigned long long fs;
 	unsigned char c;
 
+	m_offset=0;
 	SetMemory();
 	fs=from->GetSize();
 	if(fs)
 	{
 		from->Open();
-		OpenWrite("wb",fs);
+		OpenWrite("wb",(unsigned long)fs);
 		for(i=0;i<fs;++i)
 		{
 			from->Read(&c,(unsigned long long)1L);
 			Write(&c,1);
 		}
 		from->Close();
+		m_filesize=fs;
 		Close();
 	}
 }
@@ -235,8 +237,11 @@ bool DataHandle::Open(void)
 	/* load the file into memory, unencrypt it and feed it */
 	/* from memory, purge when code calls Close() */
 
-	if(m_wopen==true)
-		return(false);	/* cannot open for read, someone is writing to it aleady */
+	if(m_openmutex.TryLock()==false)
+		return(false);
+
+//	if(m_wopen==true)
+//		return(false);	/* cannot open for read, someone is writing to it aleady */
 
 	assert(m_lock==false,"Error: file is locked!");
 	switch(m_type)
@@ -251,7 +256,7 @@ bool DataHandle::Open(void)
 #endif
 		m_offset=0;
 		assert(m_open==false,"Already Open!");
-		assert(m_fn.GetLen(),"No Filename defined!");
+		assert(m_fn.GetLen()!=0,"No Filename defined!");
 
 		m_handle=fopen(m_fn.GetString(),"rb");
 		if(m_handle)
@@ -294,12 +299,18 @@ bool DataHandle::Open(void)
 		m_offset=0;
 	break;
 	}
+	if(m_open==false)
+		m_openmutex.UnLock();
+
 	return(m_open);
 }
 
 bool DataHandle::OpenWrite(const char *wtype,unsigned long defbufsize)		/* write mode string "wb" or "rb+" etc */
 {
 	int sok;
+
+	if(m_openmutex.TryLock()==false)
+		return(false);
 
 	assert(m_lock==false,"Error: file is locked!");
 	assert(m_open==false,"File is already open for read!");
@@ -330,6 +341,8 @@ bool DataHandle::OpenWrite(const char *wtype,unsigned long defbufsize)		/* write
 		m_writebufferlen=0;
 		m_writebuffer.Init(defbufsize,defbufsize>>1);
 	}
+	if(m_wopen==false)
+		m_openmutex.UnLock();
 	return(m_wopen);
 };
 
@@ -372,6 +385,7 @@ FILE *DataHandle::GetHandle(void)
 bool DataHandle::Close(bool error)
 {
 	bool ok=true;
+	bool changed=false;
 
 //	kGUI::Trace("Close %x\n",this);
 	if(m_open==true)
@@ -397,6 +411,7 @@ bool DataHandle::Close(bool error)
 	}
 	else if(m_wopen==true)
 	{
+		changed=true;
 		switch(m_type)
 		{
 		case DATATYPE_MEMORY:
@@ -435,12 +450,14 @@ bool DataHandle::Close(bool error)
 		break;
 		}
 		m_wopen=false;
-		HandleChanged();
 	}
 	else
 	{
 		assert(false,"File is not open for either read or write!");
 	}
+	m_openmutex.UnLock();
+	if(changed)
+		HandleChanged();
 	return(ok);
 }
 

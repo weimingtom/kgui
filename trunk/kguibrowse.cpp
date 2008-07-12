@@ -151,16 +151,22 @@ static const char *mainmenutxt[]={
 
 kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 {
-	m_page.SetSettings(settings);
-	m_page.SetItemCache(settings->GetItemCache());
-	m_page.SetVisitedCache(settings->GetVisitedCache());
-	m_page.SetAuthHandler(&m_ah);
+	m_screenpage.SetSettings(settings);
+	m_screenpage.SetItemCache(settings->GetItemCache());
+	m_screenpage.SetVisitedCache(settings->GetVisitedCache());
+	m_screenpage.SetAuthHandler(&m_ah);
+
+	m_printpage.SetSettings(settings);
+	m_printpage.SetItemCache(settings->GetItemCache());
+	m_printpage.SetVisitedCache(settings->GetVisitedCache());
+	m_printpage.SetAuthHandler(&m_ah);
 
 	m_settings=settings;
 	m_pageindex=0;
 	m_pageend=0;
 	m_numplugins=0;
 	m_plugins.Init(4,4);
+	m_iconvalid=false;
 
 	SetNumGroups(1);
 	SetZone(0,0,w,h);
@@ -304,19 +310,32 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_linkcaption,&m_linkurl);
 
 	/* tell html renderer where to put the link under the mouse */
-	m_page.SetDrawLinkUnder(&m_linkurl);			
+	m_screenpage.SetDrawLinkUnder(&m_linkurl);			
 
 	AddObject(&m_browsecontrols);
 
-	m_page.SetPos(0,m_browsecontrols.GetZoneH());
+	m_screenpage.SetPos(0,m_browsecontrols.GetZoneH());
 	h-=m_browsecontrols.GetZoneH();
-	m_page.SetSize(w,h);
-	m_page.SetClickCallback(this,CALLBACKNAME(Click));
-	m_page.SetIconCallback(&m_url,CALLBACKCLASSNAME(kGUIOffsetInputBoxObj,SetIcon));
-//	m_page.SetStatusLine(&m_status);
-	AddObject(&m_page);
+	m_screenpage.SetSize(w,h);
+	m_screenpage.SetClickCallback(this,CALLBACKNAME(Click));
+//	m_screenpage.SetIconCallback(&m_url,CALLBACKCLASSNAME(kGUIOffsetInputBoxObj,SetIcon));
+	m_screenpage.SetIconCallback(this,CALLBACKNAME(SetIcon));
+	AddObject(&m_screenpage);
 
 	UpdateButtons();
+}
+
+void kGUIBrowseObj::SetIcon(DataHandle *dh)
+{
+	m_icon.Copy(dh);
+	m_iconvalid=m_url.SetIcon(dh);
+
+	if(m_iconvalid==false)
+	{
+		//make it an empty datahandle if image is not valid
+		m_icon.OpenWrite("wb");
+		m_icon.Close();
+	}
 }
 
 void kGUIBrowseObj::ShowMainMenu(kGUIEvent *event)
@@ -336,7 +355,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Page Source '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Page Source '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
@@ -349,9 +368,9 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			kGUIString title;
 			kGUIString correctedsource;
 
-			title.Sprintf("Corrected Page Source '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Corrected Page Source '%s'",m_screenpage.GetTitle()->GetString());
 
-			m_page.GetCorrectedSource(&correctedsource);
+			m_screenpage.GetCorrectedSource(&correctedsource);
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
 								&title,&correctedsource);
@@ -362,7 +381,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Post Data '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Post Data '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
@@ -374,7 +393,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Header '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Header '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
@@ -386,11 +405,11 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Page Scripts '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Page Scripts '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_page.GetScripts());
+								&title,m_screenpage.GetScripts());
 		}
 		break;
 		case MAINMENU_VIEWCSS:
@@ -399,9 +418,9 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			kGUIString title;
 			kGUIString source;
 
-			title.Sprintf("Page CSS '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Page CSS '%s'",m_screenpage.GetTitle()->GetString());
 
-			m_page.GetCSS(&source);
+			m_screenpage.GetCSS(&source);
 			source.Replace("}","}\n");
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
@@ -415,9 +434,9 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			kGUIString title;
 			kGUIString source;
 
-			title.Sprintf("Corrected Page CSS '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Corrected Page CSS '%s'",m_screenpage.GetTitle()->GetString());
 
-			m_page.GetCorrectedCSS(&source);
+			m_screenpage.GetCorrectedCSS(&source);
 			source.Replace("}","}\n");
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
@@ -430,11 +449,11 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Page Errors '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Page Errors '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_page.GetErrors());
+								&title,m_screenpage.GetErrors());
 		}
 		break;
 		case MAINMENU_VIEWMEDIA:
@@ -442,11 +461,11 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 
-			title.Sprintf("Page Media '%s'",m_page.GetTitle()->GetString());
+			title.Sprintf("Page Media '%s'",m_screenpage.GetTitle()->GetString());
 
 			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
 								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_page.GetMedia());
+								&title,m_screenpage.GetMedia());
 		}
 		break;
 		case MAINMENU_VIEWCOOKIES:
@@ -458,10 +477,10 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		}
 		break;
 		case MAINMENU_TRACELAYOUT:
-			m_page.TraceLayout();
+			m_screenpage.TraceLayout();
 		break;
 		case MAINMENU_TRACEDRAW:
-			m_page.TraceDraw();
+			m_screenpage.TraceDraw();
 		break;
 		case MAINMENU_SETTINGS:
 		{
@@ -484,17 +503,24 @@ void kGUIBrowseObj::ShowBookmarks(kGUIEvent *event)
 		/* populate the bookmarks menu */
 		unsigned int i;
 		unsigned int numbookmarks;
+		kGUIImageObj *icon;
 
 		if(m_settings)
 		{
 			numbookmarks=m_settings->GetNumBookmarks();
 			
+			m_bookmarksmenu.SetIconWidth(16);
 			m_bookmarksmenu.Init(numbookmarks+2);
 			m_bookmarksmenu.SetEntry(0,"Bookmark Page",0);
 			m_bookmarksmenu.SetEntry(1,"Edit Bookmarks",1);
 			for(i=0;i<numbookmarks;++i)
+			{
 				m_bookmarksmenu.SetEntry(i+2,m_settings->GetBookmark(i)->GetTitle(),i+2);
-
+				icon=m_bookmarksmenu.GetEntry(i+2)->GetIconObj();
+				icon->Copy(m_settings->GetBookmark(i)->GetIcon());
+				icon->SetSize(16,16);
+				icon->ScaleTo(16,16);
+			}
 			m_bookmarksmenu.Activate(kGUI::GetMouseX(),kGUI::GetMouseY());
 		}
 	}
@@ -518,12 +544,11 @@ void kGUIBrowseObj::DoBookmarks(kGUIEvent *event)
 			
 			p=m_pages+m_pageindex-1;
 			if(p->GetURL()->GetLen())
-				m_settings->AddBookmark(p->GetTitle(),p->GetURL());
+				m_settings->AddBookmark(p->GetTitle(),p->GetURL(),&m_icon);
 		}
 		break;
 		case 1:	/* edit bookmarks */
 		{
-			//todo, open window for editing bookmarks
 			EditBookmarkWindow *ebw;
 
 			ebw=new EditBookmarkWindow(m_settings);
@@ -637,19 +662,20 @@ void kGUIBrowseObj::Goto(void)
 	if(cp)
 		llname.SetString(cp+1);
 
-	m_page.SetTarget(&llname);
-	m_page.SetSource(&m_url,&m_source,&m_type,&m_header);
-	m_page.LoadInput(p->GetInput());			/* overwrite any form inputs with previous input */
-	m_debug.SetString(m_page.GetDebug());
+	m_screenpage.SetTarget(&llname);
+	m_screenpage.SetMedia(GetSettings()->GetScreenMedia());
+	m_screenpage.SetSource(&m_url,&m_source,&m_type,&m_header);
+	m_screenpage.LoadInput(p->GetInput());			/* overwrite any form inputs with previous input */
+	m_debug.SetString(m_screenpage.GetDebug());
 
 	/* only if window currently has vertical scrollbars */
 	/* is there a local link appended to the URL? */
-	if(llname.GetLen() && m_page.GetHasVertScrollBars()==true)
+	if(llname.GetLen() && m_screenpage.GetHasVertScrollBars()==true)
 	{
 		kGUIObj *topobj;
 		int currenty;
 
-		topobj=m_page.LocateLocalLink(&llname);
+		topobj=m_screenpage.LocateLocalLink(&llname);
 		if(topobj)
 		{
 			kGUICorners c1;
@@ -657,19 +683,19 @@ void kGUIBrowseObj::Goto(void)
 
 			/* scroll down to the top object */
 			topobj->GetCorners(&c2);
-			m_page.GetCorners(&c1);
+			m_screenpage.GetCorners(&c1);
 
-			currenty=m_page.GetScrollY();
-			m_page.SetScrollY(currenty+(c2.ty-c1.ty));
+			currenty=m_screenpage.GetScrollY();
+			m_screenpage.SetScrollY(currenty+(c2.ty-c1.ty));
 		}
 	}
 	else
-		m_page.SetScrollY(p->GetScrollY());
-	m_page.Dirty();
+		m_screenpage.SetScrollY(p->GetScrollY());
+	m_screenpage.Dirty();
 
 	/* save title of page so if user right clicks on go forward or goback buttons then ir shows title instead of URL */
-	if(m_page.GetTitle()->GetLen())
-		p->SetTitle(m_page.GetTitle());
+	if(m_screenpage.GetTitle()->GetLen())
+		p->SetTitle(m_screenpage.GetTitle());
 
 	/* tell window to change title */
 	m_pagechangedcallback.Call();
@@ -684,9 +710,9 @@ void kGUIBrowseObj::SaveCurrent(void)
 
 	/* save old scroll position and save user input on the page */
 	p=m_pages+(m_pageindex-1);
-	p->SetScrollY(m_page.GetScrollY());
+	p->SetScrollY(m_screenpage.GetScrollY());
 	if(p->GetInput())
-		m_page.SaveInput(p->GetInput());
+		m_screenpage.SaveInput(p->GetInput());
 }
 
 void kGUIBrowseObj::Click(kGUIString *url,kGUIString *referrer,kGUIString *post)
@@ -720,6 +746,7 @@ void kGUIBrowseObj::Load(void)
 	kGUIString url;
 	const char *cp;
 
+	m_iconvalid=false;
 	m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
 	if(m_dl.GetAsyncActive()==true)
 	{
@@ -751,7 +778,7 @@ void kGUIBrowseObj::Load(void)
 	}
 	else
 	{
-		m_page.SetStatusLine(0);	/* stop page from overwriting */
+		m_screenpage.SetStatusLine(0);	/* stop page from overwriting */
 		m_status.SetString("Loading");
 		m_busyimage.SetAnimate(true);
 
@@ -870,7 +897,23 @@ void kGUIBrowseObj::GoBack(kGUIEvent *event)
 void kGUIBrowseObj::Print(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
-		m_page.Preview();
+	{
+		kGUIString llname;
+		const char *cp;
+
+		/* is there a local link appended to the URL? */
+		cp=strstr(m_url.GetString(),"#");
+		if(cp)
+			llname.SetString(cp+1);
+
+		m_printpage.SetTarget(&llname);
+		m_printpage.SetMedia(GetSettings()->GetPrintMedia());
+		m_printpage.SetSource(&m_url,&m_source,&m_type,&m_header);
+
+		/* todo: copy current input values on forms from screenpage to printpage */
+
+		m_printpage.Preview();
+	}
 }
 
 void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
@@ -914,7 +957,7 @@ void kGUIBrowseObj::PageLoaded(int result)
 
 	m_busyimage.SetAnimate(false);
 	m_status.SetString("Done");
-	m_page.SetStatusLine(&m_status);	/* allow writing again... */
+	m_screenpage.SetStatusLine(&m_status);	/* allow writing again... */
 
 	if(result==DOWNLOAD_OK && m_dh.GetSize())
 	{
@@ -1041,7 +1084,7 @@ void kGUIBrowseObj::RefreshAll(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
-		m_page.FlushCurrentMedia();
+		m_screenpage.FlushCurrentMedia();
 		Load();
 	}
 }
@@ -1277,7 +1320,7 @@ void ViewSettings::DirtyandCalcChildZone(void)
 
 /* add URL to existing bookmarks, if already there then update title and return, else add it */
 
-void kGUIBrowseSettings::AddBookmark(kGUIString *title,kGUIString *url)
+void kGUIBrowseSettings::AddBookmark(kGUIString *title,kGUIString *url,DataHandle *icon)
 {
 	unsigned int i;
 	kGUIBookmark *bookmark;
@@ -1289,6 +1332,7 @@ void kGUIBrowseSettings::AddBookmark(kGUIString *title,kGUIString *url)
 		{
 			/* already exists so just update the title and return */
 			bookmark->SetTitle(title);
+			bookmark->SetIcon(icon);
 			return;
 		}
 	}
@@ -1296,16 +1340,18 @@ void kGUIBrowseSettings::AddBookmark(kGUIString *title,kGUIString *url)
 	bookmark=m_bookmarks.GetEntryPtr(m_numbookmarks++);
 	bookmark->SetTitle(title);
 	bookmark->SetURL(url);
+	bookmark->SetIcon(icon);
 }
 
 /* this is used by the bookmark edit window */
-void kGUIBrowseSettings::UpdateBookmark(unsigned int index,kGUIString *title,kGUIString *url)
+void kGUIBrowseSettings::UpdateBookmark(unsigned int index,kGUIString *title,kGUIString *url,DataHandle *icon)
 {
 	kGUIBookmark *bookmark;
 
 	bookmark=m_bookmarks.GetEntryPtr(index);
 	bookmark->SetTitle(title);
 	bookmark->SetURL(url);
+	bookmark->SetIcon(icon);
 }
 
 /* load browse settings from the XML file */
@@ -1338,8 +1384,10 @@ void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 		SetPrintMedia(item->GetValue());
 
 	kGUIHTMLSettings::Load(group);
-	m_itemcache->Load(group);
-	m_visitedcache->Load(group);
+	if(m_itemcache)
+		m_itemcache->Load(group);
+	if(m_visitedcache)
+		m_visitedcache->Load(group);
 
 	cookiegroup=group->Locate("cookies");
 	jar=kGUI::GetCookieJar();
@@ -1360,6 +1408,32 @@ void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 			bookmark=bookmarks->GetChild(i);
 			be->SetTitle(bookmark->Locate("title")->GetValue());
 			be->SetURL(bookmark->Locate("url")->GetValue());
+			if(bookmark->Locate("icon"))
+			{
+				unsigned int j;
+				unsigned int binarylen;
+				kGUIString *b;
+				Array<unsigned char>base64icon;
+				Array<unsigned char>binaryicon;
+				DataHandle icon;
+
+				/* convert from base64 encoded to binary */
+				icon.SetMemory();
+				b=bookmark->Locate("icon")->GetValue();
+				
+				base64icon.Init(b->GetLen(),1);
+				for(j=0;j<b->GetLen();++j)
+					base64icon.SetEntry(j,b->GetChar(j));
+
+				binarylen=kGUI::Base64Decode(b->GetLen(),&base64icon,&binaryicon);
+
+				icon.SetMemory();
+				icon.OpenWrite("wb",binarylen);
+				icon.Write(binaryicon.GetArrayPtr(),(unsigned long)binarylen);
+				icon.Close();
+
+				be->SetIcon(&icon);
+			}
 		}
 	}
 }
@@ -1388,8 +1462,10 @@ void kGUIBrowseSettings::Save(kGUIXMLItem *root)
 
 	kGUIHTMLSettings::Save(group);
 	
-	m_visitedcache->Save(group);
-	m_itemcache->Save(group);
+	if(m_visitedcache)
+		m_visitedcache->Save(group);
+	if(m_itemcache)
+		m_itemcache->Save(group);
 
 	jar=kGUI::GetCookieJar();
 	if(jar)
@@ -1406,6 +1482,36 @@ void kGUIBrowseSettings::Save(kGUIXMLItem *root)
 		bookmark=bookmarks->AddChild("bookmark");
 		bookmark->AddParm("title",be->GetTitle());
 		bookmark->AddParm("url",be->GetURL());
+
+		if(be->GetIcon()->GetLoadableSize())
+		{
+			unsigned int j;
+			unsigned int binarylen;
+			unsigned int base64len;
+			DataHandle *dh;
+			unsigned char c;
+			kGUIString bs;
+			Array<unsigned char>binaryicon;
+			Array<unsigned char>base64icon;
+			
+			dh=be->GetIcon();
+			binarylen=dh->GetLoadableSize();
+
+			/* fill the binary array */
+			dh->Open();
+			binaryicon.Init(binarylen,1);
+			for(j=0;j<binarylen;++j)
+			{
+				dh->Read(&c,(unsigned long)1L);
+				binaryicon.SetEntry(j,c);
+			}
+			dh->Close();
+			
+			base64len=kGUI::Base64Encode(binarylen,&binaryicon,&base64icon);
+			bs.SetString((const char *)base64icon.GetArrayPtr(),base64len);
+
+			bookmark->AddParm("icon",&bs);
+		}
 	}
 }
 
@@ -1440,7 +1546,7 @@ void kGUIOffsetInputBoxObj::Draw(void)
 	kGUI::PopClip();
 }
 
-void kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
+bool kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
 {
 	unsigned int i;
 	kGUIImage full;
@@ -1496,6 +1602,7 @@ void kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
 	else
 		SetXOffset(0);
 	Dirty();
+	return(m_iconvalid);
 }
 
 void kGUIOffsetInputBoxObj::Animate(void)
@@ -1643,15 +1750,17 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 	m_table.SetAllowAddNewRow(false);
 	m_table.SetEventHandler(this,& CALLBACKNAME(TableEvent));
 
-	m_table.SetNumCols(1);
-	m_table.SetColTitle(0,"Bookmark Title");
-	m_table.SetColWidth(0,(int)(kGUI::GetScreenWidth()*0.75f));
+	m_table.SetNumCols(2);
+	m_table.SetColTitle(1,"Bookmark Title");
+	m_table.SetColWidth(0,16);
+	m_table.SetColWidth(1,(int)(kGUI::GetScreenWidth()*0.75f));
 
 	/* populate table with the bookmarks */
 	for(i=0;i<settings->GetNumBookmarks();++i)
 	{
 		row=new EditBookmarkRow(m_settings->GetBookmark(i)->GetTitle(),
-								m_settings->GetBookmark(i)->GetURL());
+								m_settings->GetBookmark(i)->GetURL(),
+								m_settings->GetBookmark(i)->GetIcon());
 
 		m_table.AddRow(row);
 	}
@@ -1708,7 +1817,7 @@ void EditBookmarkWindow::TableChanged(void)
 	for(i=0;i<n;++i)
 	{
 		row=static_cast<EditBookmarkRow *>(m_table.GetChild(i));
-		m_settings->UpdateBookmark(i,row->GetTitle(),row->GetURL());
+		m_settings->UpdateBookmark(i,row->GetTitle(),row->GetURL(),row->GetIcon());
 	}
 }
 

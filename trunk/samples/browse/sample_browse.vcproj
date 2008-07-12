@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="sample_csvedit"
+	Name="sample_browse"
 	ProjectGUID="{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -32,11 +32,13 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/csvedit.exe"
+				AdditionalOptions="../../matrixssl/src/Debug/libmatrixstatic.lib
+"
+				OutputFile="$(OutDir)/browse.exe"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="LIBCD.lib;LIBC.lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/csvedit.pdb"
+				ProgramDatabaseFile="$(OutDir)/browse.pdb"
 				SubSystem="2"
 				TargetMachine="1"/>
 			<Tool
@@ -79,7 +81,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/csvedit.exe"
+				AdditionalOptions="../../matrixssl/src/Release/libmatrixstatic.lib"
+				OutputFile="$(OutDir)/browse.exe"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames="LIBCD.lib;LIBC.lib"
 				GenerateDebugInformation="TRUE"
@@ -92,7 +95,10 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="..\..\Debug\kguibig _brdata.big big big/
+..\..\Debug\bintoc _brdata.big _brdata.cpp
+"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -120,7 +126,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\csvedit.cpp">
+				RelativePath=".\browse.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -136,9 +142,12 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
-				RelativePath=".\csvedit.rc">
+				RelativePath=".\browse.rc">
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\ReadMe.txt">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -58,17 +58,20 @@ class kGUIBookmark
 public:
 	void SetTitle(kGUIString *t) {m_title.SetString(t);}
 	void SetURL(kGUIString *t) {m_url.SetString(t);}
+	void SetIcon(DataHandle *from) {m_icon.Copy(from);}
 	kGUIString *GetTitle(void) {return &m_title;}
 	kGUIString *GetURL(void) {return &m_url;}
+	kGUIImage *GetIcon(void) {return &m_icon;}
 private:
 	kGUIString m_url;
 	kGUIString m_title;
+	kGUIImage m_icon;
 };
 
 class kGUIBrowseSettings : public kGUIHTMLSettings
 {
 public:
-	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("string");m_printmedia.SetString("print");}
+	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("screen");m_printmedia.SetString("print");}
 	void SetVisitedCache(kGUIHTMLVisitedCache *visitedcache) {m_visitedcache=visitedcache;}
 	kGUIHTMLVisitedCache *GetVisitedCache(void) {return m_visitedcache;}
 	void SetItemCache(kGUIHTMLItemCache *itemcache) {m_itemcache=itemcache;}
@@ -86,8 +89,8 @@ public:
 	unsigned int GetNumBookmarks(void) {return m_numbookmarks;}
 	void SetNumBookmarks(unsigned int n) {m_numbookmarks=n;}
 	kGUIBookmark *GetBookmark(unsigned int index) {return m_bookmarks.GetEntryPtr(index);}
-	void AddBookmark(kGUIString *title,kGUIString *url);
-	void UpdateBookmark(unsigned int index,kGUIString *title,kGUIString *url);
+	void AddBookmark(kGUIString *title,kGUIString *url,DataHandle *icon);
+	void UpdateBookmark(unsigned int index,kGUIString *title,kGUIString *url,DataHandle *icon);
 
 	void SetScreenMedia(kGUIString *m) {m_screenmedia.SetString(m);}
 	kGUIString *GetScreenMedia(void) {return &m_screenmedia;}
@@ -117,7 +120,7 @@ class kGUIOffsetInputBoxObj : public kGUIInputBoxObj
 public:
 	kGUIOffsetInputBoxObj();
 	void Draw(void);
-	void SetIcon(DataHandle *dh);
+	bool SetIcon(DataHandle *dh);
 	CALLBACKGLUEPTR(kGUIOffsetInputBoxObj,SetIcon,DataHandle);
 private:
 	CALLBACKGLUE(kGUIOffsetInputBoxObj,Animate);
@@ -148,28 +151,28 @@ public:
 	/* default page to show, url="", source=passed source */
 	void SetPageSource(kGUIString *s);
 
-	void SetSaveDirectory(const char *dir) {m_page.SetSaveDirectory(dir);}
-	const char *GetSaveDirectory(void) {return m_page.GetSaveDirectory();}
+	void SetSaveDirectory(const char *dir) {m_screenpage.SetSaveDirectory(dir);}
+	const char *GetSaveDirectory(void) {return m_screenpage.GetSaveDirectory();}
 
-	void SetItemCache(kGUIHTMLItemCache *c) {m_page.SetItemCache(c);}
-	void SetVisitedCache(kGUIHTMLVisitedCache *v) {m_page.SetVisitedCache(v);}
+	void SetItemCache(kGUIHTMLItemCache *c) {m_screenpage.SetItemCache(c);m_printpage.SetItemCache(c);}
+	void SetVisitedCache(kGUIHTMLVisitedCache *v) {m_screenpage.SetVisitedCache(v);m_printpage.SetVisitedCache(v);}
 
-	kGUIString *GetTitle(void) {return m_page.GetTitle();}
+	kGUIString *GetTitle(void) {return m_screenpage.GetTitle();}
 	void SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header);
 	PageInfo *NextPage(void);
-	void RePosition(bool rp) {m_page.SetSize(GetChildZoneW(),GetChildZoneH()-m_page.GetZoneY());m_page.RePosition(rp);}
+	void RePosition(bool rp) {m_screenpage.SetSize(GetChildZoneW(),GetChildZoneH()-m_screenpage.GetZoneY());m_screenpage.RePosition(rp);}
 
 	void SetPageChangedCallback(void *codeobj,void (*code)(void *)) {m_pagechangedcallback.Set(codeobj,code);}
 
 	/* default printer to use */
-	void SetPID(int pid) {m_page.SetPID(pid);}
-	int GetPID(void) {return m_page.GetPID();}
+	void SetPID(int pid) {m_printpage.SetPID(pid);}
+	int GetPID(void) {return m_printpage.GetPID();}
 
 	/* attach plugins */
-	void AddPlugin(kGUIHTMLPluginObj *obj) {m_plugins.SetEntry(m_numplugins++,obj);m_page.AddPlugin(obj);}
+	void AddPlugin(kGUIHTMLPluginObj *obj) {m_plugins.SetEntry(m_numplugins++,obj);m_screenpage.AddPlugin(obj);m_printpage.AddPlugin(obj);}
 
 	kGUIBrowseSettings *GetSettings(void) {return m_settings;}
-	void FlushRuleCache(void) {m_page.FlushRuleCache();}
+	void FlushRuleCache(void) {m_screenpage.FlushRuleCache();m_printpage.FlushRuleCache();}
 	void ShowError(void);
 	void CancelAuthenticate();
 	void Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password);
@@ -187,10 +190,12 @@ private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoMainMenu,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoBookmarks,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoGotoMenu,kGUIEvent);
+	CALLBACKGLUEPTR(kGUIBrowseObj,SetIcon,DataHandle);
 	void UpdateButtons(void);
 	void Goto(void);
 	void Load(void);
 	void ShowMainMenu(kGUIEvent *event);
+	void SetIcon(DataHandle *dh);
 	void DoMainMenu(kGUIEvent *event);
 	void ShowBookmarks(kGUIEvent *event);
 	void DoBookmarks(kGUIEvent *event);
@@ -258,7 +263,8 @@ private:
 	kGUITextObj m_linkcaption;
 	kGUITextObj m_linkurl;
 
-	kGUIHTMLPageObj m_page;
+	kGUIHTMLPageObj m_screenpage;
+	kGUIHTMLPageObj m_printpage;
 	kGUIInputBoxObj m_source;
 
 	kGUIInputBoxObj m_debug;
@@ -276,6 +282,8 @@ private:
 	int m_pageend;
 	PageInfo m_pages[MAXPAGES];
 	int m_pid;
+	bool m_iconvalid;
+	DataHandle m_icon;
 };
 
 /*! @internal @class AuthenticateWindow 
@@ -335,15 +343,17 @@ private:
 class EditBookmarkRow : public kGUITableRowObj
 {
 public:
-	EditBookmarkRow(kGUIString *title,kGUIString *url) {m_title.SetString(title);m_url.SetString(url);m_objectlist[0]=&m_title;}
-	int GetNumObjects(void) {return 1;}
+	EditBookmarkRow(kGUIString *title,kGUIString *url,kGUIImage *icon) {m_title.SetString(title);m_url.SetString(url);m_objectlist[0]=&m_icon;m_objectlist[1]=&m_title;m_icon.Copy(icon);m_icon.ScaleTo(16,16);}
+	int GetNumObjects(void) {return 2;}
 	kGUIObj **GetObjectList(void) {return m_objectlist;} 
 
 	kGUIString *GetTitle(void) {return &m_title;}
 	kGUIString *GetURL(void) {return &m_url;}
+	kGUIImage *GetIcon(void) {return &m_icon;}
 private:
-	kGUIObj *m_objectlist[1];
+	kGUIObj *m_objectlist[2];
 
+	kGUIImageObj m_icon;
 	kGUITextObj m_title;
 	kGUIString m_url;
 };

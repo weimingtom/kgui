@@ -80,7 +80,7 @@ public:
 	void Save(kGUIXMLItem *root);
 	void SetCookie(kGUIString *s,kGUIString *domain,kGUIString *url);
 	void UpdateCookie(kGUICookie *cookie);
-	void GetCookies(kGUIString *s,kGUIString *domain,kGUIString *url);
+	void GetCookies(kGUIString *s,kGUIString *domain,kGUIString *url,bool issecure);
 
 	unsigned int GetCookieList(Array<kGUICookie *>*cookielist);
 private:
