@@ -43,6 +43,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "matrixSslStatic", "matrixss
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sample_browse", "samples\browse\sample_browse.vcproj", "{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -394,6 +398,36 @@ Global
 		{8DBF200C-313A-485B-97D8-892158882E16}.Release Multithreaded.Build.0 = Release|Win32
 		{8DBF200C-313A-485B-97D8-892158882E16}.Release Singlethreaded.ActiveCfg = Release|Win32
 		{8DBF200C-313A-485B-97D8-892158882E16}.Release Singlethreaded.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug Multithreaded.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug Multithreaded.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug Singlethreaded.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Debug Singlethreaded.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL ASM Debug.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL ASM Debug.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL ASM Release.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL ASM Release.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL Debug.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL Debug.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL Release.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL Release.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL VB.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.DLL VB.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB ASM Debug.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB ASM Debug.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB ASM Release.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB ASM Release.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB Debug.ActiveCfg = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB Debug.Build.0 = Debug|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB Release.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.LIB Release.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Multithreaded.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Multithreaded.Build.0 = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Singlethreaded.ActiveCfg = Release|Win32
+		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Singlethreaded.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionItems) = postSolution
 	EndGlobalSection

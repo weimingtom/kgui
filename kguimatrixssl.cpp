@@ -36,7 +36,7 @@ extern "C" {
 }
 
 //forward declaration
-int certChecker(sslCertInfo_t *cert, void *arg);
+static int certChecker(sslCertInfo_t *cert, void *arg);
 
 kGUIMatrixSSLManager::kGUIMatrixSSLManager(const char *cafilename)
 {

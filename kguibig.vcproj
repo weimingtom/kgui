@@ -131,6 +131,9 @@
 				RelativePath=".\kguibig.cpp">
 			</File>
 			<File
+				RelativePath=".\kguimutex.cpp">
+			</File>
+			<File
 				RelativePath="..\kgui\kguiprot.cpp">
 			</File>
 			<File

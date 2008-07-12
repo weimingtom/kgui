@@ -1662,7 +1662,7 @@ private:
 class kGUIHTMLSettings
 {
 public:
-	kGUIHTMLSettings() {m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);m_screenmedia.SetString("screen");m_printmedia.SetString("print");}
+	kGUIHTMLSettings() {m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);}
 	void Load(kGUIXMLItem *group);
 	void Save(kGUIXMLItem *group);
 
@@ -1675,12 +1675,6 @@ public:
 	kGUIString *GetUserCSS(void) {return &m_usercss;}
 	void SetUserCSS(kGUIString *ucss) {m_usercss.SetString(ucss);}
 
-	kGUIString *GetScreenMedia(void) {return &m_screenmedia;}
-	void SetScreenMedia(kGUIString *m) {m_screenmedia.SetString(m);}
-
-	kGUIString *GetPrintMedia(void) {return &m_printmedia;}
-	void SetPrintMedia(kGUIString *m) {m_printmedia.SetString(m);}
-
 	bool GetDrawBoxes(void) {return m_drawboxes;}
 	void SetDrawBoxes(bool db) {m_drawboxes=db;}
 
@@ -1692,8 +1686,6 @@ private:
 	bool m_usecss:1;
 	bool m_useusercss:1;
 	kGUIString m_usercss;
-	kGUIString m_screenmedia;
-	kGUIString m_printmedia;
 	kGUIColor m_areacolor;
 };
 
@@ -1731,6 +1723,7 @@ public:
 	void GetCorrectedSource(kGUIString *cs);
 	void PreProcess(kGUIString *tci,kGUIHTMLObj *obj);
 
+	void SetMedia(kGUIString *media) {m_curmedia.SetString(media);}
 	kGUIString *GetURL(void) {return &m_url;}
 	void MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out);
 	void InvalidateTCICache(void);
@@ -1795,7 +1788,7 @@ public:
 	void InitPosition(void);
 	void Position(void);
 	int PositionPrint(int width);
-	void DrawPrint(int offx,int offy) {m_printrootobject->SetChildScrollX(offx);m_printrootobject->SetChildScrollY(offy);m_printrootobject->Draw();}
+	void DrawPrint(int offx,int offy) {m_rootobject->SetChildScrollX(offx);m_rootobject->SetChildScrollY(offy);m_rootobject->Draw();}
 	bool GetNoCloseNeeded(void) {return m_nocloseneeded;}
 	void SetNoCloseNeeded(bool c) {m_nocloseneeded=c;}
 	kGUIString *GetTitle(void) {return &m_title;}
@@ -2057,7 +2050,6 @@ private:
 
 	kGUIHTMLObj *m_rootobject;
 	kGUIHTMLObj *m_absobject;
-	kGUIHTMLObj *m_printrootobject;
 	kGUIString m_title;
 	kGUIScrollBarObj m_hscrollbar;
 	kGUIScrollBarObj m_vscrollbar;
@@ -2066,8 +2058,8 @@ private:
 	kGUIHTMLAttrib *m_beforecontent;
 	kGUIHTMLAttrib *m_aftercontent;
 
-	kGUIString m_screenmedia;
-	kGUIString m_printmedia;
+//	kGUIString m_screenmedia;
+//	kGUIString m_printmedia;
 	kGUIString m_curmedia;	/* current one */
 
 	bool m_strict:1;

@@ -56,6 +56,7 @@ kGUIInputBoxObj::kGUIInputBoxObj()
 	m_allowtab=false;
 	m_allowcursorexit=false;	
 	m_leaveselection=false;	
+	m_leavescroll=false;	
 	m_recalclines=true;
 	m_usevs=false;
 	m_usehs=false;
@@ -1249,7 +1250,7 @@ void kGUIInputBoxObj::Draw(void)
 
 		if(GetUseBGColor())
 			kGUI::DrawRectBevelIn(c.lx,c.ty,c.rx,c.by,GetBGColor());
-		if(imactive==true)
+		if(imactive==true || m_leavescroll)
 		{
 			if(m_usevs==true)
 			{

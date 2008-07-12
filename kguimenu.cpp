@@ -38,14 +38,16 @@ kGUIMenuColObj::kGUIMenuColObj()
 	m_isactive=false;
 	m_numentries=0;
 	m_selection=0;
-	m_poptableentries=0;
+	m_iconwidth=0;
+	m_poptableentries.Init(32,16);
 	m_poptable = new kGUITableObj;
 	m_poptable->PopRowHeaders();	/* draw bar beside rows to make popup menu stand out */
 	m_poptable->NoColHeaders();
 	m_poptable->NoRowHeaders();
 	m_poptable->NoColScrollbar();
 	m_poptable->NoRowScrollbar();
-	m_poptable->SetNumCols(1);
+	m_poptable->SetNumCols(2);
+	m_poptable->SetColWidth(0,0);
 	m_poptable->SetSelectMode();
 	m_poptable->SetSelectedCallBack(this,CALLBACKNAME(SelectionDone));
 }
@@ -92,10 +94,7 @@ void kGUIMenuColObj::Init(int num, kGUIString *strings,int *nums)
 
 kGUIMenuColObj::~kGUIMenuColObj()
 {
-	m_poptable->DeleteChildren();
 	delete m_poptable;
-	if(m_poptableentries)
-		delete []m_poptableentries;
 }
 
 void kGUIMenuColObj::SetNumEntries(int n)
@@ -103,70 +102,79 @@ void kGUIMenuColObj::SetNumEntries(int n)
 	int i;
 
 	m_selection=0;
-	m_poptable->DeleteChildren();
-
-	if(m_poptableentries)
-		delete []m_poptableentries;
+	m_poptable->DeleteChildren(false);
 
 	m_numentries=n;
-	m_poptableentries=new kGUIMenuEntryObj *[n];
-
 	for(i=0;i<n;++i)
-	{
-		m_poptableentries[i]=new kGUIMenuEntryObj;
-		m_poptable->AddRow(m_poptableentries[i]);
-	}
+		m_poptable->AddRow(m_poptableentries.GetEntryPtr(i));
 }
 
 void kGUIMenuColObj::SetEntry(int index,kGUIString *entryname,int entryval)
 {
+	kGUIMenuEntryObj *me;
+
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
 	if(entryval==-1)
 		entryval=index;
 
-	m_poptableentries[index]->SetFontInfo(&m_fontinfo);
-	m_poptableentries[index]->SetString(entryname);
-	m_poptableentries[index]->SetRowHeight(m_poptableentries[index]->GetHeight()+4);
-	m_poptableentries[index]->SetValue(entryval);
+	me=m_poptableentries.GetEntryPtr(index);
+	me->SetFontInfo(&m_fontinfo);
+	me->SetString(entryname);
+	me->SetRowHeight(m_poptableentries.GetEntryPtr(index)->GetHeight()+4);
+	me->SetValue(entryval);
 	m_poptable->SetEntryEnable(index,true);		/* default entry to enabled */
 }
 
 void kGUIMenuColObj::SetEntry(int index,const char *entryname,int entryval)
 {
+	kGUIMenuEntryObj *me;
+
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
 	if(entryval==-1)
 		entryval=index;
-	m_poptableentries[index]->SetFontInfo(&m_fontinfo);
-	m_poptableentries[index]->SetString(entryname);
-	m_poptableentries[index]->SetRowHeight(m_poptableentries[index]->GetHeight()+4);
-	m_poptableentries[index]->SetValue(entryval);
+
+	me=m_poptableentries.GetEntryPtr(index);
+	me->SetFontInfo(&m_fontinfo);
+	me->SetString(entryname);
+	me->SetRowHeight(me->GetHeight()+4);
+	me->SetValue(entryval);
 	m_poptable->SetEntryEnable(index,true);		/* default entry to enabled */
 }
 
 /* return selection by name */
 const char *kGUIMenuColObj::GetSelectionString(void)
 {
+	kGUIMenuEntryObj *me;
+
 	assert(m_selection>=0,"kGUIMenuColObj: index too small");
 	assert(m_selection<m_numentries,"kGUIMenuColObj: index too large");
-	return(m_poptableentries[m_selection]->GetString());
+
+	me=m_poptableentries.GetEntryPtr(m_selection);
+	return(me->GetString());
 }
 
 void kGUIMenuColObj::SetBGColor(int index,kGUIColor bg)
 {
+	kGUIMenuEntryObj *me;
+
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
-	m_poptableentries[index]->SetBGColor(bg);
+	me=m_poptableentries.GetEntryPtr(index);
+	me->SetBGColor(bg);
 }
 
 void kGUIMenuColObj::SetEntryEnable(int index,bool e, bool updatecolor)
 {
+	kGUIMenuEntryObj *me;
+
 	assert(index<m_numentries,"kGUIMenuColObj: index too large");
 	m_poptable->SetEntryEnable(index,e);
 	if(updatecolor==true)
 	{
+		me=m_poptableentries.GetEntryPtr(index);
 		if(e==true)
-			m_poptableentries[index]->SetTextColor(DrawColor(32,32,32));
+			me->SetTextColor(DrawColor(32,32,32));
 		else
-			m_poptableentries[index]->SetTextColor(DrawColor(192,192,192));
+			me->SetTextColor(DrawColor(192,192,192));
 	}
 }
 
@@ -175,13 +183,15 @@ int kGUIMenuColObj::GetWidest(void)
 {
 	int i,w,widest;
 	int	redge=kGUI::GetSkin()->GetMenuRowHeaderWidth();
+	kGUIMenuEntryObj *me;
 
 	widest=0;
 	for(i=0;i<m_numentries;++i)
 	{
+		me=m_poptableentries.GetEntryPtr(i);
 		/* extra space is added to account for the table edge bevels */
 		/* and the scrollbar on the right */
-		w=m_poptableentries[i]->GetWidth()+redge+10;
+		w=me->GetWidth()+redge+10;
 		if(w>widest)
 			widest=w;
 	}
@@ -190,18 +200,19 @@ int kGUIMenuColObj::GetWidest(void)
 
 int kGUIMenuColObj::GetSelection(void)
 {
+	kGUIMenuEntryObj *me;
 	if(m_selection<0)
 		return(-1);
-	return m_poptableentries[m_selection]->GetValue();
+
+	me=m_poptableentries.GetEntryPtr(m_selection);
+	return me->GetValue();
 }
 
 /* calculate new height */
 void kGUIMenuColObj::Resize(void)
 {
-	if(m_poptableentries)
-	{
-		SetZoneH(m_poptableentries[m_selection]->GetHeight()+4);
-	}
+	if(m_numentries)
+		SetZoneH(m_poptableentries.GetEntryPtr(m_selection)->GetHeight()+4);
 }
 
 void kGUIMenuColObj::Activate(int x,int y)
@@ -219,7 +230,7 @@ void kGUIMenuColObj::Activate(int x,int y)
 
 	/* calculate position of popup selector table */
 	m_popx=x;
-	m_popw=GetWidest();
+	m_popw=GetWidest()+m_iconwidth;
 	m_popy=y;
 	showentries=m_numentries;
 	if(showentries>MAXSHOWMENUCOL)
@@ -241,7 +252,8 @@ void kGUIMenuColObj::Activate(int x,int y)
 	Dirty();
 	m_poptable->SetZone(m_popx,m_popy,m_popw,m_poph);
 	m_poptable->SizeDirty();
-	m_poptable->SetColWidth(0,m_popw);
+	m_poptable->SetColWidth(0,m_iconwidth);
+	m_poptable->SetColWidth(1,m_popw);
 	m_poptable->Dirty();
 	kGUI::PushActiveObj(this);
 	kGUI::AddWindow(m_poptable);

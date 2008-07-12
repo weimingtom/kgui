@@ -500,7 +500,7 @@ again:;
 
 	if(jar)
 	{
-		jar->GetCookies(&cc,&servername,&url);
+		jar->GetCookies(&cc,&servername,&url,mode==MODE_HTTPS);
 		if(cc.GetLen())
 			request.ASprintf("%s\r\n",cc.GetString());
 	}

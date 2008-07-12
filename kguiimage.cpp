@@ -1821,7 +1821,7 @@ bool kGUIImage::LoadWINICOImage(bool justsize)
 	unsigned long apackedbits,apackedbytes;
 	Array<unsigned char> abitbuffer;
 	unsigned int best,bestw,besth;
-
+	unsigned long off;
 	kGUIBitStream xbs;
 	unsigned long xpackedbits,xpackedbytes;
 	Array<unsigned char> xbitbuffer;
@@ -1860,7 +1860,14 @@ bool kGUIImage::LoadWINICOImage(bool justsize)
 	/* each header1 has an offset to it's header2 and then the bitmap data follows the header2 */
 	h1p=header1.GetEntryPtr(best);
 
-	Seek(ReadU32((const char *)&h1p->offset));
+	off=ReadU32((const char *)&h1p->offset);
+	if(off>GetSize())
+	{
+		Close();
+		return(false);
+	}
+
+	Seek(off);
 	Read(&header2,(unsigned long)sizeof(WINICO_Header2));
 
 	m_imagewidth=h1p->width;

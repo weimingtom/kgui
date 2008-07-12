@@ -316,7 +316,12 @@ bool kGUIWindowObj::UpdateInput(void)
 				case WINDOWMODE_ADJWIDTH:
 					if(GetBackground()==true)
 					{
-						/* unimplemented */
+						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTHORIZ);
+						neww+=dx;
+						if(neww<WMINW)
+							neww=WMINW;
+						else if(neww>kGUI::GetScreenWidth())
+							neww=kGUI::GetScreenWidth();
 					}
 					else
 					{
@@ -331,7 +336,12 @@ bool kGUIWindowObj::UpdateInput(void)
 				case WINDOWMODE_ADJHEIGHT:
 					if(GetBackground()==true)
 					{
-						/* unimplemented */
+						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTVERT);
+						newh+=dy;
+						if(newh<WMINH)
+							newh=WMINH;
+						else if(newh>kGUI::GetScreenHeight())
+							newh=kGUI::GetScreenHeight();
 					}
 					else
 					{
@@ -346,7 +356,17 @@ bool kGUIWindowObj::UpdateInput(void)
 				case WINDOWMODE_ADJSIZE:
 					if(GetBackground()==true)
 					{
-						/* unimplemented */
+						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTSIZE);
+						neww+=dx;
+						if(neww<WMINW)
+							neww=WMINW;
+						else if(neww>kGUI::GetScreenWidth())
+							neww=kGUI::GetScreenWidth();
+						newh+=dy;
+						if(newh<WMINH)
+							newh=WMINH;
+						else if(newh>kGUI::GetScreenHeight())
+							newh=kGUI::GetScreenHeight();
 					}
 					else
 					{
@@ -366,6 +386,9 @@ bool kGUIWindowObj::UpdateInput(void)
 				case WINDOWMODE_NONE:
 				break;
 				}
+				if(GetBackground()==true && (neww!=oldw) || (newh!=oldh))
+					kGUI::SetWindowSize(neww,newh);
+
 				/* have I changed? */
 				if((newx!=oldx) || (newy!=oldy) || (neww!=oldw) || (newh!=oldh)) 
 				{

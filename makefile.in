@@ -53,6 +53,10 @@ KGUILIBMOVIE_INCLUDES =
 KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
 KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
 
+KGUILIBSSL_INCLUDES = -I"$(KGUILOC)matrixssl/
+KGUILIBSSL_LIBPATHS = -L$(KGUILOC)matrixssl/src/
+KGUILIBSSL_LIBS =-lmatrixsslstatic
+
 else
 ifeq ($(findstring Linux,$(TARGET_OS)),Linux)
 
@@ -84,6 +88,10 @@ KGUILIBMOVIE_INCLUDES =
 KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
 KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
 
+KGUILIBSSL_INCLUDES = -I"$(KGUILOC)matrixssl/
+KGUILIBSSL_LIBPATHS = -L$(KGUILOC)matrixssl/src/
+KGUILIBSSL_LIBS =-lmatrixsslstatic
+
 else
 ifeq ($(findstring Darwin,$(TARGET_OS)),Darwin)
 
@@ -114,6 +122,10 @@ KGUILIBDB_LIBS =-lmysqlclient -lmysqld
 KGUILIBMOVIE_INCLUDES =
 KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
 KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
+
+KGUILIBSSL_INCLUDES = -I"$(KGUILOC)matrixssl/
+KGUILIBSSL_LIBPATHS = -L$(KGUILOC)matrixssl/src/
+KGUILIBSSL_LIBS =-lmatrixsslstatic
 
 else
 

@@ -14,7 +14,7 @@ FIXDEP_SRC=fixdep.cpp
 
 BINTOC_SRC=bintoc.cpp
 
-KGUIBIG_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kguibig.cpp kguiprot.cpp kguirandom.cpp kguistring.cpp
+KGUIBIG_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kguibig.cpp kguiprot.cpp kguirandom.cpp kguistring.cpp kguimutex.cpp
 
 LIB_OBJ=$(LIB_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
@@ -74,6 +74,7 @@ other:		# generate other support libraries
 	$(MAKE) -C ffmpeg/libavcodec
 	$(MAKE) -C ffmpeg/libavformat
 	$(MAKE) -C ffmpeg/libswscale
+	$(MAKE) -C matrixssl/src
 
 other-clean:		# generate other support libraries
 	$(MAKE) -C zlib clean
@@ -85,6 +86,7 @@ other-clean:		# generate other support libraries
 	$(MAKE) -C ffmpeg/libavcodec clean
 	$(MAKE) -C ffmpeg/libavformat clean
 	$(MAKE) -C ffmpeg/libswscale clean
+	$(MAKE) -C matrixssl/src clean
 
 .PHONY : clean   # .PHONY ignores files named clean
 clean:

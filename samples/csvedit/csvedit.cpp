@@ -32,6 +32,7 @@ public:
 	int GetNumObjects(void) {return m_numcells;}
 	kGUIObj **GetObjectList(void) {return m_objectlist.GetArrayPtr();} 
 	void SetCell(int col,kGUIString *s) {m_cells.GetEntryPtr(col)->SetString(s);}
+	kGUIString *GetCell(int col) {return m_cells.GetEntryPtr(col);}
 private:
 	int m_numcells;
 	Array<kGUIObj *>m_objectlist;
@@ -53,16 +54,25 @@ private:
 	void OpenMenuEvent(kGUIEvent *event);
 	CALLBACKGLUEPTR(CSVEditSample,MenuEvent,kGUIEvent);			/* make a static connection to the callback */
 	void MenuEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(CSVEditSample,ColMenuEvent,kGUIEvent);			/* make a static connection to the callback */
+	void ColMenuEvent(kGUIEvent *event);
 	CALLBACKGLUEPTR(CSVEditSample,TableEvent,kGUIEvent);		/* make a static connection to the callback */
 	void TableEvent(kGUIEvent *event);
 	CALLBACKGLUEPTRVAL(CSVEditSample,LoadCSV,kGUIFileReq,int);			/* make a static connection to the callback */
 	void LoadCSV(kGUIFileReq *req,int status);
 	CALLBACKGLUEPTRVAL(CSVEditSample,SaveCSV,kGUIFileReq,int);			/* make a static connection to the callback */
 	void SaveCSV(kGUIFileReq *req,int status);
+	static int SortEntry(const void *o1,const void *o2);
 
 	kGUITextObj m_menucaption;
 	kGUIMenuColObj m_popmenu;
+	kGUIMenuColObj m_colmenu;
 
+	unsigned int m_numsortcols;
+	Array<int>m_sortcols;
+	Array<bool>m_sortrevs;	/* reverse flag */
+
+	/* todo, had header flag */
 	/* todo: font size for use in the table */
 
 	kGUITableObj m_table;
@@ -131,6 +141,16 @@ MENU_EXIT,
 MENU_NUMENTRIES
 };
 
+enum
+{
+COLMENU_INSERTCOLBEFORE,
+COLMENU_INSERTCOLAFTER,
+COLMENU_DELETECOL,
+COLMENU_SORTASC,
+COLMENU_SORTDESC,
+COLMENU_SORTASC2,
+COLMENU_SORTDESC2,
+COLMENU_NUMENTRIES};
 
 CSVEditSample::CSVEditSample()
 {
@@ -155,6 +175,17 @@ CSVEditSample::CSVEditSample()
 	m_popmenu.SetEntry(MENU_EXIT,"Exit");
 	m_popmenu.SetEventHandler(this,CALLBACKNAME(MenuEvent));
 
+	/* the menu when right clicking on a column */
+	m_colmenu.SetNumEntries(COLMENU_NUMENTRIES);
+	m_colmenu.SetEntry(COLMENU_INSERTCOLBEFORE,"Insert Column Before");
+	m_colmenu.SetEntry(COLMENU_INSERTCOLAFTER,"Insert Column After");
+	m_colmenu.SetEntry(COLMENU_DELETECOL,"Delete Column");
+	m_colmenu.SetEntry(COLMENU_SORTASC,"Sort Ascending");
+	m_colmenu.SetEntry(COLMENU_SORTDESC,"Sort Descending");
+	m_colmenu.SetEntry(COLMENU_SORTASC2,"Secondaty Sort Ascending");
+	m_colmenu.SetEntry(COLMENU_SORTDESC2,"Secondaty Sort Descending");
+	m_colmenu.SetEventHandler(this,CALLBACKNAME(ColMenuEvent));
+
 	/* default to 4 columns */
 	m_table.SetNumCols(4);
 	for(i=0;i<4;++i)
@@ -168,6 +199,10 @@ CSVEditSample::CSVEditSample()
 	m_table.SetEventHandler(this,CALLBACKNAME(TableEvent));
 	background->AddObject(&m_table);
 
+	m_sortcols.Init(3,1);
+	m_sortrevs.Init(3,1);
+	m_numsortcols=0;
+
 	/* add 20 rows to the table, added by table event handler */
 	for(i=0;i<20;++i)
 		m_table.AddNewRow();
@@ -175,12 +210,17 @@ CSVEditSample::CSVEditSample()
 
 void CSVEditSample::TableEvent(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_ADDROW)
+	switch(event->GetEvent())
 	{
+	case EVENT_ADDROW:
 		CSVTableRow *row;
 
 		row=new CSVTableRow();
 		m_table.AddRow(row);
+	break;
+	case EVENT_COL_RIGHTCLICK:
+		m_colmenu.Activate(kGUI::GetMouseX(),kGUI::GetMouseY());
+	break;
 	}
 }
 
@@ -218,6 +258,74 @@ void CSVEditSample::MenuEvent(kGUIEvent *event)
 		}
 	}
 }
+
+void CSVEditSample::ColMenuEvent(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_SELECTED)
+	{
+		switch(event->m_value[0].i)
+		{
+		case COLMENU_INSERTCOLBEFORE:
+		break;
+		case COLMENU_INSERTCOLAFTER:
+		break;
+		case COLMENU_DELETECOL:
+		break;
+		case COLMENU_SORTASC:
+			m_numsortcols=1;
+			m_sortcols.SetEntry(0,m_table.GetColOrder(m_table.GetCursorCol()));
+			m_sortrevs.SetEntry(0,false);
+			m_table.Sort(SortEntry);
+		break;
+		case COLMENU_SORTDESC:
+			m_numsortcols=1;
+			m_sortcols.SetEntry(0,m_table.GetColOrder(m_table.GetCursorCol()));
+			m_sortrevs.SetEntry(0,true);
+			m_table.Sort(SortEntry);
+		break;
+		case COLMENU_SORTASC2:
+			m_sortcols.SetEntry(m_numsortcols,m_table.GetColOrder(m_table.GetCursorCol()));
+			m_sortrevs.SetEntry(m_numsortcols,false);
+			++m_numsortcols;
+			m_table.Sort(SortEntry);
+		break;
+		case COLMENU_SORTDESC2:
+			m_sortcols.SetEntry(m_numsortcols,m_table.GetColOrder(m_table.GetCursorCol()));
+			m_sortrevs.SetEntry(m_numsortcols,true);
+			++m_numsortcols;
+			m_table.Sort(SortEntry);
+		break;
+		}
+	}
+}
+
+int CSVEditSample::SortEntry(const void *o1,const void *o2)
+{
+	unsigned int s;
+	int sc;
+	int res;
+	bool sr;
+	CSVTableRow *r1=*(static_cast<CSVTableRow **>((void *)o1));
+	CSVTableRow *r2=*(static_cast<CSVTableRow **>((void *)o2));
+
+	for(s=0;s<g_csv->m_numsortcols;++s)
+	{
+		sc=g_csv->m_sortcols.GetEntry(s);
+		sr=g_csv->m_sortrevs.GetEntry(s);
+
+		res=strcmp(r1->GetCell(sc)->GetString(),r2->GetCell(sc)->GetString());
+		if(res)
+		{
+			if(sr==false)
+				return(res);
+			return(-res);
+		}
+
+	}
+	/* tie */
+	return(0);
+}
+
 
 /* you can have a unique event handler for each object, or you can have one to handle many objects */
 void CSVEditSample::ButtonEvent(kGUIEvent *event)

@@ -512,7 +512,7 @@ void kGUIString::Trim(int what)
 	/* remove leading spaces, tabs, or lf, or c/r */
 	num=0;
 	place=m_string;
-	while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)))	
+	while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)) || ((place[0]==0) && (what&TRIM_NULL)))	
 	{
 		++num;
 		++place;
@@ -528,7 +528,7 @@ void kGUIString::Trim(int what)
 	if(m_len)
 	{
 		place=m_string+m_len-1;
-		while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)))	
+		while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)) || ((place[0]==0) && (what&TRIM_NULL)))	
 		{
 			place[0]=0;
 			--place;
@@ -655,7 +655,10 @@ int kGUIString::Replace(const char *from,const char *to,unsigned int start,int c
 			}
 		}while(place);
 		m_len=newlen;
-		assert(m_len==(unsigned int)strlen(m_string),"length error!");
+		{
+			unsigned int xx=(unsigned int)strlen(m_string);
+			assert(m_len==(unsigned int)strlen(m_string),"length error!");
+		}
 	}
 	StringChanged();
 	return(numchanges);

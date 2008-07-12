@@ -1247,10 +1247,6 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_numplugins=0;
 	m_plugins.Init(4,4);
 
-	/* these can be overwritten */
-	m_screenmedia.SetString("screen");
-	m_printmedia.SetString("print");
-
 	/* if it find's strict in the header then this is enabled */
 	m_strict=false;
 
@@ -1288,8 +1284,6 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	SetNumGroups(1);	/* only 1 group */
 	m_rootobject=new kGUIHTMLObj();
 	m_rootobject->SetID(HTMLTAG_ROOT);
-	m_printrootobject=new kGUIHTMLObj();
-	m_printrootobject->SetID(HTMLTAG_ROOT);
 	AddObject(m_rootobject);
 	m_rootobject->m_page=this;
 
@@ -1687,6 +1681,7 @@ void kGUIHTMLPageObj::AttachLink(kGUIOnlineLink *link)
 
 			/* does this stylesheet have a pre-pended Byte-Order-Marker */
 			s.CheckBOM();
+			s.Trim(TRIM_NULL);		/* remove any trailing nulls */
 
 			/* is this media current? */
 			if(ValidMedia(link->GetMedia()))
@@ -4347,12 +4342,6 @@ kGUIHTMLPageObj::~kGUIHTMLPageObj()
 		m_rootobject->DeleteChildren(true);
 		delete m_rootobject;
 	}
-	if(m_printrootobject)
-	{
-		m_printrootobject->DeleteChildren(true);
-		delete m_printrootobject;
-	}
-//	PurgeClassStyles();
 
 	/* abort all pending downloads */
 
@@ -4887,26 +4876,26 @@ int kGUIHTMLPageObj::PositionPrint(int width)
 {
 	InitPosition();
 
-	m_printrootobject->SetZone(0,0,GetZoneW(),GetZoneH());
-	m_printrootobject->SetPage(this);
-	m_printrootobject->SetID(HTMLTAG_ROOT);
+	m_rootobject->SetZone(0,0,GetZoneW(),GetZoneH());
+	m_rootobject->SetPage(this);
+	m_rootobject->SetID(HTMLTAG_ROOT);
 	m_mode=MODE_MINMAX;
 
 	/* set all containers to minimum size, calc max size too */
 	m_posindex=0;
-	m_printrootobject->Position();
-	m_printrootobject->Contain();
+	m_rootobject->Position();
+	m_rootobject->Contain();
 
 	/* if width is less than pagewidth then expand root to pagewidth */
-	if(m_printrootobject->GetOutsideW()<width)
-		m_printrootobject->SetOutsideW(width);
+	if(m_rootobject->GetOutsideW()<width)
+		m_rootobject->SetOutsideW(width);
 
 	/* expand all tables as large as they can go */
 	m_mode=MODE_POSITION;
 	m_posindex=0;
-	m_printrootobject->Position();
-	m_printrootobject->Contain();
-	return(m_printrootobject->GetZoneH());
+	m_rootobject->Position();
+	m_rootobject->Contain();
+	return(m_rootobject->GetZoneH());
 }
 
 void kGUIHTMLPageObj::Position(void)
@@ -4916,8 +4905,6 @@ void kGUIHTMLPageObj::Position(void)
 	int height=GetZoneH();
 
 	m_ownerrulesbuilt=false;
-	m_screenmedia.SetString(GetSettings()->GetScreenMedia());
-	m_printmedia.SetString(GetSettings()->GetPrintMedia());
 
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
 
@@ -5663,29 +5650,14 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	m_hoverlistsize[0]=0;
 	m_hoverlistsize[1]=0;
 
+	delete m_rootobject;
+    m_rootobject=new kGUIHTMLObj();
+	m_rootobject->SetID(HTMLTAG_ROOT);
+
 	if(doprint==false)
-	{
-		delete m_rootobject;
-
-		m_curmedia.SetString(&m_screenmedia);
-
-		m_rootobject=new kGUIHTMLObj();
-		m_rootobject->SetID(HTMLTAG_ROOT);
 		AddObject(m_rootobject);
 
-		renderparent=m_rootobject;
-	}
-	else
-	{
-		delete m_printrootobject;
-
-		m_curmedia.SetString(&m_printmedia);
-
-		m_printrootobject=new kGUIHTMLObj();
-		m_printrootobject->SetID(HTMLTAG_ROOT);
-
-		renderparent=m_printrootobject;
-	}
+	renderparent=m_rootobject;
 
 	m_errors.Clear();
 	m_csserrors.Clear();
@@ -5753,60 +5725,60 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 		else
 			delete image;
 
-		/* is it plain text? */
-		if(!strcmpin(m_type.GetString(),"text",4))
+		/* try using one of the plugins */
+		for(i=0;(i<m_numplugins && m_singlemode==false);++i)
 		{
-			kGUITextObj *text;
+			kGUIHTMLPluginObj *po;
 			kGUIHTMLObj *newobj;
 
-			/* it is an image, not a html page */
-			m_singlemode=true;
-			text=new kGUITextObj();
-			text->SetPos(0,0);
-			text->SetSize(100,500);
-			/* todo: get encoding from http header */
-			text->SetString((const char *)m_fp,m_len);
-
-			newobj=new kGUIHTMLObj(renderparent,this,&m_singleobjtag);
-			newobj->SetOwnerURL(StringToIDcase(&m_url));
-			renderparent->AddStyleChild(newobj);
-			newobj->SetOwnerURL(StringToIDcase(&m_url));
-			newobj->m_obj.m_singleobj=text;
-			newobj->AddRenderObject(text);
-		}
-		else
-		{
-			/* try using one of the plugins */
-			for(i=0;(i<m_numplugins && m_singlemode==false);++i)
+			po=m_plugins.GetEntry(i)->New();
+			po->GetDH()->SetMemory((const unsigned char *)m_fp,m_len);
+			if(po->Open()==true)
 			{
-				kGUIHTMLPluginObj *po;
-				kGUIHTMLObj *newobj;
+				/* yes it was valid, so let's show it */
+				m_singlemode=true;
 
-				po=m_plugins.GetEntry(i)->New();
-				po->GetDH()->SetMemory((const unsigned char *)m_fp,m_len);
-				if(po->Open()==true)
-				{
-					/* yes it was valid, so let's show it */
-					m_singlemode=true;
+				/* get an object to add the right-click to */
+				po->GetObj()->SetEventHandler(this,CALLBACKNAME(RightClickEvent));
 
-					/* get an object to add the right-click to */
-					po->GetObj()->SetEventHandler(this,CALLBACKNAME(RightClickEvent));
-
-					newobj=new kGUIHTMLObj(renderparent,this,&m_singleobjtag);
-					newobj->SetOwnerURL(StringToIDcase(&m_url));
-					newobj->SetAlign(ALIGN_CENTER);
-					newobj->SetVAlign(VALIGN_BOTTOM);
-					renderparent->AddStyleChild(newobj);
-					newobj->m_obj.m_singleobj=po;
-					newobj->AddRenderObject(po);
-				}
-				else
-					delete po;
+				newobj=new kGUIHTMLObj(renderparent,this,&m_singleobjtag);
+				newobj->SetOwnerURL(StringToIDcase(&m_url));
+				newobj->SetAlign(ALIGN_CENTER);
+				newobj->SetVAlign(VALIGN_BOTTOM);
+				renderparent->AddStyleChild(newobj);
+				newobj->m_obj.m_singleobj=po;
+				newobj->AddRenderObject(po);
 			}
+			else
+				delete po;
 		}
 		if(m_singlemode==false)
 		{
-			/* todo: put up a blank page showing a link to the unknown object so it can be right-clicked and saved */
+			/* is it plain text? */
+			if(!strcmpin(m_type.GetString(),"text",4))
+			{
+				kGUITextObj *text;
+				kGUIHTMLObj *newobj;
+
+				/* it is an image, not a html page */
+				m_singlemode=true;
+				text=new kGUITextObj();
+				text->SetPos(0,0);
+				text->SetSize(100,500);
+				/* todo: get encoding from http header */
+				text->SetString((const char *)m_fp,m_len);
+
+				newobj=new kGUIHTMLObj(renderparent,this,&m_singleobjtag);
+				newobj->SetOwnerURL(StringToIDcase(&m_url));
+				renderparent->AddStyleChild(newobj);
+				newobj->SetOwnerURL(StringToIDcase(&m_url));
+				newobj->m_obj.m_singleobj=text;
+				newobj->AddRenderObject(text);
+			}
+			else
+			{
+				/* put up i don't know page */
+			}
 		}
 	}
 
@@ -5814,10 +5786,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	m_refreshurl.Clear();
 	m_refreshdelay=0;
 
-	if(doprint)
-		PreProcess(&tci,m_printrootobject);
-	else
-		PreProcess(&tci,m_rootobject);
+	PreProcess(&tci,m_rootobject);
 
 	/* save parse errors */
 	m_parseerrors.SetString(&m_errors);
@@ -11051,6 +11020,10 @@ void kGUIHTMLObj::Position(bool placeme)
 	kGUIHTMLAttrib *att;
 	kGUIHTMLObj *rp=GetParentObj();
 	int w;
+
+	/* this can happen if a table cell is not directly inside the table but enclosed in another tag */
+	while(rp && !rp->m_pos)
+		rp=rp->GetParentObj();
 
 	//get me a position class to use for positioning my children
 	m_pos=m_page->GetPos();
@@ -16667,12 +16640,6 @@ void kGUIHTMLSettings::Load(kGUIXMLItem *group)
 		m_useusercss=group->Locate("useusercss")->GetValueInt()?true:false;
 	else
 		m_useusercss=true;
-
-	if(group->Locate("screenmedia"))
-		m_screenmedia.SetString(group->Locate("screenmedia")->GetValue());
-
-	if(group->Locate("printmedia"))
-		m_printmedia.SetString(group->Locate("printmedia")->GetValue());
 }
 
 /* save html settings to the XML file */
@@ -16684,8 +16651,6 @@ void kGUIHTMLSettings::Save(kGUIXMLItem *group)
 	group->AddChild("drawareas",m_drawareas==true?1:0);
 	group->AddChild("usecss",m_usecss==true?1:0);
 	group->AddChild("useusercss",m_useusercss==true?1:0);
-	group->AddChild("screenmedia",&m_screenmedia);
-	group->AddChild("printmedia",&m_printmedia);
 }
 
 void kGUIHTMLShapeObj::Draw(void)

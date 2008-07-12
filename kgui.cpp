@@ -2597,9 +2597,14 @@ void kGUIMsgBoxReq::Init(const char *message,int buttons)
 	/* calculate size of message handle multi lines */
 	tw=m_text.CalcLineList(kGUI::GetSurfaceWidth()-64)+24;	/* plus room for scrollbar */	
 	th=m_text.CalcHeight(tw);
-	maxh=kGUI::GetSurfaceHeight()-100;
+	maxh=kGUI::GetSurfaceHeight()-150;
 	if(th>maxh)
+	{
 		th=maxh;
+		/* show scroll bars when not selected, so the user can see that there is too much */
+		/* text to see and he needs to scroll it to view it all */
+		m_text.SetLeaveScroll(true);
+	}
 
 	m_text.SetSize(tw+6,th+6);	
 	m_text.SetLocked(true);
@@ -2935,6 +2940,69 @@ int kGUI::FastHypot(int dx,int dy)
 	if(adx>ady)
 		return(adx+(ady>>2));
 	return(ady+(adx>>2));
+}
+
+/***************************************************************************************/
+
+static unsigned char b64[]={"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+
+/* convert from base64 back to binary */
+unsigned int kGUI::Base64Decode(unsigned int insize,Array<unsigned char>*in,Array<unsigned char>*out)
+{
+	unsigned int i,numout;
+	unsigned char c;
+	unsigned int outc;
+	unsigned int holdc;
+	unsigned int bits;
+	unsigned char u256[256];
+
+	/* build a quick xref table from chars to binary */
+	for(i=0;i<256;++i)
+		u256[i]=0;
+	for(i=0;i<64;++i)
+		u256[b64[i]]=i;
+
+	out->Init((insize*6)/8,1);
+	bits=0;
+	holdc=0;
+	numout=0;
+	for(i=0;i<insize;++i)
+	{
+		c=u256[in->GetEntry(i)];
+		holdc=(holdc<<6)|c;
+		bits+=6;
+		if(bits>=8)
+		{
+			outc=holdc>>(bits-8);
+			out->SetEntry(numout++,outc);
+			bits-=8;
+		}
+	}
+	return(numout);
+}
+
+/* convert from binary to base64 */
+unsigned int kGUI::Base64Encode(unsigned int insize,Array<unsigned char> *in,Array<unsigned char> *out)
+{
+	unsigned int i;
+	unsigned int numout;
+	unsigned int bits;
+	unsigned int c;
+	kGUIBitStream bs;
+
+	bs.SetReverseOut();
+	bs.SetReverseIn();
+
+	bs.Set(in->GetArrayPtr());
+	bits=insize*8;
+	out->Init(bits/6,1);
+	numout=0;
+	for(i=0;i<bits;i+=6)
+	{
+		c=bs.ReadU(6);
+		out->SetEntry(numout++,b64[c]);
+	}
+	return(numout);
 }
 
 /***************************************************************************************/
