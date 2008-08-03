@@ -59,7 +59,7 @@ kGUIText *kGUIComboBoxObj::GetEntryTextPtr(unsigned int index)
 
 void kGUIComboBoxObj::SetColorMode(unsigned int width)
 {
-	assert(m_poptableentries==0,"Need to set this before setting the number of entries!");
+	assert(m_poptableentries==0,"Need to set this (SetColorMode) before setting the number of entries!");
 	m_colorcolwidth=width;
 	m_colormode=true;
 }
@@ -98,7 +98,10 @@ void kGUIComboBoxObj::SetNumEntries(unsigned int n)
 	}
 	m_numentries=n;
 	m_selection=0;
-	m_poptableentries=new kGUIComboTableRowObj *[n];
+	if(n)
+		m_poptableentries=new kGUIComboTableRowObj *[n];
+	else
+		m_poptableentries=0;
 
 	for(i=0;i<n;++i)
 	{
@@ -286,26 +289,31 @@ int kGUIComboBoxObj::GetSelection(void)
 	return m_poptableentries[m_selection]->GetValue();
 }
 
-void kGUIComboBoxObj::SelectionDone(void)
+void kGUIComboBoxObj::SelectionDone(kGUIEvent *e)
 {
-	m_popped=false;
-
-	if(m_poptable->GetSelected()>=0)
-		m_selection=m_poptable->GetSelected();
-
-	kGUI::DelWindow(m_poptable);
-	delete m_poptable;
-	m_poptable=0;
-	SetCurrent();	/* I am now the top current object */
-	Dirty();
-	if(m_selection!=m_undoselection)
+	switch(e->GetEvent())
 	{
-		CallEvent(EVENT_AFTERUPDATE);
-		kGUI::CallAAParents(this);
+	case EVENT_SELECTED:
+		m_popped=false;
+
+		if(m_poptable->GetSelected()>=0)
+			m_selection=m_poptable->GetSelected();
+
+		kGUI::DelWindow(m_poptable);
+		delete m_poptable;
+		m_poptable=0;
+		SetCurrent();	/* I am now the top current object */
+		Dirty();
+		if(m_selection!=m_undoselection)
+		{
+			CallEvent(EVENT_AFTERUPDATE);
+			kGUI::CallAAParents(this);
+		}
+		else
+			CallEvent(EVENT_NOCHANGE);
+		kGUI::PushActiveObj(this);
+	break;
 	}
-	else
-		CallEvent(EVENT_NOCHANGE);
-	kGUI::PushActiveObj(this);
 }
 
 /* returning true means I've used the input, false means pass input to someone else */
@@ -508,7 +516,7 @@ click:;
 				popx=c.lx;
 				popw=GetZoneW();
 				popy=c.ty+GetZoneH();
-				poph=(text.GetHeight()+6)*showentries;
+				poph=((text.GetHeight()+6)*showentries)+4;
 
 				/* if this will go off of the bottom of the screen (with a little space at the bottom) */
 				/* then move it above instead */
@@ -531,7 +539,8 @@ click:;
 					m_poptable->SetNumCols(2);
 				else
 					m_poptable->SetNumCols(1);
-				m_poptable->SetSelectedCallBack(this,CALLBACKNAME(SelectionDone));
+				m_poptable->SetEventHandler(this,CALLBACKNAME(SelectionDone));
+//				m_poptable->SetSelectedCallBack(this,CALLBACKNAME(SelectionDone));
 				m_poptable->SetSelectMode();
 				/* add entries here */
 				for(i=0;i<m_numentries;++i)
@@ -673,7 +682,7 @@ kGUIText *kGUISharedComboEntries::GetEntryTextPtr(unsigned int index)
 
 void kGUISharedComboEntries::SetColorMode(unsigned int width)
 {
-	assert(m_poptableentries==0,"Need to set this before setting the number of entries!");
+	assert(m_poptableentries==0,"Need to set this (SetColorMode) before setting the number of entries!");
 	m_colorcolwidth=width;
 	m_colormode=true;
 }
@@ -873,26 +882,31 @@ int kGUISharedComboboxObj::GetSelection(void)
 	return m_shared->GetRow(m_selection)->GetValue();
 }
 
-void kGUISharedComboboxObj::SelectionDone(void)
+void kGUISharedComboboxObj::SelectionDone(kGUIEvent *e)
 {
-	m_popped=false;
-
-	if(m_shared->GetTable()->GetSelected()>=0)
-		m_selection=m_shared->GetTable()->GetSelected();
-
-	m_shared->CloseTable();
-
-	SetCurrent();	/* I am now the top current object */
-	Dirty();
-	if(m_selection!=m_undoselection)
+	switch(e->GetEvent())
 	{
-		CallEvent(EVENT_AFTERUPDATE);
-		kGUI::CallAAParents(this);
-	}
-	else
-		CallEvent(EVENT_NOCHANGE);
+	case EVENT_SELECTED:
+		m_popped=false;
 
-	kGUI::PushActiveObj(this);
+		if(m_shared->GetTable()->GetSelected()>=0)
+			m_selection=m_shared->GetTable()->GetSelected();
+
+		m_shared->CloseTable();
+
+		SetCurrent();	/* I am now the top current object */
+		Dirty();
+		if(m_selection!=m_undoselection)
+		{
+			CallEvent(EVENT_AFTERUPDATE);
+			kGUI::CallAAParents(this);
+		}
+		else
+			CallEvent(EVENT_NOCHANGE);
+
+		kGUI::PushActiveObj(this);
+	break;
+	}
 }
 
 /* returning true means I've used the input, false means pass input to someone else */
@@ -1119,7 +1133,8 @@ click:;
 				t->SetNumCols(2);
 			else
 				t->SetNumCols(1);
-			t->SetSelectedCallBack(this,CALLBACKNAME(SelectionDone));
+			t->SetEventHandler(this,CALLBACKNAME(SelectionDone));
+			//t->SetSelectedCallBack(this,CALLBACKNAME(SelectionDone));
 			t->SetSelectMode();
 			/* add entries here */
 			for(i=0;i<m_shared->GetNumEntries();++i)

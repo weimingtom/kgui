@@ -142,18 +142,12 @@ void kGUI::GetFontName(unsigned int index,kGUIString *s)
 	s->SetString(kGUIFont::m_faces[index].GetName());
 }
 
-
 void kGUI::CloseFontEngine(void)
 {
 	unsigned int i;
 
 	for(i=0;i<kGUIFont::m_numfonts;++i)
-	{
 		kGUIFont::GetFace(i)->Purge();
-//		FT_Done_Face( kGUIFont::GetFace(i)->GetFace());
-//		if(kGUIFont::GetFace(i)->m_memfile)
-//			delete []kGUIFont::GetFace(i)->m_memfile;
-	}
 	FT_Done_FreeType(kGUIFont::m_library);
 }
 
@@ -236,7 +230,7 @@ void kGUIFace::CalcHeight(unsigned int size)
 
 int kGUIFace::LoadFont(const char *filename)
 {
-	int size,glyph_index;	//,above,below,maxabove,maxbelow;
+	int size,glyph_index;
 	int advance;
 	unsigned int c;
 	unsigned long fontfilesize;
@@ -245,8 +239,6 @@ int kGUIFace::LoadFont(const char *filename)
 	/* handle bigfile based fonts */
 	m_memfile=kGUI::LoadFile(filename,&fontfilesize);
 	assert(m_memfile!=0,"Couldn't find font!");
-//	if(!m_memfile)
-//		return(-1);
 
 #if defined(WIN32) || defined(MINGW)
 	//windows only, this is so that when printing, reports can use these fonts too!
@@ -931,10 +923,6 @@ void kGUIText::DrawChar( char * src, int x,int y,int w,int h,kGUIColor color)
 	if(!w || !h)
 		return;
 
-	/* add scroll offsets */
-//	lx=x+kGUI::GetCurrentSurface()->GetOffsetX();
-//	ty=y+kGUI::GetCurrentSurface()->GetOffsetY();
-
 	if(kGUI::OffClip(x,y,x+w,y+h)==true)
 		return;
 
@@ -1196,9 +1184,9 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight,
 		return;
 
 	if(size<MAXQUICKSIZE)
-		cachesize=true;	//face->m_cachesize[size];
+		cachesize=true;	
 	else
-		cachesize=0;
+		cachesize=false;
 
 	face=kGUIFont::GetFace(GetFontID());
 	ftface=face->GetFace();
@@ -1341,9 +1329,9 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight)
 	usebg=GetUseRichInfo();
 
 	if(size<MAXQUICKSIZE)
-		cachesize=true;	//face->m_cachesize[size];
+		cachesize=true;
 	else
-		cachesize=0;
+		cachesize=false;
 
 	font_height=face->GetPixHeight(size);
 	ry=y+rowheight-font_height;

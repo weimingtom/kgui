@@ -83,6 +83,9 @@ bool kGUICSV::Load(void)
 	if(Open()==false)
 		return(false);		/* can't open file for read */
 
+	/* todo: check for any byte order markers and if found, then default all strings */
+	/* to that format */
+
 	sl.SetIgnoreEmpty(false);
 	maxcols=0;
 	do

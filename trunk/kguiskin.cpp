@@ -610,6 +610,16 @@ void DefSkin::DrawTableRowHeader(kGUICorners *c,bool selected,bool cursor,bool a
 	}
 }
 
+void DefSkin::DrawSubMenuMarker(kGUICorners *c)
+{
+	kGUIImage *marker=GetShape(SKIN_TABLEROWMARKER);
+	double scale;
+
+	scale=((c->by-c->ty)-6)/(double)marker->GetImageHeight();
+	marker->SetScale(scale,scale);
+	marker->Draw(0,c->lx+4,c->ty+3);
+}
+
 int DefSkin::GetMenuRowHeaderWidth(void)
 {
 	return TABLEROWEDGE;

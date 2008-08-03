@@ -6073,7 +6073,7 @@ void kGUITSP::Calc(void)
     Segment *S=0, *SPrev;
 #if 1
 	int MoveTypeInc=0;
-	int BacktrackMoveTypeInc=0;
+	//int BacktrackMoveTypeInc=0;
 #endif
 	m_stop=false;
 	/* not enough points? */

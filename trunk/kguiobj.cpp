@@ -77,9 +77,11 @@ void kGUIObj::SetEventHandler(void *codeobj,void (*code)(void *,kGUIEvent *))
 	m_eventcallback.Set(codeobj,code);
 
 	/* make sure even handler calls GetEvent() from the passed event class */
-
-	CallEvent(EVENT_UNDEFINED,&e);
-	assert(e.WasGetEventCalled()==true,"Error, EventHandler never called GetEvent");
+	if(codeobj)
+	{
+		CallEvent(EVENT_UNDEFINED,&e);
+		assert(e.WasGetEventCalled()==true,"Error, EventHandler never called GetEvent");
+	}
 }
 
 void kGUIScroll::SetEventHandler(void *codeobj,void (*code)(void *,kGUIEvent *))
@@ -298,13 +300,26 @@ void kGUIContainerObj::SetTop(bool t)
 void kGUIContainerObj::DeleteChildren(bool purge)
 {
 	unsigned int g;
+	unsigned int nc;
+	unsigned int i;
 	kGUIObj *gobj;
 
 	/* remove all child objects */
 	for(g=0;g<m_numgroups;++g)
 	{
 		if(purge==false)
-			m_numchildren.SetEntry(g,0);	/* set number of children in this list to 0 */
+		{
+			/* since we are not deleteing them but removing them from our list */
+			/* we need to detach them by setting their parent to null */
+			nc=m_numchildren.GetEntry(g);
+			for(i=0;i<nc;++i)
+			{
+				gobj=GetChild(g,i);
+				gobj->SetParent(0);
+			}
+			/* then we just set number of children in this list to 0 */
+			m_numchildren.SetEntry(g,0);
+		}
 		else
 		{
 			/* this code just keeps deleting the first entry in the list as */
@@ -1102,6 +1117,200 @@ void kGUIScroll::Update(void)
 
 	if(moved==true)
 		CallEvent(EVENT_MOVED);
+}
+
+/***************** scroll area container **************/
+
+kGUIScrollContainerObj::kGUIScrollContainerObj()
+{
+	SetNumGroups(1);
+	m_maxwidth=0;
+	m_maxheight=0;
+	m_usehs=true;
+	m_usevs=true;
+	m_vscrollbar.SetClickSize(10);
+	m_hscrollbar.SetClickSize(10);
+	m_vscrollbar.SetParent(this);
+	m_vscrollbar.SetVert();
+	m_hscrollbar.SetParent(this);
+	m_hscrollbar.SetHorz();
+	m_hscrollbar.SetEventHandler(this,& CALLBACKNAME(ScrollMoveCol));
+	m_vscrollbar.SetEventHandler(this,& CALLBACKNAME(ScrollMoveRow));
+	m_scroll.SetEventHandler(this,CALLBACKNAME(ScrollEvent));
+}
+
+void kGUIScrollContainerObj::CalcChildZone(void)
+{
+	SetChildZone(0,0,GetZoneW(),GetZoneH());
+	Scrolled();
+}
+
+void kGUIScrollContainerObj::MoveRow(int delta)
+{
+	int y=m_scroll.GetDestY();
+	int vh=GetZoneH();
+
+	if(m_usehs)
+		vh-=kGUI::GetSkin()->GetScrollbarWidth();
+
+	y+=delta;
+	if(y>(m_maxheight-vh))
+		y=m_maxheight-vh;
+	if(y<0)
+		y=0;
+
+    m_scroll.SetDestY(y);
+	UpdateScrollBars();
+}
+
+void kGUIScrollContainerObj::MoveCol(int delta)
+{
+	int x=m_scroll.GetDestX();
+	int vw=GetZoneW();
+
+	if(m_usevs)
+		vw-=kGUI::GetSkin()->GetScrollbarWidth();
+
+	x+=delta;
+	if(x>(m_maxwidth-vw))
+		x=m_maxwidth-vw;
+	if(x<0)
+		x=0;
+
+    m_scroll.SetDestX(x);
+	UpdateScrollBars();
+}
+
+void kGUIScrollContainerObj::Scrolled(void)
+{
+	kGUIZone cz;
+
+	SetChildScroll(m_scroll.GetCurrentX(),m_scroll.GetCurrentY());
+	UpdateScrollBars();
+
+	/* set the position of the row scrollbar */
+	if(m_usevs)
+	{
+		CopyChildZone(&cz);		/* get the child zone */
+		cz.SetZoneX(m_scroll.GetCurrentX()+(cz.GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth()));
+		cz.SetZoneY(m_scroll.GetCurrentY());
+		cz.SetZoneW(kGUI::GetSkin()->GetScrollbarWidth());
+		m_vscrollbar.MoveZone(&cz);
+	}
+
+	/* set the position of the column scrollbar */
+	if(m_usehs)
+	{
+		CopyChildZone(&cz);		/* get the child zone */
+		cz.SetZoneX(m_scroll.GetCurrentX());
+		cz.SetZoneY(m_scroll.GetCurrentY()+(cz.GetZoneH()-kGUI::GetSkin()->GetScrollbarHeight()));
+		cz.SetZoneW(cz.GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth());
+		cz.SetZoneH(kGUI::GetSkin()->GetScrollbarHeight());
+		m_hscrollbar.SetZone(&cz);
+	}
+
+	Dirty();
+}
+
+void kGUIScrollContainerObj::Draw(void)
+{
+	kGUICorners c;
+
+	GetCorners(&c);
+	if(m_usehs)
+	{
+		c.by-=kGUI::GetSkin()->GetScrollbarHeight();
+		m_hscrollbar.Draw();
+	}
+	if(m_usevs)
+	{
+		c.rx-=kGUI::GetSkin()->GetScrollbarWidth();
+		m_vscrollbar.Draw();
+	}
+
+	kGUI::PushClip();
+	kGUI::ShrinkClip(&c);
+	/* default to white */
+	kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(255,255,255));
+	DrawC(0);
+	kGUI::PopClip();
+}
+
+void kGUIScrollContainerObj::UpdateScrollBars(void)
+{
+	int vh=GetZoneH();
+	int vw=GetZoneW();
+
+	if(m_usehs)
+		vh-=kGUI::GetSkin()->GetScrollbarWidth();
+
+	if(m_usevs)
+		vw-=kGUI::GetSkin()->GetScrollbarWidth();
+
+	if(m_usevs==true)
+	{
+		int below;
+
+		below=m_maxheight-vh-m_scroll.GetDestY();
+		if(below<0)
+			below=0;
+		m_vscrollbar.SetValues(m_scroll.GetDestY(),vh,below);
+	}
+	if(m_usehs==true)
+	{
+		int right;
+
+		right=m_maxwidth-vw-m_scroll.GetDestX();
+		if(right<0)
+			right=0;
+		m_hscrollbar.SetValues(m_scroll.GetDestX(),vw,right);
+	}
+}
+
+bool kGUIScrollContainerObj::UpdateInput(void)
+{
+	bool over;
+	kGUICorners c;
+	kGUICorners cs;
+
+	GetCorners(&c);
+
+//	UpdateScrollBars();
+	over=kGUI::MouseOver(&c);
+	if(over)
+	{
+		/* is the horizontal scroll bar on? */
+		if(m_usehs==true)
+		{
+			if(m_hscrollbar.IsActive()==true)
+				return(m_hscrollbar.UpdateInput());
+
+			m_hscrollbar.GetCorners(&cs);
+			if(kGUI::MouseOver(&cs))
+				return(m_hscrollbar.UpdateInput());
+		}
+
+		/* is the vertical scroll bar on? */
+		if(m_usevs==true)
+		{
+			if(m_vscrollbar.IsActive()==true)
+				return(m_vscrollbar.UpdateInput());
+
+			m_vscrollbar.GetCorners(&cs);
+			if(kGUI::MouseOver(&cs))
+				return(m_vscrollbar.UpdateInput());
+		}
+		{
+			int scroll=kGUI::GetMouseWheelDelta();
+			kGUI::ClearMouseWheelDelta();
+			if(scroll)
+				MoveRow(-scroll*80);	/* magic number?, change to user var */
+		}
+		/* pass input down to my children */
+		return(UpdateInputC(0));
+	}
+	/* not over me */
+	return(false);
 }
 
 /***************** end **********************/

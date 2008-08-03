@@ -295,7 +295,7 @@ bool kGUIWindowObj::UpdateInput(void)
 				switch(m_activemode)
 				{
 				case WINDOWMODE_ADJPOS:
-					if(GetBackground()==true)
+					if(GetBackground())
 						kGUI::MoveWindowPos(dx,dy);
 					else
 					{
@@ -314,7 +314,7 @@ bool kGUIWindowObj::UpdateInput(void)
 					}
 				break;
 				case WINDOWMODE_ADJWIDTH:
-					if(GetBackground()==true)
+					if(GetBackground())
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTHORIZ);
 						neww+=dx;
@@ -334,7 +334,7 @@ bool kGUIWindowObj::UpdateInput(void)
 					}
 				break;
 				case WINDOWMODE_ADJHEIGHT:
-					if(GetBackground()==true)
+					if(GetBackground())
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTVERT);
 						newh+=dy;
@@ -354,7 +354,7 @@ bool kGUIWindowObj::UpdateInput(void)
 					}
 				break;
 				case WINDOWMODE_ADJSIZE:
-					if(GetBackground()==true)
+					if(GetBackground())
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTSIZE);
 						neww+=dx;
@@ -386,7 +386,7 @@ bool kGUIWindowObj::UpdateInput(void)
 				case WINDOWMODE_NONE:
 				break;
 				}
-				if(GetBackground()==true && (neww!=oldw) || (newh!=oldh))
+				if(GetBackground() && ((neww!=oldw) || (newh!=oldh)))
 					kGUI::SetWindowSize(neww,newh);
 
 				/* have I changed? */

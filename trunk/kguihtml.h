@@ -215,7 +215,7 @@ class kGUIUnits
 {
 public:
 	kGUIUnits() {m_units=UNITS_UNDEFINED;m_vint=true;m_value.i=0;}
-	void Set(kGUIString *s);
+	void Set(class kGUIHTMLPageObj *page,kGUIString *s);
 	void CopyFrom(kGUIUnits *from) {m_units=from->m_units;m_vint=from->m_vint;m_value.i=from->m_value.i;}
 	bool GetIsFixed(void) {return ((m_units==UNITS_PIXELS) || (m_units==UNITS_POINTS) || (m_units==UNITS_EM) || (m_units==UNITS_CM));}
 	void SetUnitType(int u) {m_units=u;}
@@ -548,6 +548,8 @@ public:
 
 	unsigned int GetBoxLeftMargin(void) {return m_leftmw;}
 	unsigned int GetBoxRightMargin(void) {return m_rightmw;}
+	unsigned int GetBoxTopMargin(void) {return m_topmw;}
+	unsigned int GetBoxBottomMargin(void) {return m_bottommw;}
 	void SetBoxLeftMargin(unsigned int lm) {m_leftmw=lm;}
 	void SetBoxRightMargin(unsigned int rm) {m_rightmw=rm;}
 
@@ -1034,7 +1036,7 @@ public:
 	void SetParent(kGUIHTMLObj *parent) {m_styleparent=parent;}
 	void SetPage(kGUIHTMLPageObj *page) {m_page=page;}
 	void Position(bool placeme=true);
-	void Contain(void);
+	void Contain(bool force=false);
 	void InsertFrame(void);
 	bool DetectObject(void);
     bool UpdateHover(void);
@@ -1662,7 +1664,7 @@ private:
 class kGUIHTMLSettings
 {
 public:
-	kGUIHTMLSettings() {m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);}
+	kGUIHTMLSettings() {m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)m_cssblock[i]=false;}
 	void Load(kGUIXMLItem *group);
 	void Save(kGUIXMLItem *group);
 
@@ -1680,6 +1682,9 @@ public:
 
 	bool GetDrawAreas(void) {return m_drawareas;}
 	void SetDrawAreas(bool da) {m_drawareas=da;}
+
+	inline bool GetCSSBlock(unsigned int n) {return m_cssblock[n];}
+	inline void SetCSSBlock(unsigned int n,bool b) {m_cssblock[n]=b;}
 private:
 	bool m_drawboxes:1;
 	bool m_drawareas:1;
@@ -1687,6 +1692,7 @@ private:
 	bool m_useusercss:1;
 	kGUIString m_usercss;
 	kGUIColor m_areacolor;
+	bool m_cssblock[HTMLATT_UNKNOWN];
 };
 
 /* this is used to keep a listing of named links within a page, so when a "local" link */
@@ -1762,17 +1768,17 @@ public:
 	void SetSaveDirectory(const char *dir) {m_savedir.SetString(dir);}
 	const char *GetSaveDirectory(void) {return m_savedir.GetString();}
 
-	void SetSettings(kGUIHTMLSettings *s) {m_settings=s;}
-	kGUIHTMLSettings *GetSettings(void) {return m_settings;}
+	inline void SetSettings(kGUIHTMLSettings *s) {m_settings=s;}
+	inline kGUIHTMLSettings *GetSettings(void) {return m_settings;}
 
-	void SetItemCache(kGUIHTMLItemCache *c) {m_itemcache=c;}
-	kGUIHTMLItemCache *GetItemCache(void) {return m_itemcache;}
+	inline void SetItemCache(kGUIHTMLItemCache *c) {m_itemcache=c;}
+	inline kGUIHTMLItemCache *GetItemCache(void) {return m_itemcache;}
 
-	void SetVisitedCache(kGUIHTMLVisitedCache *c) {m_visitedcache=c;}
-	kGUIHTMLVisitedCache *GetVisitedCache(void) {return m_visitedcache;}
+	inline void SetVisitedCache(kGUIHTMLVisitedCache *c) {m_visitedcache=c;}
+	inline kGUIHTMLVisitedCache *GetVisitedCache(void) {return m_visitedcache;}
 
-	void SetAuthHandler(kGUIDownloadAuthenticateRealms *ah) {m_ah=ah;}
-	kGUIDownloadAuthenticateRealms *GetAuthHandler(void) {return m_ah;}
+	inline void SetAuthHandler(kGUIDownloadAuthenticateRealms *ah) {m_ah=ah;}
+	inline kGUIDownloadAuthenticateRealms *GetAuthHandler(void) {return m_ah;}
 
 	/* todo, make this changeable */
 	bool ClassUseCase(void) {return true;}
@@ -1808,7 +1814,7 @@ public:
 	unsigned int GetTextDecoration(void) {return m_textdecoration;}
 
 	/* called when user adjusts the window size */
-	void RePosition(bool reparse) {if(reparse)Parse(false);m_reposition=true;}
+	void RePosition(bool reparse) {if(reparse)Parse(false);m_reposition=true;Dirty();}
 
 	/* called when user has clicked on a link */
 	void Click(kGUIString *url,kGUIString *referrer);
@@ -1818,7 +1824,6 @@ public:
 	bool GetTrace(void) {return m_trace;}
 	void TraceLayout(void) {m_trace=true;Position();m_trace=false;}
 	void TraceDraw(void) {m_trace=true;Dirty();}
-//	void TraceDraw(void) {SavePosition();Position();ComparePosition();m_trace=true;Dirty();}
 
 	int GetScrollY(void);
 	void SetScrollY(int y);
@@ -1920,6 +1925,8 @@ public:
 	kGUIHTMLObj *GetTargetObj(void) {return m_targetobj;}
 	bool GetHasVertScrollBars(void) {return m_usevs;}
 
+	Hash *GetUnitsCache(void) {return &m_unitscache;}
+
 	static TAGLIST_DEF m_taglist[];
 	static TAGLIST_DEF m_unknowntag;
 	static TAGLIST_DEF m_singleobjtag;
@@ -1930,10 +1937,15 @@ public:
 	static TAGLIST_DEF m_lishapetag;	/* list marker when shape */
 	static TAGLIST_DEF m_textgrouptag;
 	static ATTLIST_DEF m_attlist[];
+	static ATTLIST_DEF m_attlist2[];
 	static CONSTLIST_DEF m_constlist[];
 	static kGUIColor m_colors[];
 	static kGUIString m_attstrings[HTMLATT_NUM];
 	static POPLIST_DEF m_poplist[];
+
+	/* code used in the brower settings to get the attribute names */
+	static unsigned int GetNumCSSAttributes(void) {return HTMLATT_UNKNOWN;}
+	static const char *GetCSSAttributeName(unsigned int n);
 private:
 	void RightClickEvent(kGUIEvent *event);
 
@@ -1963,12 +1975,16 @@ private:
 	unsigned int m_tcinumrules;
 	Hash m_tcicache;
 
+	/* used by the style unit processer for speed optimization */
+	Hash m_unitscache;
+
 	int m_lastmousex;
 	int m_lastmousey;
 	unsigned int m_appliedlevel;
 	unsigned int m_applied[HTMLATT_UNKNOWN];
 	unsigned int m_trueapplied[HTMLATT_UNKNOWN];
 	bool m_poppossrules;
+	bool m_blocked[HTMLATT_UNKNOWN];
 
 	kGUIHTMLSettings *m_settings;
 	kGUIHTMLItemCache *m_itemcache;
@@ -2058,8 +2074,6 @@ private:
 	kGUIHTMLAttrib *m_beforecontent;
 	kGUIHTMLAttrib *m_aftercontent;
 
-//	kGUIString m_screenmedia;
-//	kGUIString m_printmedia;
 	kGUIString m_curmedia;	/* current one */
 
 	bool m_strict:1;
@@ -2156,16 +2170,6 @@ private:
 	bool m_reposition;	/* set then images are loaded and page needs to be re-positioned */
 
 	bool m_iconlinked;
-	/* style groups, first styles attached to HTML tags */
-//	kGUIStyleObj m_tagstyles[HTMLTAG_NUMTAGS];
-	/* next, style groups for user classes */
-//	int m_numclassstyles;
-//	Array<kGUIStyleObj *>m_classstyles;
-//	Hash m_classstylehash;		/* hash list for styleclasses */
-
-	/* linked objects on this page */
-//	int m_numlinkedobjects;
-//	Array<kGUIHTMLObj *>m_linkedobjects;
 
 	/*****************************************************************/
 

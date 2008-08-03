@@ -126,7 +126,6 @@ bool kGUIButtonObj::UpdateInput(void)
 			m_pressed=false;
 			Dirty();	/* force redraw of unpressed button */
 			CallEvent(EVENT_PRESSED);
-//			m_pressedcallback.Call();
 //			kGUI::CallAAParents(this);
 			return(true);
 		}
@@ -137,7 +136,6 @@ bool kGUIButtonObj::UpdateInput(void)
 		if(over==true)
 		{
 			CallEvent(EVENT_RIGHTCLICK);
-//			m_rpressedcallback.Call();
 			return(true);
 		}
 	}
@@ -149,7 +147,6 @@ bool kGUIButtonObj::UpdateInput(void)
 
 		m_pressed=false;
 		CallEvent(EVENT_PRESSED);
-//		m_pressedcallback.Call();
 //		kGUI::CallAAParents(this);
 		return(true);
 	}

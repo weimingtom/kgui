@@ -240,20 +240,10 @@ bool DataHandle::Open(void)
 	if(m_openmutex.TryLock()==false)
 		return(false);
 
-//	if(m_wopen==true)
-//		return(false);	/* cannot open for read, someone is writing to it aleady */
-
 	assert(m_lock==false,"Error: file is locked!");
 	switch(m_type)
 	{
 	case DATATYPE_FILE:
-#if 0
-		if(!m_filesize)
-		{
-			/* if file didn't extst when SetFilename was called then try again now */
-			SetFilename(GetFilename());
-		}
-#endif
 		m_offset=0;
 		assert(m_open==false,"Already Open!");
 		assert(m_fn.GetLen()!=0,"No Filename defined!");
@@ -315,7 +305,6 @@ bool DataHandle::OpenWrite(const char *wtype,unsigned long defbufsize)		/* write
 	assert(m_lock==false,"Error: file is locked!");
 	assert(m_open==false,"File is already open for read!");
 	assert(m_wopen==false,"File is already open for write!");
-//	assert(m_type==DATATYPE_FILE,"only valid for files!");
 
 	switch(m_type)
 	{

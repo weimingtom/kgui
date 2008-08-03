@@ -655,10 +655,7 @@ int kGUIString::Replace(const char *from,const char *to,unsigned int start,int c
 			}
 		}while(place);
 		m_len=newlen;
-		{
-			unsigned int xx=(unsigned int)strlen(m_string);
-			assert(m_len==(unsigned int)strlen(m_string),"length error!");
-		}
+		assert(m_len==(unsigned int)strlen(m_string),"length error!");
 	}
 	StringChanged();
 	return(numchanges);

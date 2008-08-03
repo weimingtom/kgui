@@ -371,16 +371,11 @@ public:
 
 	inline kGUIBasicIndices *GetIndicePtr(void) {return &m_indices;}
 
-//	inline bool GetIsSingle(void) {return m_issingle;}
-//	inline void SetIsSingle(bool a) {m_issingle=a;}
-
 	/* these are usefull for system and app class variables */
 	inline void *GetUserDataPtr(void) {return m_user.ptr;}
 	inline void SetUserData(void *user) {m_user.ptr=user;}
 	inline int GetUserDataInt(void) {return m_user.i;}
 	inline void SetUserData(int user) {m_user.i=user;}
-//	inline void SetPreReadCallback(void *codeobj,void (*code)(void *,kGUIBasicVarObj *)) {m_prereadcallback.Set(codeobj,code);}
-//	inline void SetPostWriteCallback(void *codeobj,void (*code)(void *,kGUIBasicVarObj *)) {m_postwritecallback.Set(codeobj,code);}
 
 	/* these are used if it is an array object, or for each field if it is a structure */
 	kGUIBasicVarObj *m_xarrayentries;
@@ -390,7 +385,6 @@ private:
 	bool m_isarray:1;
 	bool m_isconstant:1;
 	bool m_isglobal:1;
-//	bool m_issingle:1;
 	union
 	{
 		int i;										/* integer */
@@ -408,9 +402,6 @@ private:
 		void *ptr;
 		int i;
 	}m_user;
-//
-//	kGUICallBackPtr<kGUIBasicVarObj> m_prereadcallback;
-//	kGUICallBackPtr<kGUIBasicVarObj> m_postwritecallback;
 };
 
 typedef struct
@@ -464,7 +455,6 @@ private:
 	Array<sfields_def>m_fields;
 	Hash m_fieldhash;			/* small hash list for field name to index conversion */
 };
-
 
 typedef struct
 {
@@ -907,7 +897,6 @@ private:
 	bool m_alphatable[256];
 	bool m_digittable[256];
 	bool m_nametable[256];
-//	int m_exppri[BASICTOKEN_NUMTOKENS];
 };
 
 /* after adding errors here, add them to the error string array in kguibasic.cpp */
