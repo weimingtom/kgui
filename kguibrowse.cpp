@@ -48,17 +48,36 @@ private:
 	kGUIInputBoxObj m_source;
 };
 
+class CSSBlockRowObj : public kGUITableRowObj
+{
+public:
+	CSSBlockRowObj(unsigned int index);
+	~CSSBlockRowObj() {}
+	int GetNumObjects(void) {return 2;}
+	kGUIObj **GetObjectList(void) {return m_objectlist;}
+	void SetBlocked(bool b) {m_block.SetSelected(b);} 
+	bool GetBlocked(void) {return m_block.GetSelected();}
+private:
+	kGUIObj *m_objectlist[2];
+	kGUITickBoxObj m_block;
+	kGUIInputBoxObj m_name;
+};
+
 class ViewSettings : public kGUIWindowObj
 {
 public:
 	ViewSettings(kGUIBrowseObj *b,int w,int h);
+	ViewSettings() {m_csstable.DeleteChildren(true);}
 	/* called when window size changes */
 	void DirtyandCalcChildZone(void);
 private:
 	CALLBACKGLUEPTR(ViewSettings,WindowEvent,kGUIEvent)
 	void WindowEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(ViewSettings,ButtonsEvent,kGUIEvent)
+	void ButtonsEvent(kGUIEvent *event);
 
 	kGUIBrowseObj *m_b;
+	kGUIScrollContainerObj m_scroll;
 	kGUIControlBoxObj m_controls;
 
 	/* browser settings */
@@ -97,13 +116,19 @@ private:
 	kGUITickBoxObj m_drawareas;
 	kGUIComboBoxObj m_drawareascolor;
 
-	/* draw areas */
+	/* screen media to use */
 	kGUITextObj m_screenmediacaption;
 	kGUIComboBoxObj m_screenmedia;
 
-	/* draw areas */
+	/* print media to use */
 	kGUITextObj m_printmediacaption;
 	kGUIComboBoxObj m_printmedia;
+
+	kGUIButtonObj m_clear;
+	kGUIButtonObj m_set;
+	kGUIButtonObj m_toggle;
+
+	kGUITableObj m_csstable;
 };
 
 void PageInfo::Set(const char *url,const char *post,const char *referer,const char *source,const char *header)
@@ -133,6 +158,13 @@ MAINMENU_TRACEDRAW,
 MAINMENU_VIEWCOOKIES,
 MAINMENU_SETTINGS,
 MAINMENU_NUM};
+
+enum
+{
+BOOKMARK_EDITBOOKMARK=MAINMENU_NUM,
+BOOKMARK_ADDBOOKMARK,
+BOOKMARK_BOOKMARKS
+};
 
 static const char *mainmenutxt[]={
 	"View Page Source",
@@ -177,24 +209,23 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_lockedimage.SetFilename("_locked.gif");
 	m_unlockedimage.SetFilename("_unlocked.gif");
 
-	m_menulabel.SetFontSize(20);
-	m_menulabel.SetFontID(1);
-	m_menulabel.SetString("Menu");
-	m_menulabel.SetEventHandler(this,CALLBACKNAME(ShowMainMenu));
-	m_browsecontrols.AddObject(&m_menulabel);
+	m_mainmenu.SetFontSize(20);
+	m_mainmenu.SetFontID(1);
+	m_mainmenu.SetNumEntries(2);
+	m_mainmenu.GetTitle(0)->SetString("Menu");
+	m_mainmenu.GetTitle(1)->SetString("Bookmarks");
+	m_mainmenu.SetEntry(0,&m_menu);
+	m_mainmenu.SetEntry(1,&m_bookmarksmenu);
+	m_mainmenu.SetEventHandler(this,CALLBACKNAME(DoMainMenu));
+
+	m_browsecontrols.AddObject(&m_mainmenu);
 
 	m_menu.SetFontSize(14);
+	m_menu.SetIconWidth(22);
 	m_menu.Init(MAINMENU_NUM,mainmenutxt);
-	m_menu.SetEventHandler(this,CALLBACKNAME(DoMainMenu));
-
-	m_bookmarkslabel.SetFontSize(20);
-	m_bookmarkslabel.SetFontID(1);
-	m_bookmarkslabel.SetString("Bookmarks");
-	m_bookmarkslabel.SetEventHandler(this,CALLBACKNAME(ShowBookmarks));
-	m_browsecontrols.AddObject(&m_bookmarkslabel);
 
 	m_bookmarksmenu.SetFontSize(14);
-	m_bookmarksmenu.SetEventHandler(this,CALLBACKNAME(DoBookmarks));
+//	m_bookmarksmenu.SetEventHandler(this,CALLBACKNAME(DoBookmarks));
 
 	m_gomenu.SetFontSize(14);
 	m_gomenu.SetEventHandler(this,CALLBACKNAME(DoGotoMenu));
@@ -338,17 +369,40 @@ void kGUIBrowseObj::SetIcon(DataHandle *dh)
 	}
 }
 
-void kGUIBrowseObj::ShowMainMenu(kGUIEvent *event)
-{
-	if(event->GetEvent()==EVENT_LEFTCLICK)
-		m_menu.Activate(kGUI::GetMouseX(),kGUI::GetMouseY());
-}
-
 void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_SELECTED)
+	switch(event->GetEvent())
 	{
-		switch(m_menu.GetSelection())
+	case EVENT_ENTER:
+	{
+		/* populate the bookmarks menu */
+		unsigned int i;
+		unsigned int numbookmarks;
+		kGUIImageObj *icon;
+
+		if(m_settings)
+		{
+			numbookmarks=m_settings->GetNumBookmarks();
+			
+			m_bookmarksmenu.SetIconWidth(22);
+			m_bookmarksmenu.Init(numbookmarks+3);
+			m_bookmarksmenu.SetEntry(0,"Bookmark Page",BOOKMARK_ADDBOOKMARK);
+			m_bookmarksmenu.SetEntry(1,"Edit Bookmarks",BOOKMARK_EDITBOOKMARK);
+			m_bookmarksmenu.GetEntry(2)->SetIsBar(true);
+
+			for(i=0;i<numbookmarks;++i)
+			{
+				m_bookmarksmenu.SetEntry(i+3,m_settings->GetBookmark(i)->GetTitle(),BOOKMARK_BOOKMARKS+i);
+				icon=m_bookmarksmenu.GetEntry(i+3)->GetIconObj();
+				icon->Copy(m_settings->GetBookmark(i)->GetIcon());
+				icon->SetSize(16,16);
+				icon->ScaleTo(16,16);
+			}
+		}
+	}
+	break;
+	case EVENT_SELECTED:
+		switch(event->m_value[0].i)
 		{
 		case MAINMENU_VIEWPAGESOURCE:
 		{
@@ -492,53 +546,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 					(int)(kGUI::GetScreenHeight()*0.75));
 		}
 		break;
-		}
-	}
-}
-
-void kGUIBrowseObj::ShowBookmarks(kGUIEvent *event)
-{
-	if(event->GetEvent()==EVENT_LEFTCLICK)
-	{
-		/* populate the bookmarks menu */
-		unsigned int i;
-		unsigned int numbookmarks;
-		kGUIImageObj *icon;
-
-		if(m_settings)
-		{
-			numbookmarks=m_settings->GetNumBookmarks();
-			
-			m_bookmarksmenu.SetIconWidth(16);
-			m_bookmarksmenu.Init(numbookmarks+2);
-			m_bookmarksmenu.SetEntry(0,"Bookmark Page",0);
-			m_bookmarksmenu.SetEntry(1,"Edit Bookmarks",1);
-			for(i=0;i<numbookmarks;++i)
-			{
-				m_bookmarksmenu.SetEntry(i+2,m_settings->GetBookmark(i)->GetTitle(),i+2);
-				icon=m_bookmarksmenu.GetEntry(i+2)->GetIconObj();
-				icon->Copy(m_settings->GetBookmark(i)->GetIcon());
-				icon->SetSize(16,16);
-				icon->ScaleTo(16,16);
-			}
-			m_bookmarksmenu.Activate(kGUI::GetMouseX(),kGUI::GetMouseY());
-		}
-	}
-}
-
-void kGUIBrowseObj::DoBookmarks(kGUIEvent *event)
-{
-	if(event->GetEvent()==EVENT_SELECTED)
-	{
-		int sel;
-
-		sel=m_bookmarksmenu.GetSelection();
-		switch(sel)
-		{
-		case -1:
-			/* menu aborted */
-		break;
-		case 0:	/* bookmark current page */
+		case BOOKMARK_ADDBOOKMARK:
 		{
 			PageInfo *p;
 			
@@ -547,12 +555,14 @@ void kGUIBrowseObj::DoBookmarks(kGUIEvent *event)
 				m_settings->AddBookmark(p->GetTitle(),p->GetURL(),&m_icon);
 		}
 		break;
-		case 1:	/* edit bookmarks */
+		case BOOKMARK_EDITBOOKMARK:
 		{
 			EditBookmarkWindow *ebw;
 
 			ebw=new EditBookmarkWindow(m_settings);
 		}
+		break;
+		case -1:	/* menu aborted */
 		break;
 		default:
 		{
@@ -562,7 +572,7 @@ void kGUIBrowseObj::DoBookmarks(kGUIEvent *event)
 
 			SaveCurrent();
 
-			bookmark=m_settings->GetBookmark(sel-2);
+			bookmark=m_settings->GetBookmark(event->m_value[0].i-BOOKMARK_BOOKMARKS);
 
 			p=NextPage();
 			m_url.SetString(bookmark->GetURL());
@@ -573,6 +583,7 @@ void kGUIBrowseObj::DoBookmarks(kGUIEvent *event)
 		}
 		break;
 		}
+	break;
 	}
 }
 
@@ -1148,6 +1159,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_b=b;
 	m_controls.SetPos(0,0);
 	m_controls.SetZoneW(GetChildZoneW());
+	m_controls.SetMaxHeight(10000);
 
 	m_visiteddayscaption.SetFontID(1);
 	m_visiteddayscaption.SetFontSize(VSFONTSIZE);
@@ -1269,6 +1281,54 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.AddObject(&m_printmedia);
 	m_controls.NextLine();
 
+	m_clear.SetFontID(1);
+	m_clear.SetFontSize(VSFONTSIZE);
+	m_clear.SetString("Clear All");
+	m_clear.SetSize(m_clear.GetWidth()+6,m_clear.GetHeight()+6);
+	m_clear.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
+	m_controls.AddObject(&m_clear);
+
+	m_set.SetFontID(1);
+	m_set.SetFontSize(VSFONTSIZE);
+	m_set.SetString("Set All");
+	m_set.SetSize(m_set.GetWidth()+6,m_set.GetHeight()+6);
+	m_set.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
+	m_controls.AddObject(&m_set);
+
+	m_toggle.SetFontID(1);
+	m_toggle.SetFontSize(VSFONTSIZE);
+	m_toggle.SetString("Toggle All");
+	m_toggle.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
+	m_toggle.SetSize(m_toggle.GetWidth()+6,m_toggle.GetHeight()+6);
+	m_controls.AddObject(&m_toggle);
+	m_controls.NextLine();
+
+	/* css enable/disable table */
+
+	m_csstable.SetNumCols(2);
+	m_csstable.SetColTitle(0,"Enable");
+	m_csstable.SetColTitle(1,"Name");
+	m_csstable.SetColWidth(0,50);
+	m_csstable.SetColWidth(1,200);
+	m_csstable.SetAllowAddNewRow(false);
+	m_csstable.SetAllowDelete(false);
+
+	/* populate the table */
+
+	for(i=0;i<kGUIHTMLPageObj::GetNumCSSAttributes();++i)
+	{
+		CSSBlockRowObj *row;
+
+		row=new CSSBlockRowObj(i);
+		row->SetBlocked(b->GetSettings()->GetCSSBlock(i));
+		m_csstable.AddRow(row);
+	}
+
+	/* make table big enough to hold all entries */
+	m_csstable.SetSize(m_csstable.CalcTableWidth(),m_csstable.CalcTableHeight());
+	m_controls.AddObject(&m_csstable);
+	m_controls.NextLine();
+
 	/* set values to current settings */
 	m_visiteddays.SetInt(b->GetSettings()->GetVisitedDays());
 	m_cachemode.SetSelection(b->GetSettings()->GetCacheMode());
@@ -1281,10 +1341,55 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_screenmedia.SetSelectionz(b->GetSettings()->GetScreenMedia()->GetString());
 	m_printmedia.SetSelectionz(b->GetSettings()->GetPrintMedia()->GetString());
 
-	AddObject(&m_controls);
+	m_scroll.SetPos(0,0);
+	m_scroll.SetSize(GetChildZoneW(),GetChildZoneH());
+	m_scroll.AddObject(&m_controls);
+	m_scroll.SetMaxWidth(m_controls.GetZoneW());
+	m_scroll.SetMaxHeight(m_controls.GetZoneH());
+	AddObject(&m_scroll);
+
 	kGUI::AddWindow(this);
 	GetTitle()->SetString("Browser Settings");
 	SetEventHandler(this,CALLBACKNAME(WindowEvent));
+}
+
+void ViewSettings::ButtonsEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_PRESSED:
+		if(event->GetObj()==&m_clear)
+		{
+			for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)
+			{
+				CSSBlockRowObj *row;
+
+				row=static_cast<CSSBlockRowObj *>(m_csstable.GetRow(i));
+				row->SetBlocked(false);
+			}
+		}
+		else if(event->GetObj()==&m_set)
+		{
+			for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)
+			{
+				CSSBlockRowObj *row;
+
+				row=static_cast<CSSBlockRowObj *>(m_csstable.GetRow(i));
+				row->SetBlocked(true);
+			}
+		}
+		else if(event->GetObj()==&m_toggle)
+		{
+			for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)
+			{
+				CSSBlockRowObj *row;
+
+				row=static_cast<CSSBlockRowObj *>(m_csstable.GetRow(i));
+				row->SetBlocked(!row->GetBlocked());
+			}
+		}
+	break;
+	}
 }
 
 void ViewSettings::WindowEvent(kGUIEvent *event)
@@ -1304,10 +1409,22 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 		m_b->GetSettings()->SetScreenMedia(m_screenmedia.GetSelectionStringObj());
 		m_b->GetSettings()->SetPrintMedia(m_printmedia.GetSelectionStringObj());
 
+		/* copy the enable/disable settings from the cssenable table */
+		for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)
+		{
+			CSSBlockRowObj *row;
+
+			row=static_cast<CSSBlockRowObj *>(m_csstable.GetRow(i));
+			m_b->GetSettings()->SetCSSBlock(i,row->GetBlocked());
+		}
+
 		/* trigger redraw, and flush rule cache since user rules may have been added */
 		m_b->FlushRuleCache();
 		m_b->RePosition(true);
 		delete this;
+	break;
+	case EVENT_SIZECHANGED:
+		m_scroll.SetSize(GetChildZoneW(),GetChildZoneH());
 	break;
 	}
 }
@@ -1316,6 +1433,16 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 void ViewSettings::DirtyandCalcChildZone(void)
 {
 	kGUIContainerObj::DirtyandCalcChildZone();
+}
+
+CSSBlockRowObj::CSSBlockRowObj(unsigned int index)
+{
+	m_block.SetSelected(false);
+	m_name.SetString(kGUIHTMLPageObj::GetCSSAttributeName(index));
+	m_objectlist[0]=&m_block;
+	m_objectlist[1]=&m_name;
+	m_name.SetLocked(true);
+	SetRowHeight(20);
 }
 
 /* add URL to existing bookmarks, if already there then update title and return, else add it */

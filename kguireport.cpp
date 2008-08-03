@@ -40,6 +40,7 @@
  panel so the user can have many customization options for printing reports */
 
 #include "kgui.h"
+#include "_text.h"
 #include "kguireport.h"
 
 void kGUIReportAreaObj::AddObj(kGUIReportObj *obj)

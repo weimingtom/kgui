@@ -185,20 +185,14 @@ private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,GoBack,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,Print,kGUIEvent);
 	CALLBACKGLUEPTRPTRPTR(kGUIBrowseObj,Click,kGUIString,kGUIString,kGUIString);
-	CALLBACKGLUEPTR(kGUIBrowseObj,ShowMainMenu,kGUIEvent);
-	CALLBACKGLUEPTR(kGUIBrowseObj,ShowBookmarks,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoMainMenu,kGUIEvent);
-	CALLBACKGLUEPTR(kGUIBrowseObj,DoBookmarks,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoGotoMenu,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,SetIcon,DataHandle);
 	void UpdateButtons(void);
 	void Goto(void);
 	void Load(void);
-	void ShowMainMenu(kGUIEvent *event);
 	void SetIcon(DataHandle *dh);
 	void DoMainMenu(kGUIEvent *event);
-	void ShowBookmarks(kGUIEvent *event);
-	void DoBookmarks(kGUIEvent *event);
 	void DoGotoMenu(kGUIEvent *event);
 	void UrlChanged(kGUIEvent *event);
 	void PageLoaded(int result);
@@ -217,7 +211,7 @@ private:
 	bool m_showheader;
 	kGUIControlBoxObj m_browsecontrols;
 
-	kGUITextObj m_menulabel;
+	kGUIMenuObj m_mainmenu;
 	kGUIMenuColObj m_menu;
 	kGUIMenuColObj m_gomenu;
 

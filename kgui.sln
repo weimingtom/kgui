@@ -47,6 +47,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sample_browse", "samples\br
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kguilocstr", "kguilocstr.vcproj", "{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -428,6 +432,36 @@ Global
 		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Multithreaded.Build.0 = Release|Win32
 		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Singlethreaded.ActiveCfg = Release|Win32
 		{29E7DDAF-F176-4659-85E7-D3F2B374BFFD}.Release Singlethreaded.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug Multithreaded.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug Multithreaded.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug Singlethreaded.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Debug Singlethreaded.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL ASM Debug.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL ASM Debug.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL ASM Release.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL ASM Release.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL Debug.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL Debug.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL Release.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL Release.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL VB.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.DLL VB.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB ASM Debug.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB ASM Debug.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB ASM Release.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB ASM Release.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB Debug.ActiveCfg = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB Debug.Build.0 = Debug|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB Release.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.LIB Release.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release Multithreaded.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release Multithreaded.Build.0 = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release Singlethreaded.ActiveCfg = Release|Win32
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}.Release Singlethreaded.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionItems) = postSolution
 	EndGlobalSection

@@ -31,6 +31,7 @@
  extra functionality to them */
 
 #include "kgui.h"
+#include "_text.h"
 #include "kguireq.h"
 
 enum
@@ -280,12 +281,17 @@ void kGUIFileReq::CopyFilename(kGUIEvent *event)
 		kGUIObj *obj;
 		kGUIFileReqRow *frr;
 
-		row=m_table.GetCursorRow();
-		obj=m_table.GetChild(0,row);
-		frr=static_cast<kGUIFileReqRow *>(obj);
+		if(m_table.GetNumChildren())
+		{
+			row=m_table.GetCursorRow();
+			obj=m_table.GetChild(0,row);
+			frr=static_cast<kGUIFileReqRow *>(obj);
 
-		if(frr->GetType()==TYPE_FILE)
-			m_shortfn.SetString(frr->GetFilename());
+			if(frr->GetType()==TYPE_FILE)
+				m_shortfn.SetString(frr->GetFilename());
+		}
+		else
+			m_shortfn.Clear();
 	}
 }
 

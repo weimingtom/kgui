@@ -232,7 +232,7 @@ void kGUIDownloadEntry::Download(void)
 {
 #if defined(LINUX)  || defined(MACINTOSH) || defined(MINGW)
 	struct sockaddr_in addr ;
-	int sock;
+	int sock=0;
 	kGUIString request;
 	kGUIString got;
 	bool findblank;

@@ -124,6 +124,7 @@ public:
 //	int GetTableColHeaderHeight(void);
 
 	void DrawTableRowHeader(kGUICorners *c,bool selected,bool cursor,bool add);
+	void DrawSubMenuMarker(kGUICorners *c);
 	void DrawMenuRowHeader(kGUICorners *c);
 	/* tickbox */
 	void DrawTickbox(kGUICorners *c,bool scale,bool selected,bool current);

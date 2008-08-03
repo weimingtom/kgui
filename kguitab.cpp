@@ -71,28 +71,20 @@ bool kGUITabObj::SetCurrentTabNamez(const char *name)
 void kGUITabObj::SetNumTabs(int numtabs,int numgroups)
 {
 	int i,j;
-	kGUIText *t;
-
-	/* delete old names if they exist and reallocate below */
-	for(i=0;i<m_numtabs;++i)
-	{
-		delete m_tabnames.GetEntry(i);
-		m_tabnames.SetEntry(i,0);
-	}
 
 	m_numtabs=numtabs;
 	m_numgroups=numgroups;
 	m_curtab=0;
 	m_overtab=-1;
 	SetNumGroups(numgroups);
-	m_tabnames.Alloc(numtabs);
+	m_tabnames.Init(numtabs,0);
 	m_tabgroups.Alloc(numtabs);
 	m_tabx.Alloc(numtabs);
 	m_taby.Alloc(numtabs);
 	for(i=0;i<m_numtabs;++i)
 	{
-		t=new kGUIText;
-		m_tabnames.SetEntry(i,t);
+//		t=new kGUIText;
+//		m_tabnames.SetEntry(i,t);
 		j=i;
 		if(j>=numgroups)
 			j=numgroups-1;
@@ -103,17 +95,10 @@ void kGUITabObj::SetNumTabs(int numtabs,int numgroups)
 
 kGUITabObj::~kGUITabObj()
 {
-	int i;
-
 	if(m_track==true)
 	{
 		kGUI::DelEvent(this,CALLBACKNAME(Track));
 		m_track=false;
-	}
-	for(i=0;i<m_numtabs;++i)
-	{
-		delete m_tabnames.GetEntry(i);
-		m_tabnames.SetEntry(i,0);
 	}
 }
 
@@ -135,7 +120,7 @@ void kGUITabObj::UpdateTabs(void)
 	x=exp+m_starttabx;			/* than all other tabs so leave room for it to expand */
 	for(i=0;i<m_numtabs;++i)
 	{
-		tw=m_tabnames.GetEntry(i)->GetWidth()+8+l+r;	/* pixel space needed for tab */
+		tw=m_tabnames.GetEntryPtr(i)->GetWidth()+8+l+r;	/* pixel space needed for tab */
 		if((x+tw)>w)
 		{
 			x=exp;	/* need another row to fit tabs so start a new row */
@@ -206,7 +191,7 @@ void kGUITabObj::DirtyTab(int tab)
 	/* calc size of tab area */
 	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
 	GetCorners(&c);
-	tw=m_tabnames.GetEntry(tab)->GetWidth()+8+l+r;
+	tw=m_tabnames.GetEntryPtr(tab)->GetWidth()+8+l+r;
 	tc.lx=c.lx+m_tabx.GetEntry(tab);
 	tc.rx=tc.lx+tw;
 	tc.ty=c.ty+m_taby.GetEntry(tab);
@@ -245,7 +230,7 @@ bool kGUITabObj::UpdateInput(void)
 		/* which tab is the mouse over? (if any) */
 		for(i=0;i<m_numtabs;++i)
 		{
-			tw=m_tabnames.GetEntry(i)->GetWidth()+8+l+r;
+			tw=m_tabnames.GetEntryPtr(i)->GetWidth()+8+l+r;
 			tc.lx=c.lx+m_tabx.GetEntry(i);
 			tc.rx=tc.lx+tw;
 			tc.ty=c.ty+m_taby.GetEntry(i);
@@ -329,7 +314,7 @@ void kGUITabObj::Draw(void)
 		{
 			x=c.lx+m_tabx.GetEntry(i);
 			y=c.ty+m_taby.GetEntry(i);
-			text=m_tabnames.GetEntry(i);
+			text=m_tabnames.GetEntryPtr(i);
 
 			kGUI::GetSkin()->DrawTab(text,x,y,i==m_curtab,i==m_overtab);
 		}

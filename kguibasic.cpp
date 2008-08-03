@@ -547,8 +547,6 @@ EXPPRI_DEF exppri[]={
 
 kGUIBasic::kGUIBasic()
 {
-//	int i;
-
 	m_asyncactive=false;
 	SetTable(m_singledelimtable,":()[],");
 	SetTable(m_groupdelimtable,"#+-*^/%=;><&|!");
@@ -556,14 +554,6 @@ kGUIBasic::kGUIBasic()
 	SetTable(m_alphatable,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	SetTable(m_digittable,".0123456789");
 	SetTable(m_nametable,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-
-#if 0
-	/* init the expression priority table */
-	for(i=0;i<BASICTOKEN_NUMTOKENS;++i)
-		m_exppri[i]=0;
-	for(i=0;i<sizeof(exppri)/sizeof(EXPPRI_DEF);++i)
-		m_exppri[exppri[i].toknum]=exppri[i].priority;
-#endif
 
 	m_fordepth=0;
 	m_fstack.Alloc(32);

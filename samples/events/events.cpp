@@ -18,6 +18,8 @@
 /* this includes the main loop for the selected OS, like Windows, Linux, Mac etc */
 #include "kguisys.cpp"
 
+#define NUMLINES 25
+
 class EventSample
 {
 public:
@@ -30,13 +32,22 @@ private:
 	void InputEvent(kGUIEvent *event);
 	CALLBACKGLUEPTR(EventSample,WindowEvent,kGUIEvent);		/* make a static connection to the callback */
 	void WindowEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(EventSample,MenuEvent,kGUIEvent);		/* make a static connection to the callback */
+	void MenuEvent(kGUIEvent *event);
 
 	void UpdateText(void);
 
+	kGUIMenuObj m_menu;
+	kGUIMenuColObj m_filemenu;
+	kGUIMenuColObj m_helpmenu;
+	kGUIMenuColObj m_loadsubmenu;
 	kGUIButtonObj m_button;
 	kGUITextObj m_text;
 	kGUIInputBoxObj m_input;
 	kGUITextObj m_text2;
+	kGUIScrollContainerObj m_scontainer;
+	kGUITextObj m_lines[NUMLINES];
+
 	unsigned int m_numwindows;
 	volatile unsigned int m_numopenwindows;
 	Array<kGUIWindowObj *>m_openwindows;
@@ -58,8 +69,21 @@ void AppClose(void)
 	delete g_eventsample;
 }
 
+enum
+{
+FE_LOAD,
+FE_LOADGPX,
+FE_LOADAS,
+FE_SAVE,
+FE_HELP,
+FE_CREDITS
+};
+
+
 EventSample::EventSample()
 {
+	int i;
+
 	kGUIWindowObj *background;
 
 	m_numwindows=0;
@@ -70,8 +94,39 @@ EventSample::EventSample()
 	background=kGUI::GetBackground();
  	background->SetTitle("EventSample");
 
+	m_filemenu.SetFontSize(25);
+	m_filemenu.SetNumEntries(2);
+	m_filemenu.SetEntry(0,"Load",FE_LOAD);
+	m_filemenu.SetEntry(1,"Save",FE_SAVE);
+	m_filemenu.GetEntry(0)->SetSubMenu(&m_loadsubmenu);
+
+	m_loadsubmenu.SetFontSize(25);
+	m_loadsubmenu.SetNumEntries(2);
+	m_loadsubmenu.SetEntry(0,"Load GPX",FE_LOADGPX);
+	m_loadsubmenu.SetEntry(1,"Load As",FE_LOADAS);
+
+	m_helpmenu.SetFontSize(25);
+	m_helpmenu.SetNumEntries(2);
+	m_helpmenu.SetEntry(0,"Help",FE_HELP);
+	m_helpmenu.SetEntry(1,"Credits",FE_CREDITS);
+
+	/* add a menu */
+	m_menu.SetPos(0,0);
+	m_menu.SetNumEntries(2);
+	m_menu.GetTitle(0)->SetString("File");
+	m_menu.GetTitle(0)->SetFontSize(25);
+	m_menu.GetTitle(1)->SetString("Help");
+	m_menu.GetTitle(1)->SetFontSize(25);
+
+	m_menu.SetEntry(0,&m_filemenu);
+	m_menu.SetEntry(1,&m_helpmenu);
+
+	/* add the menu to the background window */
+	m_menu.SetEventHandler(this,CALLBACKNAME(MenuEvent));
+	background->AddObject(&m_menu);
+
 	/* add a button */
-	m_button.SetPos(25,25);						/* x,y */
+	m_button.SetPos(0,45);						/* x,y */
 	m_button.SetSize(300,50);					/* width, height */
 	m_button.SetFontSize(30);					/* in points */
 	m_button.SetColor(DrawColor(255,0,255));	/* purple */
@@ -81,7 +136,7 @@ EventSample::EventSample()
 	background->AddObject(&m_button);
 
 	/* add static text */
-	m_text.SetPos(350,25);						/* x,y */
+	m_text.SetPos(350,45);						/* x,y */
 	m_text.SetFontSize(30);						/* in points */
 	m_text.SetColor(DrawColor(128,128,0));		/* brown */
 	UpdateText();
@@ -105,6 +160,23 @@ EventSample::EventSample()
 
 	/* add the text to the background window */
 	background->AddObject(&m_text2);
+
+	/* add lines to the scroll container */
+	for(i=0;i<NUMLINES;++i)
+	{
+		m_lines[i].Sprintf("Line number %d..asdjkkajshdjkashdjkahdsjhka",i);
+		m_lines[i].SetPos(0,i*30);
+		m_scontainer.AddObject(&m_lines[i]);
+	}
+
+	m_scontainer.SetPos(25,225);
+	m_scontainer.SetSize(500,300);
+
+	m_scontainer.SetMaxWidth(1000);
+	m_scontainer.SetMaxHeight(1000);
+
+	/* add the scroll container to the background window */
+	background->AddObject(&m_scontainer);
 
 	m_button.SetEventHandler(this,CALLBACKNAME(ButtonEvent));
 	m_input.SetEventHandler(this,CALLBACKNAME(InputEvent));
@@ -151,6 +223,20 @@ void EventSample::InputEvent(kGUIEvent *event)
 	{
 	case EVENT_MOVED:
 		m_text2.Sprintf("You typed: %s",m_input.GetString());
+	break;
+	}
+}
+
+void EventSample::MenuEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_SELECTED:
+	{
+		kGUIMsgBoxReq *msg;
+
+		msg=new kGUIMsgBoxReq(MSGBOX_OK,true,"Menu Entry selected id=%d\n",event->m_value[0].i);
+	}
 	break;
 	}
 }

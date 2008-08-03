@@ -3842,11 +3842,11 @@ void kGUIImageRefObj::Draw(void)
 			if(m_alpha==1.0f)
 			{
 				if(m_image->Draw(m_currentframe,c.lx,c.ty)==false)
-					kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(255,255,255));
+					kGUI::DrawRect(c.lx+m_leftoff,c.ty+m_topoff,c.rx,c.by,DrawColor(255,255,255));
 			}
 			else
 			{
-				m_image->DrawAlpha(m_currentframe,c.lx,c.ty,m_alpha);
+				m_image->DrawAlpha(m_currentframe,c.lx+m_leftoff,c.ty+m_topoff,m_alpha);
 			}
 		}
 	}

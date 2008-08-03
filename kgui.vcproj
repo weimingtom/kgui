@@ -103,8 +103,8 @@ avformat-51.lib
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="Debug\kguibig kguidata.big big big/
-Debug\bintoc kguidata.big kguidata.cpp
+				CommandLine="Debug\kguibig _data.big big big/
+Debug\bintoc _data.big _data.cpp
 "/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
@@ -225,6 +225,9 @@ Debug\bintoc kguidata.big kguidata.cpp
 			</File>
 			<File
 				RelativePath=".\kguimenu.cpp">
+			</File>
+			<File
+				RelativePath=".\kguimenu2.cpp">
 			</File>
 			<File
 				RelativePath=".\kguimovie.cpp">

@@ -70,7 +70,7 @@ kGUIText *kGUIListboxObj::GetEntryTextPtr(unsigned int index)
 
 void kGUIListboxObj::SetColorMode(unsigned int width)
 {
-	assert(m_tableentries==0,"Need to set this before setting the number of entries!");
+	assert(m_tableentries==0,"Need to set this (SetColorMode) before setting the number of entries!");
 	m_colorcolwidth=width;
 	m_colormode=true;
 }

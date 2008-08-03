@@ -7,7 +7,7 @@ kguidb.cpp kguidir.cpp kguifont.cpp kguigrid.cpp kguihtml.cpp kguiimage.cpp kgui
 kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistring.cpp \
 kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp \
 kguibutton.cpp kguicombo.cpp kguicontrol.cpp kguidivider.cpp kguiinput.cpp \
-kguimenu.cpp kguimcontrol.cpp kguimovie.cpp kguiradio.cpp kguitab.cpp kguitable.cpp kguiwindow.cpp kguitext.cpp \
+kguimenu.cpp kguimenu2.cpp kguimcontrol.cpp kguimovie.cpp kguiradio.cpp kguitab.cpp kguitable.cpp kguiwindow.cpp kguitext.cpp \
 kguitick.cpp kguibusy.cpp kguimutex.cpp kguicookies.cpp kguiskin.cpp kguimovieplugin.cpp kguipolygon2.cpp kguifont2.cpp
 
 FIXDEP_SRC=fixdep.cpp
@@ -15,6 +15,8 @@ FIXDEP_SRC=fixdep.cpp
 BINTOC_SRC=bintoc.cpp
 
 KGUIBIG_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kguibig.cpp kguiprot.cpp kguirandom.cpp kguistring.cpp kguimutex.cpp
+
+KGUILOCSTR_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kguilocstr.cpp kguiprot.cpp kguirandom.cpp kguistring.cpp kguimutex.cpp kguicsv.cpp
 
 LIB_OBJ=$(LIB_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
@@ -24,11 +26,15 @@ BINTOC_OBJ=$(BINTOC_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .
 
 KGUIBIG_OBJ=$(KGUIBIG_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
+KGUILOCSTR_OBJ=$(KGUILOCSTR_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
+
 LIB_OUT=$(OBJDIR)/libkgui.a
 
 BINTOC_OUT=$(OBJDIR)/bintoc$(EXE)
 
 KGUIBIG_OUT=$(OBJDIR)/kguibig$(EXE)
+
+KGUILOCSTR_OUT=$(OBJDIR)/kguilocstr$(EXE)
 
 FIXDEP_OUT=$(OBJDIR)/fixdep$(EXE)
 
@@ -43,7 +49,7 @@ endif
 	$(CC) $(CCOPTS) $(SYS) $(CFLAGS) -o $@ -c $<
 
 .PHONY : all doxygen other other-clean # .PHONY ignores files named all
-all: $(FIXDEP_OUT) $(BINTOC_OUT) $(KGUIBIG_OUT) _data.cpp $(DEP) $(LIB_OUT)  # all is dependent on  to be complete
+all: $(FIXDEP_OUT) $(BINTOC_OUT) $(KGUIBIG_OUT) _data.cpp $(KGUILOCSTR_OUT) _text.cpp $(DEP) $(LIB_OUT)  # all is dependent on  to be complete
 
 $(FIXDEP_OUT): $(FIXDEP_OBJ)
 	$(LINK) $(FIXDEP_OBJ) $(LDFLAGS) -o $@
@@ -51,7 +57,7 @@ $(FIXDEP_OUT): $(FIXDEP_OBJ)
 doxygen: dox.txt
 	doxygen dox.txt
 
-$(LIB_OUT): $(FIXDEP_OUT) $(BINTOC_OUT) $(KGUIBIG_OUT) _data.cpp $(DEP) $(LIB_OBJ)
+$(LIB_OUT): $(FIXDEP_OUT) $(BINTOC_OUT) $(KGUIBIG_OUT) $(KGUILOCSTR_OUT) _text.cpp _data.cpp $(DEP) $(LIB_OBJ)
 	$(MAKELIB) rc $@ $(LIB_OBJ)
 	$(RANLIB) $@
 
@@ -60,6 +66,12 @@ $(BINTOC_OUT): $(BINTOC_OBJ)
 
 $(KGUIBIG_OUT): $(KGUIBIG_OBJ)
 	$(LINK) $(KGUIBIG_OBJ) $(LDFLAGS) -o $@
+
+$(KGUILOCSTR_OUT): $(KGUILOCSTR_OBJ)
+	$(LINK) $(KGUILOCSTR_OBJ) $(LDFLAGS) -o $@
+
+_text.cpp: $(KGUILOCSTR_OUT) kguiloc.txt
+	./$(KGUILOCSTR_OUT) -i kguiloc.txt -p KGUISTRING_ -h _text.h -c _text.cpp
 
 _data.cpp: $(KGUIBIG_OUT) $(BINTOC_OUT) big/*
 	./$(KGUIBIG_OUT) _data.big big big/
@@ -90,9 +102,9 @@ other-clean:		# generate other support libraries
 
 .PHONY : clean   # .PHONY ignores files named clean
 clean:
-	-$(RM) _data.cpp $(FIXDEP_OUT) $(FIXDEP_OBJ) $(DEP) $(LIB_OBJ) $(LIB_OUT) $(BINTOC_OBJ) $(BINTOC_OUT) $(KGUIBIG_OBJ) $(KGUIBIG_OUT) # '-' causes errors not to exit the process
+	-$(RM) _data.cpp _text.cpp $(FIXDEP_OUT) $(FIXDEP_OBJ) $(DEP) $(LIB_OBJ) $(LIB_OUT) $(BINTOC_OBJ) $(BINTOC_OUT) $(KGUIBIG_OBJ) $(KGUIBIG_OUT) $(KGUILOCSTR_OBJ) $(KGUILOCSTR_OUT) # '-' causes errors not to exit the process
 
-$(DEP): _data.cpp $(FIXDEP_OUT)
+$(DEP): _data.cpp _text.cpp $(FIXDEP_OUT)
 	@echo "Generating Dependencies"
 	-$(CC) -E -MM $(SYS) $(CFLAGS) $(LIB_SRC) >>$(DEP)
 	$(FIXDEP_OUT) $(DEP) $(OBJDIR)/

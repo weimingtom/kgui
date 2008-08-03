@@ -1,0 +1,21 @@
+ID	English	French
+LANGUAGE	Language	Langue
+ENGLISH	English	Anglais
+FRENCH	French	Français
+OK	OK	OK
+CANCEL	Cancel	Annulation
+YES	Yes	Oui
+NO	No	Non
+DONE	Done	Fait
+TODAY	Today	Aujourd'hui 
+PRINTPREVIEW	Print Preview	Imprimer Preview
+PRINT	Print	Imprimer
+CURRENT	Current	Courant
+PAGE	Page	Page
+ZOOM	Zoom	Bourdonnement
+PORTRAIT	Portrait	Portrait
+LANDSCAPE	Landscape	Paysage
+SCALEPERCENT	Scale %	Scale %
+MULTIPAGE	Multi Page	Multi Page
+PRINTRANGE	Print Range	Imprimer Range
+COPIES	Copies	Copies

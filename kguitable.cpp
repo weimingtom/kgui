@@ -104,6 +104,7 @@ kGUITableObj::kGUITableObj()
 	m_cursorcol=0;
 	m_colheaderheight=0;
 	m_allowmultiple=true;	/* default to allow multiple selections */
+	m_releasecount=0;
 
 	m_leftcol=0;
 	m_rightcol=0;
@@ -139,6 +140,7 @@ kGUITableObj::kGUITableObj()
 	m_allowadjrowheights=true;
 	m_allowadjcolwidths=true;
 	m_viewadd=false;
+	m_wasoff=false;
 
 	/* one entry per row, onlt used for select mode tables ( combo box/menus etc ) */
 	m_available.SetGrow(true);
@@ -156,9 +158,10 @@ int kGUITableObj::CalcTableWidth(void)
 	unsigned int xcol;
 	int w;
 
-	w=0;
 	if(m_showcolheaders==true)
-		w+=kGUI::GetSkin()->GetTableRowHeaderWidth();
+		w=kGUI::GetSkin()->GetTableRowHeaderWidth();
+	else
+		w=2;
 	for(col=0;col<m_numcols;++col)
 	{
 		xcol=m_colorder.GetEntry(col);
@@ -168,6 +171,7 @@ int kGUITableObj::CalcTableWidth(void)
 	if(m_showcolscrollbar)
 		w+=kGUI::GetSkin()->GetScrollbarWidth();
 
+	w+=2;
 	return(w);
 }
 
@@ -261,6 +265,14 @@ void kGUITableObj::TableDirty(void)
 
 void kGUITableObj::DeleteRow(kGUITableRowObj *obj,bool purge)
 {
+	bool rc;
+
+	rc=DeleteRowz(obj,purge);
+	assert(rc,"delete row object not found!");
+}
+
+bool kGUITableObj::DeleteRowz(kGUITableRowObj *obj,bool purge)
+{
 	unsigned int i;
 
 	for(i=0;i<m_numrows;++i)
@@ -269,10 +281,13 @@ void kGUITableObj::DeleteRow(kGUITableRowObj *obj,bool purge)
 		{
 			if(purge)
 			{
+				/* hmmm, this should NOT be called since events should only be trigerred */
+				/* for user generated actions not regular code based actions */
+#if 0
 				kGUIEvent e;
 				e.m_value[0].i=i;
 				CallEvent(EVENT_DELETEROW,&e);
-
+#endif
 				delete obj;
 			}
 			else
@@ -284,10 +299,10 @@ void kGUITableObj::DeleteRow(kGUITableRowObj *obj,bool purge)
 			Dirty();
 			m_positionsdirty=true;
 			m_sizechanged=true;
-			return;
+			return(true);
 		}
 	}
-	assert(false,"delete row object not found!");
+	return(false);	/* row not found */
 }
 
 /* delete all rows in the table */
@@ -323,7 +338,7 @@ void kGUITableObj::CalcChildZone(void)
 	else if(m_showrowheaders)
 		x=kGUI::GetSkin()->GetTableRowHeaderWidth();
 	else
-		x=0;
+		x=2;
 	if(m_showcolheaders)
 	{
 		/* calc height */
@@ -343,9 +358,9 @@ void kGUITableObj::CalcChildZone(void)
 //		y=kGUI::GetSkin()->GetTableColHeaderHeight();
 	}
 	else
-		y=0;
+		y=2;
 	/* set the child zone */
-	SetChildZone(x,y,GetZoneW()-x,GetZoneH()-y);
+	SetChildZone(x,y,(GetZoneW()-x)-2,GetZoneH()-y);
 
 	/* set the position of the row scrollbar */
 	if(m_showrowscrollbar)
@@ -468,7 +483,7 @@ void kGUITableObj::ReCalcPositions(void)
 		int w;
 		const int *pxs;
 		const int *pwidths;
-
+		
 		/* since number of rows has changed, check to see if any variables */
 		/* are now off the end of the table */
 
@@ -504,6 +519,10 @@ void kGUITableObj::ReCalcPositions(void)
 				sx+=w;
 			}
 		}
+
+		if(m_poprowheaders==true)
+			sx-=kGUI::GetSkin()->GetMenuRowHeaderWidth();
+
 		/* now set positions for all cells in the table */
 		sy=0;
 		pxs=m_cxs.GetArrayPtr();
@@ -535,7 +554,7 @@ void kGUITableObj::ReCalcPositions(void)
 	if(m_showrowscrollbar)
 		cz.SetZoneW(cz.GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth());
 
-	/* calculate the leftcol, rightcol and last fullcol that fir in the area */
+	/* calculate the leftcol, rightcol and last fullcol that fits in the area */
 
 	m_lastfullcol=m_leftcol;/* just incase col is very wide and not fully on screen */
 	sx=0;
@@ -1485,20 +1504,36 @@ bool kGUITableObj::UpdateInput(void)
 
 	GetCorners(&c);
 	over=kGUI::MouseOver(&c);
-	if(over==false && (kGUI::GetMouseClick()==true || kGUI::GetMouseWheelDelta()))
+	if(over==false)
 	{
+		CallEvent(EVENT_MOUSEOFF);
+		m_wasoff=true;
+		if((kGUI::GetMouseClick()==true || kGUI::GetMouseWheelDelta()))
+		{
 abort:;
-		m_selected=-1;
-		if(this==kGUI::GetActiveObj())
-			kGUI::PopActiveObj();
+			m_selected=-1;
+			if(this==kGUI::GetActiveObj())
+				kGUI::PopActiveObj();
 
-		Dirty();/* this needs to be called before the callback as the callback can delete me */
+			Dirty();/* this needs to be called before the callback as the callback can delete me */
 
-		if((m_selectmode==true) || (m_listmode==true))
-			m_selcallback.Call();
-		return(false);
+			if((m_selectmode==true) || (m_listmode==true))
+			{
+				CallSelectedEvent();
+				//m_selcallback.Call();
+			}
+			return(false);
+		}
 	}
-
+	else
+	{
+		/* if the mouse was off and then came back on the trigger a moved event */
+		if(m_wasoff==true)
+		{
+			CallEvent(EVENT_MOVED);
+			m_wasoff=false;
+		}
+	}
 	if(this!=kGUI::GetActiveObj())
 	{
 		if(kGUI::GetMouseClick()==true || kGUI::GetMouseWheelDelta())
@@ -1791,7 +1826,10 @@ abort:;
 									m_selected=m_cursorrow;
 									kGUI::PopActiveObj();
 									if((m_selectmode==true) || (m_listmode==true))
-										m_selcallback.Call();
+									{
+										CallSelectedEvent();
+										//m_selcallback.Call();
+									}
 									return(true);
 								}
 							}
@@ -1822,7 +1860,9 @@ abort:;
 							m_selected=m_cursorrow;
 							kGUI::PopActiveObj();
 							Dirty();	/* erase me */
-							m_selcallback.Call();
+
+							CallSelectedEvent();
+							//m_selcallback.Call();
 							return(true);
 						}
 						break;
@@ -1840,7 +1880,8 @@ abort:;
 					m_selected=-1;
 					kGUI::PopActiveObj();
 					Dirty();			/* erase me */
-					m_selcallback.Call();
+					CallSelectedEvent();
+					//m_selcallback.Call();
 					return(true);
 				}
 			}
@@ -1866,7 +1907,8 @@ abort:;
 					m_selected=-1;
 					kGUI::PopActiveObj();
 					Dirty();
-					m_selcallback.Call();
+					CallSelectedEvent();
+					//m_selcallback.Call();
 					return(false);	/* pass input to someone else */
 				}
 			}
@@ -2012,7 +2054,8 @@ abort:;
 						kGUI::ClearKey();
 						kGUI::PopActiveObj();
 						Dirty();	/* erase me */
-						m_selcallback.Call();
+						CallSelectedEvent();
+						//m_selcallback.Call();
 						return(true);
 					}
 				break;
@@ -2023,7 +2066,8 @@ abort:;
 						kGUI::ClearKey();
 						kGUI::PopActiveObj();
 						Dirty();	/* erase me */
-						m_selcallback.Call();
+						CallSelectedEvent();
+						//m_selcallback.Call();
 						return(true);
 					}
 				break;
@@ -2096,6 +2140,15 @@ passdown:;
 		}
 	}
 	return(false);
+}
+
+void kGUITableObj::CallSelectedEvent(void)
+{
+	kGUIEvent e;
+
+	e.SetObj(this);
+	e.m_value[0].i=m_selected;
+	CallEvent(EVENT_SELECTED,&e);
 }
 
 void kGUITableObj::DelSelRowsDone(int closebutton)
