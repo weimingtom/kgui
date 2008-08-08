@@ -120,6 +120,8 @@ static void sigint_handler(int sig)  //static declaration
 	}
 }
 
+long MS_FileTime(const char *fn);
+
 int main(int argc, char* argv[])
 {
 	int i;
@@ -163,14 +165,14 @@ int main(int argc, char* argv[])
 			break;
 			default:
 				printf("Unknown parm '%s'\n",argv[i]);
-				return(0);
+				return(1);
 			break;
 			}
 		}
 		else
 		{
 			printf("Unknown parm '%s'\n",argv[i]);
-			return(0);
+			return(1);
 		}
 	}
 
@@ -183,7 +185,26 @@ int main(int argc, char* argv[])
 		printf(" -p = prefix\n");
 		printf(" -h = outputheader\n");
 		printf(" -c = outputcpp\n");
-		return(0);
+		return(1);
+	}
+
+	/* if output files exists already and are newer than the input file then just return */
+	/* just return as it is already up to date */
+	{
+		long intime;
+		long outtime1;
+		long outtime2;
+		
+		intime=MS_FileTime(iname);
+		outtime1=MS_FileTime(hname);
+		outtime2=MS_FileTime(cname);
+
+		/* zero = file doesn't exist */
+		if(outtime1>=intime && outtime2>=intime)
+		{
+			printf("kguilocstr: output files are newer so no need to re-generate them!\n");
+			return(1);
+		}
 	}
 
 	/* put code here */
@@ -196,8 +217,8 @@ int main(int argc, char* argv[])
 	outh.SetFilename(hname);
 	if(outh.OpenWrite("wb")==false)
 	{
-		printf("Error opening output file '%s'\n",hname);
-		return(0);
+		printf("kguilocstr: Error opening output file '%s'\n",hname);
+		return(1);
 	}
 	outh.Sprintf("#ifndef __%s__\n#define __%s__\n\nenum{\n",prefix,prefix);
 	for(row=1;row<numrows;++row)
@@ -209,15 +230,15 @@ int main(int argc, char* argv[])
 	outh.Sprintf("};\n#endif\n",prefix);
 	if(outh.Close()==false)
 	{
-		printf("Error opening output file '%s'\n",hname);
-		return(0);
+		printf("kguilocstr: Error writing output file '%s'\n",hname);
+		return(1);
 	}
 
 	outc.SetFilename(cname);
 	if(outc.OpenWrite("wb")==false)
 	{
-		printf("Error opening output file '%s'\n",cname);
-		return(0);
+		printf("kguilocstr: Error opening output file '%s'\n",cname);
+		return(1);
 	}
 	
 	/* generate text */
@@ -264,9 +285,11 @@ int main(int argc, char* argv[])
 	
 	if(outc.Close()==false)
 	{
-		printf("Error opening output file '%s'\n",cname);
-		return(0);
+		printf("kguilocstr: Error writing output file '%s'\n",cname);
+		return(1);
 	}
+
+	printf("kguilocstr: numlangs=%d,numstrings=%d\n",csv.GetNumCols()-1,csv.GetNumRows()-1);
 
 	return 0;
 }
@@ -377,6 +400,30 @@ char *strstri(const char *lword,const char *sword)
 
 	}
 	return(0);	/* no matches */
+}
+
+long MS_FileTime(const char *fn)
+{
+#if defined(LINUX) || defined(MINGW) || defined(MACINTOSH)
+	int result;
+	struct stat buf;
+
+	result=stat(fn,&buf);
+	if(result==-1)
+		return(0);
+	return(buf.st_mtime);
+#else
+   struct __stat64 buf;
+   int result;
+
+   result = _stat64( fn, &buf );
+
+   /* Check if statistics are valid: */
+   if( result != 0 )
+		return(0);
+   else
+		return((long)buf.st_mtime);
+#endif
 }
 
 void fatalerror(const char *string)

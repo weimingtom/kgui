@@ -32,9 +32,10 @@
 
 #include "kgui.h"
 #include "kguibrowse.h"
+#include "_text.h"
 
 #define SMALLCAPTIONFONT 1
-#define SMALLCAPTIONSIZE 9
+#define SMALLCAPTIONFONTSIZE 9
 
 class ViewSource : public kGUIWindowObj
 {
@@ -67,7 +68,7 @@ class ViewSettings : public kGUIWindowObj
 {
 public:
 	ViewSettings(kGUIBrowseObj *b,int w,int h);
-	ViewSettings() {m_csstable.DeleteChildren(true);}
+	~ViewSettings() {m_csstable.DeleteChildren(true);}
 	/* called when window size changes */
 	void DirtyandCalcChildZone(void);
 private:
@@ -231,7 +232,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_gomenu.SetEventHandler(this,CALLBACKNAME(DoGotoMenu));
 
 	m_backcaption.SetPos(0,0);
-	m_backcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_backcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_backcaption.SetFontID(SMALLCAPTIONFONT);
 	m_backcaption.SetString("Back");
 
@@ -244,7 +245,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_backcaption,&m_back);
 
 	m_forwardcaption.SetPos(0,0);
-	m_forwardcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_forwardcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_forwardcaption.SetFontID(SMALLCAPTIONFONT);
 	m_forwardcaption.SetString("Forward");
 
@@ -257,7 +258,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_forwardcaption,&m_forward);
 
 	m_refreshcaption.SetPos(0,0);
-	m_refreshcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_refreshcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_refreshcaption.SetFontID(SMALLCAPTIONFONT);
 	m_refreshcaption.SetString("Reload");
 
@@ -268,7 +269,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_refreshcaption,&m_refresh);
 
 	m_refresh2caption.SetPos(0,0);
-	m_refresh2caption.SetFontSize(SMALLCAPTIONSIZE);
+	m_refresh2caption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_refresh2caption.SetFontID(SMALLCAPTIONFONT);
 	m_refresh2caption.SetString("Reload All");
 
@@ -279,7 +280,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_refresh2caption,&m_refresh2);
 
 	m_printcaption.SetPos(0,0);
-	m_printcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_printcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_printcaption.SetFontID(SMALLCAPTIONFONT);
 	m_printcaption.SetString("Print");
 
@@ -298,7 +299,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(1,&m_lock);
 
 	m_urlcaption.SetPos(0,0);
-	m_urlcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_urlcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_urlcaption.SetFontID(SMALLCAPTIONFONT);
 	m_urlcaption.SetString("URL");
 
@@ -310,7 +311,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.NextLine();
 
 	m_referercaption.SetPos(0,0);
-	m_referercaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_referercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_referercaption.SetFontID(SMALLCAPTIONFONT);
 	m_referercaption.SetString("Referrer");
 
@@ -323,7 +324,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(1,&m_busyimage);
 
 	m_statuscaption.SetPos(0,0);
-	m_statuscaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_statuscaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_statuscaption.SetFontID(SMALLCAPTIONFONT);
 	m_statuscaption.SetString("Status");
 
@@ -332,7 +333,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_statuscaption,&m_status);
 
 	m_linkcaption.SetPos(0,0);
-	m_linkcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_linkcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_linkcaption.SetFontID(SMALLCAPTIONFONT);
 	m_linkcaption.SetString("Link");
 
@@ -1851,13 +1852,13 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 	m_controls.SetPos(0,0);
 	m_controls.SetMaxWidth(m_window.GetChildZoneW());
 
-	m_up.SetSize(100,30);
-	m_up.SetString("Up");
+	m_up.SetString(kGUI::GetString(KGUISTRING_UP));
+	m_up.Contain();
 	m_up.SetEventHandler(this,CALLBACKNAME(Up));
 	m_controls.AddObject(&m_up);
 
-	m_down.SetSize(100,30);
-	m_down.SetString("Down");
+	m_down.SetString(kGUI::GetString(KGUISTRING_DOWN));
+	m_down.Contain();
 	m_down.SetEventHandler(this,CALLBACKNAME(Down));
 	m_controls.AddObject(&m_down);
 

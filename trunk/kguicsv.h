@@ -35,6 +35,7 @@ private:
 	kGUIString m_split;
 	unsigned int m_maxcols;
 	unsigned int m_numrows;
+	int m_encoding;
 	Array<kGUICSVRow *>m_rows;	
 };
 

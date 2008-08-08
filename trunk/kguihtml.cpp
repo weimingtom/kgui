@@ -9397,7 +9397,7 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 	int i,y,by,xoff;
 	double gap=0.0f;
 	PO_DEF *pop;
-	kGUIObj *obj;
+	kGUIObj *robj;
 
 	assert(m_display!=DISPLAY_INLINE,"Cannot position inside an inline object!\n");
 
@@ -9442,23 +9442,23 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 	for(i=0;i<m_pos->m_ponum;++i)
 	{
 		pop=m_pos->m_polist.GetEntryPtr(i);
-		obj=pop->obj;
+		robj=pop->robj;
 
 		/* error checking */
-		assert(obj->GetZoneW()==pop->width && obj->GetZoneH()==pop->height,"Size Changed!\n");
+		assert(robj->GetZoneW()==pop->width && robj->GetZoneH()==pop->height,"Size Changed!\n");
 
 		if(m_page->m_mode==MODE_MINMAX)
-			obj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx /*+obj->GetZoneX()*/ );
+			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx /*+obj->GetZoneX()*/ );
 		else
 		{
 			if(m_potextalign==ALIGN_JUSTIFY && gap!=0.0f)
 				xoff=(int)((i*gap)/m_pos->m_ponum);
-			obj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx+xoff /*+obj->GetZoneX()*/);
+			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx+xoff /*+obj->GetZoneX()*/);
 		}
 //		obj->MoveZoneY(m_y+(m_lineasc-obj->GetZoneH())+obj->GetZoneY());
-		obj->MoveZoneY(m_pos->m_cury+((m_pos->m_lineasc-obj->GetZoneH())+pop->baseline));
+		robj->MoveZoneY(m_pos->m_cury+((m_pos->m_lineasc-robj->GetZoneH())+pop->baseline));
 
-		if(obj->GetZoneY()<0)
+		if(robj->GetZoneY()<0)
 			kGUI::Trace("Error!\n");
 
 		/* if this is the last child of an inline tag then call ContainChildren to make the box surround them */
@@ -9466,14 +9466,14 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 		if(m_page->m_trace)
 		{
 			if(m_tag)
-				kGUI::Trace("Position Child %s (%d,%d,w=%d,h=%d)\n",m_tag->name,obj->GetZoneX(),obj->GetZoneY(),obj->GetZoneW(),obj->GetZoneH());
+				kGUI::Trace("Position Child %s (%d,%d,w=%d,h=%d)\n",m_tag->name,robj->GetZoneX(),robj->GetZoneY(),robj->GetZoneW(),robj->GetZoneH());
 			else
-				kGUI::Trace("Position Child %d (%d,%d,w=%d,h=%d)\n",m_id,obj->GetZoneX(),obj->GetZoneY(),obj->GetZoneW(),obj->GetZoneH());
+				kGUI::Trace("Position Child %d (%d,%d,w=%d,h=%d)\n",m_id,robj->GetZoneX(),robj->GetZoneY(),robj->GetZoneW(),robj->GetZoneH());
 		}
-		y=obj->GetZoneY()+obj->GetZoneH();
+		y=robj->GetZoneY()+robj->GetZoneH();
 		if(y>by)
 			by=y;
-		m_pos->m_curx+=obj->GetZoneW();
+		m_pos->m_curx+=robj->GetZoneW();
 	}
 	m_pos->m_cury=by;
 	if(m_pos->m_cury>m_maxy)
@@ -9817,7 +9817,8 @@ dotext:;
 
 		robj->MoveZoneX(0);
 		robj->MoveZoneY(0);
-		po.obj=robj;
+		po.obj=obj;
+		po.robj=robj;
 		po.above=above;
 		po.baseline=desc;
 		po.below=below;

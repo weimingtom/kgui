@@ -977,7 +977,8 @@ typedef struct
 	int above;
 	int baseline;
 	int below;
-	kGUIObj *obj;
+	kGUIHTMLObj *obj;
+	kGUIObj *robj;
 	int width;		/* width when added, used for debugging */
 	int height;		/* height when added, used for debugging */
 }PO_DEF;

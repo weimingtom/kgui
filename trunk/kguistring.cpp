@@ -931,15 +931,70 @@ bool kGUIString::RemoveQuotes(void)
 //UTF-EBCDIC 	DD 73 66 73
 //BOCU-1 	FB EE 28
 
+typedef struct
+{
+	unsigned int encoding;
+	int size;
+	unsigned int data[4];
+}ENCHEADER_DEF;
+
+static ENCHEADER_DEF enclist[]={
+	{ENCODING_UTF32BE,4,{0x00,0x00,0xfe,0xff}},
+	{ENCODING_UTF32LE,4,{0xff,0xfe,0x00,0x00}},
+	{ENCODING_UTF8,3,{0xef,0xbb,0xbf,0x00}},
+	{ENCODING_UTF16BE,2,{0xfe,0xff}},
+	{ENCODING_UTF16LE,2,{0xff,0xfe}}};
+
+//SCSU 	0E FE FF
+//UTF-7 	2B 2F 76, and one of the following bytes: [ 38 | 39 | 2B | 2F ]†
+//UTF-EBCDIC 	DD 73 66 73
+//BOCU-1 	FB EE 28
+
+unsigned int kGUIString::CheckBOM(const unsigned char *header,int *bomsize)
+{
+	unsigned int i;
+	int j;
+	ENCHEADER_DEF *e;
+	bool match;
+
+	e=enclist;
+	for(i=0;i<sizeof(enclist)/sizeof(ENCHEADER_DEF);++i)
+	{
+		match=true;
+		for(j=0;j<(e->size) && (match==true);++j)
+		{
+			if(header[j]!=e->data[j])
+				match=false;
+		}
+		if(match)
+		{
+			*(bomsize)=e->size;
+			return(e->encoding);
+		}
+
+		++e;
+	}
+	*(bomsize)=0;
+	return(ENCODING_8BIT);
+}
+
 void kGUIString::CheckBOM(void)
 {
 	if(GetLen()>3)
 	{
-		if(GetUChar(0)==0xef && GetUChar(1)==0xbb && GetUChar(2)==0xbf)
+		unsigned char header[4];
+		int bomsize=0;
+		unsigned int encoding;
+
+		header[0]=GetUChar(0);
+		header[1]=GetUChar(1);
+		header[2]=GetUChar(2);
+		header[3]=GetUChar(3);
+		encoding=CheckBOM(header,&bomsize);
+		if(bomsize)
 		{
-			/* yes it is UTF-8 encoded */
-			Delete(0,3);
-			SetEncoding(ENCODING_UTF8);
+			Delete(0,bomsize);
+			SetEncoding(encoding);
 		}
 	}
 }

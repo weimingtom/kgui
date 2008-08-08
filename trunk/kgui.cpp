@@ -354,6 +354,7 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_sys=sys;
 
 	m_locstrings.Init(&KGUISTRING_DEF);	/* generated data in _text.cpp */
+	assert(KGUILANG_NUMLANGUAGES==KGUISTRING_DEF.numlangs,"Number of Languages Mismatch!");
 
 	DataHandle::InitStatic();
 
@@ -463,74 +464,6 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	Trace(" Sucessful kGUI Initialization\n");
 	return(true);
 }
-
-#if 0
-void kGUI::SetLanguage(unsigned int lang)
-{
-	switch(lang)
-	{
-	case KGUILANG_ENGLISH:
-		/* these are not used in kgui but supplied so the user app can ( if desired ) */
-		/* have a combo box so the user can select the desired language */
-		SetString(KGUISTRING_LANGUAGE,"Language");
-		SetString(KGUISTRING_ENGLISH,"English");
-		SetString(KGUISTRING_FRENCH,"French");
-
-		SetString(KGUISTRING_OK,"OK");
-		SetString(KGUISTRING_CANCEL,"Cancel");
-		SetString(KGUISTRING_YES,"Yes");
-		SetString(KGUISTRING_NO,"No");
-		SetString(KGUISTRING_DONE,"Done");
-		SetString(KGUISTRING_TODAY,"Today");
-
-		/* these are used on the print-preview panel */
-		SetString(KGUISTRING_PRINTPREVIEW,"Print Preview");
-		SetString(KGUISTRING_PRINT,"Print");
-		SetString(KGUISTRING_CURRENT,"Current");
-		SetString(KGUISTRING_PAGE,"Page");
-		SetString(KGUISTRING_ZOOM,"Zoom");
-		SetString(KGUISTRING_PORTRAIT,"Portrait");
-		SetString(KGUISTRING_LANDSCAPE,"Landscape");
-		SetString(KGUISTRING_SCALEPERCENT,"Scale %");
-		SetString(KGUISTRING_MULTIPAGE,"Multi Page");
-		SetString(KGUISTRING_PRINTRANGE,"Print Range");
-		SetString(KGUISTRING_COPIES,"Copies");
-
-		/* todo: months jan-dec etc can also be added... */
-	break;
-	case KGUILANG_FRENCH:
-		/* these are not used in kgui but supplied so the user app can ( if desired ) */
-		/* have a combo box so the user can select the desired language */
-		SetString(KGUISTRING_LANGUAGE,"Langue");
-		SetString(KGUISTRING_ENGLISH,"Anglais");
-		SetString(KGUISTRING_FRENCH,"Français");
-
-		SetString(KGUISTRING_OK,"xxx OK");
-		SetString(KGUISTRING_CANCEL,"xxx Cancel");
-		SetString(KGUISTRING_YES,"Oui");
-		SetString(KGUISTRING_NO,"Non");
-		SetString(KGUISTRING_DONE,"xxx Done");
-		SetString(KGUISTRING_TODAY,"xxx Today");
-
-		/* these are used on the print-preview panel */
-		SetString(KGUISTRING_PRINTPREVIEW,"Imprimer Preview");
-		SetString(KGUISTRING_PRINT,"Imprimer");
-		SetString(KGUISTRING_CURRENT,"Current");
-		SetString(KGUISTRING_PAGE,"Page");
-		SetString(KGUISTRING_ZOOM,"Zoom");
-		SetString(KGUISTRING_PORTRAIT,"Portrait");
-		SetString(KGUISTRING_LANDSCAPE,"Landscape");
-		SetString(KGUISTRING_SCALEPERCENT,"Scale %");
-		SetString(KGUISTRING_MULTIPAGE,"Multi Page");
-		SetString(KGUISTRING_PRINTRANGE,"Imprimer Range");
-		SetString(KGUISTRING_COPIES,"Copies");
-	break;
-	default:
-		assert(false,"Unknown language!");
-	break;
-	}
-}
-#endif
 
 void kGUIPrinter::GetInfo(int *ppw,int *pph,int *ppih,int *ppiv)
 {
