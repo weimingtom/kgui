@@ -1,6 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kgui", "kgui.vcproj", "{63F774C3-7D40-4844-985E-CE0C785D8733}"
 	ProjectSection(ProjectDependencies) = postProject
+		{080F0A29-F010-4ED0-9D24-EB12DC6FBFF6} = {080F0A29-F010-4ED0-9D24-EB12DC6FBFF6}
+		{E4E4367B-F3D0-443F-8495-9B08FA8BAE34} = {E4E4367B-F3D0-443F-8495-9B08FA8BAE34}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kguibig", "kguibig.vcproj", "{E4E4367B-F3D0-443F-8495-9B08FA8BAE34}"

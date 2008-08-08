@@ -39,6 +39,8 @@
 /* this is used for the loadconfig / saveconfig for saving users table layout */
 #include "kguixml.h"
 
+#include "_text.h"
+
 /***************** edit table column class ***************************/
 /* this is the window that pops up when you right click on the       */
 /* top left of the table.                                            */
@@ -2423,14 +2425,14 @@ kGUIEditTableColObj::kGUIEditTableColObj(kGUITableObj *table)
 	int i,n;
 
 	m_t=table;
-	m_up.SetString("Up");
-	m_up.SetSize(60,20);
+	m_up.SetString(kGUI::GetString(KGUISTRING_UP));
+	m_up.Contain();
 	m_up.SetPos(10,10);
 	m_up.SetEventHandler(this,CALLBACKNAME(PressUp));
 	m_window.AddObject(&m_up);
 
-	m_down.SetString("Down");
-	m_down.SetSize(60,20);
+	m_down.SetString(kGUI::GetString(KGUISTRING_DOWN));
+	m_down.Contain();
 	m_down.SetPos(80,10);
 	m_down.SetEventHandler(this,CALLBACKNAME(PressDown));
 	m_window.AddObject(&m_down);

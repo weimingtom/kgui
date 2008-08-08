@@ -1,21 +1,25 @@
-ID	English	French
-LANGUAGE	Language	Langue
-ENGLISH	English	Anglais
-FRENCH	French	Français
-OK	OK	OK
-CANCEL	Cancel	Annulation
-YES	Yes	Oui
-NO	No	Non
-DONE	Done	Fait
-TODAY	Today	Aujourd'hui 
-PRINTPREVIEW	Print Preview	Imprimer Preview
-PRINT	Print	Imprimer
-CURRENT	Current	Courant
-PAGE	Page	Page
-ZOOM	Zoom	Bourdonnement
-PORTRAIT	Portrait	Portrait
-LANDSCAPE	Landscape	Paysage
-SCALEPERCENT	Scale %	Scale %
-MULTIPAGE	Multi Page	Multi Page
-PRINTRANGE	Print Range	Imprimer Range
-COPIES	Copies	Copies
+ID	English	French	German	Swedish	Chinese	Japanese
+LANGUAGE	Language	Langue	Sprache	Språk	??	??
+ENGLISH	English	Anglais	Englisch	Engelska	??	??
+FRENCH	French	Français	Französisch	Franska	??	?????
+GERMAN	German	German	German	German	??	????
+SWEDISH	Swedish	Swedish	Swedish	Swedish	??	???????
+OK	OK	OK	OK	OK	??	ok
+CANCEL	Cancel	Annulation	Abbrechen	Avbryt	??	?????
+YES	Yes	Oui	Ja	Ja	?	??
+NO	No	Non	Nein	Nej	?	???
+DONE	Done	Fait	Getan	Gjord	??	????
+TODAY	Today	Aujourd'hui 	Heute	Idag	??	??
+PRINTPREVIEW	Print Preview	Imprimer Preview	Druckvorschau	Print Preview	????	???????
+PRINT	Print	Imprimer	Drucken	Skriv ut	??	??
+CURRENT	Current	Courant	Aktuell	Nuvarande	???	???
+PAGE	Page	Page	Page	Sida	?	???
+ZOOM	Zoom	Bourdonnement	Zoom	Zoom	??	???
+PORTRAIT	Portrait	Portrait	Porträt	Porträtt	??	???
+LANDSCAPE	Landscape	Paysage	Landschaft	Landscape	??	??
+SCALEPERCENT	Scale %	Scale %	Skala%	Skala%	?? %d	???? %d
+MULTIPAGE	Multi Page	Multi Page	Multi Page	Multi Sida	??	??????
+PRINTRANGE	Print Range	Imprimer Range	Druckbereich	Skriv ut Range	????	????
+COPIES	Copies	Copies	Kopien	Exemplar	??	???
+UP	Up	Up	Up	Up	Up	Up
+DOWN	Down	Down	Down	Down	Down	Down

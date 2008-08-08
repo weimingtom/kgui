@@ -263,15 +263,20 @@ void kGUIMenuObj::MenuEvent(kGUIEvent *event)
 		/* check for open/close submenu */
 		while(d<(m_depth-1))
 			CloseMenu();
-		menu=m_activeentry.GetEntry(d);
-		me=menu->GetCurrentEntry();
-		if(me->GetSubMenu())
-		{
-			kGUICorners c;
 
-			/* activate sub-menu */
-			me->GetCorners(&c);
-			OpenMenu(me->GetSubMenu(),c.rx-6,c.ty+2);
+		/* open sub-menu? */
+		if(m_depth>0)
+		{
+			menu=m_activeentry.GetEntry(m_depth-1);
+			me=menu->GetCurrentEntry();
+			if(me->GetSubMenu())
+			{
+				kGUICorners c;
+
+				/* activate sub-menu */
+				me->GetCorners(&c);
+				OpenMenu(me->GetSubMenu(),c.rx-6,c.ty+2);
+			}
 		}
 	}		
 	break;
@@ -287,6 +292,10 @@ void kGUIMenuObj::MenuEvent(kGUIEvent *event)
 void kGUIMenuObj::CloseMenu(void)
 {
 	kGUIMenuColObj *col;
+#if 0
+	kGUIMenuColObj *menu;
+	kGUIMenuEntryObj *me;
+#endif
 
 	/* close the current open menu */
 	if(m_depth)
@@ -301,6 +310,22 @@ void kGUIMenuObj::CloseMenu(void)
 			col->ReActivate();
 		}
 	}
+
+#if 0
+	/* check for open-submenu */
+	if(m_depth>0)
+	{
+		menu=m_activeentry.GetEntry(m_depth-1);
+		me=menu->GetCurrentEntry();
+		if(me->GetSubMenu())
+		{
+			kGUICorners c;
+			/* activate sub-menu */
+			me->GetCorners(&c);
+			OpenMenu(me->GetSubMenu(),c.rx-6,c.ty+2);
+		}
+	}
+#endif
 }
 
 void kGUIMenuObj::Draw(void)

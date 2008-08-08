@@ -1091,10 +1091,10 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 	switch(GetVAlign())
 	{
 	case FT_MIDDLE:
-		cy+=(h-(lineheight*numl))/2;
+		cy+=(h-((lineheight*numl)-2))/2;
 	break;
 	case FT_BOTTOM:
-		cy+=h-(lineheight*numl);
+		cy+=h-((lineheight*numl)-2);
 	break;
 	}
 

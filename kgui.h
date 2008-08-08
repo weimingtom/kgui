@@ -1620,6 +1620,9 @@ public:
 	void Disable(void) {SetEnabled(false);}
 	void SetShowCurrent(bool c) {m_showcurrent=c;}
 
+	/* make button just big enough to hold text or image */
+	void Contain(void);
+
 	/* override the string and text changed callbacks */
 	void StringChanged(void) {Changed();}
 	void FontChanged(void) {Changed();}
@@ -2422,6 +2425,7 @@ public:
 	int GetNumTabs(void) {return m_numtabs;}
 	int GetNumGroups(void) {return m_numgroups;}
 	void SetTabName(int tabindex,const char *name) {m_tabnames.GetEntryPtr(tabindex)->SetString(name);UpdateTabs();}
+	void SetTabName(int tabindex,kGUIString *name) {m_tabnames.GetEntryPtr(tabindex)->SetString(name);UpdateTabs();}
 	const char *GetTabName(int index) {return m_tabnames.GetEntryPtr(index)->GetString();}
 	kGUIText *GetTabTextPtr(int index) {return m_tabnames.GetEntryPtr(index);}
 	void SetTabGroup(int tabindex,int groupindex) {m_tabgroups.SetEntry(tabindex,groupindex);}
@@ -3289,6 +3293,10 @@ enum
 {
 KGUILANG_ENGLISH,
 KGUILANG_FRENCH,
+KGUILANG_GERMAN,
+KGUILANG_SWEDISH,
+KGUILANG_CHINESE,
+KGUILANG_JAPANESE,
 KGUILANG_NUMLANGUAGES
 };
 
@@ -3417,6 +3425,7 @@ public:
 	void SetLanguage(unsigned int lang) {m_lang=lang;m_langoff=lang*m_numstrings;}
 	kGUIString *GetString(unsigned int word) {return &m_strings[m_langoff+word];}
 	kGUIString *GetString(unsigned int lang,unsigned int word) {return &m_strings[(lang*m_numstrings)+word];}
+	unsigned int GetNumLanguages(void) {return m_numlangs;}
 private:
 	unsigned int m_lang;
 	unsigned int m_langoff;

@@ -79,12 +79,20 @@ bool kGUICSV::Load(void)
 	kGUIString line;
 	kGUICSVRow *row;
 	kGUIStringSplit sl;
+	unsigned char header[4];
+	int bomsize;
 
 	if(Open()==false)
 		return(false);		/* can't open file for read */
 
-	/* todo: check for any byte order markers and if found, then default all strings */
-	/* to that format */
+	/* read in the first 4 bytes and look for a byte order marker */
+	Read((void *)header,(unsigned long)sizeof(header));
+	printf("%02x %02x %02x %02x\n",header[0],header[1],header[2],header[3]);
+	m_encoding=kGUIString::CheckBOM(header,&bomsize);
+	printf("encoding=%d\n",m_encoding);
+	line.SetEncoding(m_encoding);
+
+	Seek((unsigned long long)bomsize);
 
 	sl.SetIgnoreEmpty(false);
 	maxcols=0;
