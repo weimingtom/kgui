@@ -93,24 +93,24 @@ GammaSample::GammaSample()
 	background=kGUI::GetBackground();
  	background->SetTitle("GammaSample");
 
-	m_gamma.SetPos(25,25);
-	m_gamma.SetSize(200,35);
+	m_gamma.SetPos(20,0);
+	m_gamma.SetSize(200,25);
 	m_gamma.SetString("2.2");
 	background->AddObject(&m_gamma);
 
-	m_hbox.SetPos(20,48);
+	m_hbox.SetPos(20,30);
 	m_hbox.SetSize(256,256);
 	background->AddObject(&m_hbox);
 
-	m_vbox.SetPos(40+256,48);
+	m_vbox.SetPos(40+256,30);
 	m_vbox.SetSize(256,256);
 	background->AddObject(&m_vbox);
 
-	m_tbox.SetPos(80+512,48);
+	m_tbox.SetPos(20,30+256+20);
 	m_tbox.SetSize(256,256);
 	background->AddObject(&m_tbox);
 
-	m_hbox2.SetPos(120+768,48);
+	m_hbox2.SetPos(40+256,30+256+10);
 	m_hbox2.SetSize(256,256);
 	background->AddObject(&m_hbox2);
 
