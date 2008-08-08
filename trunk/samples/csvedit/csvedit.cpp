@@ -206,6 +206,7 @@ CSVEditSample::CSVEditSample()
 	/* add 20 rows to the table, added by table event handler */
 	for(i=0;i<20;++i)
 		m_table.AddNewRow();
+	kGUI::ShowWindow();
 }
 
 void CSVEditSample::TableEvent(kGUIEvent *event)

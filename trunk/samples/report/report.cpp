@@ -91,6 +91,7 @@ MyReport::MyReport(int pid)
 	AddUserControl(&m_ifontsize);
 
 	m_lines.Init(16,16);
+	kGUI::ShowWindow();
 }
 
 void MyReport::Setup(void)
