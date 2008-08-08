@@ -180,6 +180,8 @@ EventSample::EventSample()
 
 	m_button.SetEventHandler(this,CALLBACKNAME(ButtonEvent));
 	m_input.SetEventHandler(this,CALLBACKNAME(InputEvent));
+
+	kGUI::ShowWindow();
 }
 
 /* you can have a unique event handler for each object, or you can have one to handle many objects */
