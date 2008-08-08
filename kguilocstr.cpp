@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
 		if(outtime1>=intime && outtime2>=intime)
 		{
 			printf("kguilocstr: output files are newer so no need to re-generate them!\n");
-			return(1);
+			return(0);
 		}
 	}
 
