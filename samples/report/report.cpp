@@ -91,7 +91,6 @@ MyReport::MyReport(int pid)
 	AddUserControl(&m_ifontsize);
 
 	m_lines.Init(16,16);
-	kGUI::ShowWindow();
 }
 
 void MyReport::Setup(void)
@@ -276,6 +275,7 @@ ReportSample::ReportSample()
 
 	m_previewbutton.SetEventHandler(this,CALLBACKNAME(ButtonEvent));
 	m_printbutton.SetEventHandler(this,CALLBACKNAME(ButtonEvent));
+	kGUI::ShowWindow();
 }
 
 /* you can have a unique event handler for each object, or you can have one to handle many objects */
