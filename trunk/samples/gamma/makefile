@@ -3,11 +3,11 @@
 KGUILOC=../../
 include $(KGUILOC)/makefile.in
 
-SRC=events.cpp
+SRC=gamma.cpp
 
 OBJ=$(SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
-PROGRAM=events$(EXE)
+PROGRAM=gamma$(EXE)
 
 DEP=makefile_$(OBJDIR).dep
 
@@ -21,8 +21,8 @@ ifeq ($(SYS),-DMINGW)
 
 RESOBJ=$(OBJDIR)/simpleres.o
 
-$(RESOBJ): events.rc
-	windres events.rc $(RESOBJ)
+$(RESOBJ): gamma.rc
+	windres gamma.rc $(RESOBJ)
 
 endif
 
