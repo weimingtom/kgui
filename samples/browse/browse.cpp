@@ -129,6 +129,7 @@ Browse::Browse()
 	/* attach event handler to look for window resize events */
 	bg->SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_browse->SetPageChangedCallback(this,CALLBACKNAME(PageChanged));
+	kGUI::ShowWindow();
 }
 
 void Browse::PageChanged(void)

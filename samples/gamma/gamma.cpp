@@ -115,6 +115,7 @@ GammaSample::GammaSample()
 	background->AddObject(&m_hbox2);
 
 	m_gamma.SetEventHandler(this,CALLBACKNAME(GammaEvent));
+	kGUI::ShowWindow();
 }
 
 /* you can have a unique event handler for each object, or you can have one to handle many objects */
