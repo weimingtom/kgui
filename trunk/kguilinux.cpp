@@ -28,7 +28,7 @@
 #include <cups/ppd.h>
 
 #define DEBUGPRINT 0
-#define USE_WM_DECORATION 0
+#define USE_WM_DECORATION 1
 
 void AppInit(void);
 void AppClose(void);
@@ -118,6 +118,8 @@ private:
 	int m_fullwidth,m_fullheight;
 	int m_winx,m_winy;
 	int m_winw,m_winh;
+	unsigned long m_lastsetposserial;
+	unsigned long m_lastsetsizeserial;
 	Visual *m_visual;
 	Colormap m_cmap;
 	XEvent m_e;
@@ -181,7 +183,7 @@ int main()
 	return 0;
 }
 
-#define TOP 32
+#define TOP 0
 #define BOTTOM 32
 
 bool kGUISystemX::Init(void)
@@ -1044,30 +1046,36 @@ void kGUISystemX::ShowMouse(bool show)
 
 void kGUISystemX::GetWindowPos(int *x,int *y,int *w,int *h)
 {
-#if 1
-	XWindowAttributes wa;
+	if(m_showwindow==true)
+	{
+		XWindowAttributes wa;
 
-	//flush any pending window size changes
-	XFlush(m_display);
-
-	XGetWindowAttributes(m_display,m_win,&wa);
-	m_winx=wa.x;
-	m_winy=wa.y;
-	m_winw=wa.width;
-	m_winh=wa.height;
-//	printf("Get %d,%d\n",m_winx,m_winy);
-#endif
+		//flush any pending window size changes
+		//XFlush(m_display);
+		XSync(m_display,false);
+	
+		XGetWindowAttributes(m_display,m_win,&wa);
+		m_winx=wa.x;
+		m_winy=wa.y;
+		m_winw=wa.width;
+		m_winh=wa.height;
+	}
 	*(x)=m_winx;
 	*(y)=m_winy;
 	*(w)=m_winw;
 	*(h)=m_winh;
+	printf("GetWindow x=%d,y=%d,w=%d,h=%d\n",m_winx,m_winy,m_winw,m_winh);
 }
 
 void kGUISystemX::SetWindowPos(int x,int y)
 {
-//	printf("Set window position to %d,%d\n",x,y);
+	printf("Set window position to %d,%d\n",x,y);
+	if(y<0)
+		y=0;
 #if USE_WM_DECORATION
 	XMoveWindow(m_display,m_win,x,y);
+	m_winx=x;
+	m_winy=y;
 #else
 	XSetWindowAttributes attributes;
 	XWindowAttributes wa;
@@ -1096,7 +1104,7 @@ void kGUISystemX::SetWindowPos(int x,int y)
 	attributes.override_redirect = True;
 	XChangeWindowAttributes(m_display,m_win,CWOverrideRedirect,&attributes);
 
-	owp->serial=NextRequest(m_display);
+	m_lastsetposserial=owp->serial=NextRequest(m_display);
 	XMoveWindow(m_display,m_win,x,y);
 //	printf("move request=%d\n",owp->serial);
 
@@ -1104,18 +1112,22 @@ void kGUISystemX::SetWindowPos(int x,int y)
 	attributes.override_redirect = False;
 	XChangeWindowAttributes(m_display,m_win,CWOverrideRedirect,&attributes);
 
+	m_winx=x;
+	m_winy=y;
 	/* get coords after they have been set */
-	XGetWindowAttributes(m_display,m_win,&wa);
+//	XGetWindowAttributes(m_display,m_win,&wa);
 //	printf("After set coords are %d,%d\n",wa.x,wa.y);
-	m_winx=wa.x;
-	m_winy=wa.y;
+//	m_winx=wa.x;
+//	m_winy=wa.y;
 #endif
 }
 
 void kGUISystemX::SetWindowSize(int w,int h)
 {
-//	printf("Set window size to %d,%d\n",w,h);
+	printf("Set window size to %d,%d\n",w,h);
+	m_lastsetsizeserial=NextRequest(m_display);
 	XResizeWindow(m_display,m_win,w,h);
+	XSync(m_display,false);
 //	XFlush(m_display);
 	m_winw=w;
 	m_winh=h;
@@ -1139,6 +1151,7 @@ void kGUISystemX::ShowWindow(void)
 		SetWindowPos(m_winx,m_winy);
 		XFlush(m_display);
 		m_showwindow=true;
+		printf("Window Shown!\n");
 	}
 }
 
@@ -1157,6 +1170,7 @@ void kGUISystemX::HideWindow(void)
 			XNextEvent(m_display,&e);
 		}while(e.type!=UnmapNotify);
 		m_showwindow=false;
+		printf("Window Hidden!\n");
 	}
 }
 
@@ -1586,6 +1600,8 @@ void kGUIPrintJobCups::DrawImage(kGUIDrawSurface *s,int lx,int rx,int ty,int by)
 	int r,g,b;
 	double dlx,drx,dty,dby;
 
+	//printf("lx=%d,rx=%d,ty=%d,by=%d\n",lx,rx,ty,by);
+
 	/* if image is too wide or too tall then split in half */
 	if((rx-lx)>64)
 	{
@@ -1676,7 +1692,7 @@ void kGUIPrintJobCups::DrawImage(kGUIDrawSurface *s,int lx,int rx,int ty,int by)
 
 void kGUIPrintJobCups::PrintSurface(kGUIDrawSurface *surface)
 {
-	DrawImage(surface,0,0,surface->GetWidth(),surface->GetHeight());
+	DrawImage(surface,0,surface->GetWidth(),0,surface->GetHeight());
 }
 
 void kGUIPrintJobCups::EndPage(void)
@@ -1704,6 +1720,7 @@ bool kGUIPrintJobCups::End(void)
 	cupsFreeOptions(num_options, options);
 //	kGUI::FileDelete(m_filename.GetString());
 
+
         if (jobid == 0)
         {
 		printf("%s\n",ippErrorString(cupsLastError()));
@@ -1712,5 +1729,6 @@ bool kGUIPrintJobCups::End(void)
 #endif
 
 	return(!m_error);
-}
+}
+
 
