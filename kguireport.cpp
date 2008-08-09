@@ -816,7 +816,7 @@ void kGUIReport::Preview(void)
 //	DrawPage(1,true);
 	m_curpage=1;
 	/* calculate size for the window */
-	CalcPageSize(kGUI::GetSurfaceWidth()-100,kGUI::GetSurfaceHeight()-140);
+	CalcPageSize(kGUI::GetBackground()->GetChildZoneW()-100,kGUI::GetBackground()->GetChildZoneH()-140);
 	m_controls.SetMaxWidth(kGUI::GetSurfaceWidth()-100);
 
 	m_previewwindow.SetAllowButtons(WINDOWBUTTON_CLOSE);

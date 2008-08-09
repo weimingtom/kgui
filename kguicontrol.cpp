@@ -82,7 +82,7 @@ void kGUIControlBoxObj::NextLine(void)
 		if(newh<=m_maxheight)
 			SetZoneH(newh);
 		else
-			assert(false,"cannot fit control in the box!");
+			passert(false,"cannot fit control in the box! newh=%d,max=%d",newh,m_maxheight);
 	}
 }
 
@@ -156,7 +156,7 @@ again:;
 		if(newh<=m_maxheight)
 			SetSize(GetZoneW(),newh);
 		else
-			assert(false,"cannot fit control in the box!");
+			passert(false,"cannot fit control in the box! newh=%d,max=%d",newh,m_maxheight);
 	}
 	m_currentx=objx+w;
 	if(h>m_tallest)
