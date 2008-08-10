@@ -184,7 +184,7 @@ int main()
 }
 
 #define TOP 0
-#define BOTTOM 32
+#define BOTTOM 28
 
 bool kGUISystemX::Init(void)
 {
@@ -216,6 +216,8 @@ bool kGUISystemX::Init(void)
 		return(false);
 	m_screen = DefaultScreen(m_display);
 	m_visual=DefaultVisual(m_display,m_screen);
+
+	assert(DefaultDepth(m_display,m_screen)>=24,"Error, screen depths below 24 are not supported!\n");
 
 	/* get the full screen size */
 	m_fullwidth = DisplayWidth(m_display, m_screen);
@@ -315,7 +317,7 @@ bool kGUISystemX::Init(void)
 #else
 	/* the Window Manager that is attached to the X-Windows system will automatically add */
 	/* it's own "Decoration" to the window frame, we need to turn off the decoration since */
-	/* we have our own. Also we can't just turn off the Redirect Flas since if we do that then */
+	/* we have our own. Also we can't just turn off the Redirect Flag since if we do that then */
 	/* the window is not be properly layered with the other open windows and will always stay on top */
 	/* and also then we cannot tab between applications either */
 	HideDecoration();
@@ -1103,14 +1105,17 @@ void kGUISystemX::SetWindowPos(int x,int y)
 	/* so we disconnect the manager and then reattach it after we have moved it */
 	attributes.override_redirect = True;
 	XChangeWindowAttributes(m_display,m_win,CWOverrideRedirect,&attributes);
+	XSync(m_display,false);
 
 	m_lastsetposserial=owp->serial=NextRequest(m_display);
 	XMoveWindow(m_display,m_win,x,y);
 //	printf("move request=%d\n",owp->serial);
+	XSync(m_display,false);
 
 	/* put back */
 	attributes.override_redirect = False;
 	XChangeWindowAttributes(m_display,m_win,CWOverrideRedirect,&attributes);
+	XSync(m_display,false);
 
 	m_winx=x;
 	m_winy=y;
