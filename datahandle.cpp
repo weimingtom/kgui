@@ -602,12 +602,12 @@ void DataHandle::ReadLine(kGUIString *line)
 	while(Eof()==false)
 	{
 		Read(&c,(unsigned long)1);
-		if((c==0x0d) || (c==0x0a))
+		if((c==0x0d) || (c==0x0a) ||(!c))
 			break;
 		line->Append(c);
 	}
 
-	if(Eof()==true)
+	if((Eof()==true) || (!c))
 		return;
 	Read(&c2,(unsigned long)1);
 	if((!( (c==0x0d) && (c2=0x0a)) || ((c==0x0a) && (c2=0x0d))))
