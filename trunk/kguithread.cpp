@@ -96,8 +96,20 @@ kGUICallThread::~kGUICallThread()
 bool kGUICallThread::Start(const char *line,int mode)
 {
 #if defined(LINUX) || defined(MACINTOSH)
+	int status;
 #if CALLTHREADUSEFORK
 	long tid;
+	int i,num;
+
+	m_sl.SetString(line);
+	num=m_ss.Split(&m_sl," ",false,true);
+	m_args=new char *[num+1];
+	for(i=0;i<num;++i)
+	{
+		m_args[i]=(char *)(m_ss.GetWord(i)->GetString());
+		//printf("arg[%d]=%s'\n",i,m_args[i]);
+	}
+	m_args[num]=0;
 
 	m_closing=false;
 	if (pipe(m_p) < 0)
@@ -114,7 +126,7 @@ bool kGUICallThread::Start(const char *line,int mode)
 		/* this is the child process */
 		setpgid(0, 0);
 
-	    if (mode==CALLTHREAD_READ)
+		if (mode==CALLTHREAD_READ)
 		{
 			fflush(stdout);
 			fflush(stderr);
@@ -129,30 +141,15 @@ bool kGUICallThread::Start(const char *line,int mode)
 		{
 			close(0);
 			if (dup(m_p[0]) < 0)
-		        perror("dup of read side of pipe failed");
+		        	perror("dup of read side of pipe failed");
 		}
 
-	    close(m_p[0]); /* close since we dup()'ed what we needed */
-	    close(m_p[1]);
+		close(m_p[0]); /* close since we dup()'ed what we needed */
+		close(m_p[1]);
 
-		/* split line into word pointers */
-		{
-			kGUIString sl;
-			kGUIStringSplit ss;
-			int i,num;
-			const char **args;
-
-			sl.SetString(line);
-			num=ss.Split(&sl," ",false,true);
-			args=new (char *)[num];
-			for(i=0;i<num;++i)
-				args[i]=ss.GetWord(i)->GetString();
-
-		    execv(args[0], args);
-			delete []args;
-			/* ok, task is done */
-			return(true);
-		}
+	    	execv(m_args[0], m_args);
+		/* should never get here! */
+		return(false);
 	}
 	/* we are the parent process */
 	m_tid=tid;
@@ -160,17 +157,14 @@ bool kGUICallThread::Start(const char *line,int mode)
 	{
 		close(m_p[1]);
 		m_handle = fdopen(m_p[0], "r");
-    }
+	}
 	else
 	{
 		close(m_p[0]);
 		m_handle = fdopen(m_p[1], "w");
-    }
-
-    return m_handle;
-}
+	}
+	//printf("child id=%d\n",m_tid);
 #else
-	int status;
 
 	m_closing=false;
 	m_handle=popen(line,mode==CALLTHREAD_READ?"r":"w");
@@ -262,7 +256,9 @@ bool kGUICallThread::Start(const char *line,int mode)
 				m_updatecallback.Call();
 		}
 		m_active=false;
-
+#if CALLTHREADUSEFORK
+		delete []m_args;
+#endif
 		status = pclose(m_handle);
 		if (status == -1)
 			return(false);
@@ -299,6 +295,9 @@ bool kGUICallThread::Start(const char *line,int mode)
 			fprintf(m_handle,m_string.GetString());
 		status = pclose(m_handle);
 		m_active=false;
+#if CALLTHREADUSEFORK
+		delete []m_args;
+#endif
 		if (status == -1)
 			return(false);
 #elif defined(WIN32) || defined(MINGW)
