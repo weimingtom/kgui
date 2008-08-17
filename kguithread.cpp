@@ -96,12 +96,87 @@ kGUICallThread::~kGUICallThread()
 bool kGUICallThread::Start(const char *line,int mode)
 {
 #if defined(LINUX) || defined(MACINTOSH)
+#if CALLTHREADUSEFORK
+	long tid;
+
+	m_closing=false;
+	if (pipe(m_p) < 0)
+		return false;
+
+	tid=fork();
+	/* if the fork command is unsucessfull then it returns -1 */
+	if(tid<0)
+		return(false);
+	/* if it is sucessfull then it spawns another process and returns 0 to that process */
+	/* and it returns the child's process id to the parents process */
+	if(!tid)
+	{
+		/* this is the child process */
+		setpgid(0, 0);
+
+	    if (mode==CALLTHREAD_READ)
+		{
+			fflush(stdout);
+			fflush(stderr);
+			close(1);
+			if (dup(m_p[1]) < 0)
+				perror("dup of write side of pipe failed");
+			close(2);
+			if (dup(m_p[1]) < 0)
+				perror("dup of write side of pipe failed");
+		}
+		else
+		{
+			close(0);
+			if (dup(m_p[0]) < 0)
+		        perror("dup of read side of pipe failed");
+		}
+
+	    close(m_p[0]); /* close since we dup()'ed what we needed */
+	    close(m_p[1]);
+
+		/* split line into word pointers */
+		{
+			kGUIString sl;
+			kGUIStringSplit ss;
+			int i,num;
+			const char **args;
+
+			sl.SetString(line);
+			num=ss.Split(&sl," ",false,true);
+			args=new (char *)[num];
+			for(i=0;i<num;++i)
+				args[i]=ss.GetWord(i)->GetString();
+
+		    execv(args[0], args);
+			delete []args;
+			/* ok, task is done */
+			return(true);
+		}
+	}
+	/* we are the parent process */
+	m_tid=tid;
+	if (mode==CALLTHREAD_READ)
+	{
+		close(m_p[1]);
+		m_handle = fdopen(m_p[0], "r");
+    }
+	else
+	{
+		close(m_p[0]);
+		m_handle = fdopen(m_p[1], "w");
+    }
+
+    return m_handle;
+}
+#else
 	int status;
 
 	m_closing=false;
 	m_handle=popen(line,mode==CALLTHREAD_READ?"r":"w");
 	if(!m_handle)
 		return(false);
+#endif
 #elif defined(WIN32) || defined(MINGW)
 	HANDLE hChildStdinRd, hChildStdinWr, hChildStdoutRd, hChildStdoutWr;
 	SECURITY_ATTRIBUTES saAttr; 
@@ -248,9 +323,13 @@ void kGUICallThread::Stop(void)
 		GenerateConsoleCtrlEvent( CTRL_C_EVENT,m_pi.dwProcessId);
 		FreeConsole();
 #elif defined(LINUX) || defined(MACINTOSH)
-		//todo how to send kill to thread
+#if CALLTHREADUSEFORK
+		kill(m_tid,SIGINT);
+#else
+		//todo how to send kill to a popened thread
 		//		kill(m_handle,SIGINT);
 //		kill(m_handle,SIGKILL);
+#endif
 #else
 #error
 #endif

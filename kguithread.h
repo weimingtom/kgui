@@ -37,6 +37,8 @@ CALLTHREAD_READ,
 CALLTHREAD_WRITE
 };
 
+#define CALLTHREADUSEFORK 0
+
 class kGUICallThread
 {
 public:
@@ -53,6 +55,10 @@ private:
 	kGUIString m_string;
 #if defined(LINUX) || defined(MACINTOSH)
 	FILE *m_handle;
+#if CALLTHREADUSEFORK
+	long m_tid;
+	int m_p[2];
+#endif
 #elif defined(WIN32) || defined(MINGW)
 	PROCESS_INFORMATION m_pi; 
 #else
