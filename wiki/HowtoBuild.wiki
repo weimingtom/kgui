@@ -6,7 +6,7 @@
 open the kgui solution file in Visual Studio
 then press f5 to build
 
-= Building for Windows using MinGW
+= Building for Windows using MinGW =
 
 open the mingw shell
 
