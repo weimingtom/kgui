@@ -26,7 +26,7 @@ make
 
 = Building for Linux =
 
-For complete beginners, you will need to install the compiler and build enviroment, and also subversion to get download the source code. 
+For complete beginners, you will need to install the compiler and build enviroment, and also subversion to download the source code. 
 
 {{{
 apt-get install build-essential
