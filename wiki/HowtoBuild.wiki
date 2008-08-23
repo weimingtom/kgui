@@ -63,7 +63,7 @@ make other
 make
 }}}
 
-_* currently it will build until it gets to matrixsll and then it dies since the matrixssl makefile is currently not working with linux you can just ignore this since it is the last thing to be build._
+_* currently it will build ( in the make other step )until it gets to matrixsll and then it dies since the matrixssl makefile is currently not working with linux you can just ignore this since it is the last thing to be built._
 
 To build the samples just go into the sample directory and
 
