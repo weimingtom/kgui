@@ -34,13 +34,16 @@ apt-get install subversion
 }}}
 
 The linux build uses two external libraries:
-XWindows - for the window manager / screen / mouse / keyboard
-Cups - for printing
+*XWindows* - for the window manager / screen / mouse / keyboard
+and *Cups* - for printing
 
 {{{
 apt-get install xlibs-static-dev
-on  some systems the above is called xorg-dev
+}}}
 
+_on  some systems the above is called xorg-dev_
+
+{{{
 apt-get install libcupsys2-dev
 apt-get install libcupimage2-dev
 }}}
