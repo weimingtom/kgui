@@ -53,6 +53,8 @@ kGUIBSPRect::~kGUIBSPRect()
 void kGUIBSPRect::Alloc(int n,int c)
 {
 	m_numentries=0;
+	m_max[0]=0;
+	m_max[1]=0;
 	if(n>m_numalloc)
 	{
 		if(m_rc)
@@ -86,7 +88,16 @@ void kGUIBSPRect::Alloc(int n,int c)
 
 void kGUIBSPRect::AddEntry(kGUIBSPRectEntry *re)
 {
+	int w,h;
+
 	assert(m_numentries<m_numalloc4,"Buffer Overflow!");
+
+	w=re->m_c.rx-re->m_c.lx;
+	h=re->m_c.by-re->m_c.ty;
+	if(w>m_max[0])
+		m_max[0]=w;
+	if(h>m_max[1])
+		m_max[1]=h;
 
 	m_currc[0].m_c[0]=re->m_c.lx;
 	m_currc[0].m_c[1]=re->m_c.ty;
@@ -112,8 +123,6 @@ void kGUIBSPRect::AddEntry(kGUIBSPRectEntry *re)
 	m_currc+=4;
 	m_numentries+=4;
 }
-
-//int kGUIBSPRect::m_sortaxis;
 
 //our sort data is an array of pointers
 int kGUIBSPRect::Sort0(const void *v1,const void *v2)
@@ -143,7 +152,7 @@ int kGUIBSPRect::Sort1(const void *v1,const void *v2)
 kGUIBSPZoneEntry *kGUIBSPRect::CutAxis(int start,int end,int depth)
 {
 	int num,axis;
-	int v;
+	int v,span1,span2;
 	kGUIBSPCornerEntry **prc;
 	kGUIBSPZoneEntry *zone;
 
@@ -187,14 +196,17 @@ kGUIBSPZoneEntry *kGUIBSPRect::CutAxis(int start,int end,int depth)
 		else
 			axis=1;
 
-		/* testing... */
-		//axis=0;
-
-//		m_sortaxis=axis;
 		qsort(m_prc+start,end-start,sizeof(kGUIBSPCornerEntry *),axis==0?Sort0:Sort1);
+
 		/* 4. split zone in 2 and call recursively */
-		zone->m_left=CutAxis(start,center,depth-1);
-		zone->m_right=CutAxis(center,end,depth-1);
+		span1=m_prc[center-1]->m_c[axis]-m_prc[start]->m_c[axis];
+		span2=m_prc[end-1]->m_c[axis]-m_prc[center]->m_c[axis];
+
+		if(span1>=m_max[axis] && span2>=m_max[axis])
+		{
+			zone->m_left=CutAxis(start,center,depth-1);
+			zone->m_right=CutAxis(center,end,depth-1);
+		}
 	}
 	return(zone);
 }
