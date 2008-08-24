@@ -42,6 +42,7 @@ public:
 
 private:
 //	static int m_sortaxis;
+	int m_max[2];
 	int m_numentries;		/* number allocated */
 	int m_numalloc;
 	int m_numalloc4;

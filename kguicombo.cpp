@@ -576,7 +576,8 @@ click:;
 	return(true);
 }
 
-#define COMBOTEXTEDGE 6
+#define COMBOTEXTEDGEW 6
+#define COMBOTEXTEDGEH 3
 
 void kGUIComboBoxObj::Draw(void)
 {
@@ -619,20 +620,20 @@ void kGUIComboBoxObj::Draw(void)
 			tl=m_typedstring->GetLen();
 			tlx=text->GetWidthSub(0,tl);
 
-			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGE+tlx,c.by-2,DrawColor(255,255,255));
-			text->DrawSection(0,tl,0,c.lx+COMBOTEXTEDGE,c.ty+COMBOTEXTEDGE,text->GetHeight(),DrawColor(16,16,16));
+			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx,c.by-2,DrawColor(255,255,255));
+			text->DrawSection(0,tl,0,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(16,16,16));
 
 			/* draw cursor */
-			kGUI::DrawRect(c.lx+COMBOTEXTEDGE+tlx,c.ty+2,c.lx+COMBOTEXTEDGE+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
+			kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
 
 			if(tl<text->GetLen())
 			{
-				kGUI::DrawRect(c.lx+COMBOTEXTEDGE+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGE+text->GetWidth(),c.by-2,DrawColor(16,16,16));
-				text->DrawSection(tl,text->GetLen(),0,c.lx+COMBOTEXTEDGE+tlx,c.ty+COMBOTEXTEDGE,text->GetHeight(),DrawColor(255,255,255));
+				kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+text->GetWidth(),c.by-2,DrawColor(16,16,16));
+				text->DrawSection(tl,text->GetLen(),0,c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(255,255,255));
 			}
 		}
 		else
-			text->Draw(c.lx+COMBOTEXTEDGE,c.ty+COMBOTEXTEDGE,0,0,tc);
+			text->Draw(c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,0,0,tc);
 
 		cw=kGUI::GetSkin()->GetComboArrowWidth();
 		if(m_colormode)
@@ -1210,20 +1211,20 @@ void kGUISharedComboboxObj::Draw(void)
 			tl=m_typedstring->GetLen();
 			tlx=text->GetWidthSub(0,tl);
 
-			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGE+tlx,c.by-2,DrawColor(255,255,255));
-			text->DrawSection(0,tl,c.lx+COMBOTEXTEDGE,c.ty+COMBOTEXTEDGE,text->GetHeight(),DrawColor(16,16,16));
+			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx,c.by-2,DrawColor(255,255,255));
+			text->DrawSection(0,tl,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(16,16,16));
 
 			/* draw cursor */
-			kGUI::DrawRect(c.lx+COMBOTEXTEDGE+tlx,c.ty+2,c.lx+COMBOTEXTEDGE+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
+			kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
 
 			if(tl<text->GetLen())
 			{
-				kGUI::DrawRect(c.lx+COMBOTEXTEDGE+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGE+text->GetWidth(),c.by-2,DrawColor(16,16,16));
-				text->DrawSection(tl,text->GetLen(),c.lx+COMBOTEXTEDGE+tlx,c.ty+COMBOTEXTEDGE,text->GetHeight(),DrawColor(255,255,255));
+				kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+text->GetWidth(),c.by-2,DrawColor(16,16,16));
+				text->DrawSection(tl,text->GetLen(),c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(255,255,255));
 			}
 		}
 		else
-			text->Draw(c.lx+COMBOTEXTEDGE,c.ty+COMBOTEXTEDGE,0,0,tc);
+			text->Draw(c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,0,0,tc);
 
 		cw=kGUI::GetSkin()->GetComboArrowWidth();
 		if(m_shared->GetColorMode())
