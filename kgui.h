@@ -2595,6 +2595,7 @@ public:
 	bool DeleteRowz(kGUITableRowObj *obj,bool purge=true);
 	void SetNumCols(unsigned int n);
 	void SetColWidth(int n,int w) {m_colwidths.SetEntry(n,w);m_sizechanged=true;m_positionsdirty=true;}
+	void SetColTitle(int n,kGUIString *s) {m_coltitles.GetEntryPtr(n)->SetString(s);m_positionsdirty=true;}
 	void SetColTitle(int n,const char *t) {m_coltitles.GetEntryPtr(n)->SetString(t);m_positionsdirty=true;}
 	void SetColHint(int n,const char *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
 	void SetColHint(int n,kGUIString *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
@@ -3423,6 +3424,7 @@ public:
 	~kGUILocStrings();
 	void Init(LOCSTRING_DEF *loc);
 	void SetLanguage(unsigned int lang) {m_lang=lang;m_langoff=lang*m_numstrings;}
+	unsigned int GetLanguage(void) {return m_lang;}
 	kGUIString *GetString(unsigned int word) {return &m_strings[m_langoff+word];}
 	kGUIString *GetString(unsigned int lang,unsigned int word) {return &m_strings[(lang*m_numstrings)+word];}
 	unsigned int GetNumLanguages(void) {return m_numlangs;}
@@ -3788,6 +3790,7 @@ public:
 
 	/* set default strings for supported language */
 	static void SetLanguage(unsigned int lang) {m_locstrings.SetLanguage(lang);}
+	static unsigned int GetLanguage(void) {return m_locstrings.GetLanguage();}
 	static kGUIString *GetString(unsigned int word) {return m_locstrings.GetString(word);}
 	static kGUIString *GetString(unsigned int lang,unsigned int word) {return m_locstrings.GetString(lang,word);}
 
