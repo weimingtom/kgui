@@ -365,9 +365,9 @@ public:
 	/*! Enable / Disable the ability for the Array to grow !*/ 
 	inline void SetGrow(bool g) {m_grow=g;}
 	/*! If growing is enabled then this is the amount to grow when referenced past the end of the Array !*/ 
-	inline void SetGrowSize(unsigned int g) {m_growsize=g;}
+	inline void SetGrowSize(int g) {m_growsize=g;}
 	inline bool GetGrow(void) {return m_grow;}
-	inline unsigned int GetGrowSize(void) {return m_growsize;}
+	inline int GetGrowSize(void) {return m_growsize;}
 	/*! return the current number of allocated entries in the Array */
 	inline unsigned int GetNumEntries(void) {return m_numentries;}
 	inline void Alloc(unsigned int num, bool preserve=true);
@@ -383,7 +383,7 @@ public:
 private:
 	unsigned int m_numentries;
 	bool m_grow;
-	unsigned int m_growsize;	/* number of entries to add when list is full */
+	int m_growsize;	/* number of entries to add when list is full */
 	T *m_array;
 };
 
@@ -422,9 +422,9 @@ template <class T>
 void Array<T>::SetEntry(unsigned int num,T entry)
 {
 	if(num>=m_numentries && m_grow==true)
-		Alloc(num+m_growsize,true);
+		Alloc(m_growsize>0?num+m_growsize:num+max(1,(num>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"Array::SetEntry Out of bounds on array!");
 	m_array[num]=entry;
 };
 
@@ -433,7 +433,7 @@ void Array<T>::DeleteEntry(unsigned int num)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"Array::DeleteEntry(num) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-1)-num);
 	if(movesize)
@@ -447,7 +447,7 @@ void Array<T>::DeleteEntry(unsigned int num,unsigned int numentries)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"Array::DeleteEntry(num,numentries) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-numentries)-num);
 	if(movesize)
@@ -462,10 +462,10 @@ void Array<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned int n
 	int movesize;
 	
 	if((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(listsize+m_growsize,true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,listsize>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
-	assert((listsize+numentries)<=(m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
+	assert((listsize+numentries)<=(m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 
 	movesize=(listsize-num)*sizeof(T);
 	if(movesize)
@@ -493,7 +493,7 @@ void Array<T>::Delete(T entry)
 template <class T>
 T Array<T>::GetEntry(unsigned int num)
 {
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	passert((num>=0) && (num<m_numentries),"Array::GetEntry(%d) (numentries=%d) Out of bounds on array!",num,m_numentries);
 	return(m_array[num]);
 };
 
@@ -501,9 +501,9 @@ template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
 {
 	if(num>=m_numentries && m_grow==true)
-		Alloc(num+m_growsize,true);
+		Alloc(m_growsize>0?num+m_growsize:num+(max(1,num>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
 };
 
@@ -524,9 +524,9 @@ public:
 	~SmallArray() {if(m_array) delete []m_array;m_array=0;}
 	inline void Init(int startsize,int growsize) {Alloc(startsize);SetGrowSize(growsize);SetGrow(true);}
 	inline void SetGrow(bool g) {m_grow=g;}
-	inline void SetGrowSize(unsigned int g) {m_growsize=g;}
+	inline void SetGrowSize(int g) {m_growsize=g;}
 	inline bool GetGrow(void) {return m_grow;}
-	inline unsigned int GetGrowSize(void) {return m_growsize;}
+	inline int GetGrowSize(void) {return m_growsize;}
 	inline unsigned int GetNumEntries(void) {return m_numentries;}
 	inline void Alloc(unsigned int num, bool preserve=true);
 	inline void SetEntry(unsigned int num, T entry);
@@ -541,7 +541,7 @@ public:
 private:
 	bool m_grow:1;
 	unsigned int m_numentries:15;
-	unsigned int m_growsize:15;			/* number of entries to add when list is full */
+	int m_growsize:15;			/* number of entries to add when list is full */
 	T *m_array;
 };
 
@@ -580,9 +580,9 @@ template <class T>
 void SmallArray<T>::SetEntry(unsigned int num,T entry)
 {
 	if(num>=m_numentries && m_grow==true)
-		Alloc(num+m_growsize,true);
+		Alloc(m_growsize>0?num+m_growsize:num+(max(1,num>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
 	m_array[num]=entry;
 };
 
@@ -591,7 +591,7 @@ void SmallArray<T>::DeleteEntry(unsigned int num)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::DeleteEntry(num) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-1)-num);
 	if(movesize)
@@ -605,7 +605,7 @@ void SmallArray<T>::DeleteEntry(unsigned int num,unsigned int numentries)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::DeleteEntry(num,numentries) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-numentries)-num);
 	if(movesize)
@@ -620,10 +620,10 @@ void SmallArray<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned 
 	int movesize;
 	
 	if((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(listsize+m_growsize,true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,listsize>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
-	assert((listsize+numentries)<=(m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
+	assert((listsize+numentries)<=(m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 
 	movesize=(listsize-num)*sizeof(T);
 	if(movesize)
@@ -651,14 +651,14 @@ void SmallArray<T>::Delete(T entry)
 template <class T>
 T SmallArray<T>::GetEntry(unsigned int num)
 {
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::GetEntry(num) Out of bounds on array!");
 	return(m_array[num]);
 };
 
 template <class T>
 T *SmallArray<T>::GetEntryPtr(unsigned int num)
 {
-	assert((num>=0) && (num<m_numentries),"Out of bounds on array!");
+	assert((num>=0) && (num<m_numentries),"SmallArray::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
 };
 
@@ -733,7 +733,7 @@ void ClassArray<T>::DeleteEntry(unsigned int num)
 {
 	T *obj;
 
-	assert((num>=0) && (num<m_pointers.GetNumEntries()),"Out of bounds on array!");
+	assert((num>=0) && (num<m_pointers.GetNumEntries()),"ClassArray::DeleteEntry(num) Out of bounds on array!");
 
 	/* no entries to move */
 	if(num==m_pointers.GetNumEntries()-1)

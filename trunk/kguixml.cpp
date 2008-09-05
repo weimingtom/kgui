@@ -610,15 +610,18 @@ void kGUIXMLItem::AddParm(const char *name,kGUIString *value)
 }
 
 
-void kGUIXMLItem::DelChild(kGUIXMLItem *child)
+void kGUIXMLItem::DelChild(kGUIXMLItem *child,bool purge)
 {
 	unsigned int i;
 
-	for(i=0;i<m_numchildren;++i)
+	i=m_numchildren;
+	while(i)
 	{
+		--i;
 		if(m_children.GetEntry(i)==child)
 		{
-			delete child;
+			if(purge)
+				delete child;
 			m_children.DeleteEntry(i);
 			--m_numchildren;
 			return;
@@ -708,7 +711,7 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 	++fp;
 	m_parm=false;
 	sfp=fp;
-	while(fp[0]!=0x0a && fp[0]!=0x0d && fp[0]!=' ' && fp[0]!=9 && fp[0]!='>')
+	while(fp[0]!=0x0a && fp[0]!=0x0d && fp[0]!=' ' && fp[0]!=9 && fp[0]!='/' && fp[0]!='>')
 		++fp;
 
 	/* since there are many duplicate tags in XML files instead of saving each unique name */
@@ -722,9 +725,10 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 
 	while(fp[0]==0x0a || fp[0]==0x0d)
 		++fp;
-	if(fp[0]==' ')
+	if(fp[0]==' ' || fp[0]=='/')
 	{
-		++fp;
+		if(fp[0]==' ')
+			++fp;
 		if(fp[0]=='/' && fp[1]=='>')
 		{
 			fp+=2;
@@ -743,9 +747,13 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 				++fp;
 
 			ts->SetString(sfp,(int)(fp-sfp));
+			ts->Trim();
 			parm->m_name=root->CacheName(ts->GetString());
 
-			++fp;
+			++fp;	/* skip '=' */
+			while(fp[0]==' ')
+				++fp;		/* skip any spaces between = and start quote */
+
 			q=fp[0];
 			assert((q=='\"' || q=='\''),"Quote not found!");
 			++fp;
@@ -792,6 +800,20 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 	while(1)
 	{
 		kGUIXMLItem *child;
+
+		/* check for comment here?? */
+		while(fp[0]=='<' && fp[1]=='!' && fp[2]=='-' && fp[3]=='-')
+		{
+			fp+=4;
+			while(!(fp[0]=='-' && fp[1]=='-' && fp[2]=='>'))
+				++fp;
+
+			fp+=3;
+			/* eat whitespace */
+			while(fp[0]==0x0a || fp[0]==0x0d || fp[0]==' ' || fp[0]==9 )
+				++fp;
+		}
+
 		if((fp[0]=='<') && (fp[1]=='/') && (fp[nl+2]=='>'))
 		{
 			if(!strncmp(fp+2,m_name,nl))
@@ -944,12 +966,21 @@ kGUIXML::kGUIXML()
 	/* namecache must be defined before loading an XML file */
 	m_namecache=0;
 	m_namecachelocal=false;
+
+	m_numinpool=0;
+	m_itempool.Init(256,-1);
 }
 
 kGUIXML::~kGUIXML()
 {
+	unsigned int i;
+
 	if(m_namecachelocal==true)
 		delete m_namecache;
+
+	/* delete any items left in the pool */
+	for(i=0;i<m_numinpool;++i)
+		delete m_itempool.GetEntry(i);
 
 	delete m_root;
 }
@@ -1062,4 +1093,271 @@ bool kGUIXML::Save(const char *filename)
 	m_root->Save(this,&tempstring,fp,0);
 	fclose(fp);
 	return(true);
+}
+
+/*********************************************************************************/
+/* this is for loading really BIG xml files that are too large to fit in memory */
+
+bool kGUIXML::StreamLoad(const char *filename)
+{
+	kGUIXMLItem *xitem;
+	kGUIXMLItem *encoding;
+	bool gotencoding=false;
+	unsigned long long fs;
+
+	/*  if not defined then we will */
+	if(!m_namecache)
+	{
+		m_namecachelocal=true;	/* tells us to free it upon exit */
+
+		m_namecache=new Hash();
+		m_namecache->Init(8,0);
+	}
+
+	assert(m_namecache!=0,"Name Cache needs to be defined before loading an XML file");
+	m_tempstring.Alloc(65536);
+	delete m_root;
+	m_root=new kGUIXMLItem();
+
+	m_dh.SetFilename(filename);
+	if(!m_dh.Open())
+		return(false);
+
+	m_dh.InitReadStream(16,2);	/* use 2 64k buffers */ 
+
+	m_fd=0;	/* only used for callback */
+
+	/* pull end back to last '>' character */
+	fs=m_dh.GetSize();
+	do
+	{
+		m_dh.Seek(fs-1);
+		if(m_dh.StreamPeekChar()=='>')
+			break;
+		--fs;
+	}while(fs>1);
+
+	/* eat any leading spaces */
+	m_dh.Seek((unsigned long long)0);
+	while(m_dh.StreamPeekChar()==' ')
+		m_dh.Skip(1);
+
+	while(m_dh.GetOffset()<fs)
+	{
+		xitem=StreamLoad(m_root);
+
+		/* can we get the encoding for this file? */
+		if(gotencoding==false)
+		{
+			if(!strcmp("?xml",xitem->GetName()))
+			{
+				encoding=xitem->Locate("encoding");
+				if(encoding)
+				{
+					SetEncoding(kGUIString::GetEncoding(encoding->GetValueString()));
+					m_tempstring.SetEncoding(GetEncoding());
+					gotencoding=true;
+				}
+			}
+		}
+
+	}
+	m_dh.Close();
+	return(true);
+}
+
+kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
+{
+	kGUIXMLItem *item;
+	long nl;
+	char c;
+	char q;
+	int sl;
+
+	Update((char *)m_dh.GetOffset());	/* call users callback if there is one */
+
+	/* change to get from pool */
+	item=PoolGet();
+
+	item->SetEncoding(GetEncoding());
+	parent->AddChild(item);
+	assert(m_dh.StreamPeekChar()=='<',"Open bracket not found!");
+	m_dh.StreamSkip(1);				/* skip the '<' */
+	item->m_parm=false;
+
+	nl=0;
+	c=m_dh.StreamPeekChar();
+	while(c!=0x0a && c!=0x0d && c!=' ' && c!=9 && c!='/' && c!='>')
+	{
+		m_dh.StreamSkip(1);
+		c=m_dh.StreamPeekChar();
+		++nl;
+	}
+
+	/* since there are many duplicate tags in XML files instead of saving each unique name */
+	/* in each XMLItem class, instead they are cached (Using a hash table) and XMLItems */
+	/* just refer to the cached names */
+
+	m_dh.StreamSkip(-nl);		/* go back to beginning of string */
+	m_dh.Read(&m_tempstring,(unsigned long)nl);	/* read in the string */
+	item->m_name=CacheName(m_tempstring.GetString());
+
+	while(c==0x0a || c==0x0d)
+	{
+		m_dh.StreamSkip(1);
+		c=m_dh.StreamPeekChar();
+	}
+
+	if(c==' ' || c=='/')
+	{
+		if(c==' ')
+		{
+			m_dh.StreamSkip(1);
+			c=m_dh.StreamPeekChar();
+		}
+		if(!m_dh.StreamCmp("/>",2))
+		{
+			m_dh.StreamSkip(2);
+			c=m_dh.StreamPeekChar();
+			goto done;
+		}
+		/* this command has values in the header */
+		while(c!='>')
+		{
+			kGUIXMLItem *parm=PoolGet();
+			
+			/* apply file encoding to parms */
+			parm->SetEncoding(GetEncoding());
+			sl=0;
+			parm->m_parm=true;
+			while(c!='=')
+			{
+				m_dh.StreamSkip(1);
+				c=m_dh.StreamPeekChar();
+				++sl;
+			}
+
+			m_dh.StreamSkip(-sl);		/* go back to beginning of string */
+			m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+			m_tempstring.Trim();
+			parm->m_name=CacheName(m_tempstring.GetString());
+
+			m_dh.StreamSkip(1);			/* skip '=' */
+			c=m_dh.StreamPeekChar();
+
+			while(c==' ')
+			{
+				m_dh.StreamSkip(1);
+				c=m_dh.StreamPeekChar();
+			}
+
+			q=c;
+			assert((q=='\"' || q=='\''),"Quote not found!");
+
+			m_dh.StreamSkip(1);			/* skip the opening quote */
+			c=m_dh.StreamPeekChar();
+
+			sl=0;
+			while(c!=q)
+			{
+				m_dh.StreamSkip(1);
+				c=m_dh.StreamPeekChar();
+				++sl;
+			}
+			m_dh.StreamSkip(-sl);		/* go back to beginning of string */
+			m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+			kGUIXMLCODES::Shrink(&m_tempstring,&parm->m_value);
+
+			m_dh.StreamSkip(1);			/* skip the close quote */
+			c=m_dh.StreamPeekChar();
+
+			item->AddChild(parm);
+
+			while(c==0x0a || c==0x0d || c==' ' || c==9)
+			{
+				m_dh.StreamSkip(1);
+				c=m_dh.StreamPeekChar();
+			}
+
+			if(!m_dh.StreamCmp("?>",2) || !m_dh.StreamCmp("/>",2))
+			{
+				m_dh.StreamSkip(2);
+				c=m_dh.StreamPeekChar();
+				goto done;
+			}
+		}
+		m_dh.StreamSkip(1);			/* skip '>' */		
+		c=m_dh.StreamPeekChar();
+		while( (c==10) || (c==13) || (c==' ') || (c==9) )
+		{
+			m_dh.StreamSkip(1);
+			c=m_dh.StreamPeekChar();
+		}
+	}
+	else
+	{
+		m_dh.StreamSkip(1);
+		c=m_dh.StreamPeekChar();
+	}
+
+	sl=0;
+	while(c!='<')
+	{
+		m_dh.StreamSkip(1);
+		c=m_dh.StreamPeekChar();
+		++sl;
+	}
+
+	if(sl)
+	{
+		m_dh.StreamSkip(-sl);		/* go back to beginning of string */
+		m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+		kGUIXMLCODES::Shrink(&m_tempstring,&item->m_value);
+	}
+
+	/* grab children until </name> is found */
+	while(1)
+	{
+		/* check for comment here?? */
+		while(!m_dh.StreamCmp("<!--",4))
+		{
+			m_dh.StreamSkip(4);		/* skip comment start */
+
+			while(m_dh.StreamCmp("-->",3))
+				m_dh.StreamSkip(1);
+
+			m_dh.StreamSkip(3);		/* skip comment end */
+			c=m_dh.StreamPeekChar();
+
+			/* eat whitespace */
+			while(c==0x0a || c==0x0d || c==' ' || c==9 )
+			{
+				m_dh.StreamSkip(1);
+				c=m_dh.StreamPeekChar();
+			}
+		}
+
+		if(!m_dh.StreamCmp("</",2) && !m_dh.StreamCmp(">",1,nl+2))
+		{
+			if(!m_dh.StreamCmp(item->m_name,nl,2))
+			{
+				m_dh.StreamSkip(nl+3);	/* skip </name> */
+				c=m_dh.StreamPeekChar();
+				break;
+			}
+		}
+		/* recursively load a child */
+		StreamLoad(item);
+	}
+done:;
+
+	while((c==10) || (c==13) || (c==' ') || (c==9))
+	{
+		m_dh.StreamSkip(1);
+		c=m_dh.StreamPeekChar();
+	}
+	/* this is a virtual function */
+	ChildLoaded(item,parent);
+
+	return(item);
 }

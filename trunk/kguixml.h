@@ -6,8 +6,9 @@
 
 class kGUIXMLItem
 {
+	friend class kGUIXML;
 public:
-	kGUIXMLItem() {m_parm=false;m_name=0;m_numchildren=0;m_children.SetGrow(true);m_children.SetGrowSize(8);}
+	kGUIXMLItem() {m_parm=false;m_name=0;m_numchildren=0;m_children.SetGrow(true);m_children.SetGrowSize(-1);}
 	~kGUIXMLItem();
 	void SetEncoding(unsigned int e) {m_value.SetEncoding(e);};
 	char *Load(class kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *parent);
@@ -15,7 +16,7 @@ public:
 	void Save(class kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level);
 	void AddChild(kGUIXMLItem *child) {m_children.SetEntry(m_numchildren,child);++m_numchildren;}
 	void CopyChild(kGUIXMLItem *copy) {kGUIXMLItem *child=new kGUIXMLItem();child->Copy(copy);m_children.SetEntry(m_numchildren,child);++m_numchildren;}
-	void DelChild(kGUIXMLItem *child);
+	void DelChild(kGUIXMLItem *child,bool purge=true);
 	kGUIXMLItem *Locate(const char *name,bool add=false);
 
 	void SetName(const char *n) {m_name=n;}
@@ -75,9 +76,13 @@ class kGUIXML
 {
 public:
 	kGUIXML();
-	~kGUIXML();
+	virtual ~kGUIXML();
 	bool Load(const char *filename);
+	bool StreamLoad(const char *filename);
 	bool Save(const char *filename);
+	/* this is called after loading each object */
+	virtual void ChildLoaded(kGUIXMLItem *child,kGUIXMLItem *parent) {}
+
 	kGUIXMLItem *GetRootItem(void) {return m_root;}
 	void SetLoadingCallback(void *codeobj,void (*code)(void *,int,int)) {m_loadcallback.Set(codeobj,code);}
 	void Update(char *cur);
@@ -86,7 +91,12 @@ public:
 	
 	void SetNameCache(Hash *namecache) {m_namecache=namecache;}
 	const char *CacheName(const char *name);
+
+	/* item pool */
+	inline kGUIXMLItem *PoolGet(void) {if(!m_numinpool)return new kGUIXMLItem();return m_itempool.GetEntry(--m_numinpool);}
+	void PoolAdd(kGUIXMLItem *item) {m_itempool.SetEntry(m_numinpool++,item);for(unsigned int j=0;j<item->m_numchildren;++j){PoolAdd(item->m_children.GetEntry(j));}item->m_numchildren=0;item->m_parm=false;item->m_value.Clear();}
 private:
+	kGUIXMLItem *StreamLoad(kGUIXMLItem *parent);	/* recursive call */
 	char *m_fd;
 	unsigned long m_filesize;
 	unsigned int m_encoding;
@@ -94,6 +104,12 @@ private:
 	kGUICallBackIntInt m_loadcallback;
 	bool m_namecachelocal;
 	Hash *m_namecache;
+
+	DataHandle m_dh;
+	kGUIString m_tempstring;
+
+	unsigned int m_numinpool;
+	Array<kGUIXMLItem *>m_itempool;
 };
 
 #endif
