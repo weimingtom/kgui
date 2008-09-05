@@ -387,6 +387,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			
 			m_bookmarksmenu.SetIconWidth(22);
 			m_bookmarksmenu.Init(numbookmarks+3);
+			/* todo add to translated text file */
 			m_bookmarksmenu.SetEntry(0,"Bookmark Page",BOOKMARK_ADDBOOKMARK);
 			m_bookmarksmenu.SetEntry(1,"Edit Bookmarks",BOOKMARK_EDITBOOKMARK);
 			m_bookmarksmenu.GetEntry(2)->SetIsBar(true);
@@ -1183,6 +1184,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	
 	m_cachemode.SetNumEntries(3);
 	m_cachemode.SetFontSize(VSFONTSIZE);
+	/* todo, add to translated text file */
 	m_cachemode.SetEntry(0,"Cache downloaded files",0);
 	m_cachemode.SetEntry(1,"Cache downloaded files, delete at end of each session",1);
 	m_cachemode.SetEntry(2,"Don't cache downloaded files",2);

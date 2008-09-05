@@ -40,6 +40,23 @@ enum
 	DATATYPE_UNDEFINED
 };
 
+/* these are interal structures used for the read-caching system */
+typedef struct
+{
+	unsigned long long m_startindex;
+	unsigned long long m_endindex;
+	char *m_data;
+	struct s_DataSection *m_datasection;
+	unsigned int m_priority;
+}StreamBlock;
+
+typedef struct s_DataSection
+{
+	unsigned long long m_startindex;
+	unsigned long long m_endindex;
+	StreamBlock *m_streamblock;
+}DataSection;
+
 /*! @class DataHandle
 	@brief This is the DataHandle class. It is used as a container class for all objects
 	that read / write files. It can reference a disk file, memory, or a file inside of a 
@@ -87,8 +104,9 @@ public:
 
 	void ReadLine(kGUIString *line);
 	void ReadHtmlString(kGUIString *s);
-	unsigned char PeekChar(void);
-	unsigned char ReadChar(void);
+	inline unsigned char PeekChar(void) {char c;Read(&c,(unsigned long)1);Seek(m_offset-1);return c;}
+	inline unsigned char ReadChar(void) {char c;Read(&c,(unsigned long)1);return c;}
+	inline void Skip(long numbytes) {Seek(m_offset+numbytes);}		/* pos or neg */
 
 	bool Seek(const char *string);
 	void Seek(unsigned long long index);
@@ -115,7 +133,21 @@ public:
 
 	/* calc crc for file */
 	long CRC(void);
+
+	/* new caching system init */
+	void InitReadStream(unsigned int blocksizebits,unsigned int numblocks);
+	char StreamCmp(const void *cmpstring,unsigned long numbytes,long offset=0,bool cs=true);
+	inline unsigned char StreamPeekChar(void) {unsigned long blockoff;StreamBlock *cb;cb=LoadStreamBlock(m_offset,&blockoff,true);return cb->m_data[blockoff];}
+	inline unsigned char StreamReadChar(void) {unsigned long blockoff;StreamBlock *cb;cb=LoadStreamBlock(m_offset,&blockoff,true);++m_offset;return cb->m_data[blockoff];}
+	inline void StreamSkip(long numbytes) {m_offset+=numbytes;}		/* pos or neg */
+
 private:
+	StreamBlock *LoadStreamBlock(unsigned long long index,unsigned long *poffset,bool setcurrent);
+	void ReadStreamBlock(StreamBlock *cb);
+	void StreamRead(void *dest,unsigned long numbytes);
+	void StreamRead(kGUIString *s,unsigned long numbytes);
+	void PurgeReadStream(void);
+
 	kGUIMutex m_openmutex;	/* open mutex */
 	int m_type;				/* handle or memory based */
 	long m_filetime;		/* filetime */
@@ -135,7 +167,26 @@ private:
 
 	static int m_numbigfiles;					/* number of registered bigfiles */
 	static Array<class BigFile *>m_bigfiles;	/* array of pointers to bigfiles */
-	
+
+	/* new caching system */
+	bool m_readstream;					/* true=read Stream enabled */
+	unsigned int m_nextstreampriority;
+
+	/* section data */
+	unsigned int m_numdatasections; 
+	Array<DataSection>m_datasections;
+
+	/* Streamblock data */
+	StreamBlock *m_currentstreamblock;
+	unsigned long long m_currentstreamstartindex;
+	unsigned long long m_currentstreamendindex;
+	unsigned long long m_currentseekindex;
+
+	Array<StreamBlock>m_streamblocks;
+	unsigned long m_streamblockshift;	/* shift index by this to convert to a block# */
+	unsigned long m_streamblockmask;		/* mask index by this to convert to an offset into the block */
+	unsigned long m_streamblocksize;
+	unsigned long m_numstreamblocks;
 };
 
 #endif

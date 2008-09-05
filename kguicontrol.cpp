@@ -144,7 +144,8 @@ again:;
 			if(m_currenty)
 				m_currenty+=m_objectgap;
 			m_currenty+=m_tallest;
-			objy+=m_objectgap+m_tallest;
+//			objy+=m_objectgap+m_tallest;
+			objy=m_currenty;
 			m_tallest=0;
 
 			/* check for collisions again */
