@@ -421,8 +421,8 @@ void Array<T>::Alloc(unsigned int num,bool preserve)
 template <class T>
 void Array<T>::SetEntry(unsigned int num,T entry)
 {
-	if(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+max(1,(num>>-m_growsize)),true);
+	while(num>=m_numentries && m_grow==true)
+		Alloc(m_growsize>0?num+m_growsize:num+max(1,(m_numentries>>-m_growsize)),true);
 
 	assert((num>=0) && (num<m_numentries),"Array::SetEntry Out of bounds on array!");
 	m_array[num]=entry;
@@ -461,8 +461,8 @@ void Array<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned int n
 {
 	int movesize;
 	
-	if((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,listsize>>-m_growsize)),true);
+	while((listsize+numentries)>=m_numentries && m_grow==true)
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
 
 	assert((num>=0) && (num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
@@ -500,8 +500,8 @@ T Array<T>::GetEntry(unsigned int num)
 template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
 {
-	if(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(max(1,num>>-m_growsize)),true);
+	while(num>=m_numentries && m_grow==true)
+		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
 
 	assert((num>=0) && (num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
@@ -579,8 +579,8 @@ void SmallArray<T>::Alloc(unsigned int num,bool preserve)
 template <class T>
 void SmallArray<T>::SetEntry(unsigned int num,T entry)
 {
-	if(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(max(1,num>>-m_growsize)),true);
+	while(num>=m_numentries && m_grow==true)
+		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
 
 	assert((num>=0) && (num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
 	m_array[num]=entry;
@@ -619,8 +619,8 @@ void SmallArray<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned 
 {
 	int movesize;
 	
-	if((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,listsize>>-m_growsize)),true);
+	while((listsize+numentries)>=m_numentries && m_grow==true)
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
 
 	assert((num>=0) && (num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
@@ -3436,6 +3436,14 @@ private:
 	kGUIString *m_strings;
 };
 
+/* used by the polygon draw code */
+typedef struct
+{		/* a polygon edge */
+    double x;	/* x coordinate of edge's intersection with current scanline */
+	double dx;	/* change in x with respect to y */
+	int i;	/* edge number: edge i goes from pt[i] to pt[i+1] */
+} Edge;
+
 class kGUICookieJar;
 class kGUISSLManager;
 
@@ -3618,12 +3626,15 @@ public:
 	static int FastHypot(int dx,int dy);
 
 	/* integer coords draws */
+
 	static void DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha);
 	static bool ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPolyLine(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawFatLine(int x1,int y1,int x2,int y2,kGUIColor c,double radius,double alpha=1.0f);
 	static void DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
+	static Array<int>m_polysortint;
+	static Array<Edge>m_polysortedge;
 
 	/* double coord draws, anti-aliased edges */
 

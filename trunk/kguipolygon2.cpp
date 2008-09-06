@@ -53,12 +53,6 @@ from "Graphics Gems", Academic Press, 1990
 
 #include "kgui.h"
 
-typedef struct {		/* a polygon edge */
-    double x;	/* x coordinate of edge's intersection with current scanline */
-    double dx;	/* change in x with respect to y */
-    int i;	/* edge number: edge i goes from pt[i] to pt[i+1] */
-} Edge;
-
 static int n;			/* number of vertices */
 static kGUIDPoint2 *pt;		/* vertices */
 
@@ -134,8 +128,12 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 	if(n<2)
 		return;
 	
-	ind=new int[n];
-	active = new Edge[n];
+	/*only allocates if not enough space already */
+	m_polysortint.Alloc(n,false);
+	m_polysortedge.Alloc(n,false);
+
+	ind=m_polysortint.GetArrayPtr();
+	active=m_polysortedge.GetArrayPtr();
 
     /* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<n; k++)
@@ -213,8 +211,6 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 		  }
 		y+=rowheight;
     }while(y<y1);
-	delete ind;
-	delete active;
 	m_subpixcollector.Draw();
 }
 
@@ -288,8 +284,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIDPoint2 *point,kGUIColor c,dou
 	/* end point step to cover 180 degrees */
 	estep=PI/(numep-1);
 
-	if(m_dfatpoints.GetNumEntries()<(MAXENDPOINTS*nvert*2))
-		m_dfatpoints.Alloc(MAXENDPOINTS*nvert*2,false);
+	m_dfatpoints.Alloc(MAXENDPOINTS*nvert*2,false);
 
 	/* number of out points */
 	numout=0;

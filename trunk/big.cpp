@@ -581,7 +581,7 @@ bool BigFile::Extract(const char *name,const char *filename)
 	f2=fopen(filename,"wb");
 	if(!f2)
 	{
-		delete buf;
+		delete []buf;
 		return(false);	/* error opening output file */
 	}
 
@@ -599,7 +599,7 @@ bool BigFile::Extract(const char *name,const char *filename)
 	}
 	section.Close();
 	fclose(f2);
-	delete buf;
+	delete []buf;
 	if(writeerror)
 		return(false);
 	return(true);	/* ok */

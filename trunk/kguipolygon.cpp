@@ -59,17 +59,14 @@ from "Graphics Gems", Academic Press, 1990
 #define min(a, b)	((a) < (b) ? (a) : (b))
 #endif
 
-typedef struct {		/* a polygon edge */
-    double x;	/* x coordinate of edge's intersection with current scanline */
-    double dx;	/* change in x with respect to y */
-    int i;	/* edge number: edge i goes from pt[i] to pt[i+1] */
-} Edge;
-
 static int n;			/* number of vertices */
 static kGUIPoint2 *pt;		/* vertices */
 
 static int nact;		/* number of active edges */
 static Edge *active;	/* active edge list:edges crossing scanline y */
+
+Array<int>kGUI::m_polysortint;
+Array<Edge>kGUI::m_polysortedge;
 
 #if 1
 /* if inputs are integers, then use these defines */
@@ -151,8 +148,12 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
 
     assert (n>1,"not enough points in polygon!");
 	
-	ind=new int[n];
-	active = new Edge[n];
+	/*only allocates if not enough space already */
+	m_polysortint.Alloc(n,false);
+	m_polysortedge.Alloc(n,false);
+
+	ind=m_polysortint.GetArrayPtr();
+	active=m_polysortedge.GetArrayPtr();
 
     /* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<n; k++)
@@ -230,8 +231,6 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
 	    	active[j+1].x += active[j+1].dx;
 		  }
     }
-	delete ind;
-	delete active;
 }
 
 void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha)
@@ -254,9 +253,13 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha)
     pt = point;
 
     assert (n>1,"not enough points in polygon!");
-	
-	ind=new int[n];
-	active = new Edge[n];
+
+	/*only allocates if not enough space already */
+	m_polysortint.Alloc(n,false);
+	m_polysortedge.Alloc(n,false);
+
+	ind=m_polysortint.GetArrayPtr();
+	active=m_polysortedge.GetArrayPtr();
 
     /* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<n; k++)
@@ -342,8 +345,6 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha)
 	    	active[j+1].x += active[j+1].dx;
 		  }
     }
-	delete ind;
-	delete active;
 }
 
 /* read the screen and return false if any pixel is not "c" */
@@ -360,10 +361,14 @@ bool kGUI::ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
     pt = point;
     assert (n>1,"not enough points in polygon!");
 
-	ind=new int[n];
-	active = new Edge[n];
+	/*only allocates if not enough space already */
+	m_polysortint.Alloc(n,false);
+	m_polysortedge.Alloc(n,false);
 
-    /* create y-sorted array of indices ind[k] into vertex list */
+	ind=m_polysortint.GetArrayPtr();
+	active=m_polysortedge.GetArrayPtr();
+
+	/* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<n; k++)
 		ind[k] = k;
     qsort(ind, n, sizeof ind[0], compare_ind);
@@ -441,8 +446,6 @@ bool kGUI::ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
 		  }
     }
 done:;
-	delete ind;
-	delete active;
 	return(rc);
 }
 
@@ -514,8 +517,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 	/* end point step to cover 180 degrees */
 	estep=PI/(numep-1);
 
-	if(m_fatpoints.GetNumEntries()<(MAXENDPOINTS*nvert))
-		m_fatpoints.Alloc(MAXENDPOINTS*nvert,false);
+	m_fatpoints.Alloc(MAXENDPOINTS*nvert,false);
 
 	/* number of out points */
 	numout=0;
@@ -627,8 +629,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 	awidth=width>>1;
 	bwidth=width-awidth;
 
-	if(m_fatpoints.GetNumEntries()<(nvert<<1))
-		m_fatpoints.Alloc(nvert<<1,false);
+	m_fatpoints.Alloc(nvert<<1,false);
 
 	nplist=m_fatpoints.GetArrayPtr();
 	np1=nplist;
@@ -694,8 +695,7 @@ void kGUI::DrawFatPolyOutLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,i
 	awidth=width>>1;
 	bwidth=width-awidth;
 
-	if(m_fatpoints.GetNumEntries()<(nvert<<1))
-		m_fatpoints.Alloc(nvert<<1,false);
+	m_fatpoints.Alloc(nvert<<1,false);
 
 	nplist=m_fatpoints.GetArrayPtr();
 	np1=nplist;
