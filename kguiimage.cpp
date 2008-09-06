@@ -136,7 +136,7 @@ void kGUIImage::Purge(void)
 			--m_numloaded;
 
 			for(i=0;i<m_numframes;++i)
-				delete m_imagedata.GetEntry(i);
+				delete []m_imagedata.GetEntry(i);
 			m_numframes=0;
 		}
 		else
@@ -144,7 +144,7 @@ void kGUIImage::Purge(void)
 			if(m_allocmemimage==true)
 			{
 				for(i=0;i<m_numframes;++i)
-					delete m_imagedata.GetEntry(i);
+					delete []m_imagedata.GetEntry(i);
 			}
 			m_numframes=0;
 		}
@@ -171,7 +171,7 @@ void kGUIImage::SetMemImage(unsigned int frame,int format,int width,int height,u
 	{
 		/* purge this frame if it was already allocated */
 		if(m_memimage==true && m_allocmemimage==true && m_numframes>frame)
-			delete m_imagedata.GetEntry(frame);
+			delete []m_imagedata.GetEntry(frame);
 	}
 
 	m_memimage=true;

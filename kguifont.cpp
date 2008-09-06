@@ -700,9 +700,8 @@ int kGUIText::CalcLineList(int w)
 
 	if(m_linelist.GetNumEntries()==0)
 	{
-		m_linelist.Alloc(1);
+		m_linelist.Init(1,-1);
 		m_linelist.SetEntry(0,new kGUIInputLineInfo);
-		m_linelist.SetGrow(true);
 	}
 
 	maxw=0;

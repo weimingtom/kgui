@@ -35,8 +35,8 @@
 Heap::Heap()
 {
 	m_numblocks=0;
-	m_blocksize=65536;	/* default to 64k */
-	m_blocks.Init(16,4);
+	m_blocksize=65536;		/* default to 64k */
+	m_blocks.Init(16,-1);	/* double in size if too small */
 }
 
 /* reset heap to all blocks empty */

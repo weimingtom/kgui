@@ -173,17 +173,20 @@ void kGUIMenuColObj::SetEntryEnable(int entryval,bool e, bool updatecolor)
 	for(i=0;i<m_numentries;++i)
 	{
 		me=m_poptableentries.GetEntryPtr(i);
-		if(me->GetValue()==entryval)
+		if(me->GetIsBar()==false)
 		{
-			m_poptable->SetEntryEnable(i,e);
-			if(updatecolor==true)
+			if(me->GetValue()==entryval)
 			{
-				if(e==true)
-					me->SetTextColor(DrawColor(32,32,32));
-				else
-					me->SetTextColor(DrawColor(192,192,192));
+				m_poptable->SetEntryEnable(i,e);
+				if(updatecolor==true)
+				{
+					if(e==true)
+						me->SetTextColor(DrawColor(32,32,32));
+					else
+						me->SetTextColor(DrawColor(192,192,192));
+				}
+				return;
 			}
-			return;
 		}
 	}
 	assert(false,"kGUIMenuColObj: entryval not found in list!");

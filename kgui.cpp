@@ -461,6 +461,9 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_backgroundobj->SetSize(width,height);
 	m_rootobj->AddObject(m_backgroundobj);
 
+	m_polysortint.Init(16,-1);
+	m_polysortedge.Init(16,-1);
+
 	Trace(" Sucessful kGUI Initialization\n");
 	return(true);
 }
