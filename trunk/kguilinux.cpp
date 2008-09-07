@@ -72,7 +72,7 @@ private:
 class kGUISystemX : public kGUISystem
 {
 public:
-	kGUISystemX() {m_display=0;m_cprinters=0;}
+	kGUISystemX() {m_display=0;m_cprinters=0;m_image=0;m_cursor=0;}
 	~kGUISystemX();
 	bool Init(void);
 #if USE_WM_DECORATION==0
@@ -126,6 +126,7 @@ private:
 	XImage *m_image;
 	int m_screen;
 	GC m_gc;
+	Cursor m_cursor;
 	int m_mousex,m_mousey,m_mousewheel;
 	bool m_showwindow;	
 	bool m_mouseleft,m_mouseright;
@@ -190,7 +191,6 @@ bool kGUISystemX::Init(void)
 {
 	int startwidth,startheight;
 	int maximages;
-	//XEvent e;
 	XSetWindowAttributes attributes;
 
 	m_showwindow=false;
@@ -302,7 +302,6 @@ bool kGUISystemX::Init(void)
 		m_printers.GetEntryPtr(0)->SetName("No Printers");
 		m_printers.GetEntryPtr(0)->SetDefaultPageSize();
 	}
-
 
 	kGUI::Trace(" kGUI::Init(startwidth,startheight);\n");
 	if(kGUI::Init(this,startwidth,startheight,m_fullwidth,m_fullheight,maximages)==false)
@@ -511,7 +510,7 @@ again:;
 			case ClientMessage:
 				if(((unsigned int)m_e.xclient.message_type==(unsigned int)m_wmp) && ((unsigned int)m_e.xclient.data.l[0]==(unsigned int)m_wdw))
 				{
-					printf("Window Close button was pressed!");
+					printf("Window Close button was pressed!\n");
 					goto doclose;
 				}
 			break;
@@ -999,8 +998,6 @@ void kGUISystemX::ReDraw(void)
 
 void kGUISystemX::UpdateMouse(void)
 {
-	Cursor c;
-
 	static Cursor mousecursors[]={
 		XC_left_ptr,		/* default */
 		XC_watch,		/* busy */
@@ -1023,11 +1020,14 @@ void kGUISystemX::UpdateMouse(void)
 #if DEBUGPRINT
 		printf("Setting mouse cursor\n");
 #endif
-		c=XCreateFontCursor(m_display,mousecursors[kGUI::GetMouseCursor()]);
-		if(c)
+		if(m_cursor)
+			XFreeCursor(m_display,m_cursor);
+
+		m_cursor=XCreateFontCursor(m_display,mousecursors[kGUI::GetMouseCursor()]);
+		if(m_cursor)
 		{
 			m_lastcursor=kGUI::GetMouseCursor();
-			XDefineCursor(m_display,m_win,c);
+			XDefineCursor(m_display,m_win,m_cursor);
 			XFlush(m_display);
 		}
 		else
@@ -1224,11 +1224,25 @@ bool kGUISystemX::IsDir(const char *fn)
 
 kGUISystemX::~kGUISystemX()
 {
-printf("closing display\n");
+	if(m_image)
+	{
+		/* we don't want X to free the data since it was not allocated here */
+		m_image->data=0;
+		XDestroyImage(m_image);
+	}
+
 	if(m_display)
+	{
+//		printf("closing display\n");
+		if(m_cursor)
+			XFreeCursor(m_display,m_cursor);
+
+		XFreeGC(m_display,m_gc);
 		XCloseDisplay(m_display);
-/* do I need to free these or not? */
-//	if(m_printers)
+	}
+
+	if(m_cprinters)
+		cupsFreeDests(&m_cprinters);
 }
 
 void kGUISystemX::GetPrinterInfo(const char *name,int *pw,int *ph,int *ppih,int *ppiv)
@@ -1726,8 +1740,8 @@ bool kGUIPrintJobCups::End(void)
 //	kGUI::FileDelete(m_filename.GetString());
 
 
-        if (jobid == 0)
-        {
+    if (jobid == 0)
+	{
 		printf("%s\n",ippErrorString(cupsLastError()));
 		m_error=true;
 	}

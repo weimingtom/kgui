@@ -344,7 +344,9 @@ void kGUIString::Delete(unsigned int index,unsigned int num)
 {
 	assert(m_string!=0,"Cannot move null string");
 	assert(((index+num)<=m_len),"Cannot delete negative range");
-	strcpy(m_string+index,m_string+index+num);
+
+	/* +1 is to copy the null along too */
+	memmove(m_string+index,m_string+index+num,m_len-(index+num)+1);
 	m_len-=num;
 	StringChanged();
 }
@@ -519,7 +521,7 @@ void kGUIString::Trim(int what)
 	}
 	if(num)
 	{
-		memcpy(m_string,m_string+num,(m_len+1)-num);
+		memmove(m_string,m_string+num,(m_len+1)-num);
 		m_len-=num;
 	}
 
