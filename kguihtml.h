@@ -703,7 +703,7 @@ LINKTYPE_UNKNOWN
 class kGUIOnlineLink : public DataHandle
 {
 public:
-	kGUIOnlineLink(kGUIHTMLPageObj *page) {m_page=page;m_flush=false;m_loadpending=false;}
+	kGUIOnlineLink(kGUIHTMLPageObj *page) {m_page=page;m_flush=false;m_loadpending=false;m_priority=0;}
 	void SetURL(kGUIString *url,kGUIString *referrer,unsigned int type);
 	bool CacheURL(kGUIString *url,unsigned int type,kGUIString *fn);
 	kGUIString *GetURL(void) {return &m_url;}

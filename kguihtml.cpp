@@ -1404,7 +1404,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_stylepriority=0;	/* priority is in order encountered in source, not load time order */
 	m_linkhash.SetCaseSensitive(true);
 	m_linkhash.Init(12,sizeof(kGUIOnlineLink *));
-	m_links.Init(256,256);
+	m_links.Init(256,-1);
 
 	m_popmenu.SetEventHandler(this,CALLBACKNAME(DoPopMenu));
 
@@ -1603,7 +1603,7 @@ unsigned int kGUIHTMLPageObj::GetStylePriority(unsigned int after)
 	kGUIOnlineLink *link;
 
 	if(after==m_stylepriority)
-		return ++m_stylepriority;
+		return (++m_stylepriority);
 	else
 	{
 		/* we are inserting a priority, so we need to increment any greater ones */
@@ -7817,6 +7817,7 @@ void kGUIHTMLObj::Init(void)
 	m_relpos=false;
 	m_skipbr=false;
 	m_maxchildy=0;
+	m_potextalign=ALIGN_UNDEFINED;
 }
 
 void kGUIHTMLObj::SetID(int id)
