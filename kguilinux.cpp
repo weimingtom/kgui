@@ -1242,7 +1242,7 @@ kGUISystemX::~kGUISystemX()
 	}
 
 	if(m_cprinters)
-		cupsFreeDests(&m_cprinters);
+		cupsFreeDests(m_numprinters,m_cprinters);
 }
 
 void kGUISystemX::GetPrinterInfo(const char *name,int *pw,int *ph,int *ppih,int *ppiv)
