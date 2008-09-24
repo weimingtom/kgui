@@ -70,6 +70,7 @@
 /*******************************************/
 
 #define _CRT_SECURE_NO_WARNINGS
+#define __MSVCRT_VERSION__ 0x0601
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
@@ -924,6 +925,8 @@ public:
 	kGUICallBackPtr() {m_obj=0;m_func=0;}
 	void Set(void *o,void (*f)(void *,T *));
 	inline void Call(T *i) {if(m_func) m_func(m_obj,i);}
+	/*! call the callback if it is valid and clear it before calling so it can't be called again */
+	inline void CallOnce(T *i) {if(m_func){void (*func)(void *,T *i);func=m_func;m_func=0;func(m_obj,i);}}
 	inline bool IsValid(void) {return (m_func!=0);}
 private:
 	void *m_obj;
@@ -3806,8 +3809,8 @@ public:
 	static kGUIString *GetString(unsigned int lang,unsigned int word) {return m_locstrings.GetString(lang,word);}
 
 	/* set the panic function, call this if the program encounters a fatal error */
-	static void SetPanic(void *o,void (*f)(void *)) {m_panic.Set(o,f);}
-	static void Panic(void) {m_panic.CallOnce();}
+	static void SetPanic(void *o,void (*f)(void *,kGUIString *s)) {m_panic.Set(o,f);}
+	static void Panic(kGUIString *s) {m_panic.CallOnce(s);}
 
 	static kGUIObj *m_forcecurrentobj;
 	/* current clip corners */
@@ -3816,7 +3819,7 @@ public:
 	static kGUISubPixelCollector m_subpixcollector;
 private:
 	static kGUISystem *m_sys;
-	static kGUICallBack m_panic;
+	static kGUICallBackPtr<kGUIString> m_panic;
 	static kGUIDrawSurface *m_currentsurface;
 	static kGUIDrawSurface m_screensurface;
 

@@ -257,7 +257,14 @@ void kGUIInputBoxObj::PutCursorOnScreen(void)
 	int width;
 	
 	CallEvent(EVENT_MOVED);
-//	m_movedcallback.Call();
+
+	/* this event can change the string, so we need to check for recalclines here! */
+	if(m_recalclines==true)
+	{
+		if(m_hcursor>GetLen())
+			m_hcursor=GetLen();
+		CalcLines(true);
+	}
 
 	cursorline=GetLineNum(m_hcursor);
 	if(cursorline<0)
