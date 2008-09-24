@@ -54,13 +54,14 @@
 #include "kguiprot.h"
 #include <math.h>
 #include <time.h>
+#include <signal.h>
 
 #define HINTTEXTSIZE 9
 
 /* since these are static, they need to be defined specifically */
 
 kGUISystem *kGUI::m_sys;
-kGUICallBack kGUI::m_panic;
+kGUICallBackPtr<kGUIString> kGUI::m_panic;
 kGUIWindowObj *kGUI::m_backgroundobj;
 kGUILocStrings kGUI::m_locstrings;
 kGUIRootObj *kGUI::m_rootobj;
@@ -158,6 +159,8 @@ kGUICookieJar *kGUI::m_cookiejar=0;
 kGUISSLManager *kGUI::m_sslmanager=0;
 
 bool kGUI::m_fastdraw;
+
+void sighandler(int sig);
 
 void kGUICallBack::Set(void *o,void (*f)(void *))
 {
@@ -352,6 +355,13 @@ kGUISkin *AllocDefSkin(void);
 bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheight,int maximages)
 {
 	m_sys=sys;
+
+	signal(SIGILL, sighandler);   // install our handler
+	signal(SIGFPE, sighandler);   // install our handler
+	signal(SIGSEGV, sighandler);   // install our handler
+	signal(SIGTERM, sighandler);   // install our handler
+	signal(SIGBREAK, sighandler);   // install our handler
+	signal(SIGABRT, sighandler);   // install our handler
 
 	m_locstrings.Init(&KGUISTRING_DEF);	/* generated data in _text.cpp */
 	assert(KGUILANG_NUMLANGUAGES==KGUISTRING_DEF.numlangs,"Number of Languages Mismatch!");
@@ -3636,18 +3646,54 @@ unsigned char strcmpin(const char *lword,const char *sword,int n)
 	return(0);	/* match! */
 }
 
-//#define MAXESTRING 8192
+void sighandler(int sig)
+{
+	kGUIString s;
+	
+	s.Sprintf("Signal error:%s\n",sig);
+	fatalerror(s.GetString());
+}
+
+#if 0
+#if defined(MINGW) || defined(LINUX) || defined(MACINTOSH) 
+//#include <execinfo.h>
+extern "C"{
+int backtrace(void **buffer, int size);
+char ** backtrace_symbols(void *const *buffer, int size);
+};
+#endif
+#endif
 
 void fatalerror(const char *string)
 {
 	FILE *ef;
+	kGUIString err;
+
+	err.Sprintf("%s\n",string);
+#if 0
+#if defined(MINGW) || defined(LINUX) || defined(MACINTOSH) 
+	void *array[256];
+	size_t size;
+	char **strings;
+	size_t i;
+
+	size = backtrace (array, sizeof(array)/sizeof(void *));
+	strings = backtrace_symbols (array, size);
+
+	for (i = 0; i < size; i++)
+		err.ASprintf("%s\n",strings[i]);
+
+	free (strings);
+#endif
+#endif
+
 	ef=fopen("errors.txt","a");
 	if(ef)
 	{
-		fprintf(ef,"%s\n",string);
+		fprintf(ef,"%s",err.GetString());
 		fclose(ef);
 	}
 	printf("%s",string);
-	kGUI::Panic();
+	kGUI::Panic(&err);
 	exit(1);
 }

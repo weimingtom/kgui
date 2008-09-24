@@ -43,9 +43,7 @@ DEP=makefile_$(OBJDIR).dep
 CFLAGS= -I"freetype/include" -I"jpeg" -I"lpng128" -I"zlib" -I"mysql/include" -I"ffmpeg/libswscale" -I"ffmpeg/libavformat" -I"ffmpeg/libavcodec" -I"ffmpeg/libavutil"
 
 $(OBJDIR)/%.o: %.cpp         # combined w/ next line will compile recently changed .cpp files
-ifeq (,$(findstring $(OBJDIR),$(wildcard $(OBJDIR) )))
-	-mkdir $(OBJDIR)
-endif
+	mkdir -p $(OBJDIR)
 	$(CC) $(CCOPTS) $(SYS) $(CFLAGS) -o $@ -c $<
 
 .PHONY : all doxygen other other-clean # .PHONY ignores files named all
@@ -102,7 +100,7 @@ other-clean:		# generate other support libraries
 
 .PHONY : clean   # .PHONY ignores files named clean
 clean:
-	-$(RM) _data.cpp _text.cpp $(FIXDEP_OUT) $(FIXDEP_OBJ) $(DEP) $(LIB_OBJ) $(LIB_OUT) $(BINTOC_OBJ) $(BINTOC_OUT) $(KGUIBIG_OBJ) $(KGUIBIG_OUT) $(KGUILOCSTR_OBJ) $(KGUILOCSTR_OUT) # '-' causes errors not to exit the process
+	-$(RM) -f _data.cpp _text.cpp $(FIXDEP_OUT) $(FIXDEP_OBJ) $(DEP) $(LIB_OBJ) $(LIB_OUT) $(BINTOC_OBJ) $(BINTOC_OUT) $(KGUIBIG_OBJ) $(KGUIBIG_OUT) $(KGUILOCSTR_OBJ) $(KGUILOCSTR_OUT) # '-' causes errors not to exit the process
 
 $(DEP): _data.cpp _text.cpp $(FIXDEP_OUT)
 	@echo "Generating Dependencies"

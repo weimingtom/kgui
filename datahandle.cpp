@@ -34,6 +34,11 @@
 #include "kgui.h"
 #include "kguiprot.h"
 
+#if defined(WIN32) || defined(MINGW)
+#define _INTEGRAL_MAX_BITS 64
+#include <sys\stat.h> 
+#endif
+
 int DataHandle::m_numbigfiles;
 Array<BigFile *>DataHandle::m_bigfiles;
 
@@ -106,7 +111,7 @@ void DataHandle::SetEncryption(class kGUIProt *p)
 
 void DataHandle::SetFilename(const char *fn)
 {
-	int i,sok;
+	int i;
 	BigFile *bf;
 	BigFileEntry *bfe;
 	FILE *fp;
@@ -142,14 +147,18 @@ void DataHandle::SetFilename(const char *fn)
 		fp=fopen(fn,"rb");
 		if(fp)
 		{
+#if defined(WIN32) || defined(MINGW)
+			struct __stat64 fileStat; 
+			int rc;
+
+			rc = _stat64( fn, &fileStat ); 
+			assert(rc==0,"Seek error!");
+			m_filesize=fileStat.st_size; 
+#else
+			int sok;
+
 			sok=fseek(fp,0,SEEK_END);
 			assert(sok==0,"Seek error!");
-#if defined(WIN32) || defined(MINGW)
-			fpos_t currentpos;
-
-			fgetpos(fp,&currentpos);
-			m_filesize=currentpos;
-#else
 			m_filesize=ftell(fp);
 #endif
 			fclose(fp);
