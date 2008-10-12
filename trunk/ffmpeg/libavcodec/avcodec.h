@@ -272,7 +272,7 @@ enum CodecID {
     CODEC_ID_TEXT,  /* raw UTF-8 text */
     CODEC_ID_XSUB,
 
-    CODEC_ID_MPEG2TS= 0x20000, /* _FAKE_ codec to indicate a raw MPEG-2 TS
+    CODEC_ID_MPEG2TS= 0x20000 /* _FAKE_ codec to indicate a raw MPEG-2 TS
                                 * stream (only used by libavformat) */
 };
 
@@ -299,7 +299,7 @@ enum SampleFormat {
     SAMPLE_FMT_S16,             ///< signed 16 bits
     SAMPLE_FMT_S24,             ///< signed 24 bits
     SAMPLE_FMT_S32,             ///< signed 32 bits
-    SAMPLE_FMT_FLT,             ///< float
+    SAMPLE_FMT_FLT             ///< float
 };
 
 /* in bytes */
@@ -330,7 +330,7 @@ enum Motion_Est_ID {
     ME_X1,
     ME_HEX,
     ME_UMH,
-    ME_ITER,
+    ME_ITER
 };
 
 enum AVDiscard{
@@ -341,7 +341,7 @@ enum AVDiscard{
     AVDISCARD_NONREF =  8, ///< discard all non reference
     AVDISCARD_BIDIR  = 16, ///< discard all bidirectional frames
     AVDISCARD_NONKEY = 32, ///< discard all frames except keyframes
-    AVDISCARD_ALL    = 48, ///< discard all
+    AVDISCARD_ALL    = 48 ///< discard all
 };
 
 typedef struct RcOverride{
