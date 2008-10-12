@@ -12,7 +12,7 @@ PROGRAM=browse$(EXE)
 DEP=makefile_$(OBJDIR).dep
 
 $(OBJDIR)/%.o: %.cpp         # combined w/ next line will compile recently changed .cpp files
-	$(CC) $(CCOPTS) $(SYS) $(KGUILIB_INCLUDES) -o $@ -c $<
+	$(CC) $(CCOPTS) $(SYS) $(KGUILIB_INCLUDES) $(KGUILIBSSL_INCLUDES) -o $@ -c $<
 
 .PHONY : all
 all: _brdata.cpp $(PROGRAM)		# all is dependent on $(PROGRAM) to be complete
