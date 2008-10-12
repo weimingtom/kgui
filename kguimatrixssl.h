@@ -5,7 +5,7 @@
 
 extern "C" {
 
-#include "matrixssl/MatrixSsl.h"
+#include "matrixssl/matrixSsl.h"
 #include "matrixssl/examples/sslSocket.h"
 
 }
