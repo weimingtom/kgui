@@ -295,7 +295,7 @@ kGUIReportTextObj::kGUIReportTextObj()
 void kGUIReportTextObj::Changed(void)
 {
 	/* only expand to fit, don't shrink */
-	SetSize(max(GetWidth()+3+3,GetZoneW()),max((int)GetHeight()+3+3,GetZoneH()));
+	SetSize(max(GetWidth()+3+3,GetZoneW()),max((int)GetLineHeight()+3+3,GetZoneH()));
 }
 
 void kGUIReportTextObj::SetFrame(bool df)
@@ -308,7 +308,7 @@ int kGUIReportTextObj::Height(int w)
 {
 	int totalheight;
 	int line;
-	int lineheight=kGUIText::GetHeight()+2;
+	int lineheight=kGUIText::GetLineHeight()+2;
 	CalcLineList(w-6);
 	line=GetNumLines();
 	totalheight=(lineheight*line)+6;
@@ -637,7 +637,7 @@ void kGUIReport::ChangeScale(int move)
 	scale=1.0f/(1.0f+((m_scalepercent*(m_maxscale-1.0f)/100.0f)));
 	m_imageobj.SetScale(scale,scale);
 	m_imageobj.Dirty();
-};
+}
 
 void kGUIReport::ChangeFormatEvent(kGUIEvent *event)
 {

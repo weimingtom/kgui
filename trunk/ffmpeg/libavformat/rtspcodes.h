@@ -34,7 +34,7 @@ RTSP_STATUS_ONLY_AGGREGATE  =460, /**< Only aggregate operation allowed */
 RTSP_STATUS_TRANSPORT       =461, /**< Unsupported transport */
 RTSP_STATUS_INTERNAL        =500, /**< Internal Server Error */
 RTSP_STATUS_SERVICE         =503, /**< Service Unavailable */
-RTSP_STATUS_VERSION         =505, /**< RTSP Version not supported */
+RTSP_STATUS_VERSION         =505 /**< RTSP Version not supported */
 };
 
 #endif /* FFMPEG_RTSPCODES_H */

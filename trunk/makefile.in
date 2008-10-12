@@ -23,6 +23,15 @@
 TARGET_OS=$(shell uname -s)
 TARGET_CHIP=$(shell uname -m)
 
+#
+# Debug or Release build?
+#
+ifeq ($(config),debug)
+	TARGET_SUFFIX=d
+else
+	TARGET_SUFFIX=r
+endif
+
 ifeq ($(findstring MINGW,$(TARGET_OS)),MINGW)
 
 #############################################
@@ -30,9 +39,13 @@ ifeq ($(findstring MINGW,$(TARGET_OS)),MINGW)
 #############################################
 
 SYS=-DMINGW
-OBJDIR=omingw
+TARGET_OBJDIR=omingw
 CC=g++
-CCOPTS= -Wall -O3 -D_FILE_OFFSET_BITS=64
+ifeq ($(TARGET_SUFFIX),d)
+	CCOPTS= -Wall -Wextra -Wno-long-long -Wno-unused-parameter -pedantic --pedantic-errors -g -ggdb -D_FILE_OFFSET_BITS=64
+else
+	CCOPTS= -Wall -Wextra -Wno-long-long -Wno-unused-parameter -pedantic --pedantic-errors -O3 -D_FILE_OFFSET_BITS=64
+endif	
 LINK=g++
 MAKELIB=ar
 RANLIB=ranlib
@@ -41,7 +54,7 @@ RM=rm
 LDFLAGS= -mwindows
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
-KGUILIB_LIBPATHS=-L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBPATHS=-L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
 KGUILIB_LIBS=-lkgui -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS=-lws2_32 -lwinspool -lz
 
@@ -65,7 +78,7 @@ ifeq ($(findstring Linux,$(TARGET_OS)),Linux)
 #############################################
 
 SYS=-DLINUX
-OBJDIR=olinux
+TARGET_OBJDIR=olinux
 CC=g++
 CCOPTS= -Wall -O3 -D_FILE_OFFSET_BITS=64
 LINK=g++
@@ -76,7 +89,7 @@ RM=rm
 LDFLAGS=-pthread
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
-KGUILIB_LIBPATHS = -L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBPATHS = -L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
 KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS =-lcups -lX11 -lz
 
@@ -100,7 +113,7 @@ ifeq ($(findstring Darwin,$(TARGET_OS)),Darwin)
 #############################################
 
 SYS=-DMACINTOSH
-OBJDIR=omac
+TARGET_OBJDIR=omac
 CC=g++
 CCOPTS= -Wall -O3 -DUSE_EXTERNAL_DATA
 LINK=g++
@@ -111,7 +124,7 @@ RM=rm
 LDFLAGS=
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
-KGUILIB_LIBPATHS = -L$(KGUILOC)$(OBJDIR)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
+KGUILIB_LIBPATHS = -L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
 KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS =-lcups -lz -framework Carbon -framework ApplicationServices
 
@@ -145,4 +158,5 @@ endif
 
 #dependency that can be used by app to detect if the libs have been updated
 
+OBJDIR=$(TARGET_OBJDIR)$(TARGET_SUFFIX)
 KGUILIB_DEP= $(KGUILOC)$(OBJDIR)/libkgui.a

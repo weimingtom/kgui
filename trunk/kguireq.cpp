@@ -83,7 +83,7 @@ void kGUIFilenameRow::Draw(void)
 		SetRevRange(0,GetLen());
 	else
 		SetRevRange(0,0);
-	kGUIText::DrawSection(0,GetLen(),c.lx+20,c.lx+20,c.ty+3,GetHeight());
+	kGUIText::DrawSection(0,GetLen(),c.lx+20,c.lx+20,c.ty+3,GetLineHeight());
 }
 
 class kGUIFileReqRow : public kGUITableRowObj
@@ -128,7 +128,7 @@ kGUIFileReq::kGUIFileReq(int type,const char *inname,const char *ext,void *codeo
 
 	m_pathlabel.SetFontID(1);
 	m_pathlabel.SetString("Look In:");
-	th=m_pathlabel.GetHeight()+8;
+	th=m_pathlabel.GetLineHeight()+8;
 	m_controls.AddObject(&m_pathlabel);
 
 	m_path.SetSize(360,th);

@@ -192,7 +192,7 @@ enum
 	REPORTSECTION_PAGEFOOTER,
 	REPORTSECTION_HEADER,
 	REPORTSECTION_BODY,
-	REPORTSECTION_FOOTER,
+	REPORTSECTION_FOOTER
 };
 
 /* how to print a report */
@@ -353,7 +353,8 @@ private:
 
 	kGUICallBackPtr<kGUIReport> m_closecallback;
 
-	int m_startpage,m_endpage;	/* only used for the are you sure message box */
+	int m_startpage;
+	int m_endpage;	/* only used for the are you sure message box */
 };
 
 #endif

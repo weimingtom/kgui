@@ -352,7 +352,7 @@ void kGUITableObj::CalcChildZone(void)
 		for(i=0;i<m_numcols;++i)
 		{
 			t=m_coltitles.GetEntryPtr(i);
-			h=t->GetHeight()+3+3;
+			h=t->GetLineHeight()+3+3;
 			if(h>y)
 				y=h;
 		}
@@ -624,7 +624,7 @@ void kGUITableObj::ReCalcPositions(void)
 	}
 
 	if(m_showrowscrollbar)
-		m_rowscrollbar.SetValues(m_toprow,(m_botrow-m_toprow)+1,max(0,(m_numrows-1)-m_lastfullrow));
+		m_rowscrollbar.SetValues(m_toprow,(m_botrow-m_toprow)+1,(m_numrows-1)-m_lastfullrow);
 	if(m_showcolscrollbar)
 	{
 		/* since columns can be shown/hidden we can't just */
@@ -1236,9 +1236,7 @@ void kGUITableObj::ScrollRow(int delta,bool updatecursor)
 	}
 
 	assert(m_cursorrow<m_numrows,"Error! m_cursorrow>=m_numrows");
-	assert(m_cursorrow>=0,"Error! m_cursorrow<0");
 	assert(m_toprow<m_numrows,"Error! m_toprow>=m_numrows");
-	assert(m_toprow>=0,"Error! m_toprow<0");
 	
 	if(updatecursor)
 	{

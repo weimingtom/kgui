@@ -49,7 +49,7 @@ kGUIRadioObj::kGUIRadioObj()
 	m_scale=false;
 	m_hint=0;
 	SetSize(w,h);
-};
+}
 
 kGUIRadioObj::~kGUIRadioObj()
 {

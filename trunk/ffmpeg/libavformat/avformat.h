@@ -258,7 +258,7 @@ enum AVStreamParseType {
     AVSTREAM_PARSE_NONE,
     AVSTREAM_PARSE_FULL,       /**< full parsing and repack */
     AVSTREAM_PARSE_HEADERS,    /**< only parse headers, don't repack */
-    AVSTREAM_PARSE_TIMESTAMPS, /**< full parsing and interpolation of timestamps for frames not starting on packet boundary */
+    AVSTREAM_PARSE_TIMESTAMPS /**< full parsing and interpolation of timestamps for frames not starting on packet boundary */
 };
 
 typedef struct AVIndexEntry {

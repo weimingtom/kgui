@@ -516,7 +516,7 @@ click:;
 				popx=c.lx;
 				popw=GetZoneW();
 				popy=c.ty+GetZoneH();
-				poph=((text.GetHeight()+6)*showentries)+4;
+				poph=((text.GetLineHeight()+6)*showentries)+4;
 
 				/* if this will go off of the bottom of the screen (with a little space at the bottom) */
 				/* then move it above instead */
@@ -592,7 +592,7 @@ void kGUIComboBoxObj::Draw(void)
 
 	GetCorners(&c);
 	text=m_poptableentries[m_selection]->GetText();
-	h=text->GetHeight()+4;
+	h=text->GetLineHeight()+4;
 
 	kGUI::PushClip();
 	kGUI::ShrinkClip(&c);
@@ -621,7 +621,7 @@ void kGUIComboBoxObj::Draw(void)
 			tlx=text->GetWidthSub(0,tl);
 
 			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx,c.by-2,DrawColor(255,255,255));
-			text->DrawSection(0,tl,0,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(16,16,16));
+			text->DrawSection(0,tl,0,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetLineHeight(),DrawColor(16,16,16));
 
 			/* draw cursor */
 			kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
@@ -629,7 +629,7 @@ void kGUIComboBoxObj::Draw(void)
 			if(tl<text->GetLen())
 			{
 				kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+text->GetWidth(),c.by-2,DrawColor(16,16,16));
-				text->DrawSection(tl,text->GetLen(),0,c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(255,255,255));
+				text->DrawSection(tl,text->GetLen(),0,c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetLineHeight(),DrawColor(255,255,255));
 			}
 		}
 		else
@@ -1110,7 +1110,7 @@ click:;
 			popx=c.lx;
 			popw=GetZoneW();
 			popy=c.ty+GetZoneH();
-			poph=(text.GetHeight()+6)*showentries;
+			poph=(text.GetLineHeight()+6)*showentries;
 
 			/* if this will go off of the bottom of the screen (with a little space at the bottom) */
 			/* then move it above instead */
@@ -1183,7 +1183,7 @@ void kGUISharedComboboxObj::Draw(void)
 
 	GetCorners(&c);
 	text=m_shared->GetRow(m_selection)->GetText();
-	h=text->GetHeight()+4;
+	h=text->GetLineHeight()+4;
 
 	kGUI::PushClip();
 	kGUI::ShrinkClip(&c);
@@ -1212,7 +1212,7 @@ void kGUISharedComboboxObj::Draw(void)
 			tlx=text->GetWidthSub(0,tl);
 
 			kGUI::DrawRect(c.lx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx,c.by-2,DrawColor(255,255,255));
-			text->DrawSection(0,tl,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(16,16,16));
+			text->DrawSection(0,tl,c.lx+COMBOTEXTEDGEW,c.ty+COMBOTEXTEDGEH,text->GetLineHeight(),DrawColor(16,16,16));
 
 			/* draw cursor */
 			kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx,c.ty+2,c.lx+COMBOTEXTEDGEW+tlx+2,c.by-2,kGUI::GetDrawCursor()?DrawColor(255,255,255):DrawColor(0,0,0));
@@ -1220,7 +1220,7 @@ void kGUISharedComboboxObj::Draw(void)
 			if(tl<text->GetLen())
 			{
 				kGUI::DrawRect(c.lx+COMBOTEXTEDGEW+tlx+2,c.ty+2,c.lx+COMBOTEXTEDGEW+text->GetWidth(),c.by-2,DrawColor(16,16,16));
-				text->DrawSection(tl,text->GetLen(),c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetHeight(),DrawColor(255,255,255));
+				text->DrawSection(tl,text->GetLen(),c.lx+COMBOTEXTEDGEW+tlx,c.ty+COMBOTEXTEDGEH,text->GetLineHeight(),DrawColor(255,255,255));
 			}
 		}
 		else

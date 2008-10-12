@@ -626,7 +626,7 @@ void kGUISystemMINGW::FileShow(const char *filename)
 
 void kGUISystemMINGW::ShellExec(const char *program,const char *parms,const char *dir)
 {
-	SHELLEXECUTEINFO ShExecInfo = {0};
+	SHELLEXECUTEINFO ShExecInfo = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -1003,7 +1003,7 @@ void kGUISystemMINGW::CreateHDC(const char *printerName,int numcopies,HDC *hdc)
 		delete[] lpPrinterInfo2;
 		lpPrinterInfo2=NULL;
 	}
-}; 
+} 
 
 void kGUISystemMINGW::GetPrinterInfo(const char *name,int *pw,int *ph,int *ppih,int *ppiv)
 {

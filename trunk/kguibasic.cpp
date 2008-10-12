@@ -1357,23 +1357,6 @@ bool kGUIBasic::IsPreVerb(int token)
 /* compile the code */
 bool kGUIBasic::Compile(kGUIText *source,kGUIString *output)
 {
-	unsigned int i;
-	int level;
-	int leveltype;
-	int clevel;
-	int clast;
-	kGUIString sfname;	/* sub or function name */
-	kGUIString vn;
-	Array<kGUIBasicFlowObj *>condnames;
-	kGUIBasicCommandObj *cobj;
-	kGUIBasicFlowObj *fobj;
-	kGUIBasicFlowObj *pfobj;
-	kGUIBasicVarObj *vobj;
-	kGUIBasicStructObj *structobj=0;
-	kGUIBasicUClassObj *classobj=0;
-	kGUIEnumObj *enumobj=0;
-	const char *spc;
-
 	static COMMANDLIST_DEF commandlist[]={
 	{"sub",		BASICTOKEN_SUB,		&kGUIBasic::cmd_null},	/* never called at runtime */
 	{"function",BASICTOKEN_FUNCTION,&kGUIBasic::cmd_null},	/* never called at runtime */
@@ -1543,525 +1526,656 @@ bool kGUIBasic::Compile(kGUIText *source,kGUIString *output)
 		return(false);
 	}
 
-//	m_thread=0;
-	m_asyncactive=false;
-	m_compile=true;
-	m_source=source;
-	m_output=output;
-
-	m_source->InitRichInfo();	/* default list to black/white for all characters */
-
-	PurgeVars();
-	m_varhash.Init(16,sizeof(kGUIBasicVarObj *));
-
-	/* add commands to the hashtable */
-
-	for(i=0;i<sizeof(commandlist)/sizeof(COMMANDLIST_DEF);++i)
 	{
-		cobj=new kGUIBasicCommandObj();
-		cobj->SetType(VARTYPE_COMMAND);
-		cobj->SetID(commandlist[i].tokenid);
-		cobj->SetCode(commandlist[i].vcodev);
-		RegObj(commandlist[i].name,cobj);
-	}
+		unsigned int i;
+		int level;
+		int leveltype;
+		int clevel;
+		int clast;
+		kGUIString sfname;	/* sub or function name */
+		kGUIString vn;
+		Array<kGUIBasicFlowObj *>condnames;
+		kGUIBasicCommandObj *cobj;
+		kGUIBasicFlowObj *fobj;
+		kGUIBasicFlowObj *pfobj;
+		kGUIBasicVarObj *vobj;
+		kGUIBasicStructObj *structobj=0;
+		kGUIBasicUClassObj *classobj=0;
+		kGUIEnumObj *enumobj=0;
+		const char *spc;
 
-	/* add command verbs to the hash table */
-	for(i=0;i<sizeof(commandverblist)/sizeof(COMMANDVERBLIST_DEF);++i)
-	{
-		cobj=new kGUIBasicCommandObj();
-		cobj->SetType(VARTYPE_COMMAND);
-		cobj->SetID(commandverblist[i].tokenid);
-		RegObj(commandverblist[i].name,cobj);
-	}
 
-	/* add operators to the hash table */
-	for(i=0;i<sizeof(operatorlist)/sizeof(OPERATORLIST_DEF);++i)
-	{
-		cobj=new kGUIBasicCommandObj();
-		cobj->SetType(VARTYPE_OPERATOR);
-		cobj->SetID(operatorlist[i].tokenid);
-		RegObj(operatorlist[i].name,cobj);
-	}
 
-	/* add functions */
-	for(i=0;i<sizeof(funclist)/sizeof(FUNCLIST_DEF);++i)
-	{
-		kGUIBasicObj *obj;
-		cobj=new kGUIBasicCommandObj();
-		cobj->SetType(VARTYPE_CFUNCTION);
-		cobj->SetMinNumParms(funclist[i].minnumparms);
-		cobj->SetMaxNumParms(funclist[i].maxnumparms);
-		cobj->SetCode(funclist[i].fcode);
-		cobj->SetParmDef(funclist[i].parmdef);
+	//	m_thread=0;
+		m_asyncactive=false;
+		m_compile=true;
+		m_source=source;
+		m_output=output;
 
-		/* special case, name used for both command and function? */
-		obj=GetObj(funclist[i].name);
-		if(!obj)
-			RegObj(funclist[i].name,cobj);
-		else
-			(static_cast<kGUIBasicCommandObj *>(obj))->SetExtra(cobj);
-	}
+		m_source->InitRichInfo();	/* default list to black/white for all characters */
 
-	/* add constants with integer values */
-	for(i=0;i<sizeof(constlistint)/sizeof(CONSTLISTINT_DEF);++i)
-	{
+		PurgeVars();
+		m_varhash.Init(16,sizeof(kGUIBasicVarObj *));
+
+		/* add commands to the hashtable */
+
+		for(i=0;i<sizeof(commandlist)/sizeof(COMMANDLIST_DEF);++i)
+		{
+			cobj=new kGUIBasicCommandObj();
+			cobj->SetType(VARTYPE_COMMAND);
+			cobj->SetID(commandlist[i].tokenid);
+			cobj->SetCode(commandlist[i].vcodev);
+			RegObj(commandlist[i].name,cobj);
+		}
+
+		/* add command verbs to the hash table */
+		for(i=0;i<sizeof(commandverblist)/sizeof(COMMANDVERBLIST_DEF);++i)
+		{
+			cobj=new kGUIBasicCommandObj();
+			cobj->SetType(VARTYPE_COMMAND);
+			cobj->SetID(commandverblist[i].tokenid);
+			RegObj(commandverblist[i].name,cobj);
+		}
+
+		/* add operators to the hash table */
+		for(i=0;i<sizeof(operatorlist)/sizeof(OPERATORLIST_DEF);++i)
+		{
+			cobj=new kGUIBasicCommandObj();
+			cobj->SetType(VARTYPE_OPERATOR);
+			cobj->SetID(operatorlist[i].tokenid);
+			RegObj(operatorlist[i].name,cobj);
+		}
+
+		/* add functions */
+		for(i=0;i<sizeof(funclist)/sizeof(FUNCLIST_DEF);++i)
+		{
+			kGUIBasicObj *obj;
+			cobj=new kGUIBasicCommandObj();
+			cobj->SetType(VARTYPE_CFUNCTION);
+			cobj->SetMinNumParms(funclist[i].minnumparms);
+			cobj->SetMaxNumParms(funclist[i].maxnumparms);
+			cobj->SetCode(funclist[i].fcode);
+			cobj->SetParmDef(funclist[i].parmdef);
+
+			/* special case, name used for both command and function? */
+			obj=GetObj(funclist[i].name);
+			if(!obj)
+				RegObj(funclist[i].name,cobj);
+			else
+				(static_cast<kGUIBasicCommandObj *>(obj))->SetExtra(cobj);
+		}
+
+		/* add constants with integer values */
+		for(i=0;i<sizeof(constlistint)/sizeof(CONSTLISTINT_DEF);++i)
+		{
+			vobj=new kGUIBasicVarObj();
+			vobj->Set(constlistint[i].value);
+			vobj->SetIsConstant(true);
+			vobj->SetIsUndefined(false);
+			RegObj(constlistint[i].name,vobj);
+		}
+
+		/* true */
 		vobj=new kGUIBasicVarObj();
-		vobj->Set(constlistint[i].value);
+		vobj->Set(true);
 		vobj->SetIsConstant(true);
 		vobj->SetIsUndefined(false);
-		RegObj(constlistint[i].name,vobj);
-	}
+		RegObj("True",vobj);
 
-	/* true */
-	vobj=new kGUIBasicVarObj();
-	vobj->Set(true);
-	vobj->SetIsConstant(true);
-	vobj->SetIsUndefined(false);
-	RegObj("True",vobj);
+		/* false */
+		vobj=new kGUIBasicVarObj();
+		vobj->Set(false);
+		vobj->SetIsConstant(true);
+		vobj->SetIsUndefined(false);
+		RegObj("False",vobj);
 
-	/* false */
-	vobj=new kGUIBasicVarObj();
-	vobj->Set(false);
-	vobj->SetIsConstant(true);
-	vobj->SetIsUndefined(false);
-	RegObj("False",vobj);
+		/* adds the built in classes for things like dates, mysql and other classes */
 
-	/* adds the built in classes for things like dates, mysql and other classes */
+		AddBuiltInClasses();
 
-	AddBuiltInClasses();
+		/* add app specific objects to the variables list */
+		/* mostly used for "C" Classes to access APP data but can also add */
+		/* globals, consts or APP specific functions too */
 
-	/* add app specific objects to the variables list */
-	/* mostly used for "C" Classes to access APP data but can also add */
-	/* globals, consts or APP specific functions too */
+		m_addappobjectscallback.Call();
 
-	m_addappobjectscallback.Call();
-
-	/* build list of tokens from source code */
-	m_numbtokens=0;
-	spc=source->GetString();
-	do
-	{
-		BTOK_DEF bt;
-		const char *tstart;
-
-		spc=GetSourceToken(&tstart,spc);
-		bt.type=m_token_type;
-		bt.num=m_tok;
-		bt.obj=m_tokobj;
-		bt.fobj=0;
-		bt.source=tstart;
-		bt.len=(int)(spc-tstart);
-		m_btoklist.SetEntry(m_numbtokens++,bt);
-	}while(m_tok!=BASICTOKEN_FINISHED);
-
-	m_numpreverbs=0;
-	condnames.Alloc(32);
-	condnames.SetGrow(true);
-	level=0;		/* global=0, 1=sub/function */
-	leveltype=0;	/* type of object, function, sub etc */
-	clevel=0;	/* condition index level ( if/do/loop/for etc.) */
-
-	/* if no source then we are done */
-	if(!source->GetLen())
-		return(true);
-
-	/* since array is all allocated and can't be moved, we can just use */
-	/* a pointer into it for speed */
-
-	m_pc=m_btoklist.GetArrayPtr();
-//	m_pc=source->GetString();
-	/* iterate through the source and syntax check */
-	do {
-		GetToken();
-		if(m_token_type==TT_LABEL)
+		/* build list of tokens from source code */
+		m_numbtokens=0;
+		spc=source->GetString();
+		do
 		{
-			if(!level)
-				basicerror(ERROR_LABELERROR);
-			else
+			BTOK_DEF bt;
+			const char *tstart;
+
+			spc=GetSourceToken(&tstart,spc);
+			bt.type=m_token_type;
+			bt.num=m_tok;
+			bt.obj=m_tokobj;
+			bt.fobj=0;
+			bt.source=tstart;
+			bt.len=(int)(spc-tstart);
+			m_btoklist.SetEntry(m_numbtokens++,bt);
+		}while(m_tok!=BASICTOKEN_FINISHED);
+
+		m_numpreverbs=0;
+		condnames.Alloc(32);
+		condnames.SetGrow(true);
+		level=0;		/* global=0, 1=sub/function */
+		leveltype=0;	/* type of object, function, sub etc */
+		clevel=0;	/* condition index level ( if/do/loop/for etc.) */
+
+		/* if no source then we are done */
+		if(!source->GetLen())
+			return(true);
+
+		/* since array is all allocated and can't be moved, we can just use */
+		/* a pointer into it for speed */
+
+		m_pc=m_btoklist.GetArrayPtr();
+	//	m_pc=source->GetString();
+		/* iterate through the source and syntax check */
+		do {
+			GetToken();
+			if(m_token_type==TT_LABEL)
 			{
-				/* generate a unique label name using the function name and the label name */
-				vn.Sprintf("%s:%s",sfname.GetString(),m_token);
-
-				if(GetObj(vn.GetString()))
+				if(!level)
 					basicerror(ERROR_LABELERROR);
+				else
+				{
+					/* generate a unique label name using the function name and the label name */
+					vn.Sprintf("%s:%s",sfname.GetString(),m_token);
 
-				fobj=new kGUIBasicFlowObj();
-				fobj->SetType(VARTYPE_LABEL);
-				fobj->SetAddr(m_pc);
-				
-				if(RegObj(vn.GetString(),fobj,false)==false)
-					basicerror(ERROR_SYNTAX);	/* already defined */
+					if(GetObj(vn.GetString()))
+						basicerror(ERROR_LABELERROR);
+
+					fobj=new kGUIBasicFlowObj();
+					fobj->SetType(VARTYPE_LABEL);
+					fobj->SetAddr(m_pc);
+					
+					if(RegObj(vn.GetString(),fobj,false)==false)
+						basicerror(ERROR_SYNTAX);	/* already defined */
+					GetToken();
+				}
+			}
+			/* grab verbs */
+			while(m_token_type==TT_COMMANDVERB)
+			{
+				preverb_def pv;
+
+	//			pv.token=m_tok;
+				pv.pc=m_lastpc;
+	//			pv.tpc=m_tpc;
+				/* save list of prefix verbs */
+				m_preverbs.SetEntry(m_numpreverbs++,pv);
+				/* todo: save verbs in list */
 				GetToken();
 			}
-		}
-		/* grab verbs */
-		while(m_token_type==TT_COMMANDVERB)
-		{
-			preverb_def pv;
 
-//			pv.token=m_tok;
-			pv.pc=m_lastpc;
-//			pv.tpc=m_tpc;
-			/* save list of prefix verbs */
-			m_preverbs.SetEntry(m_numpreverbs++,pv);
-			/* todo: save verbs in list */
-			GetToken();
-		}
-
-		/* in global space? */
-//		Print("compile token='%s'\n",m_token);
-		if(!level)
-		{
-			if(m_token_type==TT_COMMAND)
-			{
-				switch(m_tok)
-				{
-				case BASICTOKEN_DIM:
-				{
-					kGUIBasicVarObj *var;
-					kGUIString vn;
-
-					var=new kGUIBasicVarObj();
-					AddLeak(var);
-					DimVar(&vn,var);
-					RemoveLeak(var);
-					RegGlobal(vn.GetString(),var);
-				}
-				break;
-				case BASICTOKEN_CONST:
-				{
-					kGUIString vn;
-					kGUIBasicVarObj *var;
-
-					var=new kGUIBasicVarObj();
-					AddLeak(var);
-					GetVarName(&vn);
-						
-					/* get the equals sign */
-					GetToken();
-					if(m_tok!=BASICTOKEN_EQUALS)
-						basicerror(ERROR_EQUALSIGNEXPECTED);
-					
-					/* take whatever type the expression is */
-					var->SetIsVariant(true);
-					exp_get(var);
-					/* lock to  that type */
-					var->SetIsVariant(false);
-
-					RemoveLeak(var);
-					RegGlobal(vn.GetString(),var);
-					var->SetIsConstant(true);
-					var->SetIsUndefined(false);
-
-					/* is it public? */
-					if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
-						var->SetIsGlobal(true);
-				}
-				break;
-				case BASICTOKEN_SUB:
-				case BASICTOKEN_FUNCTION:
-				{
-					kGUIBasicFuncObj *funcobj;
-
-					leveltype=m_tok;
-					level=1;
-
-					GetToken();
-					/* todo, syntax check to make sure it is a valid name */
-					sfname.SetString(m_token);
-
-					funcobj=new kGUIBasicFuncObj();
-					if(leveltype==BASICTOKEN_SUB)
-						funcobj->SetType(VARTYPE_USUB);
-					else
-						funcobj->SetType(VARTYPE_UFUNCTION);
-
-					funcobj->SetName(m_token);
-					if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
-						funcobj->SetIsPublic(true);
-
-					if(RegObj(m_token,funcobj,false)==false)
-						basicerror(ERROR_SYNTAX);	/* varname already used/defined */
-
-					GetToken();
-					if(m_tok==BASICTOKEN_EOL)
-					{
-						/* if EOL then sub/function takes no parms */
-						/* also if EOL, assume function returns an integer */
-						Rewind();
-					}
-					else
-					{
-						if(m_tok!=BASICTOKEN_OPENBRACKET)
-							basicerror(ERROR_OPENBRACKETEXPECTED);
-						do
-						{
-							int bymode;
-							kGUIBasicVarObj *var;
-							kGUIString varname;
-
-							GetToken();
-							if(m_tok==BASICTOKEN_CLOSEBRACKET)
-								break;
-							if(!funcobj->GetNumParms())
-								Rewind();
-							else
-							{
-								if(m_tok!=BASICTOKEN_COMMA)
-									basicerror(ERROR_COMMAEXPECTED);
-							}
-
-							/* default to byval if none specified */
-							bymode=BASICTOKEN_BYVAL;	
-							/* is there a byval or byref prefix? */
-							GetToken();
-							if(m_tok==BASICTOKEN_BYVAL || m_tok==BASICTOKEN_BYREF)
-								bymode=m_tok;
-							else
-								Rewind();
-
-							var=new kGUIBasicVarObj();
-							AddLeak(var);
-							GetVarDef(&varname,var);
-							
-							/* arrays are always passed by reference */
-							if(var->GetIsArray()==true)
-								bymode=BASICTOKEN_BYREF;
-							funcobj->AddParm(varname.GetString(),var,bymode);
-							RemoveLeak(var);
-						}while(1);
-						if(m_tok!=BASICTOKEN_CLOSEBRACKET)
-							basicerror(ERROR_CLOSEBRACKETEXPECTED);
-						
-						/* get return type for function */
-						if(leveltype==BASICTOKEN_FUNCTION)
-						{
-							GetToken();
-							if(m_tok!=BASICTOKEN_AS)
-								basicerror(ERROR_ASEXPECTED);
-							GetToken();
-							if(funcobj->m_rettype.InitVarType(m_tokobj,0)==false)
-								basicerror(ERROR_UNKNOWNTYPE);
-						}
-					}
-					funcobj->SetAddr(m_pc);
-				}
-				break;
-				case BASICTOKEN_TYPE:
-					/* define a structure */
-					leveltype=m_tok;
-					level=1;
-
-					GetToken();
-					/* todo, syntax check to make sure it is a valid type name */
-					sfname.SetString(m_token);
-
-					structobj=new kGUIBasicStructObj();
-					structobj->SetType(VARTYPE_STRUCTDEF);
-					if(RegObj(m_token,structobj,false)==false)
-						basicerror(ERROR_SYNTAX);	/* varname already used/defined */
-
-					/* is it public? */
-					if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
-						structobj->SetIsPublic(true);
-				break;
-				case BASICTOKEN_CLASS:
-					/* define a class */
-					leveltype=m_tok;
-					level=1;
-
-					GetToken();
-					/* todo, syntax check to make sure it is a valid class name */
-					sfname.SetString(m_token);
-
-					classobj=new kGUIBasicUClassObj();
-					classobj->SetType(VARTYPE_UCLASSDEF);
-					if(RegObj(m_token,classobj,false)==false)
-						basicerror(ERROR_SYNTAX);	/* varname already used/defined */
-
-				break;
-				case BASICTOKEN_ENUM:
-					/* define a enum list */
-					leveltype=m_tok;
-					level=1;
-						
-					GetToken();
-					/* todo, syntax check to make sure it is a valid type name */
-					sfname.SetString(m_token);
-
-					enumobj=new kGUIEnumObj();
-
-					GetToken();
-					if(m_tok==BASICTOKEN_AS)
-					{
-						GetToken();
-						enumobj->SetVarType(m_tokobj);						
-					}
-					else
-						enumobj->SetVarType(GetObj("Integer"));
-
-					enumobj->SetType(VARTYPE_ENUMDEF);
-					if(RegObj(sfname.GetString(),enumobj,false)==false)
-						basicerror(ERROR_SYNTAX);	/* varname already used/defined */
-
-					/* is it public? */
-					if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
-						enumobj->SetIsPublic(true);
-				break;
-				default:
-					basicerror(ERROR_COMMANDNOTVALIDASGLOBAL);	/* command is not valid outside of function or subroutine */
-				break;
-				}
-			}
-			else if(m_token[0]!=10 && m_token[0]!='\t' && m_token[0]!=0)
-				basicerror(ERROR_NOTACOMMAND);
-		}
-		else
-		{
-			/* are we in a structure definition? */
-			if(leveltype==BASICTOKEN_ENUM)
-			{
-				if(m_token_type==TT_COMMAND)
-				{
-					if(m_tok==BASICTOKEN_END)
-					{
-						GetToken();
-						if(leveltype!=m_tok)
-							basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
-						level=0;
-						leveltype=0;
-					}
-					else
-						basicerror(ERROR_SYNTAX);	/* no commands allowed inside a structure definition */
-				}
-				else
-				{
-					kGUIBasicIndices ind;
-					kGUIBasicVarObj *var=new kGUIBasicVarObj();
-					kGUIString *vn=new kGUIString();
-
-					GetToken();	/* get name */
-					vn->SetString(m_token);
-					GetToken();	/* '=' */
-					if(m_tok==BASICTOKEN_EQUALS)
-					{
-						AddLeak(var);
-						var->InitVarType(enumobj->GetVarType(),&ind);
-						exp_get(var);
-						RemoveLeak(var);
-						enumobj->SetLastValue(var->GetInt()+1);
-					}
-					else
-					{
-						var->Set(enumobj->GetLastValue());
-						enumobj->SetLastValue(enumobj->GetLastValue()+1);
-					}
-
-					var->SetIsConstant(true);
-					var->SetIsUndefined(false);
-
-					/* add enum to the current enumlist */
-					enumobj->AddField(vn,var);
-					/* register it as a global enum */
-					if(RegObj(vn->GetString(),var,false)==false)
-						basicerror(ERROR_SYNTAX);	/* varname already used/defined */
-				}
-			}
-			/* are we in an type definition? */
-			else if(leveltype==BASICTOKEN_TYPE)
-			{
-				if(m_token_type==TT_COMMAND)
-				{
-					if(m_tok==BASICTOKEN_END)
-					{
-						GetToken();
-						if(leveltype!=m_tok)
-							basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
-						level=0;
-						leveltype=0;
-					}
-					else
-						basicerror(ERROR_SYNTAX);	/* no commands allowed inside a enum definition */
-				}
-				else
-				{
-					kGUIBasicVarObj *var;
-					kGUIString *vn;
-
-					var=new kGUIBasicVarObj();
-					vn=new kGUIString();
-					AddLeak(var);
-
-					/* type [= value] */
-					Rewind();
-
-					DimVar(vn,var);
-					RemoveLeak(var);
-					/* hmm, leak string */
-					structobj->AddField(vn,var);	/* add field to the current struct */
-				}
-			}
-			/* are we in a class definition? */
-			else if(leveltype==BASICTOKEN_CLASS)
-			{
-				if(m_token_type==TT_COMMAND)
-				{
-					if(m_tok==BASICTOKEN_END)
-					{
-						GetToken();
-						if(leveltype!=m_tok)
-							basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
-						level=0;
-						leveltype=0;
-					}
-					else
-						basicerror(ERROR_SYNTAX);	/* no commands allowed inside a structure definition */
-				}
-				else
-				{
-					kGUIBasicVarObj *var;
-					kGUIString *vn;
-
-					/* todo: hmmm, handle both function defs, and public/private keywords */
-					var=new kGUIBasicVarObj();
-					vn=new kGUIString();
-					AddLeak(var);
-					Rewind();
-					DimVar(vn,var);
-					RemoveLeak(var);
-					/* hmm, leak string */
-					classobj->AddField(vn,var);	/* add field to the current class */
-				}
-			}
-			else
+			/* in global space? */
+	//		Print("compile token='%s'\n",m_token);
+			if(!level)
 			{
 				if(m_token_type==TT_COMMAND)
 				{
 					switch(m_tok)
 					{
-					case BASICTOKEN_INPUT:
-						IsPreVerb(BASICTOKEN_LINE);	/* eat the "line" prefix so it won't trigger an error */
-					break;
-					case BASICTOKEN_END:
+					case BASICTOKEN_DIM:
+					{
+						kGUIBasicVarObj *var;
+						kGUIString vn;
 
-						/* end sub, function or select */
+						var=new kGUIBasicVarObj();
+						AddLeak(var);
+						DimVar(&vn,var);
+						RemoveLeak(var);
+						RegGlobal(vn.GetString(),var);
+					}
+					break;
+					case BASICTOKEN_CONST:
+					{
+						kGUIString vn;
+						kGUIBasicVarObj *var;
+
+						var=new kGUIBasicVarObj();
+						AddLeak(var);
+						GetVarName(&vn);
+							
+						/* get the equals sign */
+						GetToken();
+						if(m_tok!=BASICTOKEN_EQUALS)
+							basicerror(ERROR_EQUALSIGNEXPECTED);
+						
+						/* take whatever type the expression is */
+						var->SetIsVariant(true);
+						exp_get(var);
+						/* lock to  that type */
+						var->SetIsVariant(false);
+
+						RemoveLeak(var);
+						RegGlobal(vn.GetString(),var);
+						var->SetIsConstant(true);
+						var->SetIsUndefined(false);
+
+						/* is it public? */
+						if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
+							var->SetIsGlobal(true);
+					}
+					break;
+					case BASICTOKEN_SUB:
+					case BASICTOKEN_FUNCTION:
+					{
+						kGUIBasicFuncObj *funcobj;
+
+						leveltype=m_tok;
+						level=1;
 
 						GetToken();
-						if(m_tok==BASICTOKEN_WITH)
-						{
-							/* do nothing */
-						}
-						else if(m_tok==BASICTOKEN_SELECT)
-						{
-							if(!clevel)
-								basicerror(ERROR_ENDSELECTWITHOUTSELECT);
+						/* todo, syntax check to make sure it is a valid name */
+						sfname.SetString(m_token);
 
+						funcobj=new kGUIBasicFuncObj();
+						if(leveltype==BASICTOKEN_SUB)
+							funcobj->SetType(VARTYPE_USUB);
+						else
+							funcobj->SetType(VARTYPE_UFUNCTION);
+
+						funcobj->SetName(m_token);
+						if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
+							funcobj->SetIsPublic(true);
+
+						if(RegObj(m_token,funcobj,false)==false)
+							basicerror(ERROR_SYNTAX);	/* varname already used/defined */
+
+						GetToken();
+						if(m_tok==BASICTOKEN_EOL)
+						{
+							/* if EOL then sub/function takes no parms */
+							/* also if EOL, assume function returns an integer */
+							Rewind();
+						}
+						else
+						{
+							if(m_tok!=BASICTOKEN_OPENBRACKET)
+								basicerror(ERROR_OPENBRACKETEXPECTED);
+							do
+							{
+								int bymode;
+								kGUIBasicVarObj *var;
+								kGUIString varname;
+
+								GetToken();
+								if(m_tok==BASICTOKEN_CLOSEBRACKET)
+									break;
+								if(!funcobj->GetNumParms())
+									Rewind();
+								else
+								{
+									if(m_tok!=BASICTOKEN_COMMA)
+										basicerror(ERROR_COMMAEXPECTED);
+								}
+
+								/* default to byval if none specified */
+								bymode=BASICTOKEN_BYVAL;	
+								/* is there a byval or byref prefix? */
+								GetToken();
+								if(m_tok==BASICTOKEN_BYVAL || m_tok==BASICTOKEN_BYREF)
+									bymode=m_tok;
+								else
+									Rewind();
+
+								var=new kGUIBasicVarObj();
+								AddLeak(var);
+								GetVarDef(&varname,var);
+								
+								/* arrays are always passed by reference */
+								if(var->GetIsArray()==true)
+									bymode=BASICTOKEN_BYREF;
+								funcobj->AddParm(varname.GetString(),var,bymode);
+								RemoveLeak(var);
+							}while(1);
+							if(m_tok!=BASICTOKEN_CLOSEBRACKET)
+								basicerror(ERROR_CLOSEBRACKETEXPECTED);
+							
+							/* get return type for function */
+							if(leveltype==BASICTOKEN_FUNCTION)
+							{
+								GetToken();
+								if(m_tok!=BASICTOKEN_AS)
+									basicerror(ERROR_ASEXPECTED);
+								GetToken();
+								if(funcobj->m_rettype.InitVarType(m_tokobj,0)==false)
+									basicerror(ERROR_UNKNOWNTYPE);
+							}
+						}
+						funcobj->SetAddr(m_pc);
+					}
+					break;
+					case BASICTOKEN_TYPE:
+						/* define a structure */
+						leveltype=m_tok;
+						level=1;
+
+						GetToken();
+						/* todo, syntax check to make sure it is a valid type name */
+						sfname.SetString(m_token);
+
+						structobj=new kGUIBasicStructObj();
+						structobj->SetType(VARTYPE_STRUCTDEF);
+						if(RegObj(m_token,structobj,false)==false)
+							basicerror(ERROR_SYNTAX);	/* varname already used/defined */
+
+						/* is it public? */
+						if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
+							structobj->SetIsPublic(true);
+					break;
+					case BASICTOKEN_CLASS:
+						/* define a class */
+						leveltype=m_tok;
+						level=1;
+
+						GetToken();
+						/* todo, syntax check to make sure it is a valid class name */
+						sfname.SetString(m_token);
+
+						classobj=new kGUIBasicUClassObj();
+						classobj->SetType(VARTYPE_UCLASSDEF);
+						if(RegObj(m_token,classobj,false)==false)
+							basicerror(ERROR_SYNTAX);	/* varname already used/defined */
+
+					break;
+					case BASICTOKEN_ENUM:
+						/* define a enum list */
+						leveltype=m_tok;
+						level=1;
+							
+						GetToken();
+						/* todo, syntax check to make sure it is a valid type name */
+						sfname.SetString(m_token);
+
+						enumobj=new kGUIEnumObj();
+
+						GetToken();
+						if(m_tok==BASICTOKEN_AS)
+						{
+							GetToken();
+							enumobj->SetVarType(m_tokobj);						
+						}
+						else
+							enumobj->SetVarType(GetObj("Integer"));
+
+						enumobj->SetType(VARTYPE_ENUMDEF);
+						if(RegObj(sfname.GetString(),enumobj,false)==false)
+							basicerror(ERROR_SYNTAX);	/* varname already used/defined */
+
+						/* is it public? */
+						if(IsPreVerb(BASICTOKEN_PUBLIC)==true)
+							enumobj->SetIsPublic(true);
+					break;
+					default:
+						basicerror(ERROR_COMMANDNOTVALIDASGLOBAL);	/* command is not valid outside of function or subroutine */
+					break;
+					}
+				}
+				else if(m_token[0]!=10 && m_token[0]!='\t' && m_token[0]!=0)
+					basicerror(ERROR_NOTACOMMAND);
+			}
+			else
+			{
+				/* are we in a structure definition? */
+				if(leveltype==BASICTOKEN_ENUM)
+				{
+					if(m_token_type==TT_COMMAND)
+					{
+						if(m_tok==BASICTOKEN_END)
+						{
+							GetToken();
+							if(leveltype!=m_tok)
+								basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
+							level=0;
+							leveltype=0;
+						}
+						else
+							basicerror(ERROR_SYNTAX);	/* no commands allowed inside a structure definition */
+					}
+					else
+					{
+						kGUIBasicIndices ind;
+						kGUIBasicVarObj *var=new kGUIBasicVarObj();
+						kGUIString *vn=new kGUIString();
+
+						GetToken();	/* get name */
+						vn->SetString(m_token);
+						GetToken();	/* '=' */
+						if(m_tok==BASICTOKEN_EQUALS)
+						{
+							AddLeak(var);
+							var->InitVarType(enumobj->GetVarType(),&ind);
+							exp_get(var);
+							RemoveLeak(var);
+							enumobj->SetLastValue(var->GetInt()+1);
+						}
+						else
+						{
+							var->Set(enumobj->GetLastValue());
+							enumobj->SetLastValue(enumobj->GetLastValue()+1);
+						}
+
+						var->SetIsConstant(true);
+						var->SetIsUndefined(false);
+
+						/* add enum to the current enumlist */
+						enumobj->AddField(vn,var);
+						/* register it as a global enum */
+						if(RegObj(vn->GetString(),var,false)==false)
+							basicerror(ERROR_SYNTAX);	/* varname already used/defined */
+					}
+				}
+				/* are we in an type definition? */
+				else if(leveltype==BASICTOKEN_TYPE)
+				{
+					if(m_token_type==TT_COMMAND)
+					{
+						if(m_tok==BASICTOKEN_END)
+						{
+							GetToken();
+							if(leveltype!=m_tok)
+								basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
+							level=0;
+							leveltype=0;
+						}
+						else
+							basicerror(ERROR_SYNTAX);	/* no commands allowed inside a enum definition */
+					}
+					else
+					{
+						kGUIBasicVarObj *var;
+						kGUIString *vn;
+
+						var=new kGUIBasicVarObj();
+						vn=new kGUIString();
+						AddLeak(var);
+
+						/* type [= value] */
+						Rewind();
+
+						DimVar(vn,var);
+						RemoveLeak(var);
+						/* hmm, leak string */
+						structobj->AddField(vn,var);	/* add field to the current struct */
+					}
+				}
+				/* are we in a class definition? */
+				else if(leveltype==BASICTOKEN_CLASS)
+				{
+					if(m_token_type==TT_COMMAND)
+					{
+						if(m_tok==BASICTOKEN_END)
+						{
+							GetToken();
+							if(leveltype!=m_tok)
+								basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
+							level=0;
+							leveltype=0;
+						}
+						else
+							basicerror(ERROR_SYNTAX);	/* no commands allowed inside a structure definition */
+					}
+					else
+					{
+						kGUIBasicVarObj *var;
+						kGUIString *vn;
+
+						/* todo: hmmm, handle both function defs, and public/private keywords */
+						var=new kGUIBasicVarObj();
+						vn=new kGUIString();
+						AddLeak(var);
+						Rewind();
+						DimVar(vn,var);
+						RemoveLeak(var);
+						/* hmm, leak string */
+						classobj->AddField(vn,var);	/* add field to the current class */
+					}
+				}
+				else
+				{
+					if(m_token_type==TT_COMMAND)
+					{
+						switch(m_tok)
+						{
+						case BASICTOKEN_INPUT:
+							IsPreVerb(BASICTOKEN_LINE);	/* eat the "line" prefix so it won't trigger an error */
+						break;
+						case BASICTOKEN_END:
+
+							/* end sub, function or select */
+
+							GetToken();
+							if(m_tok==BASICTOKEN_WITH)
+							{
+								/* do nothing */
+							}
+							else if(m_tok==BASICTOKEN_SELECT)
+							{
+								if(!clevel)
+									basicerror(ERROR_ENDSELECTWITHOUTSELECT);
+
+								pfobj=condnames.GetEntry(clevel-1);	/* parent */
+								if(pfobj->GetType()!=VARTYPE_SELECT)
+									basicerror(ERROR_ENDSELECTWITHOUTSELECT);
+
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_ENDSELECT);
+								fobj->SetAddr(m_pc);
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+								/* add me to my parents list */
+								pfobj->AddChild(fobj);
+								/* add my parent to my list */
+								fobj->AddChild(pfobj);
+								--clevel;
+							}
+							else
+							{
+								if(m_tok==BASICTOKEN_IF)
+									goto isendif;
+
+								/* must be sub or function */
+								if(leveltype!=m_tok)
+									basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
+
+								/* make sure for/if/do stack is empty! */
+
+								if(clevel)
+								{
+									pfobj=condnames.GetEntry(clevel-1);	/* get pointer to thingy */
+									m_pc=pfobj->GetAddr();
+									basicerror(ERROR_UNTERMINATEDCOMMAND);
+								}
+
+								level=0;
+								leveltype=0;
+							}
+						break;
+						case BASICTOKEN_IF:
+						{
+							if(skipto(BASICTOKEN_THEN)==false)
+								basicerror(ERROR_THENEXPECTED);
+
+							/* if EOL is after the "then"  then this is a multi line "if" */
+							/* otherwise it is a single line "if" and no other else,elseif or endif commands are valid */
+							GetToken();
+							if(m_tok==BASICTOKEN_EOL)
+							{
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_IF);
+								fobj->SetAddr(m_pc);
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+								condnames.SetEntry(clevel,fobj);
+								++clevel;
+							}
+						}
+						break;
+						case BASICTOKEN_ELSEIF:
+							if(!clevel)
+								basicerror(ERROR_ELSEIFWITHOUTIF);
+
+							/* make sure "else" is not already in list */
+							
 							pfobj=condnames.GetEntry(clevel-1);	/* parent */
-							if(pfobj->GetType()!=VARTYPE_SELECT)
-								basicerror(ERROR_ENDSELECTWITHOUTSELECT);
+							if(pfobj->GetType()!=VARTYPE_IF)
+								basicerror(ERROR_ELSEIFWITHOUTIF);
 
 							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_ENDSELECT);
+							fobj->SetType(VARTYPE_ELSEIF);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+						break;
+						case BASICTOKEN_ELSE:
+						{
+							int type=VARTYPE_ELSE;
+
+							if(!clevel)
+								basicerror(ERROR_ELSEWITHOUTIF);
+
+							/* make sure "else" is not already in list */
+
+							pfobj=condnames.GetEntry(clevel-1);	/* parent */
+							if(pfobj->GetType()!=VARTYPE_IF)
+								basicerror(ERROR_ELSEWITHOUTIF);
+
+							GetToken();
+							if(m_tok==BASICTOKEN_IF)
+								type=VARTYPE_ELSEIF;
+							else
+								Rewind();
+
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(type);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+						}
+						break;
+						case BASICTOKEN_ENDIF:
+	isendif:				if(!clevel)
+								basicerror(ERROR_ENDIFWITHOUTIF);
+
+							pfobj=condnames.GetEntry(clevel-1);	/* parent */
+							if(pfobj->GetType()!=VARTYPE_IF)
+								basicerror(ERROR_ENDIFWITHOUTIF);
+
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_ENDIF);
 							fobj->SetAddr(m_pc);
 							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
 
@@ -2070,339 +2184,241 @@ bool kGUIBasic::Compile(kGUIText *source,kGUIString *output)
 							/* add my parent to my list */
 							fobj->AddChild(pfobj);
 							--clevel;
-						}
-						else
-						{
-							if(m_tok==BASICTOKEN_IF)
-								goto isendif;
-
-							/* must be sub or function */
-							if(leveltype!=m_tok)
-								basicerror(ERROR_ENDTYPEMISMATCH);	/* end type does not match current type */
-
-							/* make sure for/if/do stack is empty! */
-
-							if(clevel)
-							{
-								pfobj=condnames.GetEntry(clevel-1);	/* get pointer to thingy */
-								m_pc=pfobj->GetAddr();
-								basicerror(ERROR_UNTERMINATEDCOMMAND);
-							}
-
-							level=0;
-							leveltype=0;
-						}
-					break;
-					case BASICTOKEN_IF:
-					{
-						if(skipto(BASICTOKEN_THEN)==false)
-							basicerror(ERROR_THENEXPECTED);
-
-						/* if EOL is after the "then"  then this is a multi line "if" */
-						/* otherwise it is a single line "if" and no other else,elseif or endif commands are valid */
-						GetToken();
-						if(m_tok==BASICTOKEN_EOL)
-						{
+						break;
+						case BASICTOKEN_SELECT:
 							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_IF);
+							fobj->SetType(VARTYPE_SELECT);
 							fobj->SetAddr(m_pc);
 							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
 
 							condnames.SetEntry(clevel,fobj);
 							++clevel;
-						}
-					}
-					break;
-					case BASICTOKEN_ELSEIF:
-						if(!clevel)
-							basicerror(ERROR_ELSEIFWITHOUTIF);
+						break;
+						case BASICTOKEN_CASE:
+							if(!clevel)
+								basicerror(ERROR_CASEWITHOUTSELECT);
 
-						/* make sure "else" is not already in list */
-						
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_IF)
-							basicerror(ERROR_ELSEIFWITHOUTIF);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_ELSEIF);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-					break;
-					case BASICTOKEN_ELSE:
-					{
-						int type=VARTYPE_ELSE;
-
-						if(!clevel)
-							basicerror(ERROR_ELSEWITHOUTIF);
-
-						/* make sure "else" is not already in list */
-
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_IF)
-							basicerror(ERROR_ELSEWITHOUTIF);
-
-						GetToken();
-						if(m_tok==BASICTOKEN_IF)
-							type=VARTYPE_ELSEIF;
-						else
-							Rewind();
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(type);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-					}
-					break;
-					case BASICTOKEN_ENDIF:
-isendif:				if(!clevel)
-							basicerror(ERROR_ENDIFWITHOUTIF);
-
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_IF)
-							basicerror(ERROR_ENDIFWITHOUTIF);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_ENDIF);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-						--clevel;
-					break;
-					case BASICTOKEN_SELECT:
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_SELECT);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						condnames.SetEntry(clevel,fobj);
-						++clevel;
-					break;
-					case BASICTOKEN_CASE:
-						if(!clevel)
-							basicerror(ERROR_CASEWITHOUTSELECT);
-
-						pfobj=condnames.GetEntry(clevel-1);		/* parent */
-						if(pfobj->GetType()!=VARTYPE_SELECT)
-							basicerror(ERROR_CASEWITHOUTSELECT);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						GetToken();
-						if(m_tok==BASICTOKEN_ELSE)
-						{
-							fobj->SetType(VARTYPE_CASEELSE);
-							CheckEOL();
-						}
-						else
-							fobj->SetType(VARTYPE_CASE);
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-					break;
-					case BASICTOKEN_DO:
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_DO);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						condnames.SetEntry(clevel,fobj);
-						++clevel;
-					break;
-					case BASICTOKEN_WHILE:
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_WHILE);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						condnames.SetEntry(clevel,fobj);
-						++clevel;
-					break;
-					case BASICTOKEN_LOOP:
-						if(!clevel)
-							basicerror(ERROR_LOOPWITHOUTDO);
-
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_DO)
-							basicerror(ERROR_LOOPWITHOUTDO);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_LOOP);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-						--clevel;
-					break;
-					case BASICTOKEN_WEND:
-						if(!clevel)
-							basicerror(ERROR_WENDWITHOUTWHILE);
-
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_WHILE)
-							basicerror(ERROR_WENDWITHOUTWHILE);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_WEND);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-						--clevel;
-					break;
-					case BASICTOKEN_FOR:
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_FOR);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						condnames.SetEntry(clevel,fobj);
-						++clevel;
-					break;
-					case BASICTOKEN_NEXT:
-						if(!clevel)
-							basicerror(ERROR_NEXTWITHOUTFOR);
-
-						pfobj=condnames.GetEntry(clevel-1);	/* parent */
-						if(pfobj->GetType()!=VARTYPE_FOR)
-							basicerror(ERROR_NEXTWITHOUTFOR);
-
-						fobj=new kGUIBasicFlowObj();
-						fobj->SetType(VARTYPE_NEXT);
-						fobj->SetAddr(m_pc);
-						((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-
-						/* add me to my parents list */
-						pfobj->AddChild(fobj);
-						/* add my parent to my list */
-						fobj->AddChild(pfobj);
-						--clevel;
-					break;
-					case BASICTOKEN_EXIT:
-						/* todo, generate pointer to head object */
-						GetToken();
-						switch(m_tok)
-						{
-						case BASICTOKEN_DO:
-							/* find previous do */
-							clast=-1;
-							for(i=clevel-1;i>=0;--i)
-							{
-								if(condnames.GetEntry(i)->GetType()==VARTYPE_DO)
-								{
-									clast=i;
-									break;
-								}
-							}
-							if(clast<0)
-								basicerror(ERROR_NODOTOEXIT);
-							pfobj=condnames.GetEntry(clast);	/* pointer to last do */
+							pfobj=condnames.GetEntry(clevel-1);		/* parent */
+							if(pfobj->GetType()!=VARTYPE_SELECT)
+								basicerror(ERROR_CASEWITHOUTSELECT);
 
 							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_EXIT);
 							fobj->SetAddr(m_pc);
-							fobj->AddChild(pfobj);	/* add parent pointer */
 							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							GetToken();
+							if(m_tok==BASICTOKEN_ELSE)
+							{
+								fobj->SetType(VARTYPE_CASEELSE);
+								CheckEOL();
+							}
+							else
+								fobj->SetType(VARTYPE_CASE);
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+						break;
+						case BASICTOKEN_DO:
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_DO);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							condnames.SetEntry(clevel,fobj);
+							++clevel;
 						break;
 						case BASICTOKEN_WHILE:
-							/* find previous while */
-							clast=-1;
-							for(i=clevel-1;i>=0;--i)
-							{
-								if(condnames.GetEntry(i)->GetType()==VARTYPE_WHILE)
-								{
-									clast=i;
-									break;
-								}
-							}
-							if(clast<0)
-								basicerror(ERROR_NOWHILETOEXIT);
-							pfobj=condnames.GetEntry(clast);	/* pointer to last do */
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_WHILE);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							condnames.SetEntry(clevel,fobj);
+							++clevel;
+						break;
+						case BASICTOKEN_LOOP:
+							if(!clevel)
+								basicerror(ERROR_LOOPWITHOUTDO);
+
+							pfobj=condnames.GetEntry(clevel-1);	/* parent */
+							if(pfobj->GetType()!=VARTYPE_DO)
+								basicerror(ERROR_LOOPWITHOUTDO);
 
 							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_EXIT);
+							fobj->SetType(VARTYPE_LOOP);
 							fobj->SetAddr(m_pc);
-							fobj->AddChild(pfobj);	/* add parent pointer */
 							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+							--clevel;
+						break;
+						case BASICTOKEN_WEND:
+							if(!clevel)
+								basicerror(ERROR_WENDWITHOUTWHILE);
+
+							pfobj=condnames.GetEntry(clevel-1);	/* parent */
+							if(pfobj->GetType()!=VARTYPE_WHILE)
+								basicerror(ERROR_WENDWITHOUTWHILE);
+
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_WEND);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+							--clevel;
 						break;
 						case BASICTOKEN_FOR:
-							/* find previous for */
-							clast=-1;
-							for(i=clevel-1;i>=0;--i)
+
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_FOR);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							condnames.SetEntry(clevel,fobj);
+							++clevel;
+						break;
+						case BASICTOKEN_NEXT:
+							if(!clevel)
+								basicerror(ERROR_NEXTWITHOUTFOR);
+
+							pfobj=condnames.GetEntry(clevel-1);	/* parent */
+							if(pfobj->GetType()!=VARTYPE_FOR)
+								basicerror(ERROR_NEXTWITHOUTFOR);
+
+							fobj=new kGUIBasicFlowObj();
+							fobj->SetType(VARTYPE_NEXT);
+							fobj->SetAddr(m_pc);
+							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+
+							/* add me to my parents list */
+							pfobj->AddChild(fobj);
+							/* add my parent to my list */
+							fobj->AddChild(pfobj);
+							--clevel;
+						break;
+						case BASICTOKEN_EXIT:
+							/* todo, generate pointer to head object */
+							GetToken();
+							switch(m_tok)
 							{
-								if(condnames.GetEntry(i)->GetType()==VARTYPE_FOR)
+							case BASICTOKEN_DO:
+								/* find previous do */
+								clast=-1;
+								i=clevel;
+								do
 								{
-									clast=i;
-									break;
-								}
+									if(!i)
+										break;
+									--i;
+									if(condnames.GetEntry(i)->GetType()==VARTYPE_DO)
+									{
+										clast=i;
+										break;
+									}
+								}while(1);
+								if(clast<0)
+									basicerror(ERROR_NODOTOEXIT);
+								pfobj=condnames.GetEntry(clast);	/* pointer to last do */
+
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_EXIT);
+								fobj->SetAddr(m_pc);
+								fobj->AddChild(pfobj);	/* add parent pointer */
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+							break;
+							case BASICTOKEN_WHILE:
+								/* find previous while */
+								clast=-1;
+								i=clevel;
+								do
+								{
+									if(!i)
+										break;
+									--i;
+									if(condnames.GetEntry(i)->GetType()==VARTYPE_WHILE)
+									{
+										clast=i;
+										break;
+									}
+								}while(1);
+								if(clast<0)
+									basicerror(ERROR_NOWHILETOEXIT);
+								pfobj=condnames.GetEntry(clast);	/* pointer to last do */
+
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_EXIT);
+								fobj->SetAddr(m_pc);
+								fobj->AddChild(pfobj);	/* add parent pointer */
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+							break;
+							case BASICTOKEN_FOR:
+								/* find previous for */
+								clast=-1;
+								i=clevel;
+								do
+								{
+									if(!i)
+										break;
+									--i;
+									if(condnames.GetEntry(i)->GetType()==VARTYPE_FOR)
+									{
+										clast=i;
+										break;
+									}
+								}while(1);
+								if(clast<0)
+									basicerror(ERROR_NOFORTOEXIT);
+								pfobj=condnames.GetEntry(clast);	/* pointer to last do */
+
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_EXIT);
+								fobj->SetAddr(m_pc);
+								fobj->AddChild(pfobj);	/* add parent pointer */
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+							break;
+							case BASICTOKEN_FUNCTION:
+							case BASICTOKEN_SUB:
+								if(leveltype!=m_tok)	/* needs to match current thingy type */
+									basicerror(ERROR_EXITTYPEMISMATCH);
+
+								fobj=new kGUIBasicFlowObj();
+								fobj->SetType(VARTYPE_EXIT);
+								fobj->SetAddr(m_pc);
+								/* pointer to sub/function */
+								fobj->AddChild(GetFObj(sfname.GetString()));
+								((BTOK_DEF *)(m_lastpc))->fobj=fobj;
+							break;
+							default:
+								basicerror(ERROR_EXITTYPENOTVALID);	/* exit bad */
+							break;
 							}
-							if(clast<0)
-								basicerror(ERROR_NOFORTOEXIT);
-							pfobj=condnames.GetEntry(clast);	/* pointer to last do */
-
-							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_EXIT);
-							fobj->SetAddr(m_pc);
-							fobj->AddChild(pfobj);	/* add parent pointer */
-							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-						break;
-						case BASICTOKEN_FUNCTION:
-						case BASICTOKEN_SUB:
-							if(leveltype!=m_tok)	/* needs to match current thingy type */
-								basicerror(ERROR_EXITTYPEMISMATCH);
-
-							fobj=new kGUIBasicFlowObj();
-							fobj->SetType(VARTYPE_EXIT);
-							fobj->SetAddr(m_pc);
-							/* pointer to sub/function */
-							fobj->AddChild(GetFObj(sfname.GetString()));
-							((BTOK_DEF *)(m_lastpc))->fobj=fobj;
-						break;
-						default:
-							basicerror(ERROR_EXITTYPENOTVALID);	/* exit bad */
 						break;
 						}
-					break;
 					}
 				}
 			}
-		}
-		if(m_numpreverbs>0)
-		{
-			preverb_def pv;
+			if(m_numpreverbs>0)
+			{
+				preverb_def pv;
 
-			pv=m_preverbs.GetEntry(0);
-			m_pc=pv.pc;
-//			m_tpc=pv.tpc;
-			basicerror(ERROR_SYNTAX);	/* unused prefix */
-		}
-		if(m_tok!=BASICTOKEN_EOL)
-			SkipToEOL();
-	}while (m_tok != BASICTOKEN_FINISHED);
+				pv=m_preverbs.GetEntry(0);
+				m_pc=pv.pc;
+	//			m_tpc=pv.tpc;
+				basicerror(ERROR_SYNTAX);	/* unused prefix */
+			}
+			if(m_tok!=BASICTOKEN_EOL)
+				SkipToEOL();
+		}while (m_tok != BASICTOKEN_FINISHED);
+	}
 	return(true);
 }
 

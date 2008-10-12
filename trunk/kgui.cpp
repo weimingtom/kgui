@@ -360,7 +360,7 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	signal(SIGFPE, sighandler);   // install our handler
 	signal(SIGSEGV, sighandler);   // install our handler
 	signal(SIGTERM, sighandler);   // install our handler
-	signal(SIGBREAK, sighandler);   // install our handler
+//	signal(SIGBREAK, sighandler);   // install our handler
 	signal(SIGABRT, sighandler);   // install our handler
 
 	m_locstrings.Init(&KGUISTRING_DEF);	/* generated data in _text.cpp */
@@ -489,7 +489,7 @@ void kGUIPrinter::GetInfo(int *ppw,int *pph,int *ppih,int *ppiv)
 	pph[0]=m_pageheight;
 	ppih[0]=m_ppihoriz;
 	ppiv[0]=m_ppivert;
-};
+}
 
 /* return index into printer by name */
 /* if not found, then return -1 or default */
@@ -582,7 +582,7 @@ void kGUI::SetHintString(int x,int y,const char *hint)
 		m_hintcorners.lx=x;
 		m_hintcorners.ty=y;
 		m_hintcorners.rx=m_hintcorners.lx+m_hinttext.GetWidth()+8;
-		m_hintcorners.by=m_hintcorners.ty+m_hinttext.GetHeight()+8;
+		m_hintcorners.by=m_hintcorners.ty+m_hinttext.GetLineHeight()+8;
 
 		if(m_hintcorners.rx>GetSurfaceWidth())
 		{
@@ -3650,7 +3650,7 @@ void sighandler(int sig)
 {
 	kGUIString s;
 	
-	s.Sprintf("Signal error:%s\n",sig);
+	s.Sprintf("Signal error:%d\n",sig);
 	fatalerror(s.GetString());
 }
 

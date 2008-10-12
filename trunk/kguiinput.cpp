@@ -211,7 +211,7 @@ void kGUIInputBoxObj::CalcViewLines(void)
 
 	if(GetUseRichInfo()==false || !GetNumLines())
 	{
-		int lineheight=(GetHeight()+ILGAP);
+		int lineheight=(GetLineHeight()+ILGAP);
 		m_numviewlines=boxheight/lineheight;
 		m_numfullviewlines=m_numviewlines;
 		if((m_numviewlines*lineheight)>boxheight)
@@ -1285,7 +1285,7 @@ void kGUIInputBoxObj::Draw(void)
 		c.lx+=m_xoff;
 		kGUI::ShrinkClip(&c);
 
-		h=GetHeight()+ILGAP;
+		h=GetLineHeight()+ILGAP;
 		y=c.ty;
 
 		if(m_scroll)

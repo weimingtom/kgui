@@ -1169,7 +1169,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 
 	m_visiteddays.SetFontSize(VSFONTSIZE);
 	m_visiteddays.SetInputType(GUIINPUTTYPE_INT);
-	m_visiteddays.SetSize(50,m_visiteddays.GetHeight()+6);
+	m_visiteddays.SetSize(50,m_visiteddays.GetLineHeight()+6);
 
 	m_visiteddayscaption2.SetFontID(1);
 	m_visiteddayscaption2.SetFontSize(VSFONTSIZE);
@@ -1188,7 +1188,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_cachemode.SetEntry(0,"Cache downloaded files",0);
 	m_cachemode.SetEntry(1,"Cache downloaded files, delete at end of each session",1);
 	m_cachemode.SetEntry(2,"Don't cache downloaded files",2);
-	m_cachemode.SetSize(m_cachemode.GetWidest(),m_visiteddayscaption2.GetHeight()+6);
+	m_cachemode.SetSize(m_cachemode.GetWidest(),m_visiteddayscaption2.GetLineHeight()+6);
 
 	m_controls.AddObject(&m_cachemode);
 	m_controls.NextLine();
@@ -1199,7 +1199,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 
 	m_cachesize.SetFontSize(VSFONTSIZE);
 	m_cachesize.SetInputType(GUIINPUTTYPE_INT);
-	m_cachesize.SetSize(75,m_cachesize.GetHeight()+6);
+	m_cachesize.SetSize(75,m_cachesize.GetLineHeight()+6);
 
 	m_cachesizecaption2.SetFontID(1);
 	m_cachesizecaption2.SetFontSize(VSFONTSIZE);
@@ -1271,7 +1271,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_screenmediacaption.SetString("Screen Media");
 	m_controls.AddObject(&m_screenmediacaption);
 
-	m_screenmedia.SetSize(m_screenmedia.GetWidest(),m_screenmediacaption.GetHeight()+6);
+	m_screenmedia.SetSize(m_screenmedia.GetWidest(),m_screenmediacaption.GetLineHeight()+6);
 	m_controls.AddObject(&m_screenmedia);
 	m_controls.NextLine();
 
@@ -1280,21 +1280,21 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_printmediacaption.SetString("Print Media");
 	m_controls.AddObject(&m_printmediacaption);
 
-	m_printmedia.SetSize(m_printmedia.GetWidest(),m_printmediacaption.GetHeight()+6);
+	m_printmedia.SetSize(m_printmedia.GetWidest(),m_printmediacaption.GetLineHeight()+6);
 	m_controls.AddObject(&m_printmedia);
 	m_controls.NextLine();
 
 	m_clear.SetFontID(1);
 	m_clear.SetFontSize(VSFONTSIZE);
 	m_clear.SetString("Clear All");
-	m_clear.SetSize(m_clear.GetWidth()+6,m_clear.GetHeight()+6);
+	m_clear.SetSize(m_clear.GetWidth()+6,m_clear.GetLineHeight()+6);
 	m_clear.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
 	m_controls.AddObject(&m_clear);
 
 	m_set.SetFontID(1);
 	m_set.SetFontSize(VSFONTSIZE);
 	m_set.SetString("Set All");
-	m_set.SetSize(m_set.GetWidth()+6,m_set.GetHeight()+6);
+	m_set.SetSize(m_set.GetWidth()+6,m_set.GetLineHeight()+6);
 	m_set.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
 	m_controls.AddObject(&m_set);
 
@@ -1302,7 +1302,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_toggle.SetFontSize(VSFONTSIZE);
 	m_toggle.SetString("Toggle All");
 	m_toggle.SetEventHandler(this,CALLBACKNAME(ButtonsEvent));
-	m_toggle.SetSize(m_toggle.GetWidth()+6,m_toggle.GetHeight()+6);
+	m_toggle.SetSize(m_toggle.GetWidth()+6,m_toggle.GetLineHeight()+6);
 	m_controls.AddObject(&m_toggle);
 	m_controls.NextLine();
 

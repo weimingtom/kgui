@@ -65,7 +65,7 @@ void kGUIButtonObj::Contain(void)
 	if(m_image)
 		SetSize(m_image->GetImageWidth()+(BUTTONTEXTEDGE<<1),m_image->GetImageHeight()+(BUTTONTEXTEDGE<<1));
 	else
-		SetSize(this->GetWidth()+(BUTTONTEXTEDGE<<1),GetHeight()+(BUTTONTEXTEDGE<<1));
+		SetSize(this->GetWidth()+(BUTTONTEXTEDGE<<1),GetLineHeight()+(BUTTONTEXTEDGE<<1));
 }
 
 /* if this button has an image on it, then we need to generate */

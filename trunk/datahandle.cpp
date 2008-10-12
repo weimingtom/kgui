@@ -363,7 +363,7 @@ bool DataHandle::OpenWrite(const char *wtype,unsigned long defbufsize)		/* write
 	if(m_wopen==false)
 		m_openmutex.UnLock();
 	return(m_wopen);
-};
+}
 
 void DataHandle::Sprintf(const char *fmt,...)
 {

@@ -28,7 +28,7 @@ enum AVRounding {
     AV_ROUND_INF      = 1, ///< round away from zero
     AV_ROUND_DOWN     = 2, ///< round toward -infinity
     AV_ROUND_UP       = 3, ///< round toward +infinity
-    AV_ROUND_NEAR_INF = 5, ///< round to nearest and halfway cases away from zero
+    AV_ROUND_NEAR_INF = 5 ///< round to nearest and halfway cases away from zero
 };
 
 /**
