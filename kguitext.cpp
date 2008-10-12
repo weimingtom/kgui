@@ -58,7 +58,7 @@ void kGUITextObj::Control(unsigned int command,KGCONTROL_DEF *data)
 void kGUITextObj::Changed()
 {
 	/* only expand to fit, don't shrink */
-	SetSize(max((int)GetWidth()+(m_xoff<<1),GetZoneW()),max((int)GetHeight()+(m_yoff<<1),GetZoneH()));
+	SetSize(max((int)GetWidth()+(m_xoff<<1),GetZoneW()),max((int)GetLineHeight()+(m_yoff<<1),GetZoneH()));
 	Dirty();
 }
 
@@ -68,12 +68,15 @@ void kGUITextObj::ShrinktoFit(void)
 	int fontsize;
 	int w=GetZoneW();
 	int h=GetZoneH();
-	
+	int widestline;
+
 	fontsize=GetFontSize();
-	while((((int)GetWidth()+m_xoff+m_xoff)>w) && (fontsize>1))
+	widestline=CalcLineList(w);
+	while( (((widestline+m_xoff+m_xoff)>w) || ((int)GetTotalHeight()+m_yoff+m_yoff)>h) && (fontsize>1))
 	{
 		SetFontSize(--fontsize);
 		SetSize(w,h);
+		widestline=CalcLineList(w);
 	}
 }
 

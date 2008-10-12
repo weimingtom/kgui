@@ -417,7 +417,7 @@ void Array<T>::Alloc(unsigned int num,bool preserve)
 	}
 	m_array=newarray;
 	m_numentries=num;
-};
+}
 
 template <class T>
 void Array<T>::SetEntry(unsigned int num,T entry)
@@ -425,16 +425,16 @@ void Array<T>::SetEntry(unsigned int num,T entry)
 	while(num>=m_numentries && m_grow==true)
 		Alloc(m_growsize>0?num+m_growsize:num+max(1,(m_numentries>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Array::SetEntry Out of bounds on array!");
+	assert((num<m_numentries),"Array::SetEntry Out of bounds on array!");
 	m_array[num]=entry;
-};
+}
 
 template <class T>
 void Array<T>::DeleteEntry(unsigned int num)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Array::DeleteEntry(num) Out of bounds on array!");
+	assert((num<m_numentries),"Array::DeleteEntry(num) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-1)-num);
 	if(movesize)
@@ -448,7 +448,7 @@ void Array<T>::DeleteEntry(unsigned int num,unsigned int numentries)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"Array::DeleteEntry(num,numentries) Out of bounds on array!");
+	assert((num<m_numentries),"Array::DeleteEntry(num,numentries) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-numentries)-num);
 	if(movesize)
@@ -465,7 +465,7 @@ void Array<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned int n
 	while((listsize+numentries)>=m_numentries && m_grow==true)
 		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
+	assert((num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 
 	movesize=(listsize-num)*sizeof(T);
@@ -494,9 +494,9 @@ void Array<T>::Delete(T entry)
 template <class T>
 T Array<T>::GetEntry(unsigned int num)
 {
-	passert((num>=0) && (num<m_numentries),"Array::GetEntry(%d) (numentries=%d) Out of bounds on array!",num,m_numentries);
+	passert((num<m_numentries),"Array::GetEntry(%d) (numentries=%d) Out of bounds on array!",num,m_numentries);
 	return(m_array[num]);
-};
+}
 
 template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
@@ -504,15 +504,15 @@ T *Array<T>::GetEntryPtr(unsigned int num)
 	while(num>=m_numentries && m_grow==true)
 		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
+	assert((num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
-};
+}
 
 template <class T>
 void Array<T>::Sort(unsigned int num,int (*code)(const void *o1,const void *o2))
 {
 	qsort(m_array,num,sizeof(T),code);
-};
+}
 
 /*! @class SmallArray
 	@brief An Array handling template class for structures and primitives (not for classes), used for holding a small number of items
@@ -575,7 +575,7 @@ void SmallArray<T>::Alloc(unsigned int num,bool preserve)
 	}
 	m_array=newarray;
 	m_numentries=num;
-};
+}
 
 template <class T>
 void SmallArray<T>::SetEntry(unsigned int num,T entry)
@@ -583,16 +583,16 @@ void SmallArray<T>::SetEntry(unsigned int num,T entry)
 	while(num>=m_numentries && m_grow==true)
 		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
 	m_array[num]=entry;
-};
+}
 
 template <class T>
 void SmallArray<T>::DeleteEntry(unsigned int num)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"SmallArray::DeleteEntry(num) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::DeleteEntry(num) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-1)-num);
 	if(movesize)
@@ -606,7 +606,7 @@ void SmallArray<T>::DeleteEntry(unsigned int num,unsigned int numentries)
 {
 	int movesize;
 
-	assert((num>=0) && (num<m_numentries),"SmallArray::DeleteEntry(num,numentries) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::DeleteEntry(num,numentries) Out of bounds on array!");
 	/* if deleting the last entry, then movesize=0 */
 	movesize=sizeof(T)*((m_numentries-numentries)-num);
 	if(movesize)
@@ -623,7 +623,7 @@ void SmallArray<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned 
 	while((listsize+numentries)>=m_numentries && m_grow==true)
 		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
 
-	assert((num>=0) && (num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 
 	movesize=(listsize-num)*sizeof(T);
@@ -652,22 +652,22 @@ void SmallArray<T>::Delete(T entry)
 template <class T>
 T SmallArray<T>::GetEntry(unsigned int num)
 {
-	assert((num>=0) && (num<m_numentries),"SmallArray::GetEntry(num) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::GetEntry(num) Out of bounds on array!");
 	return(m_array[num]);
-};
+}
 
 template <class T>
 T *SmallArray<T>::GetEntryPtr(unsigned int num)
 {
-	assert((num>=0) && (num<m_numentries),"SmallArray::GetEntryPtr(num) Out of bounds on array!");
+	assert((num<m_numentries),"SmallArray::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
-};
+}
 
 template <class T>
 void SmallArray<T>::Sort(unsigned int num,int (*code)(const void *o1,const void *o2))
 {
 	qsort(m_array,num,sizeof(T),code);
-};
+}
 
 /*! @class ClassArray
 	@brief An Array handling template class for an array of classes
@@ -727,14 +727,14 @@ T *ClassArray<T>::GetEntryPtr(unsigned int num)
 		m_pointers.SetEntry(num,obj);
 	}
 	return(obj);
-};
+}
 
 template <class T>
 void ClassArray<T>::DeleteEntry(unsigned int num)
 {
 	T *obj;
 
-	assert((num>=0) && (num<m_pointers.GetNumEntries()),"ClassArray::DeleteEntry(num) Out of bounds on array!");
+	assert((num<m_pointers.GetNumEntries()),"ClassArray::DeleteEntry(num) Out of bounds on array!");
 
 	/* no entries to move */
 	if(num==m_pointers.GetNumEntries()-1)
@@ -1110,7 +1110,8 @@ public:
 	void GetSubSize(int sstart,int slen,unsigned int *pixwidth,unsigned int *pixheight);
 	inline const unsigned int GetWidth(void) {unsigned int w;GetSubSize(0,GetLen(),&w,0);return w;}
 	const unsigned int GetWidthSub(int sstart,int slen) {unsigned int w;GetSubSize(sstart,slen,&w,0);return w;}
-	const unsigned int GetHeight(void) {return GetFontHeight();}
+	const unsigned int GetLineHeight(void) {return GetFontHeight();}
+	const unsigned int GetTotalHeight(void) {return (GetNumLines()*GetFontHeight());}
 	const unsigned int GetAscHeight(void);	/* todo: move to fontinfo */
 	const unsigned int GetDescHeight(void);	/* todo: move to fontinfo */
 	void Draw(int x,int y,int w,int h);
@@ -2506,7 +2507,7 @@ public:
 	inline bool GetIsTextValue(void) {return m_istextvalue;}
 	inline int GetValue(void) {return m_value;}
 	inline kGUIString *GetTextValue(void) {return &m_textvalue;}
-	inline int GetHeight(void) {return m_text.GetHeight();}
+	inline int GetHeight(void) {return m_text.GetLineHeight();}
 	inline int GetWidth(void) {return m_text.GetWidth();}
 	inline void SetBox(int w,kGUIColor c) {m_box.SetColor(c);m_box.SetSize(w,20);}
 	inline kGUIColor GetBoxColor(void) {return m_box.GetColor();}
@@ -2536,7 +2537,7 @@ public:
 	inline kGUIText *GetText(void) {return &m_text;}
 	inline void SetValue(int v) {m_value=v;}
 	inline int GetValue(void) {return m_value;}
-	inline int GetHeight(void) {return m_text.GetHeight();}
+	inline int GetHeight(void) {return m_text.GetLineHeight();}
 	inline int GetWidth(void) {return m_text.GetWidth();}
 	inline kGUIImageObj *GetIconObj(void) {return &m_icon;}
 	void SetSubMenu(kGUIMenuColObj *submenu) {m_submenu=submenu;}

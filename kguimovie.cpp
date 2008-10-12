@@ -41,9 +41,9 @@ extern "C"
 	/* these are in wiffmpeg so any windows projects needs to */
 	/* set this as an include directory */
 
-#include "avcodec.h"
-#include "avformat.h"
-#include "swscale.h"
+#include <avcodec.h>
+#include <avformat.h>
+#include <swscale.h>
 }
 
 #define INT64_C(val) val##LL
@@ -159,6 +159,7 @@ URLProtocol kGUIMovieLocal::kg_protocol = {
     kGUIMovieLocal::kg_write,
     kGUIMovieLocal::kg_seek,
     kGUIMovieLocal::kg_close,
+	0	/* next */
 };
 
 bool kGUIMovie::m_initglobals=false;

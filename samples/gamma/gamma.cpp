@@ -206,7 +206,7 @@ void GammaTextBox::Draw(void)
 	do
 	{
 		t.DrawRot(x,y,0.0f,DrawColor(0,0,0));
-		y+=t.GetHeight();
+		y+=t.GetLineHeight();
 		x+=0.25f;
 	}while(y<(double)c.by);
 }

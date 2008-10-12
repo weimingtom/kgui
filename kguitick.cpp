@@ -41,7 +41,7 @@ kGUITickBoxObj::kGUITickBoxObj()
 	m_selected=false;
 	m_scale=false;
 	SetSize(w,h);
-};
+}
 
 kGUITickBoxObj::~kGUITickBoxObj()
 {

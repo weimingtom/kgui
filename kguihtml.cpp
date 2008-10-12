@@ -6703,7 +6703,7 @@ kGUIHTMLObj *kGUIHTMLPageObj::LocateLocalLink(kGUIString *name)
 enum
 {
 POPMENU_SAVE,
-POPMENU_SAVELINK,
+POPMENU_SAVELINK
 };
 
 /* user right clicked on something */
@@ -11244,7 +11244,7 @@ typechanged:;
 			textobj.SetFontID(m_page->m_fontid);
 			textobj.SetFontSize(m_em);
 			m_height.SetUnitType(UNITS_PIXELS);
-			m_height.SetUnitValue((int)textobj.GetHeight());
+			m_height.SetUnitValue((int)textobj.GetLineHeight());
 		}
 		rp->PositionHardBreak(m_height.GetUnitValue());
 		/* clear left/right/both/none */
@@ -11318,7 +11318,7 @@ typechanged:;
 				w+=(int)(0.3f*m_em)+(m_page->m_wordspacing.CalcUnitValue(0,m_em));
 			textobj->MoveZoneW(w);
 
-			h=textobj->GetHeight();
+			h=textobj->GetLineHeight();
 			if(m_page->m_textdecoration&TEXTDECORATION_UNDERLINE)
 				h=max(h,(int)textobj->GetAscHeight()+4);
 
@@ -11764,7 +11764,7 @@ typechanged:;
 				inputboxobj->SetFontSize(m_em);
 				inputboxobj->SetColor(m_page->m_fontcolor.GetColor());
 				inputboxobj->MoveZoneW(w);
-				inputboxobj->MoveZoneH(inputboxobj->GetHeight()+6);
+				inputboxobj->MoveZoneH(inputboxobj->GetLineHeight()+6);
 			}
 			rp->PositionChild(this,inputboxobj,inputboxobj->GetZoneH(),0);
 		}
@@ -14386,7 +14386,7 @@ void kGUIHTMLButtonTextObj::Draw(void)
 			int offx,offy;
 			int tw,th;
 
-			th=kGUIText::GetHeight();
+			th=kGUIText::GetLineHeight();
 			tw=kGUIText::GetWidth();
 			offx=((c.rx-c.lx)-tw)>>1;
 			if(offx<0)

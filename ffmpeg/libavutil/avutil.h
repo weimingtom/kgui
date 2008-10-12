@@ -106,7 +106,7 @@ enum PixelFormat {
     PIX_FMT_YUV440P,   ///< Planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
     PIX_FMT_YUVJ440P,  ///< Planar YUV 4:4:0 full scale (jpeg)
     PIX_FMT_YUVA420P,  ///< Planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
-    PIX_FMT_NB,        ///< number of pixel formats, DO NOT USE THIS if you want to link with shared libav* because the number of formats might differ between versions
+    PIX_FMT_NB        ///< number of pixel formats, DO NOT USE THIS if you want to link with shared libav* because the number of formats might differ between versions
 };
 
 #ifdef WORDS_BIGENDIAN

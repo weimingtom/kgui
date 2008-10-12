@@ -63,7 +63,7 @@ public:
 	~kGUICookieDomain();
 	kGUICookie *GetFirst(void) {return m_links.GetFirst();}
 	kGUICookie *GetTail(void) {return m_links.GetTail();}
-private:;
+private:
 	//linked list of cookies attached to this domain, sorted so longer paths are first
 	LinkEnds<kGUICookie,kGUICookie> m_links;
 };

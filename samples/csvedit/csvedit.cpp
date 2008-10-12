@@ -518,7 +518,7 @@ void MyReport::Setup(void)
 
 		t->SetFontSize(fs);	
 		t->SetString("Hello World!");
-		t->SetSize(t->GetWidth()+6,t->GetHeight()+6);
+		t->SetSize(t->GetWidth()+6,t->GetLineHeight()+6);
 		y+=t->GetZoneH();
 
 		/* attach to the page */

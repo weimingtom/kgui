@@ -64,7 +64,7 @@ kGUIMovieControlObj::kGUIMovieControlObj()
 	m_lastduration=0;
 	m_lastplaying=false;
 	m_eventactive=false;
-};
+}
 
 /* position the elements */
 void kGUIMovieControlObj::Position(void)

@@ -432,7 +432,7 @@ void kGUIText::GetSubSize(int sstart,int slen,unsigned int *pixwidth,unsigned in
 	if(GetUseRichInfo()==false)
 	{
 		/* plain mode, single font and size for whole string */
-		maxheight=GetHeight();
+		maxheight=GetLineHeight();
 		if(slen)
 		{
 			face=kGUIFont::GetFace(GetFontID());
@@ -716,7 +716,7 @@ int kGUIText::CalcLineList(int w)
 		lbptr->endindex=sindex;
 		lbptr->pixwidth=0;
 		lbptr->hardbreak=true;
-		lbptr->pixheight=GetHeight();
+		lbptr->pixheight=GetLineHeight();
 		m_lltotalheight=lbptr->pixheight+2;
 		lbptr->ty=0;
 		lbptr->by=m_lltotalheight-1;
@@ -770,7 +770,7 @@ int kGUIText::CalcLineList(int w)
 		{
 			/* how tall is a blank line, use height of last character in previous line */
 			if(!sindex)
-				lbptr->pixheight=GetHeight();
+				lbptr->pixheight=GetLineHeight();
 			else
 				GetSubSize(sindex-1,1,0,&lbptr->pixheight);
 		}
@@ -1015,7 +1015,7 @@ void kGUIText::Draw(int x,int y,int w,int h)
 	if(m_llnum<2)
 	{
 		numl=1;
-		th=GetHeight()+2;
+		th=GetLineHeight()+2;
 	}
 	else
 	{
@@ -1047,7 +1047,7 @@ void kGUIText::Draw(int x,int y,int w,int h)
 		break;
 		}
 
-		DrawSection(0,GetLen(),x,cx,cy,GetHeight());
+		DrawSection(0,GetLen(),x,cx,cy,GetLineHeight());
 	}
 	else
 	{
@@ -1078,7 +1078,7 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 	int halign=GetHAlign();
 	int cx;
 	int cy;
-	int lineheight=GetHeight()+2;
+	int lineheight=GetLineHeight()+2;
 	int numl;
 
 	if(m_llnum<2)
@@ -1110,7 +1110,7 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 		break;
 		}
 
-		DrawSection(0,GetLen(),x,cx,cy,GetHeight(),color);
+		DrawSection(0,GetLen(),x,cx,cy,GetLineHeight(),color);
 	}
 	else
 	{

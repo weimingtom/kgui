@@ -225,7 +225,9 @@ int main(int argc, char* argv[])
 	{
 		csv.GetField(row,0,&s);
 		s.ChangeEncoding(ENCODING_UTF8);
-		outh.Sprintf("%s%s,\n",prefix,s.GetString());
+		if(row>1)
+			outh.Sprintf(",\n");
+		outh.Sprintf("%s%s",prefix,s.GetString());
 	}
 	outh.Sprintf("};\n#endif\n",prefix);
 	if(outh.Close()==false)

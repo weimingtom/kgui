@@ -81,7 +81,7 @@ void kGUIMenuObj::Resize(void)
 	for(i=0;i<m_numentries;++i)
 	{
 		w=m_title.GetEntryPtr(i)->GetWidth();
-		h=m_title.GetEntryPtr(i)->GetHeight();
+		h=m_title.GetEntryPtr(i)->GetLineHeight();
 		m_titlex.SetEntry(i,x);
 		m_titlew.SetEntry(i,w);
 		w+=TITLEGAPX+TITLEGAPX;		/* left gap + right gap */
