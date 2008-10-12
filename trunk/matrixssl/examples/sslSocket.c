@@ -87,7 +87,11 @@ SOCKET socketAccept(SOCKET listenfd, int *err)
 {
 	struct sockaddr_in	addr;
 	SOCKET				fd;
+#if _WIN32
 	int					len;
+#else
+	socklen_t			len;
+#endif
 /*
 	Wait(blocking)/poll(non-blocking) for an incoming connection
 */
