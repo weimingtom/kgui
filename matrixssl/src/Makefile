@@ -17,9 +17,9 @@ E       =
 LIBRARY	= libmatrixssl$(SO)
 STATIC	= libmatrixsslstatic$(A)
 
-#		for linux or mac replace the os/win/win below with this one
-#		os/linux/linux$(O)	\
+TARGET_OS=$(shell uname -s)
 
+ifeq ($(findstring MINGW,$(TARGET_OS)),MINGW)
 OBJECTS	= \
 		cipherSuite$(O) \
 		matrixSsl$(O) \
@@ -39,6 +39,28 @@ OBJECTS	= \
 		pki/asn1$(O) \
 		pki/rsaPki$(O) \
 		pki/x509$(O)
+else
+OBJECTS	= \
+		cipherSuite$(O) \
+		matrixSsl$(O) \
+		sslDecode$(O) \
+		sslEncode$(O) \
+		sslv3$(O) \
+		os/debug$(O) \
+		os/linux/linux$(O)	\
+		crypto/peersec/arc4$(O) \
+		crypto/peersec/base64$(O) \
+		crypto/peersec/des3$(O) \
+		crypto/peersec/md5$(O) \
+		crypto/peersec/md2$(O) \
+		crypto/peersec/mpi$(O) \
+		crypto/peersec/rsa$(O) \
+		crypto/peersec/sha1$(O) \
+		pki/asn1$(O) \
+		pki/rsaPki$(O) \
+		pki/x509$(O)
+endif
+
 
 #
 #	Debug flags (Define MATRIXSSL_DEBUG in shell to build debug)
@@ -73,7 +95,7 @@ endif
 #
 SHARED	= -shared
 ifeq ($(findstring MINGW,$(shell uname)),MINGW)
-CFLAGS  = $(DFLAGS) -fPIC -DWIN -I./
+CFLAGS  = $(DFLAGS) -DWIN -I./
 else
 CFLAGS  = $(DFLAGS) -fPIC -DLINUX -I./
 LDFLAGS += -lc -lpthread
