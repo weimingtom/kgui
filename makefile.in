@@ -28,8 +28,10 @@ TARGET_CHIP=$(shell uname -m)
 #
 ifeq ($(config),debug)
 	TARGET_SUFFIX=d
+	LIB_SUFFIX=d
 else
 	TARGET_SUFFIX=r
+	LIB_SUFFIX=
 endif
 
 ifeq ($(findstring MINGW,$(TARGET_OS)),MINGW)
@@ -55,7 +57,7 @@ LDFLAGS= -mwindows
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
 KGUILIB_LIBPATHS=-L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
-KGUILIB_LIBS=-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_LIBS=-lkgui$(LIB_SUFFIX) -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS=-lws2_32 -lwinspool -lz
 
 KGUILIBDB_INCLUDES = -I"$(KGUILOC)mysql/include/"
@@ -90,7 +92,7 @@ LDFLAGS=-pthread
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
 KGUILIB_LIBPATHS = -L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
-KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_LIBS =-lkgui$(LIB_SUFFIX) -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS =-lcups -lX11 -lz
 
 KGUILIBDB_INCLUDES = -I"/usr/include/mysql"
@@ -125,7 +127,7 @@ LDFLAGS=
 
 KGUILIB_INCLUDES = -I$(KGUILOC)
 KGUILIB_LIBPATHS = -L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
-KGUILIB_LIBS =-lkgui -ljpeg -lpng -lfreetype
+KGUILIB_LIBS =-lkgui$(LIB_SUFFIX) -ljpeg -lpng -lfreetype
 KGUILIB_SYSLIBS =-lcups -lz -framework Carbon -framework ApplicationServices
 
 KGUILIBDB_INCLUDES = -I"/usr/include/mysql"
@@ -159,4 +161,4 @@ endif
 #dependency that can be used by app to detect if the libs have been updated
 
 OBJDIR=$(TARGET_OBJDIR)$(TARGET_SUFFIX)
-KGUILIB_DEP= $(KGUILOC)$(OBJDIR)/libkgui.a
+KGUILIB_DEP= $(KGUILOC)$(OBJDIR)/libkgui$(LIB_SUFFIX).a

@@ -28,7 +28,7 @@ KGUIBIG_OBJ=$(KGUIBIG_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with
 
 KGUILOCSTR_OBJ=$(KGUILOCSTR_SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
-LIB_OUT=$(OBJDIR)/libkgui.a
+LIB_OUT=$(OBJDIR)/libkgui$(LIB_SUFFIX).a
 
 BINTOC_OUT=$(OBJDIR)/bintoc$(EXE)
 
