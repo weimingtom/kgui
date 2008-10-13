@@ -3661,14 +3661,8 @@ void sighandler(int sig)
 	fatalerror(s.GetString());
 }
 
-#if 0
-#if defined(MINGW) || defined(LINUX) || defined(MACINTOSH) 
-//#include <execinfo.h>
-extern "C"{
-int backtrace(void **buffer, int size);
-char ** backtrace_symbols(void *const *buffer, int size);
-};
-#endif
+#if defined(LINUX) || defined(MACINTOSH) 
+#include <execinfo.h>
 #endif
 
 void fatalerror(const char *string)
