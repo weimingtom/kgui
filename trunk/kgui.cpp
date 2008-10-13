@@ -56,6 +56,13 @@
 #include <time.h>
 #include <signal.h>
 
+#if 0
+#if defined(MINGW) || defined(WIN32)
+//for CaptureStackBacktrace
+#include <winbase.h>
+#endif
+#endif
+
 #define HINTTEXTSIZE 9
 
 /* since these are static, they need to be defined specifically */
@@ -3671,20 +3678,33 @@ void fatalerror(const char *string)
 
 	err.Sprintf("%s\n",string);
 #if 0
-#if defined(MINGW) || defined(LINUX) || defined(MACINTOSH) 
-	void *array[256];
-	size_t size;
-	char **strings;
-	size_t i;
+#if defined(MINGW) || defined(WIN32)
+	{
+		void *array[63];
+		int i,num;
 
-	size = backtrace (array, sizeof(array)/sizeof(void *));
-	strings = backtrace_symbols (array, size);
+		num=CaptureStackBackTrace(0,63,array,0);
 
-	for (i = 0; i < size; i++)
-		err.ASprintf("%s\n",strings[i]);
-
-	free (strings);
+		for (i = 0; i < num; i++)
+			err.ASprintf("%s\n",(char *)array[i]);
+	}
 #endif
+#endif
+#if defined(LINUX) || defined(MACINTOSH) 
+	{
+		void *array[256];
+		size_t size;
+		char **strings;
+		size_t i;
+
+		size = backtrace (array, sizeof(array)/sizeof(void *));
+		strings = backtrace_symbols (array, size);
+
+		for (i = 0; i < size; i++)
+			err.ASprintf("%s\n",strings[i]);
+
+		free (strings);
+	}
 #endif
 
 	ef=fopen("errors.txt","a");

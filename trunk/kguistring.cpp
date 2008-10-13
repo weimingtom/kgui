@@ -514,7 +514,7 @@ void kGUIString::Trim(int what)
 	/* remove leading spaces, tabs, or lf, or c/r */
 	num=0;
 	place=m_string;
-	while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)) || ((place[0]==0) && (what&TRIM_NULL)))	
+	while(((place[0]==' ') && (what&TRIM_SPACE)) || ((place[0]==9) && (what&TRIM_TAB)) || ((place[0]==10) && (what&TRIM_CR)) || ((place[0]==13) && (what&TRIM_CR)))
 	{
 		++num;
 		++place;
@@ -937,7 +937,7 @@ bool kGUIString::RemoveQuotes(void)
 typedef struct
 {
 	unsigned int encoding;
-	int size;
+	unsigned int size;
 	unsigned int data[4];
 }ENCHEADER_DEF;
 
@@ -953,28 +953,31 @@ static ENCHEADER_DEF enclist[]={
 //UTF-EBCDIC 	DD 73 66 73
 //BOCU-1 	FB EE 28
 
-unsigned int kGUIString::CheckBOM(const unsigned char *header,int *bomsize)
+unsigned int kGUIString::CheckBOM(unsigned int len,const unsigned char *header,int *bomsize)
 {
 	unsigned int i;
-	int j;
+	unsigned int j;
 	ENCHEADER_DEF *e;
 	bool match;
 
 	e=enclist;
 	for(i=0;i<sizeof(enclist)/sizeof(ENCHEADER_DEF);++i)
 	{
-		match=true;
-		for(j=0;j<(e->size) && (match==true);++j)
+		/* if string is shorter thab BOM then it can't match! */
+		if(len>=e->size)
 		{
-			if(header[j]!=e->data[j])
-				match=false;
+			match=true;
+			for(j=0;j<(e->size) && (match==true);++j)
+			{
+				if(header[j]!=e->data[j])
+					match=false;
+			}
+			if(match)
+			{
+				*(bomsize)=e->size;
+				return(e->encoding);
+			}
 		}
-		if(match)
-		{
-			*(bomsize)=e->size;
-			return(e->encoding);
-		}
-
 		++e;
 	}
 	*(bomsize)=0;
@@ -993,7 +996,7 @@ void kGUIString::CheckBOM(void)
 		header[1]=GetUChar(1);
 		header[2]=GetUChar(2);
 		header[3]=GetUChar(3);
-		encoding=CheckBOM(header,&bomsize);
+		encoding=CheckBOM(4,header,&bomsize);
 		if(bomsize)
 		{
 			Delete(0,bomsize);

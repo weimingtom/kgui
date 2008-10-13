@@ -88,7 +88,7 @@ bool kGUICSV::Load(void)
 	/* read in the first 4 bytes and look for a byte order marker */
 	Read((void *)header,(unsigned long)sizeof(header));
 	printf("%02x %02x %02x %02x\n",header[0],header[1],header[2],header[3]);
-	m_encoding=kGUIString::CheckBOM(header,&bomsize);
+	m_encoding=kGUIString::CheckBOM(sizeof(header),header,&bomsize);
 	printf("encoding=%d\n",m_encoding);
 	line.SetEncoding(m_encoding);
 

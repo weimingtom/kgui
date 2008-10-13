@@ -62,6 +62,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,"abbr",		HTMLTAG_ABBR		,DISPLAY_INLINE},
 	{false,false,"acronym",		HTMLTAG_ACRONYM		,DISPLAY_INLINE},
 	{false,false,"address",		HTMLTAG_ADDRESS		,DISPLAY_BLOCK},
+	{false,false,"applet",		HTMLTAG_APPLET		,DISPLAY_BLOCK},
 	{true,false,"area",			HTMLTAG_AREA		,DISPLAY_INLINE},
 	{false,false,"b",			HTMLTAG_B			,DISPLAY_INLINE},
 	{true,false,"base",			HTMLTAG_BASE		,DISPLAY_INLINE},
@@ -123,6 +124,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,"param",		HTMLTAG_PARAM		,DISPLAY_INLINE},
 	{false,false,"pre",			HTMLTAG_PRE			,DISPLAY_INLINE},
 	{false,false,"q",			HTMLTAG_Q			,DISPLAY_INLINE},
+	{false,false,"s",			HTMLTAG_S			,DISPLAY_INLINE},	
 	{false,false,"samp",		HTMLTAG_SAMP		,DISPLAY_BLOCK},
 	{false,false,"script",		HTMLTAG_SCRIPT		,DISPLAY_INLINE},
 	{false,false,"select",		HTMLTAG_SELECT		,DISPLAY_INLINE},
@@ -1710,8 +1712,11 @@ void kGUIHTMLPageObj::AttachLink(kGUIOnlineLink *link)
 			s.Trim(TRIM_NULL);		/* remove any trailing nulls */
 
 			/* is this media current? */
-			if(ValidMedia(link->GetMedia()))
-				AddClassStyles(OWNER_AUTHOR,link->GetPriority(),link->GetURL(),&s);
+			if(s.GetLen())
+			{
+				if(ValidMedia(link->GetMedia()))
+					AddClassStyles(OWNER_AUTHOR,link->GetPriority(),link->GetURL(),&s);
+			}
 		}
 	}
 	break;
@@ -2072,9 +2077,10 @@ void kGUIHTMLPageObj::BuildOwnerRules(void)
 
 	ro.m_block=false;
 	m_numownerrules=0;
-	owner=OWNER_NUM-1;
+	owner=OWNER_NUM;
 	do
 	{
+		--owner;
 		/* insert null rule pointer to flag the point to insert the tag styles */
 		if((owner==OWNER_AUTHOR) || (owner==OWNER_AUTHORIMPORTANT))
 		{
@@ -2095,10 +2101,7 @@ void kGUIHTMLPageObj::BuildOwnerRules(void)
 				m_ownerrules.SetEntry(m_numownerrules++,ro);
 			}
 		}
-		if(!owner)	/* owner is unsigned so we can't check <0*/
-			break;
-		--owner;
-	}while(1);
+	}while(owner);
 }
 
 /* apply the style rules applicable to this object */
@@ -12259,11 +12262,14 @@ void kGUIHTMLObj::Contain(bool force)
 				kGUIZone *z;
 
 				z=GetChild(i);
-				if(z->GetZoneRX()>GetZoneW() || z->GetZoneBY()>GetZoneH())
+				if(z->GetZoneW() && z->GetZoneH())
 				{
-					neww=max(neww,z->GetZoneRX());		
-					newh=max(newh,z->GetZoneBY());		
-					m_error=true;
+					if(z->GetZoneRX()>GetZoneW() || z->GetZoneBY()>GetZoneH())
+					{
+						neww=max(neww,z->GetZoneRX());		
+						newh=max(newh,z->GetZoneBY());		
+						m_error=true;
+					}
 				}
 			}
 			if(m_error==true)

@@ -17,14 +17,17 @@
 #include "resource.h"
 #endif
 
+#define MOVIEPLAYER 1
+#define USESSL 1
+
 /* this includes the main loop for the selected OS, like Windows, Linux, Mac etc */
 #include "kguisys.cpp"
 
+#if USESSL
 /* we use MatrixSSL */
 #include "kguimatrixssl.h"
 #include "kguimatrixssl.cpp"
-
-#define MOVIEPLAYER 1
+#endif
 
 #if MOVIEPLAYER
 /* movie player */
@@ -94,9 +97,11 @@ Browse::Browse()
 	/* Init Cookie Handler */
 	kGUI::SetCookieJar(new kGUICookieJar());
 
+#if USESSL
 	/* Init SSL Handler */
 	/* NOTE: This SSL Handler is GPL'd not LGPL'ed */
 	kGUI::SetSSLManager(new kGUIMatrixSSLManager("CAcertSrv.pem"));
+#endif
 
 	/* connect the caches to the settings */
 	if(kGUI::IsDir("cache")==false)
@@ -105,6 +110,9 @@ Browse::Browse()
 	m_settings.SetItemCache(&m_itemcache);
 	m_settings.SetVisitedCache(&m_visitedcache);
 
+#if MOVIEPLAYER
+	kGUIMovie::InitGlobals();
+#endif
 	/* load settings, including browser settins */
 	if(prefs.Load("browse.xml")==true)
 	{
@@ -173,7 +181,8 @@ Browse::~Browse()
 	prefs.Save("browse.xml");
 
 	delete kGUI::GetCookieJar();
+#if USESSL
 	delete kGUI::GetSSLManager();
-
+#endif
 	kGUIXMLCODES::Purge();
 }
