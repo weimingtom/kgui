@@ -1309,7 +1309,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	/* css enable/disable table */
 
 	m_csstable.SetNumCols(2);
-	m_csstable.SetColTitle(0,"Enable");
+	m_csstable.SetColTitle(0,"Disable");
 	m_csstable.SetColTitle(1,"Name");
 	m_csstable.SetColWidth(0,50);
 	m_csstable.SetColWidth(1,200);

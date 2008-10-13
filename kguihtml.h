@@ -53,6 +53,7 @@ HTMLTAG_A,
 HTMLTAG_ABBR,
 HTMLTAG_ACRONYM,
 HTMLTAG_ADDRESS,
+HTMLTAG_APPLET,
 HTMLTAG_AREA,
 HTMLTAG_B,
 HTMLTAG_BASE,
@@ -115,6 +116,7 @@ HTMLTAG_P,
 HTMLTAG_PARAM,
 HTMLTAG_PRE,
 HTMLTAG_Q,
+HTMLTAG_S,
 HTMLTAG_SAMP,
 HTMLTAG_SCRIPT,
 HTMLTAG_SELECT,
@@ -1823,7 +1825,7 @@ public:
 	/* this is debug code */
 	/* position and print output for 1 frame */
 	bool GetTrace(void) {return m_trace;}
-	void TraceLayout(void) {m_trace=true;Position();m_trace=false;}
+	void TraceLayout(void) {m_trace=true;InvalidateTCICache();Position();m_trace=false;}
 	void TraceDraw(void) {m_trace=true;Dirty();}
 
 	int GetScrollY(void);

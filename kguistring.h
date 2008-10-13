@@ -89,7 +89,7 @@ public:
 	unsigned int GetEncoding(void) {return m_encoding;}
 	void SetEncoding(unsigned int e) {m_encoding=e;}
 	void ChangeEncoding(unsigned int e);
-	static unsigned int CheckBOM(const unsigned char *header,int *bomsize);
+	static unsigned int CheckBOM(unsigned int len,const unsigned char *header,int *bomsize);
 	void CheckBOM(void);	/* look at beginning of string for an Byte-Ordering-Mark ( encoding ) */
 	unsigned int CursorToIndex(unsigned int cursor);
 	unsigned int IndexToCursor(unsigned int index);
