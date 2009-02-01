@@ -430,6 +430,15 @@ void kGUIBSPPoint::Select(kGUICorners *c)
 	}
 }
 
+/* select a specific zone */
+void kGUIBSPPoint::SelectZone(int zonenum)
+{
+	m_wpdrawzones=m_drawzones;	/* write pointer */
+	m_rpdrawzones=m_drawzones;	/* read pointer */
+	*(m_wpdrawzones++)=&m_zones[zonenum];
+	m_readcurrent=m_rpdrawzones[0]->m_start;
+}
+
 void kGUIBSPPoint::SelectZone(kGUICorners *c,kGUIBSPZoneEntry *zone)
 {
 	/* 1. compare zone against corners, if it is outside then return */

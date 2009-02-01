@@ -1017,7 +1017,7 @@ unsigned int kGUIString::GetEncoding(const char *s)
 }
 
 /* return character index */
-int kGUIString::StrStr(const char *ss,unsigned int offset)
+int kGUIString::Str(const char *ss,unsigned int offset)
 {
 	const char *cp;
 
@@ -1028,7 +1028,7 @@ int kGUIString::StrStr(const char *ss,unsigned int offset)
 	return((int)(cp-m_string));
 }
 
-int kGUIString::StrIStr(const char *ss,unsigned int offset)
+int kGUIString::IStr(const char *ss,unsigned int offset)
 {
 	const char *cp;
 
@@ -1039,22 +1039,22 @@ int kGUIString::StrIStr(const char *ss,unsigned int offset)
 	return((int)(cp-m_string));
 }
 
-int kGUIString::StrStr(kGUIString *ss,unsigned int offset)
+int kGUIString::Str(kGUIString *ss,unsigned int offset)
 {
 	assert(offset<=m_len,"Searching off of end of string!");
 	if(GetEncoding()==ss->GetEncoding())
-		return(StrStr(ss->GetString(),offset));
+		return(Str(ss->GetString(),offset));
 
 	/* different encoding, must match encoding first */
 	assert(false,"Todo!");
 	return(-1);
 }
 
-int kGUIString::StrIStr(kGUIString *ss,unsigned int offset)
+int kGUIString::IStr(kGUIString *ss,unsigned int offset)
 {
 	assert(offset<=m_len,"Searching off of end of string!");
 	if(GetEncoding()==ss->GetEncoding())
-		return(StrIStr(ss->GetString(),offset));
+		return(IStr(ss->GetString(),offset));
 
 	/* different encoding, must match encoding first */
 	assert(false,"Todo!");

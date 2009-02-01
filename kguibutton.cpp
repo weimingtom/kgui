@@ -200,15 +200,16 @@ void kGUIButtonObj::Draw(void)
 			if(m_image)
 			{
 				int offx,offy;
-			
-				/* centere the image */
-				offx=((c.rx-c.lx)-m_image->GetImageWidth())>>1;
-				offy=((c.by-c.ty)-m_image->GetImageHeight())>>1;
+				kGUIImage *ci=(m_enabled==true)?m_image:m_disabledimage;
 
-				if(m_enabled==true)
-					m_image->Draw(0,c.lx+offx,c.ty+offy);
-				else
-					m_disabledimage->Draw(0,c.lx+offx,c.ty+offy);
+				/* if image was flushed, then reload it */
+
+				ci->LoadPixels();
+				/* center the image */
+				offx=((c.rx-c.lx)-ci->GetImageWidth())>>1;
+				offy=((c.by-c.ty)-ci->GetImageHeight())>>1;
+
+				ci->Draw(0,c.lx+offx,c.ty+offy);
 			}
 			else
 			{

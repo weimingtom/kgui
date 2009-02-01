@@ -114,6 +114,7 @@ public:
 	bool Eof(void) {return (m_offset==m_filesize);}
 	FILE *GetHandle(void);	/* only valid for filesystem based data */
 
+	void CheckWrite(void);
 	bool OpenWrite(const char *wtype,unsigned long defbufsize=65536);		/* write mode string "wb" or "rb+" etc */
 	void Sprintf(const char *fmt,...);
 	void Write(const void *buf,long numbytes);

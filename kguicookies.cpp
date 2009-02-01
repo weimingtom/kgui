@@ -54,6 +54,7 @@ kGUICookie::kGUICookie()
 	m_permanent=false;
 	m_expiry.SetToday();
 	m_remove=false;
+	m_error=false;
 }
 
 kGUICookie::~kGUICookie()
@@ -130,7 +131,8 @@ void kGUICookie::SetAttribute(unsigned int att,kGUIString *value,kGUIString *dom
 	break;
 	case COOKIEATT_EXPIRES:
 		/* date is in format Weekday, DD-Mon-YY HH:MM:SS GMT */
-		m_expiry.Set(value->GetString());
+		if(m_expiry.Setz(value->GetString())==false)
+			m_error=true;
 		m_permanent=true;
 	break;
 	case COOKIEATT_SECURE:
@@ -466,7 +468,7 @@ void kGUICookieJar::SetCookie(kGUIString *s,kGUIString *domain,kGUIString *url)
 			}
 		}
 	}
-	if(gotname)
+	if(gotname && c->GetError()==false)
 		UpdateCookie(c);
 	else
 		delete c;

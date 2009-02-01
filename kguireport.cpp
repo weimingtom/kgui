@@ -1020,7 +1020,7 @@ void kGUIReport::GetSurfaceSize(double *ppw,double *pph)
 }
 
 /* return the area for a subpage using the current mode */
-void kGUIReport::GetSubPageInfo(int subpage,int *pw,int *ph,int *poffx,int *poffy)
+void kGUIReport::GetSubHistoryRecord(int subpage,int *pw,int *ph,int *poffx,int *poffy)
 {
 	int	rw=GetSurfaceWidthPix();
 	int	rh=GetSurfaceHeightPix();
@@ -1309,7 +1309,7 @@ void kGUIReport::DrawPage(int grouppage)
 		kGUI::PushClip();
 		kGUI::ResetClip();	/* set clip to full surface on stack */
 
-		GetSubPageInfo(subpage,&rw,&rh,&offx,&offy);
+		GetSubHistoryRecord(subpage,&rw,&rh,&offx,&offy);
 		c.lx=0;
 		c.ty=0;
 		c.rx=rw;
@@ -1359,5 +1359,5 @@ void kGUIReport::GetPageSizePixels(int *ppw,int *pph)
 {
 	int offx,offy;
 
-	GetSubPageInfo(0,ppw,pph,&offx,&offy);
+	GetSubHistoryRecord(0,ppw,pph,&offx,&offy);
 }

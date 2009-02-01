@@ -73,6 +73,8 @@ void *Heap::Alloc(int size)
 	int blocksize;
 	char *place;
 
+	assert(size>0,"Cannot allocate 0 bytes or negative sizes!");
+
 	/* align to 4 bytes */
 	if(size&3)
 		size+=4-(size&3);

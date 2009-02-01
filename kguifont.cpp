@@ -799,7 +799,7 @@ int kGUIText::GetLineNum(unsigned int charindex)
 	unsigned int endchar;
 	kGUIInputLineInfo *lbptr;
 
-	if(!m_llnum)
+	if(m_llnum<2)
 		return(0);
 	else if(charindex>=GetLen())
 		return(m_llnum-1);
@@ -807,6 +807,11 @@ int kGUIText::GetLineNum(unsigned int charindex)
 	/* binary search */
 	startindex=0;
 	endindex=m_llnum-1;
+
+	/* make sure split list is accurate! */
+	lbptr=GetLineInfo(endindex);
+	assert(lbptr->endindex==(GetLen()-1) || lbptr->endindex==(GetLen()),"Split list is NOT up to date!");
+
 	do
 	{
 		midindex=(startindex+endindex)>>1;
@@ -1006,8 +1011,8 @@ void kGUIText::Draw(int x,int y,int w,int h)
 	/* this is the only draw call that looks at the valign and halign */
 	kGUIInputLineInfo *lbptr;
 	int i;
-	int halign=GetHAlign();
-	int cx;
+	FT_HALIGN halign=GetHAlign();
+	int cx=0;
 	int cy;
 	int numl;
 	int th;
@@ -1026,6 +1031,8 @@ void kGUIText::Draw(int x,int y,int w,int h)
 	cy=y;
 	switch(GetVAlign())
 	{
+	case FT_TOP:
+	break;
 	case FT_MIDDLE:
 		cy+=(h-th)/2;
 	break;
@@ -1036,14 +1043,16 @@ void kGUIText::Draw(int x,int y,int w,int h)
 
 	if(m_llnum<2)
 	{
-		cx=x;
 		switch(halign)
 		{
+		case FT_LEFT:
+			cx=x;
+		break;
 		case FT_CENTER:
-			cx+=((w-GetWidth())/2);
+			cx=x+((w-GetWidth())/2);
 		break;
 		case FT_RIGHT:
-			cx+=w-GetWidth();
+			cx=x+(w-GetWidth());
 		break;
 		}
 
@@ -1054,14 +1063,16 @@ void kGUIText::Draw(int x,int y,int w,int h)
 		for(i=0;i<m_llnum;++i)
 		{
 			lbptr=m_linelist.GetEntry(i);
-			cx=x;
 			switch(halign)
 			{
+			case FT_LEFT:
+				cx=x;
+			break;
 			case FT_CENTER:
-				cx+=((w-lbptr->pixwidth)/2);
+				cx=x+((w-lbptr->pixwidth)/2);
 			break;
 			case FT_RIGHT:
-				cx+=w-lbptr->pixwidth;
+				cx=x+(w-lbptr->pixwidth);
 			break;
 			}
 			DrawSection(lbptr->startindex,lbptr->endindex-lbptr->startindex,x,cx,cy,lbptr->pixheight);
@@ -1075,8 +1086,8 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 	/* this is the only draw call that looks at the valign and halign */
 	kGUIInputLineInfo *lbptr;
 	int i;
-	int halign=GetHAlign();
-	int cx;
+	FT_HALIGN halign=GetHAlign();
+	int cx=0;
 	int cy;
 	int lineheight=GetLineHeight()+2;
 	int numl;
@@ -1089,6 +1100,8 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 	cy=y;
 	switch(GetVAlign())
 	{
+	case FT_TOP:
+	break;
 	case FT_MIDDLE:
 		cy+=(h-((lineheight*numl)-2))/2;
 	break;
@@ -1099,14 +1112,16 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 
 	if(m_llnum<2)
 	{
-		cx=x;
 		switch(halign)
 		{
+		case FT_LEFT:
+			cx=x;
+		break;
 		case FT_CENTER:
-			cx+=((w-(int)GetWidth())/2);
+			cx=x+((w-(int)GetWidth())/2);
 		break;
 		case FT_RIGHT:
-			cx+=w-(int)GetWidth();
+			cx=x+(w-(int)GetWidth());
 		break;
 		}
 
@@ -1117,14 +1132,16 @@ void kGUIText::Draw(int x,int y,int w,int h,kGUIColor color)
 		for(i=0;i<m_llnum;++i)
 		{
 			lbptr=m_linelist.GetEntry(i);
-			cx=x;
 			switch(halign)
 			{
+			case FT_LEFT:
+				cx=x;
+			break;
 			case FT_CENTER:
-				cx+=((w-lbptr->pixwidth)/2);
+				cx=x+((w-lbptr->pixwidth)/2);
 			break;
 			case FT_RIGHT:
-				cx+=w-lbptr->pixwidth;
+				cx=x+(w-lbptr->pixwidth);
 			break;
 			}
 			DrawSection(lbptr->startindex,lbptr->endindex-lbptr->startindex,x,cx,cy,lbptr->pixheight,color);

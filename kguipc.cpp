@@ -279,6 +279,88 @@ void kGUISystemWin::Init(HINSTANCE hInstance,int nCmdShow)
 	kGUI::Trace(" Exited Main loop, program done.\n");
 }
 
+static int ConvertKey(int inkey,int defkey)
+{
+	int key=defkey;
+
+	switch (inkey)
+	{
+	case VK_HOME:
+		key=GUIKEY_HOME;
+	break;
+	case VK_END:
+		key=GUIKEY_END;
+	break;
+	case VK_LEFT:
+		key=GUIKEY_LEFT;
+	break;
+	case VK_RIGHT:
+		key=GUIKEY_RIGHT;
+	break;
+	case VK_UP:
+		key=GUIKEY_UP;
+	break;
+	case VK_DOWN:
+		key=GUIKEY_DOWN;
+	break;
+	case VK_PRIOR:
+		key=GUIKEY_PGUP;
+	break;
+	case VK_NEXT:
+		key=GUIKEY_PGDOWN;
+	break;
+	case VK_DELETE:
+		key=GUIKEY_DELETE;
+	break;
+	case VK_INSERT:
+		key=GUIKEY_INSERT;
+	break;
+	case VK_F1:
+		key=GUIKEY_F1;
+	break;
+	case VK_F2:
+		key=GUIKEY_F2;
+	break;
+	case VK_F3:
+		key=GUIKEY_F3;
+	break;
+	case VK_F4:
+		key=GUIKEY_F4;
+	break;
+	case VK_F5:
+		key=GUIKEY_F5;
+	break;
+	case VK_F6:
+		key=GUIKEY_F6;
+	break;
+	case VK_F7:
+		key=GUIKEY_F7;
+	break;
+	case VK_F8:
+		key=GUIKEY_F8;
+	break;
+	case VK_F9:
+		key=GUIKEY_F9;
+	break;
+	case VK_F10:
+		key=GUIKEY_F10;
+	break;
+	case VK_F11:
+		key=GUIKEY_F11;
+	break;
+	case VK_F12:
+		key=GUIKEY_F12;
+	break;
+	case 187:	//'ctrl +'
+		key=GUIKEY_CTRL_PLUS;
+	break;
+	case 189:	//'ctrl -'
+		key=GUIKEY_CTRL_MINUS;
+	break;
+	}
+	return(key);
+}
+
 //
 //  FUNCTION: Event(HWND, unsigned, WORD, LONG)
 //
@@ -454,84 +536,18 @@ LRESULT kGUISystemWin::Event(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			kGUI::KeyPressed(key);
 	break;
 	case WM_KEYDOWN:
-		key=0;
-		switch (wParam)
-		{
-		case VK_HOME:
-			key=GUIKEY_HOME;
-		break;
-		case VK_END:
-			key=GUIKEY_END;
-		break;
-		case VK_LEFT:
-			key=GUIKEY_LEFT;
-		break;
-		case VK_RIGHT:
-			key=GUIKEY_RIGHT;
-		break;
-		case VK_UP:
-			key=GUIKEY_UP;
-		break;
-		case VK_DOWN:
-			key=GUIKEY_DOWN;
-		break;
-		case VK_PRIOR:
-			key=GUIKEY_PGUP;
-		break;
-		case VK_NEXT:
-			key=GUIKEY_PGDOWN;
-		break;
-		case VK_DELETE:
-			key=GUIKEY_DELETE;
-		break;
-		case VK_INSERT:
-			key=GUIKEY_INSERT;
-		break;
-		case VK_F1:
-			key=GUIKEY_F1;
-		break;
-		case VK_F2:
-			key=GUIKEY_F2;
-		break;
-		case VK_F3:
-			key=GUIKEY_F3;
-		break;
-		case VK_F4:
-			key=GUIKEY_F4;
-		break;
-		case VK_F5:
-			key=GUIKEY_F5;
-		break;
-		case VK_F6:
-			key=GUIKEY_F6;
-		break;
-		case VK_F7:
-			key=GUIKEY_F7;
-		break;
-		case VK_F8:
-			key=GUIKEY_F8;
-		break;
-		case VK_F9:
-			key=GUIKEY_F9;
-		break;
-		case VK_F10:
-			key=GUIKEY_F10;
-		break;
-		case VK_F11:
-			key=GUIKEY_F11;
-		break;
-		case VK_F12:
-			key=GUIKEY_F12;
-		break;
-		case 187:	//'ctrl +'
-			key=GUIKEY_CTRL_PLUS;
-		break;
-		case 189:	//'ctrl -'
-			key=GUIKEY_CTRL_MINUS;
-		break;
-		}
+		key=ConvertKey((int)wParam,0);
 		if(key)
 			kGUI::KeyPressed(key);
+
+		key=ConvertKey((int)wParam,(int)wParam);
+		if(key)
+			kGUI::SetKeyState(key,true);
+	break;
+	case WM_KEYUP:
+		key=ConvertKey((int)wParam,(int)wParam);
+		if(key)
+			kGUI::SetKeyState(key,false);
 	break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

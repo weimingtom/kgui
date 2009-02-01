@@ -320,6 +320,22 @@ bool DataHandle::Open(void)
 	return(m_open);
 }
 
+void DataHandle::CheckWrite(void)
+{
+	assert(m_lock==false,"Error: file is locked!");
+	assert(m_open==false,"File is already open for read!");
+	assert(m_wopen==false,"File is already open for write!");
+	switch(m_type)
+	{
+	case DATATYPE_MEMORY:
+		assert(m_memory==0,"Error, only allocated memory type valid for writing!");
+	break;
+	case DATATYPE_FILE:
+		assert(m_fn.GetLen()!=0,"Error, filename not set!");
+	break;
+	}
+}
+
 bool DataHandle::OpenWrite(const char *wtype,unsigned long defbufsize)		/* write mode string "wb" or "rb+" etc */
 {
 	if(m_openmutex.TryLock()==false)

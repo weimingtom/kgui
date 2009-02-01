@@ -29,7 +29,7 @@ endif
 
 # don't use `:=' here since the path stuff will be included after this file
 #
-FTSYS_SRC = $(BUILD_DIR)/ftsystem.c
+FTSYS_SRC = $(BASE_DIR)/ftsystem.c
 
 INSTALL         := /usr/bin/install -c
 INSTALL_DATA    := ${INSTALL} -m 644

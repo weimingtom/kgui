@@ -58,13 +58,13 @@ LDFLAGS= -mwindows
 KGUILIB_INCLUDES = -I$(KGUILOC)
 KGUILIB_LIBPATHS=-L$(KGUILOC)$(TARGET_OBJDIR)$(TARGET_SUFFIX)/ -L$(KGUILOC)jpeg -L$(KGUILOC)lpng128 -L$(KGUILOC)zlib -L$(KGUILOC)freetype/objs/.libs
 KGUILIB_LIBS=-lkgui$(LIB_SUFFIX) -ljpeg -lpng -lfreetype
-KGUILIB_SYSLIBS=-lws2_32 -lwinspool -lz
+KGUILIB_SYSLIBS=-lws2_32 -lwinspool -lz -lwinmm
 
 KGUILIBDB_INCLUDES = -I"$(KGUILOC)mysql/include/"
 KGUILIBDB_LIBPATHS =-L/usr/lib/mysql/
 KGUILIBDB_LIBS =-lmysqlclient -lmysqld
 
-KGUILIBMOVIE_INCLUDES =
+KGUILIBMOVIE_INCLUDES = 
 KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
 KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
 

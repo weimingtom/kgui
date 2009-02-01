@@ -27,12 +27,15 @@ public:
 	void Init(unsigned int numrows,unsigned int numcols);
 	unsigned int GetNumCols(void) {return m_maxcols;}
 	unsigned int GetNumRows(void) {return m_numrows;}
+	unsigned int GetNumCols(int row) {return m_rows.GetEntry(row)->GetNumFields();}
 	void GetField(unsigned int row,unsigned int col,kGUIString *s) {m_rows.GetEntry(row)->GetField(col,s);}
 	void SetField(unsigned int row,unsigned int col,kGUIString *s) {m_rows.GetEntry(row)->SetField(col,s);}
 	kGUIString *GetFieldPtr(unsigned int row,unsigned int col) {return m_rows.GetEntry(row)->GetFieldPtr(col);}
+	void SetIgnoreEmpty(bool ie) {m_ignoreempty=ie;}
 	void SetSplit(const char *s) {m_split.SetString(s);}
 private:
 	kGUIString m_split;
+	bool m_ignoreempty;
 	unsigned int m_maxcols;
 	unsigned int m_numrows;
 	int m_encoding;

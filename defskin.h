@@ -59,6 +59,8 @@ SKIN_TICK,					/* tick for tickbox object */
 SKIN_TABLEFT,
 SKIN_TABCENTER,
 SKIN_TABRIGHT,
+SKIN_TABCLOSE,
+SKIN_TABCLOSE2,
 
 SKIN_SCROLLBARVERTTOP,
 SKIN_SCROLLBARVERTCENTER,
@@ -112,7 +114,7 @@ public:
 	void DrawBusy2(kGUICorners *c,int offset);
 	/* tab */
 	void GetTabSize(int *expand,int *left,int *right,int *height);
-	void DrawTab(kGUIText *text,int x,int y,bool current,bool over);
+	void DrawTab(int x,int y,int w,bool current,bool over,bool close);
 	/* Scrollbars */
 	void GetScrollbarSize(bool isvert,int *lt,int *br,int *wh);
 	void DrawScrollbar(bool isvert,kGUICorners *c,kGUICorners *sc,bool showends);

@@ -93,8 +93,13 @@ public:
 	const char *CacheName(const char *name);
 
 	/* item pool */
+#if 0
+	inline kGUIXMLItem *PoolGet(void) {return m_pool.Get();}
+	void PoolAdd(kGUIXMLItem *item) {m_pool.Release(item);for(unsigned int j=0;j<item->m_numchildren;++j){PoolAdd(item->m_children.GetEntry(j));}item->m_numchildren=0;item->m_parm=false;item->m_value.Clear();}
+#else
 	inline kGUIXMLItem *PoolGet(void) {if(!m_numinpool)return new kGUIXMLItem();return m_itempool.GetEntry(--m_numinpool);}
 	void PoolAdd(kGUIXMLItem *item) {m_itempool.SetEntry(m_numinpool++,item);for(unsigned int j=0;j<item->m_numchildren;++j){PoolAdd(item->m_children.GetEntry(j));}item->m_numchildren=0;item->m_parm=false;item->m_value.Clear();}
+#endif
 private:
 	kGUIXMLItem *StreamLoad(kGUIXMLItem *parent);	/* recursive call */
 	char *m_fd;
@@ -107,9 +112,12 @@ private:
 
 	DataHandle m_dh;
 	kGUIString m_tempstring;
-
+#if 0
+	ClassPool<kGUIXMLItem>m_pool;
+#else
 	unsigned int m_numinpool;
 	Array<kGUIXMLItem *>m_itempool;
+#endif
 };
 
 #endif

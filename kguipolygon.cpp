@@ -65,9 +65,6 @@ static kGUIPoint2 *pt;		/* vertices */
 static int nact;		/* number of active edges */
 static Edge *active;	/* active edge list:edges crossing scanline y */
 
-Array<int>kGUI::m_polysortint;
-Array<Edge>kGUI::m_polysortedge;
-
 #if 1
 /* if inputs are integers, then use these defines */
 #define xfloor
@@ -472,7 +469,7 @@ void kGUI::DrawFatLine(int x1,int y1,int x2,int y2,kGUIColor c,double radius,dou
 	ends[0].y=y1;
 	ends[1].x=x2;
 	ends[1].y=y2;
-	DrawFatPolyLine(2,ends,c,radius,alpha);
+	DrawFatPolyLine(3,2,ends,c,radius,alpha);
 }
 
 static double Diff(double h1,double h2)
@@ -494,7 +491,7 @@ static double Cross(kGUIPoint2 *p1,kGUIPoint2 *p2,kGUIPoint2 *p3)
 
 /* convert to a polygon then draw using the poly code */
 
-void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha)
+void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha)
 {
 #if 1
 	unsigned int i,j,numep,numinsidepoints,numcp,pass;
@@ -506,6 +503,7 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 	kGUIPoint2 *p1;
 	kGUIPoint2 *p2;
 	kGUIPoint2 *op;
+	unsigned int ceb=1;
 
 	/* last point */
 	numinsidepoints=nvert-2;
@@ -527,17 +525,21 @@ void kGUI::DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,doub
 	for(pass=0;pass<2;++pass)
 	{
 		/* build curved end for first point */
-		h=(heading-(PI/2));
-		for(i=0;i<numep;++i)
+		if(ce&ceb)
 		{
-			if(!pass)
-				Proj(op,p1->x,p1->y,radius,h);
-			else
-				Proj(op,p2->x,p2->y,radius,h);
-			++op;
-			++numout;
-			h+=estep;
+			h=(heading-(PI/2));
+			for(i=0;i<numep;++i)
+			{
+				if(!pass)
+					Proj(op,p1->x,p1->y,radius,h);
+				else
+					Proj(op,p2->x,p2->y,radius,h);
+				++op;
+				++numout;
+				h+=estep;
+			}
 		}
+		ceb<<=1;
 
 		/* ok, generate top edge */
 		for(j=0;j<numinsidepoints;++j)
@@ -803,3 +805,51 @@ bool kGUI::PointInsidePoly(double px,double py,int nvert,kGUIDPoint2 *point)
 	}
 	return (odd);
 }
+
+/* draw circle with alpha blending */
+void kGUI::DrawCircle(int x,int y,int r,kGUIColor color,double alpha)
+{
+	int i;
+	kGUIPoint2 points[360+1];
+
+	if(OffClip(x-r,y-r,x+r,y+r)==true)
+		return;
+
+	for(i=0;i<=360;++i)
+	{
+		points[i].x=x+(int)(r*sin(i*(3.141592654f/180.0f)));
+		points[i].y=y+(int)(r*cos(i*(3.141592654f/180.0f)));
+	}
+
+	if(alpha==1.0f)
+		kGUI::DrawPoly(360+1,points,color);
+	else
+		kGUI::DrawPoly(360+1,points,color,alpha);
+}
+
+/* draw rect with alpha blending */
+void kGUI::DrawCircleOutline(int x,int y,int r,int thickness,kGUIColor color,double alpha)
+{
+	int i,r2;
+	kGUIPoint2 points[360+1+360+1];
+
+	if(OffClip(x-r,y-r,x+r,y+r)==true)
+		return;
+
+	r2=r-thickness;
+	for(i=0;i<=360;++i)
+	{
+		points[i].x=x+(int)(r*sin(i*(3.141592654f/180.0f)));
+		points[i].y=y+(int)(r*cos(i*(3.141592654f/180.0f)));
+
+		points[361+(360-i)].x=x+(int)(r2*sin(i*(3.141592654f/180.0f)));
+		points[361+(360-i)].y=y+(int)(r2*cos(i*(3.141592654f/180.0f)));
+
+	}
+
+	if(alpha==1.0f)
+		kGUI::DrawPoly(360+1+360+1,points,color);
+	else
+		kGUI::DrawPoly(360+1+360+1,points,color,alpha);
+}
+

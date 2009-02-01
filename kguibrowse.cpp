@@ -30,6 +30,8 @@
    movies. The reason it is seperate is that the movie player is very large so    
    this way you can decide to include it or not. */
 
+//using namespace kguibrowselocal;
+
 #include "kgui.h"
 #include "kguibrowse.h"
 #include "_text.h"
@@ -95,6 +97,10 @@ private:
 
 	/* draw options */
 
+	/* load images */
+	kGUITextObj m_loadimagescaption;
+	kGUITickBoxObj m_loadimages;
+
 	/* use CSS */
 	kGUITextObj m_usecsscaption;
 	kGUITickBoxObj m_usecss;
@@ -125,6 +131,10 @@ private:
 	kGUITextObj m_printmediacaption;
 	kGUIComboBoxObj m_printmedia;
 
+	/* color simulator to use */
+	kGUITextObj m_colormodecaption;
+	kGUIComboBoxObj m_colormode;
+
 	kGUIButtonObj m_clear;
 	kGUIButtonObj m_set;
 	kGUIButtonObj m_toggle;
@@ -132,9 +142,9 @@ private:
 	kGUITableObj m_csstable;
 };
 
-void PageInfo::Set(const char *url,const char *post,const char *referer,const char *source,const char *header)
+void HistoryRecord::Set(const char *url,const char *post,const char *referer,const char *source,const char *header)
 {
-	/* title defaults to URL and is then replaced if there is a valud title in the html page */
+	/* title defaults to URL and is then replaced if there is a valid title in the html page */
 	m_title.SetString(url);
 	m_url.SetString(url);
 	m_post.SetString(post);
@@ -145,6 +155,7 @@ void PageInfo::Set(const char *url,const char *post,const char *referer,const ch
 
 enum
 {
+MAINMENU_NEWTAB,
 MAINMENU_VIEWPAGESOURCE,
 MAINMENU_VIEWCORRECTEDPAGESOURCE,
 MAINMENU_VIEWPOSTDATA,
@@ -168,6 +179,7 @@ BOOKMARK_BOOKMARKS
 };
 
 static const char *mainmenutxt[]={
+	"New Tab",
 	"View Page Source",
 	"View Corrected Page Source",
 	"View Post Data",
@@ -182,12 +194,93 @@ static const char *mainmenutxt[]={
 	"View Cookies",
 	"Settings"};
 
+/* colorblind simulator modes */
+
+typedef struct
+{
+	const char *name;
+	double rr;
+	double rg;
+	double rb;
+	double gr;
+	double gg;
+	double gb;
+	double br;
+	double bg;
+	double bb;
+}COLOR_MATRIX;
+
+static const COLOR_MATRIX colormatrix[]={
+	{"Normal",			1.0f,	0.0f,	0.0f,	0.0f,	1.0f,	0.0f,	0.0f,	0.0f,	1.0f},
+	{"Protanopia",		0.567f,	0.433f,	0.0f,	0.558f,	0.442f,	0.0f,	0.0f,	0.242f,	0.758f},
+	{"Protanomaly",		0.817f,	0.183f,	0.0f,	0.333f,	0.667f,	0.0f,	0.0f,	0.125f,	0.875f},
+	{"Deuteranopia",	0.625f,	0.375f,	0.0f,	0.7f,	0.3f,	0.0f,	0.0f,	0.3f,	0.7f},
+	{"Deuteranomaly",	0.8f,	0.2f,	0.0f,	0.258f,	0.742f,	0.0f,	0.0f,	0.142f,	0.858f},
+	{"Tritanopia",		0.95f,	0.05f,	0.0f,	0.0f,	0.433f,	0.567f,	0.0f,	0.475f,	0.525f},
+	{"Tritanomaly",		0.967f,	0.033f,	0.0f,	0.0f,	0.733f,	0.267f,	0.0f,	0.183f,	0.817f},
+	{"Achromatopsia",	0.299f,	0.587f,	0.114f,	0.299f,	0.587f,	0.114f,	0.299f,	0.587f,	0.114f},
+	{"Achromatomaly",	0.618f,	0.320f,	0.062f,	0.163f,	0.775f,	0.062f,	0.163f,	0.320f,	0.516f}};
+
+void kGUITabBrowseIcon::Dirty(void)
+{
+	m_tabobj->DirtyTab(m_tabnum);
+}
+
+void kGUIBrowseTabObj::DrawTab(int tabindex,kGUIText *text,int x,int y)
+{
+	kGUICorners c;
+
+	if(m_icons.GetEntryPtr(tabindex)->GetIsValid())
+		m_icons.GetEntryPtr(tabindex)->Draw(x,y-2);	
+
+	/* if text is really long then we need to clip it */
+	kGUI::PushClip();
+	c.lx=x;
+	c.rx=x+BROWSETABWIDTH;
+	c.ty=y;
+	c.by=y+text->GetLineHeight();
+	kGUI::ShrinkClip(&c);
+	text->Draw(x+20,y,0,0);
+	kGUI::PopClip();
+}
+
+
+TabRecord::TabRecord()
+{
+	m_curdl=0;
+	m_histindex=0;
+	m_histend=0;
+	m_iconvalid=false;
+	m_reposition=false;
+	m_reparse=false;
+}
+
+HistoryRecord *TabRecord::NextPage(void)
+{
+	int i;
+	HistoryRecord *pi;
+
+	if(m_histindex==MAXPAGES)
+	{
+		/* scroll pages down and throw away oldest */
+		for(i=0;i<(MAXPAGES-1);++i)
+			m_history[i].Copy(&m_history[i+1]);
+
+		/* use last available page */
+		pi=&m_history[MAXPAGES-1];
+	}
+	else
+		pi=&m_history[m_histindex++];
+
+	m_histend=m_histindex;
+	return(pi);
+}
+
 kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 {
-	m_screenpage.SetSettings(settings);
-	m_screenpage.SetItemCache(settings->GetItemCache());
-	m_screenpage.SetVisitedCache(settings->GetVisitedCache());
-	m_screenpage.SetAuthHandler(&m_ah);
+	m_numdlactive=0;
+	m_dlactive.Init(4,4);
+//	m_dlpool.SetBlockSize(8);
 
 	m_printpage.SetSettings(settings);
 	m_printpage.SetItemCache(settings->GetItemCache());
@@ -195,10 +288,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_printpage.SetAuthHandler(&m_ah);
 
 	m_settings=settings;
-	m_pageindex=0;
-	m_pageend=0;
-	m_numplugins=0;
-	m_plugins.Init(4,4);
+	m_tabrecords.Init(4,1);
 	m_iconvalid=false;
 
 	SetNumGroups(1);
@@ -310,13 +400,13 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_browsecontrols.AddObjects(2,&m_urlcaption,&m_url);
 	m_browsecontrols.NextLine();
 
-	m_referercaption.SetPos(0,0);
-	m_referercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
-	m_referercaption.SetFontID(SMALLCAPTIONFONT);
-	m_referercaption.SetString("Referrer");
+//	m_referercaption.SetPos(0,0);
+//	m_referercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
+//	m_referercaption.SetFontID(SMALLCAPTIONFONT);
+//	m_referercaption.SetString("Referrer");
 
-	m_referer.SetPos(0,15);
-	m_referer.SetSize(800,20);
+//	m_referer.SetPos(0,15);
+//	m_referer.SetSize(800,20);
 
 	m_busyimage.SetPos(0,0);
 	m_busyimage.SetFilename("_busy.gif");
@@ -341,33 +431,199 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_linkurl.SetSize(400,20);
 	m_browsecontrols.AddObjects(2,&m_linkcaption,&m_linkurl);
 
-	/* tell html renderer where to put the link under the mouse */
-	m_screenpage.SetDrawLinkUnder(&m_linkurl);			
-
 	AddObject(&m_browsecontrols);
 
-	m_screenpage.SetPos(0,m_browsecontrols.GetZoneH());
+	m_tabs.SetPos(0,m_browsecontrols.GetZoneH());
 	h-=m_browsecontrols.GetZoneH();
-	m_screenpage.SetSize(w,h);
-	m_screenpage.SetClickCallback(this,CALLBACKNAME(Click));
-//	m_screenpage.SetIconCallback(&m_url,CALLBACKCLASSNAME(kGUIOffsetInputBoxObj,SetIcon));
-	m_screenpage.SetIconCallback(this,CALLBACKNAME(SetIcon));
-	AddObject(&m_screenpage);
+	m_tabs.SetSize(w,h);
 
+	m_curtab=0;
+	m_numtabs=1;
+	m_tabs.SetAllowClose(true);
+	m_tabs.SetNumTabs(1);
+	m_tabs.SetTabName(0,"(untitled)");
+	m_tabs.SetEventHandler(this,CALLBACKNAME(TabChanged));
+	AddObject(&m_tabs);
+
+	/* apply settings to the default page */
+	InitTabRecord(m_tabrecords.GetEntryPtr(0));
+	m_curscreenpage=m_tabrecords.GetEntryPtr(0)->GetScreenPage();
+	m_tabs.AddObject(m_curscreenpage);
+
+	UpdateButtons();
+	kGUI::AddEvent(this,CALLBACKNAME(Update));
+}
+
+void kGUIBrowseObj::InitTabRecord(TabRecord *tr)
+{
+	HTMLPageObj *hp;
+
+	hp=tr->GetScreenPage();
+	hp->SetSettings(m_settings);
+	hp->SetItemCache(m_settings->GetItemCache());
+	hp->SetVisitedCache(m_settings->GetVisitedCache());
+	hp->SetAuthHandler(&m_ah);
+	hp->SetPlugins(&m_plugins);
+
+	hp->SetDrawLinkUnder(&m_linkurl);			
+	hp->SetPos(0,0);
+	hp->SetSize(m_tabs.GetChildZoneW(),m_tabs.GetChildZoneH()-m_tabs.GetTabRowHeight());
+
+	hp->SetClickCallback(this,CALLBACKNAME(Click));
+	hp->SetIconCallback(this,CALLBACKNAME(SetIcon));
+}
+
+void kGUIBrowseObj::RePosition(bool rp)
+{
+	unsigned int i;
+	TabRecord *tabrecord;
+	HTMLPageObj *screenpage;
+
+	/* resize the tab object then resize all the children */
+	m_tabs.SetSize(GetChildZoneW(),GetChildZoneH()-m_tabs.GetZoneY());
+
+	for(i=0;i<m_numtabs;++i)
+	{
+		tabrecord=m_tabrecords.GetEntryPtr(i);
+		screenpage=&tabrecord->m_screenpage;
+
+		screenpage->SetSize(m_tabs.GetChildZoneW(),m_tabs.GetChildZoneH()-m_tabs.GetTabRowHeight());
+		/* resize the current page now, other pages will be resized when TabChanged is trigerred */
+		if(i==m_curtab)
+			screenpage->RePosition(rp);
+		else
+		{
+			tabrecord->m_reposition=true;
+			if(rp)	/* don't clear if already set */
+				tabrecord->m_reparse=rp;
+		}
+	}
+}
+
+void kGUIBrowseObj::SetIcon(kGUIHTMLPageObj *page,DataHandle *dh)
+{
+	unsigned int t;
+	TabRecord *tr;
+
+	/* find the tab since it might not be the current one anymore */
+	for(t=0;t<m_numtabs;++t)
+	{
+		tr=m_tabrecords.GetEntryPtr(t);
+		if(&tr->m_screenpage==page)
+		{
+			/* got it! */
+			tr->SetIcon(true,dh);
+			m_tabs.SetIcon(t,dh);
+
+			/* set the icon on the URL input box */
+			if(t==m_curtab)
+			{
+				m_icon.Copy(dh);
+				m_iconvalid=m_url.SetIcon(dh);
+
+				if(m_iconvalid==false)
+				{
+					//make it an empty datahandle if image is not valid
+					m_icon.OpenWrite("wb");
+					m_icon.Close();
+				}
+			}
+			return;
+		}
+	}
+	assert(false,"Should Never Get Here!");
+}
+
+void kGUIBrowseObj::NewTab(void)
+{
+	unsigned int i;
+	int curtab=m_tabs.GetCurrentTab();
+
+	/* save prev URL string, set new URL string */
+	m_tabrecords.GetEntryPtr(curtab)->m_urlstring.SetString(&m_url);
+	m_url.Clear();
+	/* save prev icon, clear new ICON */
+	m_tabrecords.GetEntryPtr(curtab)->SetIcon(m_iconvalid,&m_icon);
+	m_iconvalid=false;
+	m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
+
+	/* add new tab */
+	++m_numtabs;
+	m_tabs.SetNumTabs(m_numtabs);
+	m_tabs.SetTabName(m_numtabs-1,"(Untitled)");
+
+	m_curscreenpage=m_tabrecords.GetEntryPtr(m_numtabs-1)->GetScreenPage();
+	InitTabRecord(m_tabrecords.GetEntryPtr(m_numtabs-1));
+
+	/* when we change the number of tabs, the tab code re-inits the child object in each tab */
+	/* so we need to re-attach all the previous tab pages */
+	for(i=0;i<m_numtabs;++i)
+	{
+		m_tabs.SetCurrentTab(i);
+		m_tabs.AddObject(m_tabrecords.GetEntryPtr(i)->GetScreenPage());
+	}
+	m_tabs.SetCurrentTab(m_numtabs-1);
+	m_curtab=m_numtabs-1;
+//	m_tabs.AddObject(m_curscreenpage);
+
+	/* update the forward/backward etc. buttons */
 	UpdateButtons();
 }
 
-void kGUIBrowseObj::SetIcon(DataHandle *dh)
+void kGUIBrowseObj::CloseTab(void)
 {
-	m_icon.Copy(dh);
-	m_iconvalid=m_url.SetIcon(dh);
+	unsigned int i;
+	TabRecord *tr;
+	HistoryRecord *hr;
 
-	if(m_iconvalid==false)
+	/* if this page already has a pending load then flag is as to be ignored */
+	StopLoad();
+
+	/* delete this tabrecord entry */
+	tr=m_tabrecords.GetEntryPtr(m_curtab);
+	m_tabrecords.DeleteEntry(m_curtab,true);
+	--m_numtabs;
+
+	/* if no tabs then open a single untitled one */
+	if(!m_numtabs)
 	{
-		//make it an empty datahandle if image is not valid
-		m_icon.OpenWrite("wb");
-		m_icon.Close();
+		m_numtabs=1;
+		m_tabs.SetNumTabs(m_numtabs);
+		m_tabs.SetTabName(m_numtabs-1,"(Untitled)");
+		m_curtab=0;
+		InitTabRecord(m_tabrecords.GetEntryPtr(0));
+		m_curscreenpage=m_tabrecords.GetEntryPtr(0)->GetScreenPage();
+		m_tabs.AddObject(m_curscreenpage);
 	}
+	else
+	{
+		if(m_curtab==m_numtabs)
+			--m_curtab;
+
+		/* when we change the number of tabs, the tab code re-inits the child object in each tab */
+		/* so we need to re-attach all the previous tab pages */
+		m_tabs.SetNumTabs(m_numtabs);
+		for(i=0;i<m_numtabs;++i)
+		{
+			tr=m_tabrecords.GetEntryPtr(i);
+			m_tabs.SetCurrentTab(i);
+			hr=tr->GetCurHist();
+			if(hr)
+				m_tabs.SetTabName(i,hr->GetTitle());
+			else
+				m_tabs.SetTabName(i,"(untitled)");
+			m_tabs.SetIcon(i,&tr->m_icon);
+			m_tabs.AddObject(m_tabrecords.GetEntryPtr(i)->GetScreenPage());
+		}
+		m_tabs.SetCurrentTab(m_curtab);
+
+		tr=m_tabrecords.GetEntryPtr(m_curtab);
+		m_url.SetString(&tr->m_urlstring);
+		m_curscreenpage=&tr->m_screenpage;
+	}
+
+	/* update the forward/backward etc. buttons */
+	UpdateButtons();
 }
 
 void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
@@ -376,10 +632,23 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 	{
 	case EVENT_ENTER:
 	{
-		/* populate the bookmarks menu */
+		/* enable the necessary menus and populate the bookmarks menu */
 		unsigned int i;
 		unsigned int numbookmarks;
 		kGUIImageObj *icon;
+		HistoryRecord *hist=GetCurHist();
+
+		m_menu.SetEntryEnable(MAINMENU_VIEWPAGESOURCE,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWCORRECTEDPAGESOURCE,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWPOSTDATA,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWHEADER,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWSCRIPTSOURCE,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWCSS,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWCORRECTEDCSS,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWERRORS,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_VIEWMEDIA,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_TRACELAYOUT,hist!=0);
+		m_menu.SetEntryEnable(MAINMENU_TRACEDRAW,hist!=0);
 
 		if(m_settings)
 		{
@@ -406,16 +675,22 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 	case EVENT_SELECTED:
 		switch(event->m_value[0].i)
 		{
+		case MAINMENU_NEWTAB:
+			NewTab();
+		break;
 		case MAINMENU_VIEWPAGESOURCE:
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Page Source '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,&m_source);
+			title.Sprintf("Page Source '%s'",hist->GetTitle()->GetString());
+
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,hist->GetSource());
 		}
 		break;
 		case MAINMENU_VIEWCORRECTEDPAGESOURCE:
@@ -423,12 +698,14 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 			kGUIString correctedsource;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Corrected Page Source '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
+			title.Sprintf("Corrected Page Source '%s'",hist->GetTitle()->GetString());
 
-			m_screenpage.GetCorrectedSource(&correctedsource);
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
+			m_curscreenpage->GetCorrectedSource(&correctedsource);
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
 								&title,&correctedsource);
 		}
 		break;
@@ -436,36 +713,43 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Post Data '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
+			title.Sprintf("Post Data '%s'",hist->GetTitle()->GetString());
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,&m_post);
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,hist->GetPost());
 		}
 		break;
 		case MAINMENU_VIEWHEADER:
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Header '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
+			title.Sprintf("Header '%s'",hist->GetTitle()->GetString());
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,&m_header);
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,hist->GetHeader());
 		}
 		break;
 		case MAINMENU_VIEWSCRIPTSOURCE:
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Page Scripts '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_screenpage.GetScripts());
+			title.Sprintf("Page Scripts '%s'",hist->GetTitle()->GetString());
+
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,m_curscreenpage->GetScripts());
 		}
 		break;
 		case MAINMENU_VIEWCSS:
@@ -473,14 +757,17 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 			kGUIString source;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Page CSS '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			m_screenpage.GetCSS(&source);
+			title.Sprintf("Page CSS '%s'",hist->GetTitle()->GetString());
+
+			m_curscreenpage->GetCSS(&source);
 			source.Replace("}","}\n");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
 								&title,&source);
 		}
 		break;
@@ -489,14 +776,17 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			ViewSource *vs;
 			kGUIString title;
 			kGUIString source;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Corrected Page CSS '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			m_screenpage.GetCorrectedCSS(&source);
+			title.Sprintf("Corrected Page CSS '%s'",hist->GetTitle()->GetString());
+
+			m_curscreenpage->GetCorrectedCSS(&source);
 			source.Replace("}","}\n");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
 								&title,&source);
 		}
 		break;
@@ -504,24 +794,30 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Page Errors '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_screenpage.GetErrors());
+			title.Sprintf("Page Errors '%s'",hist->GetTitle()->GetString());
+
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,m_curscreenpage->GetErrors());
 		}
 		break;
 		case MAINMENU_VIEWMEDIA:
 		{
 			ViewSource *vs;
 			kGUIString title;
+			HistoryRecord *hist=GetCurHist();
 
-			title.Sprintf("Page Media '%s'",m_screenpage.GetTitle()->GetString());
+			assert(hist!=0,"Error, Menu should not have allowed this!");
 
-			vs=new ViewSource(	(int)(kGUI::GetScreenWidth()*0.75),
-								(int)(kGUI::GetScreenHeight()*0.75),
-								&title,m_screenpage.GetMedia());
+			title.Sprintf("Page Media '%s'",hist->GetTitle()->GetString());
+
+			vs=new ViewSource(	(int)(GetZoneW()*0.75),
+								(int)(GetZoneH()*0.75),
+								&title,m_curscreenpage->GetMedia());
 		}
 		break;
 		case MAINMENU_VIEWCOOKIES:
@@ -533,10 +829,10 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		}
 		break;
 		case MAINMENU_TRACELAYOUT:
-			m_screenpage.TraceLayout();
+			m_curscreenpage->TraceLayout();
 		break;
 		case MAINMENU_TRACEDRAW:
-			m_screenpage.TraceDraw();
+			m_curscreenpage->TraceDraw();
 		break;
 		case MAINMENU_SETTINGS:
 		{
@@ -544,17 +840,19 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 
 			/* view / edit settings for browser */
 			vs=new ViewSettings(this,
-					(int)(kGUI::GetScreenWidth()*0.75),
-					(int)(kGUI::GetScreenHeight()*0.75));
+					(int)(GetZoneW()*0.75),
+					(int)(GetZoneH()*0.75));
 		}
 		break;
 		case BOOKMARK_ADDBOOKMARK:
 		{
-			PageInfo *p;
+			HistoryRecord *p=m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();
 			
-			p=m_pages+m_pageindex-1;
 			if(p->GetURL()->GetLen())
+			{
 				m_settings->AddBookmark(p->GetTitle(),p->GetURL(),&m_icon);
+				SettingsChanged();
+			}
 		}
 		break;
 		case BOOKMARK_EDITBOOKMARK:
@@ -570,16 +868,16 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		{
 			/* goto bookmark */
 			kGUIBookmark *bookmark;
-			PageInfo *p;
+			HistoryRecord *hist;
 
 			SaveCurrent();
 
 			bookmark=m_settings->GetBookmark(event->m_value[0].i-BOOKMARK_BOOKMARKS);
 
-			p=NextPage();
+			hist=NextPage();
 			m_url.SetString(bookmark->GetURL());
-			p->Set(bookmark->GetURL()->GetString(),0,0,0,0);
-			p->SetScrollY(0);
+			hist->Set(bookmark->GetURL()->GetString(),0,0,0,0);
+			hist->SetScrollY(0);
 
 			Load();
 		}
@@ -591,52 +889,42 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 
 kGUIBrowseObj::~kGUIBrowseObj()
 {
+	/* todo: wait for all pending downloads to finish */
+	kGUI::DelEvent(this,CALLBACKNAME(Update));
 }
 
 /* return pointer to next page buffer, if full, then scroll buffers back */
 
-PageInfo *kGUIBrowseObj::NextPage(void)
+HistoryRecord *kGUIBrowseObj::NextPage(void)
 {
-	int i;
-	PageInfo *pi;
+	HistoryRecord *pi;
 
-	if(m_pageindex==MAXPAGES)
-	{
-		/* scroll pages down and throw away oldest */
-		for(i=0;i<(MAXPAGES-1);++i)
-			m_pages[i].Copy(&m_pages[i+1]);
-
-		/* use last available page */
-		pi=&m_pages[MAXPAGES-1];
-	}
-	else
-		pi=&m_pages[m_pageindex++];
-
-	m_pageend=m_pageindex;
+	pi=m_tabrecords.GetEntryPtr(m_curtab)->NextPage();
 	UpdateButtons();
 	return(pi);
 }
 
 void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header)
 {
-	PageInfo *p=NextPage();
+	HistoryRecord *hist=NextPage();
 
-	p->SetScrollY(0);
+	hist->SetScrollY(0);
 
 	if(source)
 	{
-		p->Set(url->GetString(),0,0,source->GetString(),header?header->GetString():0);
+		hist->Set(url->GetString(),0,0,source->GetString(),header?header->GetString():0);
 		Goto();
 	}
 	else
 	{
-		p->Set(url->GetString(),0,0,0,0);
-		p->SetScrollY(0);
+		hist->Set(url->GetString(),0,0,0,0);
+		hist->SetScrollY(0);
+		hist->SetType(type);
+		hist->SetHeader(header);
+		hist->SetType(type);
+		hist->SetReferer(url);
 
-		m_type.SetString(type);
-		m_header.SetString(header);
 		m_url.SetString(url);
-		m_referer.SetString(url);
 
 		Load();
 	}
@@ -644,29 +932,45 @@ void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *typ
 
 void kGUIBrowseObj::UpdateButtons(void)
 {
-	m_back.SetEnabled(m_pageindex>1);
-	m_refresh.SetEnabled(m_pageindex>0);
-	m_refresh2.SetEnabled(m_pageindex>0);
-	m_print.SetEnabled(m_pageindex>0);
-	m_forward.SetEnabled(m_pageindex<m_pageend);
+	TabRecord *tr=m_tabrecords.GetEntryPtr(m_curtab);
+	HistoryRecord *hist=GetCurHist();
+
+	m_back.SetEnabled(tr->m_histindex>1);
+	m_refresh.SetEnabled(tr->m_histindex>0);
+	m_refresh2.SetEnabled(tr->m_histindex>0);
+	m_print.SetEnabled(tr->m_histindex>0);
+	m_forward.SetEnabled(tr->m_histindex<tr->m_histend);
+	
+	if(hist==0)
+		m_lock.SetImage(&m_unlockedimage);
+	else if(hist->GetSecure()==true)
+		m_lock.SetImage(&m_lockedimage);
+	else
+		m_lock.SetImage(&m_unlockedimage);
+
+	/* update the busy anim icon based on the current tabs download status */
+	m_busyimage.SetAnimate(tr->m_curdl!=0);
+	if(tr->m_curdl==0)
+	{
+		m_status.SetString("Done");
+		m_curscreenpage->SetStatusLine(&m_status);	/* allow writing again... */
+	}
+	else
+	{
+		m_curscreenpage->SetStatusLine(0);	/* stop page from overwriting */
+		m_status.SetString("Loading");
+	}
+	m_pagechangedcallback.Call();
 }
 
 void kGUIBrowseObj::Goto(void)
 {
-	PageInfo *p=m_pages+m_pageindex-1;
+	HistoryRecord *hist=GetCurHist();
 	const char *cp;
 	kGUIString llname;
 
-	m_url.SetString(p->GetURL());
-	m_referer.SetString(p->GetReferer());
-	m_post.SetString(p->GetPost());
-	m_source.SetString(p->GetSource());
-	m_type.SetString(p->GetType());
-	m_header.SetString(p->GetHeader());
-	if(p->GetSecure()==true)
-		m_lock.SetImage(&m_lockedimage);
-	else
-		m_lock.SetImage(&m_unlockedimage);
+	//todo remove most of this stuff
+	m_url.SetString(hist->GetURL());
 
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
 
@@ -675,20 +979,20 @@ void kGUIBrowseObj::Goto(void)
 	if(cp)
 		llname.SetString(cp+1);
 
-	m_screenpage.SetTarget(&llname);
-	m_screenpage.SetMedia(GetSettings()->GetScreenMedia());
-	m_screenpage.SetSource(&m_url,&m_source,&m_type,&m_header);
-	m_screenpage.LoadInput(p->GetInput());			/* overwrite any form inputs with previous input */
-	m_debug.SetString(m_screenpage.GetDebug());
+	m_curscreenpage->SetTarget(&llname);
+	m_curscreenpage->SetMedia(GetSettings()->GetScreenMedia());
+	m_curscreenpage->SetSource(hist->GetURL(),hist->GetSource(),hist->GetType(),hist->GetHeader());
+	m_curscreenpage->LoadInput(hist->GetInput());			/* overwrite any form inputs with previous input */
+	m_debug.SetString(m_curscreenpage->GetDebug());
 
 	/* only if window currently has vertical scrollbars */
 	/* is there a local link appended to the URL? */
-	if(llname.GetLen() && m_screenpage.GetHasVertScrollBars()==true)
+	if(llname.GetLen() && m_curscreenpage->GetHasVertScrollBars()==true)
 	{
 		kGUIObj *topobj;
 		int currenty;
 
-		topobj=m_screenpage.LocateLocalLink(&llname);
+		topobj=m_curscreenpage->LocateLocalLink(&llname);
 		if(topobj)
 		{
 			kGUICorners c1;
@@ -696,20 +1000,24 @@ void kGUIBrowseObj::Goto(void)
 
 			/* scroll down to the top object */
 			topobj->GetCorners(&c2);
-			m_screenpage.GetCorners(&c1);
+			m_curscreenpage->GetCorners(&c1);
 
-			currenty=m_screenpage.GetScrollY();
-			m_screenpage.SetScrollY(currenty+(c2.ty-c1.ty));
+			currenty=m_curscreenpage->GetScrollY();
+			m_curscreenpage->SetScrollY(currenty+(c2.ty-c1.ty));
 		}
 	}
 	else
-		m_screenpage.SetScrollY(p->GetScrollY());
-	m_screenpage.Dirty();
+		m_curscreenpage->SetScrollY(hist->GetScrollY());
+	m_curscreenpage->Dirty();
 
 	/* save title of page so if user right clicks on go forward or goback buttons then ir shows title instead of URL */
-	if(m_screenpage.GetTitle()->GetLen())
-		p->SetTitle(m_screenpage.GetTitle());
+	if(m_curscreenpage->GetTitle()->GetLen())
+	{
+		hist->SetTitle(m_curscreenpage->GetTitle());
 
+		/* set the tab title too */
+		m_tabs.SetTabName(m_tabs.GetCurrentTab(),hist->GetTitle());
+	}
 	/* tell window to change title */
 	m_pagechangedcallback.Call();
 
@@ -718,54 +1026,94 @@ void kGUIBrowseObj::Goto(void)
 
 void kGUIBrowseObj::SaveCurrent(void)
 {
-	PageInfo *p;
-	kGUIString input;
+	HistoryRecord *hist;
 
 	/* save old scroll position and save user input on the page */
-	p=m_pages+(m_pageindex-1);
-	p->SetScrollY(m_screenpage.GetScrollY());
-	if(p->GetInput())
-		m_screenpage.SaveInput(p->GetInput());
+	hist=m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();
+	if(hist)
+	{
+		hist->SetScrollY(m_curscreenpage->GetScrollY());
+		if(hist->GetInput())
+			m_curscreenpage->SaveInput(hist->GetInput());
+	}
 }
 
-void kGUIBrowseObj::Click(kGUIString *url,kGUIString *referrer,kGUIString *post)
+void kGUIBrowseObj::Click(kGUIHTMLClickInfo *info)
 {
-	PageInfo *p;
+	HistoryRecord *hist;
+
 	SaveCurrent();
+	if(info->m_newtab)
+		NewTab();
 
-	/* NOTE: referrer and post can both be null! */
+	m_url.SetString(info->m_url);
 
-	if(referrer)
-		m_referer.SetString(referrer);
-	else
-		m_referer.SetString(m_url.GetString());
-
-	m_url.SetString(url);
-	if(post)
-		m_post.SetString(post);
-	else
-		m_post.Clear();
-
-	p=NextPage();
-	p->Set(m_url.GetString(),m_post.GetString(),m_referer.GetString(),0,0);
-	p->SetScrollY(0);
-	p->GetInput()->Reset();
+	hist=NextPage();
+	hist->SetURL(info->m_url);
+	hist->SetPost(info->m_post);
+	hist->SetReferer(info->m_referrer);
+//	hist->Set(m_url.GetString(),m_post.GetString(),m_referer.GetString(),0,0);
+	hist->SetScrollY(0);
+	hist->GetInput()->Reset();
 
 	Load();
+}
+
+void kGUIBrowseObj::Update(void)
+{
+	unsigned int i;
+	DownloadPageRecord *dle;
+
+	/* scan the download pool for active items that are now done */
+
+	i=0;
+	while(i<m_numdlactive)
+	{
+		dle=m_dlactive.GetEntry(i);
+
+		/* is this still active ? */
+		if(dle->m_dl.GetAsyncActive()==true)
+			++i;
+		else
+		{
+			if(dle->m_tabrecord)
+				PageLoaded(dle,dle->m_dl.GetStatus());
+			else
+				delete dle;
+
+			m_dlactive.DeleteEntry(i,1);
+			--m_numdlactive;
+		}
+	}
+}
+
+void kGUIBrowseObj::StopLoad(void)
+{
+	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
+	DownloadPageRecord *dle;
+
+	/* if this page already has a pending load then flag is as to be ignored */
+	dle=tabrecord->m_curdl;
+	if(dle)
+	{
+		tabrecord->m_curdl=0;
+		dle->m_tabrecord=0;
+	}
 }
 
 void kGUIBrowseObj::Load(void)
 {
 	kGUIString url;
 	const char *cp;
+	DownloadPageRecord *dle;
+	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
+	HistoryRecord *hist=GetCurHist();
 
 	m_iconvalid=false;
 	m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
-	if(m_dl.GetAsyncActive()==true)
-	{
-		m_dl.Abort();
-		m_dl.WaitFinished();
-	}
+
+	/* if this page already has a pending load then flag is as to be ignored */
+	StopLoad();
 
 	/* is there a partial page offet? ie: "page.html#aaaaa" */ 
 	url.SetString(&m_url);
@@ -773,35 +1121,49 @@ void kGUIBrowseObj::Load(void)
 	if(cp)
 		url.Clip((int)(cp-url.GetString()));
 
+//	dle=m_dlpool.PoolGet();
+	dle=new DownloadPageRecord();
+	dle->m_tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
 	if(!strcmpin(url.GetString(),"file://",7))
 	{
 		int load;
 
-		m_dh.SetFilename(url.GetString()+7);
-		m_dl.SetRedirectURL(0);
+		dle->m_dh.SetFilename(url.GetString()+7);
+		dle->m_dl.SetRedirectURL(0);
 
-		if(m_dh.Open()==true)
+		if(dle->m_dh.Open()==true)
 		{
 			load=DOWNLOAD_OK;
-			m_dh.Close();
+			dle->m_dh.Close();
 		}
 		else
 			load=DOWNLOAD_ERROR;
-		PageLoaded(load);
+		PageLoaded(dle,load);
 	}
 	else
 	{
-		m_screenpage.SetStatusLine(0);	/* stop page from overwriting */
+		m_curscreenpage->SetStatusLine(0);	/* stop page from overwriting */
 		m_status.SetString("Loading");
 		m_busyimage.SetAnimate(true);
 
+		/* save in the active list */
+		m_dlactive.SetEntry(m_numdlactive++,dle);
+
 		/* todo: have browser setting for not sending this along */
-		m_dl.SetReferer(m_referer.GetString());
-//		m_dl.SetReferer("");
-		m_dl.SetPostData(&m_post);
-		m_dh.SetMemory();
-		m_dl.SetAuthHandler(&m_ah);
-		m_dl.AsyncDownLoad(&m_dh,&url,this,CALLBACKNAME(PageLoaded));
+		if(hist)
+		{
+			dle->m_dl.SetReferer(hist->GetReferer());
+			dle->m_dl.SetPostData(hist->GetPost());
+		}
+		else
+		{
+			dle->m_dl.SetReferer((const char *)0);
+			dle->m_dl.SetPostData(0);
+		}
+		dle->m_dh.SetMemory();
+		dle->m_dl.SetAuthHandler(&m_ah);
+		dle->m_dl.AsyncDownLoad(&dle->m_dh,&url);
+		tabrecord->m_curdl=dle;
 	}
 }
 
@@ -811,16 +1173,17 @@ void kGUIBrowseObj::GoBackMenu(void)
 {
 	int i;
 	int j;
-	PageInfo *p;
+	TabRecord *ctp=m_tabrecords.GetEntryPtr(m_curtab);
+	HistoryRecord *p;
 
-	if(m_pageindex<2)
+	if(ctp->m_histindex<2)
 		return;	/* nowhere to go forward to */
 
-	m_gomenu.SetNumEntries(m_pageindex-1);
-	j=m_pageindex-2;
-	for(i=1;i<m_pageindex;++i)
+	m_gomenu.SetNumEntries(ctp->m_histindex-1);
+	j=ctp->m_histindex-2;
+	for(i=1;i<ctp->m_histindex;++i)
 	{
-		p=m_pages+j;
+		p=ctp->GetHist(j);
 		m_gomenu.SetEntry(i-1,p->GetTitle(),j);
 		--j;
 	}
@@ -834,17 +1197,18 @@ void kGUIBrowseObj::GoForwardMenu(void)
 	int i;
 	unsigned int j;
 	unsigned int num;
-	PageInfo *p;
+	HistoryRecord *p;
+	TabRecord *ctp=m_tabrecords.GetEntryPtr(m_curtab);
 
-	num=m_pageend-m_pageindex;
+	num=ctp->m_histend-ctp->m_histindex;
 	if(!num)
 		return;	/* nowhere to go forward to */
 
 	m_gomenu.SetNumEntries(num);
 	j=0;
-	for(i=m_pageindex;i<m_pageend;++i)
+	for(i=ctp->m_histindex;i<ctp->m_histend;++i)
 	{
-		p=m_pages+i;
+		p=ctp->GetHist(i);
 		m_gomenu.SetEntry(j++,p->GetTitle(),i);
 	}
 	m_gomenu.Activate(kGUI::GetMouseX(),kGUI::GetMouseY());
@@ -860,7 +1224,9 @@ void kGUIBrowseObj::DoGotoMenu(kGUIEvent *event)
 
 		if(sel>=0)
 		{
-			m_pageindex=sel+1;
+		/* todo: cancel any pending loads */
+			StopLoad();
+			m_tabrecords.GetEntryPtr(m_curtab)->m_histindex=sel+1;
 			UpdateButtons();
 			Goto();
 		}
@@ -875,14 +1241,20 @@ void kGUIBrowseObj::GoForward(kGUIEvent *event)
 		GoForwardMenu();
 	break;
 	case EVENT_PRESSED:
+	{
+		TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
 		SaveCurrent();
 
-		if(m_pageindex<m_pageend)
+		/* todo: cancel any pending loads */
+
+		if(tabrecord->m_histindex<tabrecord->m_histend)
 		{
-			++m_pageindex;
+			StopLoad();
+			++tabrecord->m_histindex;
 			UpdateButtons();
 			Goto();
 		}
+	}
 	break;
 	}
 }
@@ -895,14 +1267,18 @@ void kGUIBrowseObj::GoBack(kGUIEvent *event)
 		GoBackMenu();
 	break;
 	case EVENT_PRESSED:
+	{
+		TabRecord *ctp=m_tabrecords.GetEntryPtr(m_curtab);
 		SaveCurrent();
 
-		if(m_pageindex>1)
+		if(ctp->m_histindex>1)
 		{
-			--m_pageindex;
+			StopLoad();
+			--ctp->m_histindex;
 			UpdateButtons();
 			Goto();
 		}
+	}
 	break;
 	}
 }
@@ -913,7 +1289,9 @@ void kGUIBrowseObj::Print(kGUIEvent *event)
 	{
 		kGUIString llname;
 		const char *cp;
+		HistoryRecord *hist=GetCurHist();
 
+		assert(hist!=0,"Error!");
 		/* is there a local link appended to the URL? */
 		cp=strstr(m_url.GetString(),"#");
 		if(cp)
@@ -921,7 +1299,7 @@ void kGUIBrowseObj::Print(kGUIEvent *event)
 
 		m_printpage.SetTarget(&llname);
 		m_printpage.SetMedia(GetSettings()->GetPrintMedia());
-		m_printpage.SetSource(&m_url,&m_source,&m_type,&m_header);
+		m_printpage.SetSource(hist->GetURL(),hist->GetSource(),hist->GetType(),hist->GetHeader());
 
 		/* todo: copy current input values on forms from screenpage to printpage */
 
@@ -934,14 +1312,17 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 	switch(event->GetEvent())
 	{
 	case EVENT_ENTER:
-		m_url.SelectAll();
+		if(m_url.GetLen())
+			m_url.SelectAll();
 	break;
 	case EVENT_PRESSRETURN:
 	{
-		PageInfo *p;
+		HistoryRecord *oldhist=GetCurHist();
+		HistoryRecord *newhist;
+		const char *referer;
 
 		SaveCurrent();
-		p=NextPage();
+		newhist=NextPage();
 
 		/* if URL does not have http prefix then insert it if not a local file on hd */
 		if(!strcmpin(m_url.GetString(),"file://",5))
@@ -955,8 +1336,12 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 			else
 				m_url.Insert(0,"http://");
 		}
-		p->Set(m_url.GetString(),0,m_referer.GetString(),0,0);
-		p->SetScrollY(0);
+		if(oldhist)
+			referer=oldhist->GetReferer()->GetString();
+		else
+			referer=0;
+		newhist->Set(m_url.GetString(),0,referer,0,0);
+		newhist->SetScrollY(0);
 
 		Load();
 	}
@@ -964,36 +1349,80 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 	}
 }
 
-void kGUIBrowseObj::PageLoaded(int result)
+void kGUIBrowseObj::TabChanged(kGUIEvent *event)
 {
-	PageInfo *p=m_pages+(m_pageindex-1);
-
-	m_busyimage.SetAnimate(false);
-	m_status.SetString("Done");
-	m_screenpage.SetStatusLine(&m_status);	/* allow writing again... */
-
-	if(result==DOWNLOAD_OK && m_dh.GetSize())
+	switch(event->GetEvent())
 	{
-		m_dh.Open();
-		m_dh.Read(&m_source,m_dh.GetSize());
-		m_dh.Close();
+	case EVENT_MOVED:
+	{
+		int oldtab=event->m_value[0].i;
+		int newtab=m_tabs.GetCurrentTab();
+		TabRecord *oldtabrecord;
+		TabRecord *newtabrecord;
 
-		p->SetSource(&m_source);
-		p->SetType(m_dl.GetEncoding());
-		p->SetHeader(m_dl.GetHeader());
-		p->SetSecure(m_dl.GetSecure());
+		oldtabrecord=m_tabrecords.GetEntryPtr(oldtab);
+		newtabrecord=m_tabrecords.GetEntryPtr(newtab);
+
+		/* this is not the actual page URL but the currently edited one */
+		oldtabrecord->m_urlstring.SetString(&m_url);
+		m_url.SetString(&newtabrecord->m_urlstring);
+
+		//this is to be depreciated!
+		m_curscreenpage=&newtabrecord->m_screenpage;
+		m_curtab=newtab;
+
+		/* if the size doesn't match then set it and force a layout */
+		if(newtabrecord->m_reposition)
+		{
+			m_curscreenpage->RePosition(newtabrecord->m_reparse);
+			newtabrecord->m_reposition=false;
+			newtabrecord->m_reparse=false;
+		}
+		/* update the forward/backward etc. buttons */
+		UpdateButtons();
+	}
+	break;
+	case EVENT_CLOSE:
+		/* close the current tab */
+		CloseTab();
+	break;
+	}
+}
+
+void kGUIBrowseObj::PageLoaded(DownloadPageRecord *dle,int result)
+{
+	TabRecord *tabrecord=dle->m_tabrecord;
+	HistoryRecord *hist=tabrecord->GetCurHist();
+
+	tabrecord->m_curdl=0;	/* load finished! */
+	if(tabrecord==m_tabrecords.GetEntryPtr(m_curtab))
+	{
+		m_busyimage.SetAnimate(false);
+		m_status.SetString("Done");
+		m_curscreenpage->SetStatusLine(&m_status);	/* allow writing again... */
+	}
+
+	if(result==DOWNLOAD_OK && dle->m_dh.GetSize())
+	{
+		dle->m_dh.Open();
+		dle->m_dh.Read(hist->GetSource(),dle->m_dh.GetSize());
+		dle->m_dh.Close();
+
+		hist->SetType(dle->m_dl.GetEncoding());
+		hist->SetHeader(dle->m_dl.GetHeader());
+		hist->SetSecure(dle->m_dl.GetSecure());
 
 		/* if this was redirected then get the new redirected URL */
-		if(m_dl.GetRedirectURL()->GetLen())
+		if(dle->m_dl.GetRedirectURL()->GetLen())
 		{
-			p->SetURL(m_dl.GetRedirectURL());
-			m_url.SetString(m_dl.GetRedirectURL());
+			hist->SetURL(dle->m_dl.GetRedirectURL());
+			m_url.SetString(dle->m_dl.GetRedirectURL());
 		}
 		Goto();
 	}
 	else
 	{
-		if(m_dl.GetReturnCode()==401)
+		if(dle->m_dl.GetReturnCode()==401)
 		{
 			/* bring up authentication input box */
 			AuthenticateWindow *aw;
@@ -1004,7 +1433,7 @@ void kGUIBrowseObj::PageLoaded(int result)
 			const char *cp;
 
 			//WWW-Authenticate: Basic realm="File Download Authorization"
-			m_dl.ExtractFromHeader("WWW-Authenticate:",&aa);
+			dle->m_dl.ExtractFromHeader("WWW-Authenticate:",&aa);
 			cp=strstri(aa.GetString(),"realm=");
 			if(cp)
 			{
@@ -1013,45 +1442,38 @@ void kGUIBrowseObj::PageLoaded(int result)
 
 				kGUI::ExtractURL(&m_url,&domain,&path);
 				domain.Replace("http://","");
-				aw=new AuthenticateWindow(this,&realm,&domain);
+				aw=new AuthenticateWindow(this,dle,&realm,&domain);
+				return;
 			}
 		}
 		else
-			ShowError();
+		{
+			ShowError(dle);
+		}
 	}
+	delete dle;
 }
 
-void kGUIBrowseObj::ShowError(void)
+void kGUIBrowseObj::ShowError(DownloadPageRecord *dle)
 {
-	PageInfo *p=m_pages+(m_pageindex-1);
+	HistoryRecord *hist=dle->m_tabrecord->GetCurHist();
 
 	/* did we get an error string from the server? */
-	if(m_dl.GetErrorPage()->GetLen())
+	if(dle->m_dl.GetErrorPage()->GetLen())
 	{
-		m_source.SetString(m_dl.GetErrorPage());
-		p->SetType(m_dl.GetEncoding());
-		p->SetHeader(m_dl.GetHeader());
+		hist->SetSource(dle->m_dl.GetErrorPage());
+		hist->SetType(dle->m_dl.GetEncoding());
+		hist->SetHeader(dle->m_dl.GetHeader());
 	}
 	else
 	{
-		kGUIString type;
-		kGUIString header;
-
 		/* put up an error page */
-		m_source.Sprintf("<HTML><HEAD><TITLE>Error %d loading page '%s'</TITLE></HEAD><BODY><H1>Error %d loading page '%s'</H1><BR></BODY></HTML>",m_dl.GetReturnCode(),m_url.GetString(),m_dl.GetReturnCode(),m_url.GetString());
-		type.SetString("text/html");
-
-		p->SetType(&type);
-		p->SetHeader(&header);
+		hist->GetSource()->Sprintf("<HTML><HEAD><TITLE>Error %d loading page '%s'</TITLE></HEAD><BODY><H1>Error %d loading page '%s'</H1><BR></BODY></HTML>",dle->m_dl.GetReturnCode(),dle->m_dl.GetURL()->GetString(),dle->m_dl.GetReturnCode(),dle->m_dl.GetURL()->GetString());
+		hist->GetType()->SetString("text/html");
+		hist->GetHeader()->Clear();
 	}
-	p->SetSource(&m_source);
+	//todo: hmmm, if this is not the current tab then defer layout till later
 	Goto();
-}
-
-
-void kGUIBrowseObj::CancelAuthenticate()
-{
-	ShowError();
 }
 
 void kGUIBrowseObj::Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password)
@@ -1097,7 +1519,7 @@ void kGUIBrowseObj::RefreshAll(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
-		m_screenpage.FlushCurrentMedia();
+		m_curscreenpage->FlushCurrentMedia();
 		Load();
 	}
 }
@@ -1210,6 +1632,15 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.AddObject(&m_cachesizecaption2);
 	m_controls.NextLine();
 
+	m_loadimagescaption.SetFontID(1);
+	m_loadimagescaption.SetFontSize(VSFONTSIZE);
+	m_loadimagescaption.SetString("Load Images");
+	m_controls.AddObject(&m_loadimagescaption);
+
+	m_loadimages.SetSelected(true);
+	m_controls.AddObject(&m_loadimages);
+	m_controls.NextLine();
+
 	m_usecsscaption.SetFontID(1);
 	m_usecsscaption.SetFontSize(VSFONTSIZE);
 	m_usecsscaption.SetString("Use CSS");
@@ -1284,6 +1715,20 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.AddObject(&m_printmedia);
 	m_controls.NextLine();
 
+	/* colorblind simulator values */
+	m_colormode.SetNumEntries(sizeof(colormatrix)/sizeof(COLOR_MATRIX));
+	for(i=0;i<sizeof(colormatrix)/sizeof(COLOR_MATRIX);++i)
+		m_colormode.SetEntry(i,colormatrix[i].name,i);
+
+	m_colormodecaption.SetFontID(1);
+	m_colormodecaption.SetFontSize(VSFONTSIZE);
+	m_colormodecaption.SetString("ColorBlind Simulation Mode");
+	m_controls.AddObject(&m_colormodecaption);
+
+	m_colormode.SetSize(m_colormode.GetWidest(),m_colormodecaption.GetLineHeight()+6);
+	m_controls.AddObject(&m_colormode);
+	m_controls.NextLine();
+
 	m_clear.SetFontID(1);
 	m_clear.SetFontSize(VSFONTSIZE);
 	m_clear.SetString("Clear All");
@@ -1336,6 +1781,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_visiteddays.SetInt(b->GetSettings()->GetVisitedDays());
 	m_cachemode.SetSelection(b->GetSettings()->GetCacheMode());
 	m_cachesize.SetInt(b->GetSettings()->GetCacheSize());
+	m_loadimages.SetSelected(b->GetSettings()->GetLoadImages());
 	m_usercss.SetString(b->GetSettings()->GetUserCSS());
 	m_usecss.SetSelected(b->GetSettings()->GetUseCSS());
 	m_useusercss.SetSelected(b->GetSettings()->GetUseUserCSS());
@@ -1343,6 +1789,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_drawareas.SetSelected(b->GetSettings()->GetDrawAreas());
 	m_screenmedia.SetSelectionz(b->GetSettings()->GetScreenMedia()->GetString());
 	m_printmedia.SetSelectionz(b->GetSettings()->GetPrintMedia()->GetString());
+	m_colormode.SetSelection(b->GetColorMode());
 
 	m_scroll.SetPos(0,0);
 	m_scroll.SetSize(GetChildZoneW(),GetChildZoneH());
@@ -1404,6 +1851,7 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 		m_b->GetSettings()->SetVisitedDays(m_visiteddays.GetInt());
 		m_b->GetSettings()->SetCacheMode(m_cachemode.GetSelection());
 		m_b->GetSettings()->SetCacheSize(m_cachesize.GetInt());
+		m_b->GetSettings()->SetLoadImages(m_loadimages.GetSelected());
 		m_b->GetSettings()->SetUserCSS(&m_usercss);
 		m_b->GetSettings()->SetUseCSS(m_usecss.GetSelected());
 		m_b->GetSettings()->SetUseUserCSS(m_useusercss.GetSelected());
@@ -1411,6 +1859,7 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 		m_b->GetSettings()->SetDrawAreas(m_drawareas.GetSelected());
 		m_b->GetSettings()->SetScreenMedia(m_screenmedia.GetSelectionStringObj());
 		m_b->GetSettings()->SetPrintMedia(m_printmedia.GetSelectionStringObj());
+		m_b->SetColorMode(m_colormode.GetSelection());
 
 		/* copy the enable/disable settings from the cssenable table */
 		for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)
@@ -1423,8 +1872,9 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 
 		/* trigger redraw, and flush rule cache since user rules may have been added */
 		m_b->FlushRuleCache();
+		m_b->SettingsChanged();
 		m_b->RePosition(true);
-		delete this;
+	delete this;
 	break;
 	case EVENT_SIZECHANGED:
 		m_scroll.SetSize(GetChildZoneW(),GetChildZoneH());
@@ -1676,6 +2126,79 @@ void kGUIOffsetInputBoxObj::Draw(void)
 	kGUI::PopClip();
 }
 
+bool kGUIBrowseIcon::SetIcon(DataHandle *dh)
+{
+	unsigned int i;
+	kGUIImage full;
+	kGUIDrawSurface tempds;
+	kGUIDrawSurface *ds;
+	double scale,scale2;
+
+//	m_valid=false;
+	if(dh)
+	{
+		full.CopyHandle(dh);
+		full.LoadPixels();
+		if(full.IsValid())
+		{
+			tempds.Init(16,16);
+			/* draw thumbnail */
+			kGUI::PushClip();
+			ds=kGUI::GetCurrentSurface();
+			kGUI::SetCurrentSurface(&tempds);
+			kGUI::ResetClip();	/* set clip to full surface on stack */
+
+			scale=16/(double)full.GetImageWidth();
+			scale2=16/(double)full.GetImageHeight();
+			if(scale>scale2)
+				scale=scale2;
+			full.SetScale(scale,scale);
+
+			for(i=0;i<full.GetNumFrames();++i)
+			{
+				/* clear the window to white since the icon can have transparency */
+				tempds.Clear(DrawColor(255,255,255));
+				full.Draw(i,(16-(int)(scale*full.GetImageWidth()))>>1,(16-(int)(scale*full.GetImageHeight()))>>1);
+				m_icon.SetMemImageCopy(i,tempds.GetFormat(),tempds.GetWidth(),tempds.GetHeight(),tempds.GetBPP(),(unsigned char *)tempds.GetSurfacePtr(0,0));
+				m_icon.SetDelay(i,full.GetDelay(i));
+			}
+			kGUI::SetCurrentSurface(ds);
+			kGUI::PopClip();
+
+			m_currentframe=0;
+			m_valid=true;
+
+			/* add animate event? */
+			if(m_icon.GetNumFrames()>1 && m_animateeventactive==false)
+			{
+				m_animateeventactive=true;
+				m_animdelay=0;
+				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+			}
+		}
+	}
+	return(m_valid);
+}
+
+void kGUIBrowseIcon::Animate(void)
+{
+	if( (m_icon.GetNumFrames()<1))
+	{
+		m_animateeventactive=false;
+		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		return;
+	}
+
+	m_animdelay+=kGUI::GetET();
+	if(m_animdelay>=m_icon.GetDelay(m_currentframe))
+	{
+		m_animdelay=0;
+		if(++m_currentframe>=m_icon.GetNumFrames())
+			m_currentframe=0;
+		Dirty();
+	}
+}
+
 bool kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
 {
 	unsigned int i;
@@ -1756,10 +2279,10 @@ void kGUIOffsetInputBoxObj::Animate(void)
 
 /*****************************************************************************/
 
-AuthenticateWindow::AuthenticateWindow(kGUIBrowseObj *browse,kGUIString *realm,kGUIString *domain)
+AuthenticateWindow::AuthenticateWindow(kGUIBrowseObj *browse,DownloadPageRecord *dle,kGUIString *realm,kGUIString *domain)
 {
 	m_browse=browse;
-
+	m_dle=dle;
 	m_domrealm.Sprintf("%s:%s",domain->GetString(),realm->GetString());
 
 	m_window.SetTitle("Authentication Required");
@@ -1819,18 +2342,21 @@ void AuthenticateWindow::Event(kGUIEvent *event)
 	{
 	case EVENT_CLOSE:
 		if(event->GetObj()==&m_window)
+		{
+			delete m_dle;
 			delete this;
+		}
 	break;
 	case EVENT_PRESSED:
 		if(event->GetObj()==&m_ok)
 		{
 			m_browse->Authenticate(&m_domrealm,&m_name,&m_password);
-			delete this;
+			m_window.Close();
 		}
 		else if(event->GetObj()==&m_cancel)
 		{
-			m_browse->CancelAuthenticate();
-			delete this;
+			m_browse->ShowError(m_dle);
+			m_window.Close();
 		}
 	break;	
 	}
@@ -1895,7 +2421,7 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 		m_table.AddRow(row);
 	}
 
-	m_table.SetSize(min(m_table.CalcTableWidth(),m_window.GetChildZoneW()),min(500,kGUI::GetScreenHeight()));
+	m_table.SetSize(valmin(m_table.CalcTableWidth(),m_window.GetChildZoneW()),valmin(500,kGUI::GetScreenHeight()));
 	m_controls.AddObject(&m_table);
 	UpdateButtons();
 
@@ -1908,6 +2434,7 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 
 EditBookmarkWindow::~EditBookmarkWindow()
 {
+	//todo call browser 'SettingsChanged'
 	m_table.DeleteChildren(true);
 }
 
@@ -2044,7 +2571,7 @@ ViewCookieWindow::ViewCookieWindow(kGUIBrowseSettings *settings)
 		m_table.AddRow(row);
 	}
 
-	m_table.SetSize(min(m_table.CalcTableWidth(),m_window.GetChildZoneW()),min(500,kGUI::GetScreenHeight()));
+	m_table.SetSize(valmin(m_table.CalcTableWidth(),m_window.GetChildZoneW()),valmin(500,kGUI::GetScreenHeight()));
 	m_controls.AddObject(&m_table);
 	UpdateButtons();
 
@@ -2125,3 +2652,59 @@ ViewCookieRow::ViewCookieRow(kGUICookie *cookie)
 	
 	cookie->GetExpiry()->LongDate(&m_expiry);
 }
+
+void HTMLPageObj::Draw(void)
+{
+	kGUIHTMLPageObj::Draw();
+
+	/* 0 = normal mode, 1 or greater is colorblind filter */
+	if(m_colormode>0)
+	{
+		kGUICorners c;
+		const COLOR_MATRIX *cm;
+
+		GetCorners(&c);
+		kGUI::PushClip();
+		kGUI::ShrinkClip(&c);
+
+		/* is there anywhere to draw? */
+		if(kGUI::ValidClip())
+		{
+			const kGUICorners *cc;
+			int w,h,n;
+			kGUIColor *sp;
+			int skip;
+			kGUIColor color;
+			double r,g,b;
+			double newr,newg,newb;
+
+			cm=&colormatrix[m_colormode];
+			cc=kGUI::GetClipCorners();
+			w=cc->rx-cc->lx;
+			h=cc->by-cc->ty;
+
+			/* convert colors */
+			sp=kGUI::GetSurfacePtr(cc->lx,cc->ty);
+			skip=kGUI::GetSurfaceWidth()-w;
+			while(h)
+			{
+				n=w;
+				while(n--)
+				{
+					color=*(sp);
+					DrawColorToRGB(color,r,g,b);
+
+					newr=(r*cm->rr)+(g*cm->rg)+(b*cm->rb);
+					newg=(r*cm->gr)+(g*cm->gg)+(b*cm->gb);
+					newb=(r*cm->br)+(g*cm->bg)+(b*cm->bb);
+
+					*(sp++)=DrawColor((int)newr,(int)newg,(int)newb);
+				}
+				sp+=skip;
+				--h;
+			}
+		}
+		kGUI::PopClip();
+	}
+}
+

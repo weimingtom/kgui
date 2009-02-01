@@ -84,6 +84,8 @@ DefSkin::DefSkin()
 	m_skinshapes[SKIN_TABLEFT].SetFilename("_tabl.gif");
 	m_skinshapes[SKIN_TABCENTER].SetFilename("_tabc.gif");
 	m_skinshapes[SKIN_TABRIGHT].SetFilename("_tabr.gif");
+	m_skinshapes[SKIN_TABCLOSE].SetFilename("_tclose.gif");
+	m_skinshapes[SKIN_TABCLOSE2].SetFilename("_tclose2.gif");
 
 	m_skinshapes[SKIN_TABSELECTEDLEFT].SetFilename("_tabsl.gif");
 	m_skinshapes[SKIN_TABSELECTEDCENTER].SetFilename("_tabsc.gif");
@@ -385,9 +387,8 @@ void DefSkin::GetTabSize(int *expand,int *left,int *right,int *height)
 	height[0]=TABH;
 }
 
-void DefSkin::DrawTab(kGUIText *text,int x,int y,bool current,bool over)
+void DefSkin::DrawTab(int x,int y,int w,bool current,bool over,bool close)
 {
-	int textpixels;
 	int bigger;
 	kGUIImage *tl;
 	kGUIImage *tm;
@@ -397,30 +398,29 @@ void DefSkin::DrawTab(kGUIText *text,int x,int y,bool current,bool over)
 	tm=GetShape(SKIN_TABCENTER);
 	tr=GetShape(SKIN_TABRIGHT);
 
-	textpixels=text->GetWidth()+8;
 	if(current==true)
 	{
 		tl->Draw(0,x-TABBIGGER,y);
-		tm->DrawLineRect(0,x-TABBIGGER+tl->GetImageWidth(),y,x-TABBIGGER+textpixels+(TABBIGGER<<1),y+tm->GetImageHeight(),true);
-		tr->Draw(0,x-TABBIGGER+textpixels+(TABBIGGER<<1),y);
+		tm->DrawLineRect(0,x-TABBIGGER+tl->GetImageWidth(),y,x-TABBIGGER+w+(TABBIGGER<<1),y+tm->GetImageHeight(),true);
+		tr->Draw(0,x-TABBIGGER+w+(TABBIGGER<<1),y);
 		bigger=TABBIGGER;
 	}
 	else
 		bigger=0;
 
 	tl->Draw(0,x-bigger,y-bigger);
-	tm->DrawLineRect(0,x-bigger+tl->GetImageWidth(),y-bigger,x-bigger+textpixels+(bigger<<1),y-bigger+tm->GetImageHeight(),true);
-	tr->Draw(0,x-bigger+textpixels+(bigger<<1),y-bigger);
+	tm->DrawLineRect(0,x-bigger+tl->GetImageWidth(),y-bigger,x-bigger+w+(bigger<<1),y-bigger+tm->GetImageHeight(),true);
+	tr->Draw(0,x-bigger+w+(bigger<<1),y-bigger);
 
 	if((current==true) || (over==true))
 	{
 		/* draw orange selected bar over tab */
 		GetShape(SKIN_TABSELECTEDLEFT)->Draw(0,x-bigger,y-bigger);
-		GetShape(SKIN_TABSELECTEDCENTER)->DrawLineRect(0,x-bigger+GetShape(SKIN_TABSELECTEDLEFT)->GetImageWidth(),y-bigger,x-bigger+textpixels+(bigger<<1),y-bigger+GetShape(SKIN_TABSELECTEDCENTER)->GetImageHeight(),true);
-		GetShape(SKIN_TABSELECTEDRIGHT)->Draw(0,x-bigger+textpixels+(bigger<<1),y-bigger);
+		GetShape(SKIN_TABSELECTEDCENTER)->DrawLineRect(0,x-bigger+GetShape(SKIN_TABSELECTEDLEFT)->GetImageWidth(),y-bigger,x-bigger+w+(bigger<<1),y-bigger+GetShape(SKIN_TABSELECTEDCENTER)->GetImageHeight(),true);
+		GetShape(SKIN_TABSELECTEDRIGHT)->Draw(0,x-bigger+w+(bigger<<1),y-bigger);
 	}
-
-	text->Draw(x+6,y+3,0,0);
+	if(close)
+		GetShape(current==true?SKIN_TABCLOSE:SKIN_TABCLOSE2)->Draw(0,x+tl->GetImageWidth()+w-16,y+2);
 }
 
 int DefSkin::GetScrollbarWidth(void)

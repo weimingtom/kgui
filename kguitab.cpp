@@ -41,8 +41,10 @@
 
 kGUITabObj::kGUITabObj()
 {
+	m_close=false;
 	m_locked=false;
 	m_track=false;
+	m_hidetabs=false;	/* commonly used for hiding tabs when only 1 tab */
 	m_curtab=0;
 	m_numtabs=0;
 	m_numgroups=0;
@@ -83,8 +85,6 @@ void kGUITabObj::SetNumTabs(int numtabs,int numgroups)
 	m_taby.Alloc(numtabs);
 	for(i=0;i<m_numtabs;++i)
 	{
-//		t=new kGUIText;
-//		m_tabnames.SetEntry(i,t);
 		j=i;
 		if(j>=numgroups)
 			j=numgroups-1;
@@ -106,30 +106,36 @@ kGUITabObj::~kGUITabObj()
 
 void kGUITabObj::UpdateTabs(void)
 {
-	int i,x,y,tw;
-	int	w;
-	int l,r,h,exp;
-
-	/* get the pixels size for the left/right and height of the tabs */
-	/* from the current skin engine. "exp"=expand size when tab is selected. */
-	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
-
-	w=(GetZoneW())-(exp<<1);	/* allow space for expanded (current) tab */
-	m_numtabrows=1;				/* start with one row for tabs */
-	y=exp;						/* larger (current) tab is exp pixels taller and wider*2 */
-	x=exp+m_starttabx;			/* than all other tabs so leave room for it to expand */
-	for(i=0;i<m_numtabs;++i)
+	if(m_hidetabs)
+		m_numtabrows=0;
+	else
 	{
-		tw=m_tabnames.GetEntryPtr(i)->GetWidth()+8+l+r;	/* pixel space needed for tab */
-		if((x+tw)>w)
+		int i,x,y,tw;
+		int	w;
+		int l,r,h,exp;
+		int gap=(m_close==true)?18+8:8;
+
+		/* get the pixels size for the left/right and height of the tabs */
+		/* from the current skin engine. "exp"=expand size when tab is selected. */
+		kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
+
+		w=(GetZoneW())-(exp<<1);	/* allow space for expanded (current) tab */
+		m_numtabrows=1;				/* start with one row for tabs */
+		y=exp;						/* larger (current) tab is exp pixels taller and wider*2 */
+		x=exp+m_starttabx;			/* than all other tabs so leave room for it to expand */
+		for(i=0;i<m_numtabs;++i)
 		{
-			x=exp;	/* need another row to fit tabs so start a new row */
-			y+=h;
-			++m_numtabrows;
+			tw=GetTabWidth(i)+gap+l+r;	/* pixel space needed for tab */
+			if((x+tw)>w)
+			{
+				x=exp;	/* need another row to fit tabs so start a new row */
+				y+=h;
+				++m_numtabrows;
+			}
+			m_tabx.SetEntry(i,x);	/* save tab position so we don't need to re-calc unless */
+			m_taby.SetEntry(i,y);	/* tabs are added */
+			x+=tw;
 		}
-		m_tabx.SetEntry(i,x);	/* save tab position so we don't need to re-calc unless */
-		m_taby.SetEntry(i,y);	/* tabs are added */
-		x+=tw;
 	}
 	DirtyandCalcChildZone();	/* child size varies by space needed for the tabs so re-calc */
 }
@@ -145,14 +151,19 @@ int kGUITabObj::GetTabRowHeight(void)
 
 void kGUITabObj::CalcChildZone(void)
 {
-	int l,r,h,exp,taby;
+	if(m_hidetabs)
+		SetChildZone(0,0,GetZoneW(),GetZoneH());
+	else
+	{
+		int l,r,h,exp,taby;
 
-	/* how tall is a row of tabs? */
-	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
-	/* space needed for tabs is height for tab * number of tabs rows */
-	taby=exp+(h*m_numtabrows);
-	/* children get remaining area */
-	SetChildZone(2,taby,GetZoneW()-4,GetZoneH()-taby);
+		/* how tall is a row of tabs? */
+		kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
+		/* space needed for tabs is height for tab * number of tabs rows */
+		taby=exp+(h*m_numtabrows);
+		/* children get remaining area */
+		SetChildZone(2,taby,GetZoneW()-4,GetZoneH()-taby);
+	}
 }
 
 void kGUITabObj::Track(void)
@@ -183,15 +194,16 @@ void kGUITabObj::DirtyTab(int tab)
 	kGUICorners tc;
 	int tw;
 	int l,r,h,exp;
+	int gap=(m_close==true)?18+8:8;
 
 	/* -1 == no current overtab, so ignore */
-	if(tab<0)
+	if(tab<0 || m_hidetabs)
 		return;
 
 	/* calc size of tab area */
 	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
 	GetCorners(&c);
-	tw=m_tabnames.GetEntryPtr(tab)->GetWidth()+8+l+r;
+	tw=GetTabWidth(tab)+gap+l+r;
 	tc.lx=c.lx+m_tabx.GetEntry(tab);
 	tc.rx=tc.lx+tw;
 	tc.ty=c.ty+m_taby.GetEntry(tab);
@@ -205,82 +217,114 @@ bool kGUITabObj::UpdateInput(void)
 {
 	kGUICorners c;
 	kGUICorners tc;
+	kGUICorners cb;
 	int i,tw;
 	int l,r,h,exp;
 	bool over;
+	int gap=(m_close==true)?18+8:8;
 
-	/* calc size of tab area */
-	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
-	GetCorners(&c);
-	c.by=c.ty+exp+(h*m_numtabrows);
-
-	/* is the mouse over the tab button area? */
-	over=kGUI::MouseOver(&c);
-	if(over && m_locked==false)
+	if(m_hidetabs==false)
 	{
-		/* if i'm not active then activate me */
-		/* I need to be active so I can track the mouse when it moves */
-		/* off of the tab area so I can unhilight the last tab under the cursor */
-		if(m_track==false)
-		{
-			m_track=true;
-			kGUI::AddEvent(this,CALLBACKNAME(Track));
-		}
-		/* yes they have mouse over the tabs on the top */
-		/* which tab is the mouse over? (if any) */
-		for(i=0;i<m_numtabs;++i)
-		{
-			tw=m_tabnames.GetEntryPtr(i)->GetWidth()+8+l+r;
-			tc.lx=c.lx+m_tabx.GetEntry(i);
-			tc.rx=tc.lx+tw;
-			tc.ty=c.ty+m_taby.GetEntry(i);
-			tc.by=tc.ty+h;
+		/* calc size of tab area */
+		kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
+		GetCorners(&c);
+		c.by=c.ty+exp+(h*m_numtabrows);
 
-			if(kGUI::MouseOver(&tc))
+		/* is the mouse over the tab button area? */
+		over=kGUI::MouseOver(&c);
+		if(over && m_locked==false)
+		{
+			/* if i'm not active then activate me */
+			/* I need to be active so I can track the mouse when it moves */
+			/* off of the tab area so I can unhilight the last tab under the cursor */
+			if(m_track==false)
 			{
-				/* yes mouse is over this tab */
-				if(i!=m_overtab)
-				{
-					DirtyTab(m_overtab);
-					DirtyTab(i);
-					m_overtab=i;
-				}
+				m_track=true;
+				kGUI::AddEvent(this,CALLBACKNAME(Track));
+			}
+			/* yes they have mouse over the tabs on the top */
+			/* which tab is the mouse over? (if any) */
+			for(i=0;i<m_numtabs;++i)
+			{
+				tw=GetTabWidth(i)+gap+l+r;
+				tc.lx=c.lx+m_tabx.GetEntry(i);
+				tc.rx=tc.lx+tw;
+				tc.ty=c.ty+m_taby.GetEntry(i);
+				tc.by=tc.ty+h;
 
-				/* are they rightclicking on the tab? */
-				if(kGUI::GetMouseClickRight()==true)
+				if(kGUI::MouseOver(&tc))
 				{
-					if(m_overtab!=m_curtab)		/* set this to the current tab first */
+					/* yes mouse is over this tab */
+					if(i!=m_overtab)
 					{
-						kGUI::ClearActiveStack();
-						m_curtab=m_overtab;
-						/* then call tabclicked callback */
-						CallEvent(EVENT_MOVED);
+						DirtyTab(m_overtab);
+						DirtyTab(i);
+						m_overtab=i;
 					}
-					/* then call rightclick tab callback */
-					CallEvent(EVENT_RIGHTCLICK);
-				}
-				if(kGUI::GetMouseReleaseLeft()==true)
-				{
-					if(m_overtab!=m_curtab)
+					/* check for clicking on the close button */
+					if(i==m_curtab && m_close && kGUI::GetMouseReleaseLeft()==true)
 					{
-						kGUI::ClearActiveStack();
-						m_curtab=m_overtab;
-						Dirty();
-						/* call the tabclicked callback */
-						CallEvent(EVENT_MOVED);
+						/* position of close button */
+						cb.lx=tc.rx-r-16;
+						cb.rx=cb.lx+14;
+						cb.ty=tc.ty+2;
+						cb.by=cb.ty+14;
+						if(kGUI::MouseOver(&cb))
+						{
+							kGUIEvent e;
+
+							e.m_value[0].i=m_curtab;		/* tab being closed */
+
+							/* then call tabclicked closed callback, it is up to the app to actually handle */
+							Dirty();
+							CallEvent(EVENT_CLOSE,&e);
+							return(true);
+						}
 					}
+
+					/* are they rightclicking on the tab? */
+					if(kGUI::GetMouseClickRight()==true)
+					{
+						if(m_overtab!=m_curtab)				/* set this to the current tab first */
+						{
+							kGUIEvent e;
+
+							kGUI::ClearActiveStack();
+							e.m_value[0].i=m_curtab;		/* save the old value */
+							m_curtab=m_overtab;
+
+							/* then call tabclicked callback */
+							CallEvent(EVENT_MOVED,&e);
+						}
+						/* then call rightclick tab callback */
+						CallEvent(EVENT_RIGHTCLICK);
+					}
+					if(kGUI::GetMouseReleaseLeft()==true)
+					{
+						if(m_overtab!=m_curtab)
+						{
+							kGUIEvent e;
+
+							kGUI::ClearActiveStack();
+							e.m_value[0].i=m_curtab;		/* save the old value */
+							m_curtab=m_overtab;
+							Dirty();
+							/* call the tabclicked callback */
+							CallEvent(EVENT_MOVED,&e);
+						}
+					}
+					return(true);
 				}
-				return(true);
 			}
 		}
-	}
 
-	/* if we got here then the mouse is not hovering over any of the tabs */
-	/* so we need to reset the overtab variable back to "not over any" (-1) */
-	if(m_overtab!=-1)
-	{
-		DirtyTab(m_overtab);	/* redraw */
-		m_overtab=-1;
+		/* if we got here then the mouse is not hovering over any of the tabs */
+		/* so we need to reset the overtab variable back to "not over any" (-1) */
+		if(m_overtab!=-1)
+		{
+			DirtyTab(m_overtab);	/* redraw */
+			m_overtab=-1;
+		}
 	}
 
 	/* send input to children of currently selected tab */
@@ -292,11 +336,11 @@ bool kGUITabObj::UpdateInput(void)
 void kGUITabObj::Draw(void)
 {
 	int i,x,y;
-	kGUIText *text;
 	kGUICorners c;
 	kGUICorners cc;
 	int l,r,h,exp;
 	kGUI::GetSkin()->GetTabSize(&exp,&l,&r,&h);
+	int gap=(m_close==true)?18+8:8;
 
 	kGUI::PushClip();
 	GetCorners(&c);
@@ -314,9 +358,8 @@ void kGUITabObj::Draw(void)
 		{
 			x=c.lx+m_tabx.GetEntry(i);
 			y=c.ty+m_taby.GetEntry(i);
-			text=m_tabnames.GetEntryPtr(i);
-
-			kGUI::GetSkin()->DrawTab(text,x,y,i==m_curtab,i==m_overtab);
+			kGUI::GetSkin()->DrawTab(x,y,GetTabWidth(i)+gap,i==m_curtab,i==m_overtab,m_close);
+			DrawTab(i,m_tabnames.GetEntryPtr(i),x+6,y+3);
 		}
 
 		if(m_numtabs)	/* if no tabs then m_curtab is not valid doh! */

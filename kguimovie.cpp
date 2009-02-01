@@ -54,9 +54,9 @@ extern "C"
 #endif
 
 //return version number, used in credit screens
-const char *kGUI::GetFFMpegVersion(void)
+const char *kGUIMovie::GetVersion(void)
 {
-	static char ffmpegversion[]={ "avcodec=" STRINGIFY(LIBAVCODEC_VERSION) ", avformat=" STRINGIFY(LIBAVFORMAT_VERSION) };
+	static char ffmpegversion[]={ "avcodec=" STRINGIFY(LIBAVCODEC_VERSION) ", avformat=" STRINGIFY(LIBAVFORMAT_VERSION)", avutil=" STRINGIFY(LIBAVUTIL_VERSION) };
 
 	return ffmpegversion;
 }
@@ -68,8 +68,11 @@ public:
 	static int kg_open(URLContext *h, const char *filename, int flags);
 	static int kg_read(URLContext *h, unsigned char *buf, int size);
 	static int kg_write(URLContext *h, unsigned char *buf, int size);
-	static offset_t kg_seek(URLContext *h, offset_t pos, int whence);
+	static int64_t kg_seek(URLContext *h, int64_t pos, int whence);
 	static int kg_close(URLContext *h);
+    static int kg_read_pause(URLContext *h, int pause);
+    static int64_t kg_read_seek(URLContext *h,int stream_index, int64_t timestamp, int flags);
+
 	static URLProtocol kg_protocol;
 
 	AVFormatContext *m_pFormatCtx;
@@ -79,11 +82,6 @@ public:
 	AVCodec *m_pVCodec;				/* video codec */
 	AVCodec *m_pACodec;				/* audio codec */
 	AVFrame *m_pFrame; 
-#if USERGBBUFFER
-	AVFrame *m_pFrameRGB;
-	int m_numBytes;
-	uint8_t *m_buffer;
-#endif
 	struct SwsContext *m_img_convert_ctx;
 };
 
@@ -117,7 +115,7 @@ int kGUIMovieLocal::kg_write(URLContext *h, unsigned char *buf, int size)
     return -1;
 }
 
-offset_t kGUIMovieLocal::kg_seek(URLContext *h, offset_t pos, int whence)
+int64_t kGUIMovieLocal::kg_seek(URLContext *h, int64_t pos, int whence)
 {
     DataHandle *dh = (DataHandle *)h->priv_data;
 
@@ -148,6 +146,17 @@ int kGUIMovieLocal::kg_close(URLContext *h)
 	return 0;
 }
 
+int kGUIMovieLocal::kg_read_pause(URLContext *h, int pause)
+{
+	return(0);
+}
+
+int64_t kGUIMovieLocal::kg_read_seek(URLContext *h,int stream_index, int64_t timestamp, int flags)
+{
+	return(0);
+}
+
+
 /* this is the list of functions to call when a filename using ffmpeg */
 /* starts with the prefix listed, IE: a file "kg:fred.mpg" will use these */
 /* load routines to handle it. */
@@ -159,7 +168,9 @@ URLProtocol kGUIMovieLocal::kg_protocol = {
     kGUIMovieLocal::kg_write,
     kGUIMovieLocal::kg_seek,
     kGUIMovieLocal::kg_close,
-	0	/* next */
+	0,	/* next */
+    kGUIMovieLocal::kg_read_pause,
+    kGUIMovieLocal::kg_read_seek
 };
 
 bool kGUIMovie::m_initglobals=false;
@@ -180,6 +191,8 @@ void kGUIMovie::PurgeGlobals(void)
 
 kGUIMovie::kGUIMovie()
 {
+	unsigned int alignoff;
+
 	m_local=new kGUIMovieLocal();
 	m_width=0;
 	m_height=0;
@@ -187,11 +200,8 @@ kGUIMovie::kGUIMovie()
 	m_isvalid=false;
 	m_playing=false;
 	m_image=0;
+	m_playaudio=true;
 	m_local->m_pFrame=0;
-#if USERGBBUFFER
-	m_pFrameRGB=0;
-	m_buffer=0;
-#endif
 	m_local->m_img_convert_ctx=0;
 	m_local->m_pVCodecCtx=0;
 	m_local->m_pACodecCtx=0;
@@ -199,12 +209,23 @@ kGUIMovie::kGUIMovie()
 	m_frameready=0;
 	m_time=0;
 	m_ptime=0;
+	m_audiomanager.Init();
+	m_audio=m_audiomanager.GetAudio();
+    m_abraw = new unsigned char[((AVCODEC_MAX_AUDIO_FRAME_SIZE+16)*3)/2];
+	/* align to 16 byte boundary */
+	m_abalign=m_abraw;
+	alignoff=((unsigned int)m_abalign)&15;
+	if(alignoff)
+		m_abalign+=(16-alignoff);
 }
 
 kGUIMovie::~kGUIMovie()
 {
 	CloseMovie();
 	delete m_local;
+
+	m_audiomanager.ReleaseAudio(m_audio);
+	delete m_abraw;
 }
 
 void kGUIMovie::OpenMovie(void)
@@ -265,13 +286,16 @@ void kGUIMovie::OpenMovie(void)
 
 	m_audioStream=-1;
 	m_local->m_pACodecCtx=0;
-	for(i=0; i<m_local->m_pFormatCtx->nb_streams; i++)
+	if(m_playaudio)
 	{
-		if(m_local->m_pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_AUDIO)
+		for(i=0; i<m_local->m_pFormatCtx->nb_streams; i++)
 		{
-			m_audioStream=(int)i;
-			m_local->m_pACodecCtx=m_local->m_pFormatCtx->streams[m_audioStream]->codec;
-			break;
+			if(m_local->m_pFormatCtx->streams[i]->codec->codec_type==CODEC_TYPE_AUDIO)
+			{
+				m_audioStream=(int)i;
+				m_local->m_pACodecCtx=m_local->m_pFormatCtx->streams[m_audioStream]->codec;
+				break;
+			}
 		}
 	}
 
@@ -346,34 +370,6 @@ void kGUIMovie::SetOutputImage(kGUIImage *image)
 	m_outheight=image->GetImageHeight();
 	assert(m_outwidth>0 && m_outheight>0 && image->GetImageType()==GUISHAPE_SURFACE,"Error, destination image is not correct!");
 
-#if USERGBBUFFER
-	if(m_pFrameRGB)
-	{
-		av_free(m_pFrameRGB);
-		m_pFrameRGB=0;
-	}
-	if(m_buffer)
-	{
-		av_free(m_buffer);
-		m_buffer=0;
-	}
-	// Allocate an AVFrame structure
-	m_pFrameRGB=avcodec_alloc_frame();
-	if(m_pFrameRGB==NULL)
-		return;
-
-	// Determine required buffer size and allocate buffer
-	m_numBytes=avpicture_get_size(OUTFORMAT, m_outwidth,
-					m_outheight);
-	m_buffer=(uint8_t *)av_malloc(m_numBytes*sizeof(uint8_t));
-
-	// Assign appropriate parts of buffer to image planes in pFrameRGB
-	// Note that pFrameRGB is an AVFrame, but AVFrame is a superset
-	// of AVPicture
-	avpicture_fill((AVPicture *)m_pFrameRGB, m_buffer, OUTFORMAT,
-			m_outwidth, m_outheight);
-#endif
-
 	if(m_local->m_img_convert_ctx)
 	{
 		av_free(m_local->m_img_convert_ctx);
@@ -392,6 +388,7 @@ bool kGUIMovie::LoadNextFrame(void)
 	double frame_delay;
 	AVPacket packet;
 	bool again;
+	int alen;
 
 	assert(m_image!=0,"Output Image not defined!");
 
@@ -417,11 +414,11 @@ bool kGUIMovie::LoadNextFrame(void)
 			if(gotpts==false)
 			{
 				gotpts=true;		//only grab the pts from the first video packet 
+			    /* update the video clock */
 				if(packet.pts && packet.pts!=(int)AV_NOPTS_VALUE)
 					m_videoclock=(double)packet.pts*m_vstreamtimebase;
 				else if(packet.dts && packet.dts!=(int)AV_NOPTS_VALUE)
 					m_videoclock=(double)packet.dts*m_vstreamtimebase;
-			    /* update the video clock */
 
 				/* if we are repeating a frame, adjust clock accordingly */
 				frame_delay = m_vcodectimebase;
@@ -429,6 +426,7 @@ bool kGUIMovie::LoadNextFrame(void)
 					frame_delay += m_local->m_pFrame->repeat_pict * (frame_delay * 0.5);
 				m_videoclock += frame_delay;
 				m_ptime=(int)(m_videoclock*TICKSPERSEC)-m_starttime;
+				//kGUI::Trace("ptime=%d\n",m_ptime);
 			}
 			avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame, &frameFinished, 
 			   packet.data, packet.size);
@@ -439,6 +437,8 @@ bool kGUIMovie::LoadNextFrame(void)
 			    av_free_packet(&packet);
 				/* frame is loaded and ready to be presented when it is time */
 				m_frameready=true;
+
+				av_free_packet(&packet);
 				
 				/* if there was no pending frame to show then get the time for the next one now. */
 				if(again)
@@ -446,46 +446,46 @@ bool kGUIMovie::LoadNextFrame(void)
 				return(true);
 			}
 		}
-    }
-    
+		else if((packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
+        {
+			int len;
+			unsigned char *ptr;
+
+			ptr = packet.data;
+			len = packet.size;
+			while(len>0)
+			{
+				frameFinished=AVCODEC_MAX_AUDIO_FRAME_SIZE*sizeof(short);
+				alen=avcodec_decode_audio2(m_local->m_pACodecCtx, (int16_t *)m_abalign, &frameFinished, ptr, len);
+
+				if(alen<0)
+				{
+					av_free_packet(&packet);
+					return(false);	/* error */
+				}
+
+				len-=alen;
+				ptr+=alen;
+
+				// Did we get a audio frame?
+				if(frameFinished>=0)
+				{
+					/* play audio packet */
+					m_audio->Play(m_local->m_pACodecCtx->sample_rate,m_local->m_pACodecCtx->channels,(const unsigned char *)m_abalign,frameFinished,true);
+				}
+			}
+		}
+		av_free_packet(&packet);
+	}
+
     // Free the packet that was allocated by av_read_frame
-    av_free_packet(&packet);
+//    av_free_packet(&packet);
 	return(false);
 }
 
 void kGUIMovie::ShowFrame(void)
 {
 	/* copy the frame to the image */ 
-
-#if USERGBBUFFER
-	unsigned char *dest;
-	unsigned char *src;
-	unsigned int ls;
-
-	sws_scale(m_local->m_img_convert_ctx, m_local->m_pFrame->data, 
-			m_local->m_pFrame->linesize, 0,m_height, 
-			m_pFrameRGB->data, m_pFrameRGB->linesize);
-
-	ls=m_pFrameRGB->linesize[0];
-	dest=m_image->GetImageDataPtr(0);
-	
-	/* sometimes the lizesize is larger than outwidth*OUTBPP and in that case we need to copy */
-	/* a raster line at a time, if it is equal then we can copy the whole frame at once */
-	if((m_outwidth*OUTBPP)==ls)
-	{
-		src=m_pFrameRGB->data[0];
-		memcpy(dest,src, m_outheight*m_outwidth*OUTBPP);
-	}
-	else
-	{
-		for(unsigned y=0; y<m_outheight; y++)
-		{
-			src=m_pFrameRGB->data[0]+y*ls;
-			memcpy(dest,src, m_outwidth*OUTBPP);
-			dest+=m_outwidth*OUTBPP;
-		}
-	}
-#else
 	{
 		unsigned char *data[4];
 		int linesize[4];
@@ -501,7 +501,6 @@ void kGUIMovie::ShowFrame(void)
 			m_local->m_pFrame->linesize, 0,m_height, 
 			data, linesize);
 	}
-#endif
 	m_frameready=false;
 	m_image->ImageChanged();
 }
@@ -596,19 +595,6 @@ void kGUIMovie::CloseMovie(void)
 		avcodec_close(m_local->m_pVCodecCtx);
 		m_local->m_pVCodecCtx=0;
 	}
-
-#if USERGBBUFFER
-	if(m_pFrameRGB)
-	{
-		av_free(m_pFrameRGB);
-		m_pFrameRGB=0;
-	}
-	if(m_buffer)
-	{
-		av_free(m_buffer);
-		m_buffer=0;
-	}
-#endif
 
 	// Free the YUV frame
 	if(m_local->m_pFrame)

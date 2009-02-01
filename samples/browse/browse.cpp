@@ -19,6 +19,7 @@
 
 #define MOVIEPLAYER 1
 #define USESSL 1
+#define DEFMAXIMAGES 1000
 
 /* this includes the main loop for the selected OS, like Windows, Linux, Mac etc */
 #include "kguisys.cpp"
@@ -52,6 +53,8 @@ private:
 	void WindowEvent(kGUIEvent *event);
 	CALLBACKGLUE(Browse,PageChanged);
 	void PageChanged(void);
+	CALLBACKGLUE(Browse,SettingsChanged);
+	void SettingsChanged(void);
 	kGUIBrowseObj *m_browse;
 	kGUIBrowseSettings m_settings;
 	kGUIHTMLItemCache m_itemcache;
@@ -88,10 +91,10 @@ Browse::Browse()
 	kGUI::LoadFont("arial.ttf");
 	kGUI::LoadFont("arialbd.ttf");
 
-	kGUI::SetDefFontSize(11);
-	kGUI::SetDefReportFontSize(11);
+	kGUI::SetDefFontSize(13);
+	kGUI::SetDefReportFontSize(13);
 
-	/* init character encoding tables */
+    	/* init character encoding tables */
 	kGUIXMLCODES::Init();
 
 	/* Init Cookie Handler */
@@ -113,31 +116,54 @@ Browse::Browse()
 #if MOVIEPLAYER
 	kGUIMovie::InitGlobals();
 #endif
+	bg=kGUI::GetBackground();
+ 	bg->SetTitle("Browse");
+	m_browse=new kGUIBrowseObj(&m_settings,bg->GetChildZoneW(),bg->GetChildZoneH());
+	m_browse->SetPos(0,0);
+	bg->AddObject(m_browse);
+
 	/* load settings, including browser settins */
 	if(prefs.Load("browse.xml")==true)
 	{
 		kGUIXMLItem *xroot;
-		
+
 		xroot=prefs.GetRootItem()->Locate("browse");
 		if(xroot)
+		{
+			int wx,wy,ww,wh;
+
+			wx=xroot->Locate("windowx")->GetValueInt();
+			wy=xroot->Locate("windowy")->GetValueInt();
+			ww=xroot->Locate("windoww")->GetValueInt();
+			wh=xroot->Locate("windowh")->GetValueInt();
+
+			kGUI::SetWindowPos(wx,wy);
+			bg->SetSize(ww,wh);
+			m_browse->SetSize(bg->GetChildZoneW(),bg->GetChildZoneH());
+
 			m_settings.Load(xroot);
+		}
 	}
 
-	bg=kGUI::GetBackground();
- 	bg->SetTitle("Browse");
-
-	m_browse=new kGUIBrowseObj(&m_settings,bg->GetChildZoneW(),bg->GetChildZoneH());
-	m_browse->SetPos(0,0);
 #if MOVIEPLAYER
 	kGUIMovie::InitGlobals();
 	m_browse->AddPlugin(&m_movieplugin);
 #endif
-	bg->AddObject(m_browse);
 
 	/* attach event handler to look for window resize events */
 	bg->SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_browse->SetPageChangedCallback(this,CALLBACKNAME(PageChanged));
+	m_browse->SetSettingsChangedCallback(this,CALLBACKNAME(SettingsChanged));
+
+	//tell browser that we changed it's size
+	m_browse->RePosition(false);
 	kGUI::ShowWindow();
+}
+
+/* settings have changed so re-save the config xml file */
+void Browse::SettingsChanged(void)
+{
+
 }
 
 void Browse::PageChanged(void)
@@ -161,7 +187,7 @@ void Browse::WindowEvent(kGUIEvent *event)
 
 		/* update the browse window size */
 		m_browse->SetSize(bg->GetChildZoneW(),bg->GetChildZoneH());
-		m_browse->RePosition(true);
+		m_browse->RePosition(false);
 	}
 }
 
@@ -169,12 +195,22 @@ Browse::~Browse()
 {
 	kGUIXML prefs;
 	kGUIXMLItem *xroot;
+	int wx,wy,ww,wh;
 
 	delete m_browse;
 
 	/* generate the XML file for our saved settings */
 	prefs.SetEncoding(ENCODING_UTF8);
 	xroot=prefs.GetRootItem()->AddChild("browse");
+
+	/* special case for base window */
+	kGUI::GetWindowPos(&wx,&wy,&ww,&wh);
+
+	xroot->AddChild("windowx",wx);
+	xroot->AddChild("windowy",wy);
+	xroot->AddChild("windoww",ww);
+	xroot->AddChild("windowh",wh);
+	/* save the settings from the browse object */
 	m_settings.Save(xroot);
 
 	/* save the xml file */
