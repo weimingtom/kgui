@@ -156,6 +156,10 @@
 #define max(x,y) ((x)<(y)?(y):(x))
 #endif
 
+#define valmin(x,y) ((x)>(y)?(y):(x))
+#define valmax(x,y) ((x)<(y)?(y):(x))
+
+
 extern void fatalerror(const char *message);
 
 inline static void assert(bool result,const char *string) {if(result==false)fatalerror(string);}
@@ -222,6 +226,8 @@ public:
 	bool TryLock(void);
 	/*! release the mutex */
 	void UnLock(void);
+	/* for debugging */
+	bool GetIsLocked(void) {return m_locked;}
 private:
 	/*! don't allow double entry in the same thread  !*/
 	bool m_locked;
@@ -669,6 +675,59 @@ void SmallArray<T>::Sort(unsigned int num,int (*code)(const void *o1,const void 
 	qsort(m_array,num,sizeof(T),code);
 }
 
+#if defined(MINGW)
+#define USEPOOL 1
+#elif defined(WIN32)
+//problem with microsoft compiler!!!!
+#define USEPOOL 0
+#else
+#define USEPOOL 1
+#endif
+
+/*! @class ClassPool
+	@brief An Array handling template class for a pool of classes
+    @ingroup Arrays */
+template <class T>
+class ClassPool
+{
+public:
+	ClassPool() {m_numblocks=0;m_numperblock=100;m_numavail=0;m_blocks.Init(16,-2);}
+	~ClassPool() {for(unsigned int i=0;i<m_numblocks;++i){delete []m_blocks.GetEntry(i);}}
+	void SetBlockSize(int n) {m_numperblock=n;m_available.Init(n,-2);}
+	T *PoolGet(void);
+	void PoolRelease(T *obj) {m_available.SetEntry(m_numavail,obj);m_numavail++;}
+private:
+	unsigned int m_numblocks;
+	unsigned int m_numperblock;
+	unsigned int m_numavail;
+	Array<T*>m_available;
+	Array<T*>m_blocks;
+};
+
+template <class T>
+T *ClassPool<T>::PoolGet(void)
+{
+	if(!m_numavail)
+	{
+		unsigned int i;
+		T *obj;
+
+		/* allocate a new block of classes */
+		obj=new T[m_numperblock]();
+		m_blocks.SetEntry(m_numblocks++,obj);
+		m_available.Alloc(m_numperblock);
+		for(i=0;i<m_numperblock;++i)
+		{
+			m_available.SetEntry(i,obj);
+			++obj;
+		}
+		m_numavail=m_numperblock;
+	}
+
+	--m_numavail;
+	return(m_available.GetEntry(m_numavail));
+}
+
 /*! @class ClassArray
 	@brief An Array handling template class for an array of classes
     @ingroup Arrays */
@@ -678,15 +737,22 @@ class ClassArray
 public:
 	ClassArray() {}
 	~ClassArray();
+#if USEPOOL
+	inline void Init(int startsize,int growsize) {m_pointers.Init(startsize,growsize);m_pool.SetBlockSize(startsize);}
+#else
 	inline void Init(int startsize,int growsize) {m_pointers.Init(startsize,growsize);}
+#endif
 	inline void SetGrow(bool g) {m_pointers.SetGrow(g);}
 	inline void SetGrowSize(unsigned int g) {m_pointers.SetGrowSize(g);}
 	inline unsigned int GetNumEntries(void) {return m_pointers.GetNumEntries();}
 	inline T *GetEntryPtr(unsigned int num);
-	inline void DeleteEntry(unsigned int num);
+	inline void DeleteEntry(unsigned int num,bool purge);
 	inline void Purge(void);
 private:
 	Array<T *>m_pointers;
+#if USEPOOL
+	ClassPool<T>m_pool;
+#endif
 };
 
 template <class T>
@@ -700,7 +766,11 @@ void ClassArray<T>::Purge()
 		obj=m_pointers.GetEntry(i);
 		if(obj)
 		{
+#if USEPOOL
+			m_pool.PoolRelease(obj);
+#else
 			delete obj;
+#endif
 			m_pointers.SetEntry(i,0);
 		}
 	}
@@ -723,29 +793,46 @@ T *ClassArray<T>::GetEntryPtr(unsigned int num)
 	obj=m_pointers.GetEntry(num);
 	if(!obj)
 	{
+#if USEPOOL
+		obj=m_pool.PoolGet();
+#else
 		obj=new T();
+#endif
 		m_pointers.SetEntry(num,obj);
 	}
 	return(obj);
 }
 
 template <class T>
-void ClassArray<T>::DeleteEntry(unsigned int num)
+void ClassArray<T>::DeleteEntry(unsigned int num,bool purge)
 {
 	T *obj;
 
 	assert((num<m_pointers.GetNumEntries()),"ClassArray::DeleteEntry(num) Out of bounds on array!");
 
-	/* no entries to move */
-	if(num==m_pointers.GetNumEntries()-1)
-		return;
-
 	/* save entry we are deleting */
 	obj=m_pointers.GetEntry(num);
+	if(purge)
+		delete obj;
+
+	/* call the destructor and then the constructor on it to reset it back to it's new state */
+
+	/* no entries to move */
+	if(num==m_pointers.GetNumEntries()-1)
+	{
+		if(purge)
+			m_pointers.SetEntry(m_pointers.GetNumEntries()-1,0);
+		return;
+	}
+
 	/* move entries down */
 	m_pointers.DeleteEntry(num);
-	/* put entry at end of list */
-	m_pointers.SetEntry(m_pointers.GetNumEntries()-1,obj);
+
+	if(purge==false)
+	{
+		/* put entry at end of list */
+		m_pointers.SetEntry(m_pointers.GetNumEntries()-1,obj);
+	}
 }
 
 /*! enum Keyboard codes */
@@ -784,7 +871,8 @@ GUIKEY_CUT,
 GUIKEY_UNDO,
 GUIKEY_RETURN,
 GUIKEY_CTRL_PLUS,
-GUIKEY_CTRL_MINUS
+GUIKEY_CTRL_MINUS,
+MAXKEYPRESSED
 };
 
 #if WINBPP==16
@@ -792,7 +880,7 @@ GUIKEY_CTRL_MINUS
 #define DrawColorToRGB(dc,r,g,b) {r=((dc>>7)&0xf8)+4;g=((dc>>2)&0xf8)+4;b=((dc<<3)&0xf8)+4;}
 typedef unsigned short kGUIColor;
 #else
-#define DrawColor(r,g,b) (((r)<<16)|((g)<<8)|(b))
+#define DrawColor(r,g,b) ((((int)r)<<16)|(((int)g)<<8)|((int)b))
 #define DrawColorToRGB(dc,r,g,b) {r=((dc>>16)&0xff);g=((dc>>8)&0xff);b=(dc&0xff);}
 typedef unsigned int kGUIColor;
 #endif
@@ -801,6 +889,11 @@ typedef struct
 {
 	double x,y;
 }kGUIDPoint2;
+
+typedef struct
+{
+	float x,y;
+}kGUIFPoint2;
 
 typedef struct
 {
@@ -823,6 +916,20 @@ typedef struct
 	/*! bottom screen y */
 	int by;
 }kGUICorners;
+
+/*! @struct kGUIFCorners
+    @brief screen corners generated from kGUIObj zones (uses floats not ints) */
+typedef struct
+{
+	/*! left screen x */
+	float lx;	
+	/*! top screen y */
+	float ty;
+	/*! right screen x */
+	float rx;
+	/*! bottom screen y */
+	float by;
+}kGUIFCorners;
 
 /*! @struct kGUIDCorners
     @brief screen corners generated from kGUIObj zones (uses doubles not ints) */
@@ -1074,14 +1181,14 @@ public:
 	bool hardbreak;				/* true=lines ends with c/r, false=line continues... */
 };
 
-enum
+enum FT_HALIGN
 {
 FT_LEFT,
 FT_RIGHT,
 FT_CENTER
 };
 
-enum
+enum FT_VALIGN
 {
 FT_TOP,
 FT_MIDDLE,
@@ -1127,6 +1234,11 @@ public:
 	int GetTabWidth(int localx);
 
 	/* these are sub-pixel anti-aliased versions that use the kGUISubPixelCollector class */
+	void DrawRot(float x,float y,float angle,kGUIColor color,float alpha=1.0f) {DrawSectionRot(0,GetLen(),x,y,angle,color,alpha);}
+	void DrawSectionRot(int sstart,int slen,float x,float y,float angle,kGUIColor color,float alpha=1.0f);
+	void DrawChar(char * src, float x,float y,int w,int h,kGUIColor color,float apha);
+
+	/* these are sub-pixel anti-aliased versions that use the kGUISubPixelCollector class */
 	void DrawRot(double x,double y,double angle,kGUIColor color,double alpha=1.0f) {DrawSectionRot(0,GetLen(),x,y,angle,color,alpha);}
 	void DrawSectionRot(int sstart,int slen,double x,double y,double angle,kGUIColor color,double alpha=1.0f);
 	void DrawChar(char * src, double x,double y,int w,int h,kGUIColor color,double apha);
@@ -1144,10 +1256,10 @@ public:
 	void SetAlpha(double a) {m_alpha=a;}
 	double GetAlpha(void) {return m_alpha;}
 
-	void SetHAlign(unsigned int f) {m_halign=f;}	/* left, center, right */
-	unsigned int GetHAlign(void) {return m_halign;}	/* left, center, right */
-	void SetVAlign(unsigned int f) {m_valign=f;}	/* top,middle,bottom */
-	unsigned int GetVAlign(void) {return m_valign;}	/* top,middle,bottom */
+	void SetHAlign(FT_HALIGN f) {m_halign=f;}	/* left, center, right */
+	FT_HALIGN GetHAlign(void) {return m_halign;}	/* left, center, right */
+	void SetVAlign(FT_VALIGN f) {m_valign=f;}	/* top,middle,bottom */
+	FT_VALIGN GetVAlign(void) {return m_valign;}	/* top,middle,bottom */
 
 	/* optional: array of color info on a character by character basis */
 	void SetUseRichInfo(bool b) {m_userichinfo=b;}
@@ -1179,8 +1291,8 @@ private:
 	int m_rstart;
 	int m_rend;
 
-	unsigned int m_halign:2;
-	unsigned int m_valign:2;
+	FT_HALIGN m_halign:3;
+	FT_VALIGN m_valign:3;
 	bool m_usebg:1;
 	bool m_fixedtabs:1;
 	/* optional color list info */
@@ -1293,6 +1405,7 @@ public:
 		char c;
 		void *vp;
 		double d;
+		bool b;
 	}m_value[4];
 
 private:
@@ -1623,6 +1736,8 @@ public:
 	void Enable(void) {SetEnabled(true);}
 	void Disable(void) {SetEnabled(false);}
 	void SetShowCurrent(bool c) {m_showcurrent=c;}
+	void ClearPressed(void) {m_pressed=false;}
+	bool GetPressed(void) {return m_pressed;}
 
 	/* make button just big enough to hold text or image */
 	void Contain(void);
@@ -1770,7 +1885,7 @@ public:
 	void TileDraw(void);
 	bool UpdateInput(void);
 	void SetShowScrollBars(bool s);
-	void SetAnimate(bool a) {m_animdelay=0;m_animate=a;Dirty();}
+	void SetAnimate(bool a) {m_animdelay=0;m_animate=a;if(a)LoadPixels();Dirty();}
 	void SetCurrentFrame(unsigned int f) {if(f==m_currentframe)return;LoadPixels();assert(f<GetNumFrames(),"Error!");m_currentframe=f;Dirty();}
 	unsigned int GetCurrentFrame(void) {return  m_currentframe;}
 	void SetAlpha(double a) {m_alpha=a;}
@@ -1902,6 +2017,7 @@ public:
 	void SetHint(kGUIString *string) {if(!m_hint)m_hint=new kGUIString();m_hint->SetString(string);}
 
 	void SetLocked(bool l) {m_locked=l;}
+	bool GetLocked(void) {return m_locked;}
 
 	/* override the string and text changed callbacks */
 	void StringChanged(void) {Changed();}
@@ -1988,6 +2104,21 @@ class kGUIScrollTextObj : public kGUITextObj
 public:
 	kGUIScrollTextObj();
 	~kGUIScrollTextObj() {}
+	void Draw(void);
+	bool UpdateInput(void);
+private:
+};
+
+/*! @class kGUIScrollInputBoxObj
+	@brief this is an scrolltext gui object. It is essentially input text with left and right
+    scroll buttons on the ends and when the buttons are pressed the attached callback
+	can change the text contents.
+	@ingroup kGUIObjects */
+class kGUIScrollInputBoxObj : public kGUIInputBoxObj
+{
+public:
+	kGUIScrollInputBoxObj();
+	~kGUIScrollInputBoxObj() {}
 	void Draw(void);
 	bool UpdateInput(void);
 private:
@@ -2239,7 +2370,7 @@ public:
 
 	void Control(unsigned int command,KGCONTROL_DEF *data);
 	virtual int CurrentGroup(void) {return 0;}
-	virtual void Close(void) {}
+	virtual bool Close(void) {return true;}
 
 	void SetTop(bool t);
 	inline bool GetTop(void) {return m_staytop;}
@@ -2316,7 +2447,7 @@ public:
 	kGUIRootObj();
 	~kGUIRootObj() {}
 	void Draw(void);
-	void Close(void);
+	bool Close(void);
 	bool UpdateInput(void);
 private:
 	void CalcChildZone(void);
@@ -2333,11 +2464,16 @@ public:
 	~kGUIScrollContainerObj() {}
 	void Draw(void);
 	bool UpdateInput(void);
+	void SetInsideSize(int w,int h);
 	void SetShowHoriz(bool h) {m_usehs=h;Dirty();}
 	void SetShowVert(bool v) {m_usevs=v;Dirty();}
 	void SetMaxWidth(int w) {m_maxwidth=w;UpdateScrollBars();Dirty();}
 	void SetMaxHeight(int h) {m_maxheight=h;UpdateScrollBars();Dirty();}
 	void Expand(void);	/* set maxwidth and maxheight to fit all children */
+
+	void GotoX(int x) {m_scroll.SetDestX(x);UpdateScrollBars();}
+	void GotoY(int y) {m_scroll.SetDestY(y);UpdateScrollBars();}
+
 private:
 	CALLBACKGLUEPTR(kGUIScrollContainerObj,ScrollMoveRow,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIScrollContainerObj,ScrollMoveCol,kGUIEvent)
@@ -2435,18 +2571,25 @@ public:
 	void SetTabGroup(int tabindex,int groupindex) {m_tabgroups.SetEntry(tabindex,groupindex);}
 	int GetTabGroup(int tabindex) {return m_tabgroups.GetEntry(tabindex);}
 	
+	void SetHideTabs(bool h) {m_hidetabs=h;UpdateTabs();}
+	bool GetHideTabs(void) {return m_hidetabs;}
+	void SetAllowClose(bool close) {m_close=close;}
 	void SetLocked(bool l) {m_locked=l;}
 	void SetStartTabX(int x) {m_starttabx=x;}
 	int GetTabRowHeight(void);
 	CALLBACKGLUE(kGUITabObj,Track);
+	virtual unsigned int GetTabWidth(int tabindex) {return m_tabnames.GetEntryPtr(tabindex)->GetWidth();}
+	virtual void DrawTab(int tabindex,kGUIText *text,int x,int y) {text->Draw(x,y,0,0);}
+	void DirtyTab(int tab);
 private:
 	void CalcChildZone(void);
 	void UpdateTabs(void);
 	void Track(void);
-	void DirtyTab(int tab);
 
+	bool m_close:1;
 	bool m_track:1;
 	bool m_locked:1;
+	bool m_hidetabs:1;
 	int m_numtabs;
 	int m_numgroups;
 	int m_curtab;
@@ -2858,6 +3001,7 @@ public:
 	void SetSize(int w,int h);
 	void SetInsideSize(int w,int h);
 	void Draw(void);
+	void SetMinSize(int mw,int mh) {m_minw=mw;m_minh=mh;}
 
 	bool UpdateInput(void);
 	
@@ -2875,7 +3019,7 @@ public:
 	void SetFrame(bool f) {m_frame=f;DirtyandCalcChildZone();}
 
 	void ExpandToFit(void);
-	void Close(void);
+	bool Close(void);
 	void Shrink(void);
 	void SetBackground(bool b) {m_background=b;}
 	bool GetBackground(void) {return m_background;}
@@ -2894,6 +3038,8 @@ private:
 	unsigned int m_over:4;			/* mouse hovering over one of the top bar buttons */
 	unsigned int m_allow:4;			/* buttons in top corner */
 	kGUIZone m_savezone;			/* saved window zone when minimized or full */	
+	int m_minw;
+	int m_minh;
 };
 
 /*! @class kGUIControlBoxObj 
@@ -3102,6 +3248,7 @@ public:
 	static const char *GetWeekDay3(int d);	/* 0=Sun, 1=Mon .... 6=Sat */
 	static const char *GetWeekDay(int d);	/* 0=Sunday, 1=Monday .... 6=Saturday */
 	static const char *GetMonthName(int m);	/* 1-12 */
+	static void PrintElapsed(int seconds,kGUIString *s);
 private:
 	void CalcGMTDelta(void);
 	static int m_gmtdelta;					/* delta in seconds between GMT and localtime */
@@ -3252,7 +3399,7 @@ public:
 	virtual void DrawBusy2(kGUICorners *c,int offset)=0;
 
 	virtual void GetTabSize(int *expand,int *left,int *right,int *height)=0;
-	virtual void DrawTab(kGUIText *obj,int x,int y,bool current,bool over)=0;
+	virtual void DrawTab(int x,int y,int w,bool current,bool over,bool close)=0;
 
 	virtual void GetScrollbarSize(bool isvert,int *lt,int *br,int *wh)=0;
 	virtual void DrawScrollbar(bool isvert,kGUICorners *c,kGUICorners *sc,bool showends)=0;
@@ -3394,14 +3541,12 @@ class kGUISubPixelCollector
 {
 public:
 	kGUISubPixelCollector();
-	void SetGamma(double g);
 	void SetBounds(double y1,double y2);
 	void SetColor(kGUIColor c,double alpha);
 	void AddRect(double x,double y,double w,double h,double weight);
 	void Draw(void);
 private:
 	void AddChunk(int y,double lx,double rx,double weight);
-	double m_gamma256[256+1];
 	kGUIColor m_color;
 	double m_red;
 	double m_green;
@@ -3410,6 +3555,41 @@ private:
 	int m_topy;
 	int m_bottomy;
 	Array<SUBLINE_DEF>m_lines;
+	Heap m_chunks;
+	int m_chunkindex;
+};
+
+typedef struct SUBLINEPIXF_DEF
+{
+	SUBLINEPIXF_DEF *next;
+	float weight;
+	float leftx,width;
+}SUBLINEPIXF_DEF;
+
+typedef struct
+{
+	SUBLINEPIXF_DEF *chunk;
+	float leftx,rightx;
+}SUBLINEF_DEF;
+
+class kGUISubPixelCollectorF
+{
+public:
+	kGUISubPixelCollectorF();
+	void SetBounds(float y1,float y2);
+	void SetColor(kGUIColor c,float alpha);
+	void AddRect(float x,float y,float w,float h,float weight);
+	void Draw(void);
+private:
+	void AddChunk(int y,float lx,float rx,float weight);
+	kGUIColor m_color;
+	float m_red;
+	float m_green;
+	float m_blue;
+	float m_alpha;
+	int m_topy;
+	int m_bottomy;
+	Array<SUBLINEF_DEF>m_lines;
 	Heap m_chunks;
 	int m_chunkindex;
 };
@@ -3447,6 +3627,14 @@ typedef struct
 	double dx;	/* change in x with respect to y */
 	int i;	/* edge number: edge i goes from pt[i] to pt[i+1] */
 } Edge;
+
+/* used by the polygon draw code */
+typedef struct
+{		/* a polygon edge */
+    float x;	/* x coordinate of edge's intersection with current scanline */
+	float dx;	/* change in x with respect to y */
+	int i;	/* edge number: edge i goes from pt[i] to pt[i+1] */
+} FEdge;
 
 class kGUICookieJar;
 class kGUISSLManager;
@@ -3486,11 +3674,15 @@ public:
 	static bool GetKeyShift(void) {return m_keyshift;}
 	static void SetKeyControl(bool c) {m_keycontrol=c;}
 	static bool GetKeyControl(void) {return m_keycontrol;}
-	static int GetKey(void) {return m_numkeys?m_keys.GetEntry(0):0;}
+	static int GetKey(void) {return m_keymask==true?0:m_numkeys?m_keys.GetEntry(0):0;}
+	static void SetKeyMask(bool m) {m_keymask=m;}
 	static void ClearKey(void) {m_keys.SetEntry(0,0);}
 	static void EatKey(void) {if(m_numkeys){m_keys.DeleteEntry(0,1);--m_numkeys;}}
 	static void SetForceUsed(bool f) {m_forceused=f;}
 
+	static void SetKeyState(int k,bool pressed) {if(k<MAXKEYPRESSED)m_keystate[k]=pressed;}
+	static bool GetKeyState(int k) {return m_keystate[k];}
+	
 	static void RestoreScreenSurface(void) {m_currentsurface=&m_screensurface;}
 
 	static int GetSurfaceWidth(void) { return (m_currentsurface->GetWidth());}
@@ -3507,9 +3699,12 @@ public:
 
 	static void HSVToRGB(double h,double s,double v, unsigned char *pr, unsigned char *pg, unsigned char *pb);
 	static void RGBToHSV(unsigned char cr, unsigned char cg, unsigned char cb,double *ph,double *ps,double *pv);
+	static void HSLToRGB(double h,double s,double l,unsigned char *pr,unsigned char *pg,unsigned char *pb);
+
 	static void DrawRect(int x1,int y1,int x2,int y2,kGUIColor color);
 	static void DrawRect(int x1,int y1,int x2,int y2,kGUIColor color,double alpha);
 	static void DrawCircle(int x,int y,int r,kGUIColor color,double alpha);
+	static void DrawCircle(float x,float y,float r,kGUIColor color,double alpha);
 	static void DrawCircleOutline(int x,int y,int r,int thickness,kGUIColor color,double alpha);
 	static void DrawDotRect(int x1,int y1,int x2,int y2,kGUIColor color1,kGUIColor color2);
 	static void DrawRectBevel(int lx,int ty,int rx,int by,bool pressed);
@@ -3583,7 +3778,6 @@ public:
 	static const char *GetVersion(void) {return "Build:" __DATE__;}
 	static int GetJpegVersion(void) {return jpegversion;}
 	static const char *GetPngVersion(void) {return pngversion;}
-	static const char *GetFFMpegVersion(void);
 
 	/* built in list of colors, used by browser and art programs */
 	static unsigned int GetNumColors(void);
@@ -3636,9 +3830,21 @@ public:
 	static bool ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawPolyLine(int nvert,kGUIPoint2 *point,kGUIColor c);
 	static void DrawFatLine(int x1,int y1,int x2,int y2,kGUIColor c,double radius,double alpha=1.0f);
-	static void DrawFatPolyLine(unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
+	static void DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
 	static Array<int>m_polysortint;
 	static Array<Edge>m_polysortedge;
+	static Array<FEdge>m_polysortedgef;
+
+	/* float coords draws */
+
+	static bool DrawLine(float x1,float y1,float x2,float y2,kGUIColor c,float alpha=1.0f);
+	static void DrawPoly(int nvert,kGUIFPoint2 *point,kGUIColor c,float alpha=1.0f);
+	static void DrawPolyLine(int nvert,kGUIFPoint2 *point,kGUIColor c);
+	static void DrawFatLine(float x1,float y1,float x2,float y2,kGUIColor c,float radius,float alpha=1.0f);
+	static void DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIFPoint2 *point,kGUIColor c,float radius,float alpha=1.0f);
+
+//	static bool PointInsidePoly(float px,float py,int nvert,kGUIPoint2 *point);
+//	static bool PointInsidePoly(float px,float py,int nvert,kGUIFPoint2 *point);
 
 	/* double coord draws, anti-aliased edges */
 
@@ -3646,11 +3852,10 @@ public:
 	static void DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha=1.0f);
 	static void DrawPolyLine(int nvert,kGUIDPoint2 *point,kGUIColor c);
 	static void DrawFatLine(double x1,double y1,double x2,double y2,kGUIColor c,double radius,double alpha=1.0f);
-	static void DrawFatPolyLine(unsigned int nvert,kGUIDPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
+	static void DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIDPoint2 *point,kGUIColor c,double radius,double alpha=1.0f);
 
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIPoint2 *point);
 	static bool PointInsidePoly(double px,double py,int nvert,kGUIDPoint2 *point);
-
 
 	/* filehandling and bigfile entry points */
 	static void FileDelete(const char *filename);
@@ -3816,8 +4021,14 @@ public:
 	static kGUIObj *m_forcecurrentobj;
 	/* current clip corners */
 	static kGUICorners m_clipcorners;
+	static kGUIFCorners m_clipcornersf;
 	static kGUIDCorners m_clipcornersd;
 	static kGUISubPixelCollector m_subpixcollector;
+	static kGUISubPixelCollectorF m_subpixcollectorf;
+
+	static void BusyLock(void) {m_busymutex.Lock();}
+	static void BusyUnLock(void) {m_busymutex.UnLock();}
+
 private:
 	static kGUISystem *m_sys;
 	static kGUICallBackPtr<kGUIString> m_panic;
@@ -3893,8 +4104,10 @@ private:
 	static int m_frame;
 	static kGUIDelay m_flash;
 
-	static int m_numkeys;		/* number of keys in input buffer */
-	static Array<int>m_keys;	/* array of keys in the input buffer */
+	static bool m_keymask;					/* true=stop allowing keys to be read */
+	static int m_numkeys;					/* number of keys in input buffer */
+	static Array<int>m_keys;				/* array of keys in the input buffer */
+	static bool m_keystate[MAXKEYPRESSED];	/* array of pressed states */
 	static bool m_keyshift;	/* true=shift key pressed */
 	static bool m_keycontrol;	/* true=control key pressed */
 
@@ -3912,6 +4125,7 @@ private:
 	static char *m_imagesizefilename;
 	static Hash m_imagesizehash;
 	static Array<kGUIPoint2>m_fatpoints;
+	static Array<kGUIFPoint2>m_ffatpoints;
 	static Array<kGUIDPoint2>m_dfatpoints;
 
 	static bool m_trace;
@@ -3956,12 +4170,12 @@ public:
 	kGUICommStack() {m_readhead=0;m_writetail=0;m_numrecords=0;}
 	void Init(int numrecords) {m_readhead=0;m_writetail=0;m_array.Alloc(numrecords);m_numrecords=numrecords;}
 	bool GetIsEmpty(void) {return (m_readhead==m_writetail);}
-	bool Read(T *obj) {if(m_readhead==m_writetail)return(false);*obj=m_array.GetEntry(m_readhead);if(++m_readhead==m_numrecords)m_readhead=0;return(true);}
+	bool Read(T *obj) {int ri;if(m_readhead==m_writetail)return(false);*obj=m_array.GetEntry(m_readhead);ri=m_readhead+1;if(ri==m_numrecords)ri=0;m_readhead=ri;return(true);}
 	bool Write(T *obj) {int wi=m_writetail+1;if(wi==m_numrecords)wi=0;if(wi==m_readhead) return(false);m_array.SetEntry(m_writetail,*obj);m_writetail=wi;return(true);}
 private:
-	int m_numrecords;
-	int m_readhead;
-	int m_writetail;
+	volatile int m_numrecords;
+	volatile int m_readhead;
+	volatile int m_writetail;
 	Array<T>m_array;
 };
 

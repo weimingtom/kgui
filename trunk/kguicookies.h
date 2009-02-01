@@ -40,6 +40,8 @@ public:
 
 	void SetPermanent(bool p) {m_permanent=p;}
 	bool GetPermanent(void) {return m_permanent;}
+
+	bool GetError(void) {return m_error;}
 private:
 	bool Set(kGUIString *line);
 	kGUIString m_name;
@@ -50,6 +52,7 @@ private:
 	bool m_secure:1;
 	bool m_remove:1;
 	bool m_permanent:1;
+	bool m_error:1;
 	kGUIDate m_expiry;
 };
 

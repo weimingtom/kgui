@@ -1139,6 +1139,13 @@ kGUIScrollContainerObj::kGUIScrollContainerObj()
 	m_scroll.SetEventHandler(this,CALLBACKNAME(ScrollEvent));
 }
 
+void kGUIScrollContainerObj::SetInsideSize(int w,int h)
+{
+	w+=kGUI::GetSkin()->GetScrollbarWidth();
+	h+=kGUI::GetSkin()->GetScrollbarHeight();
+	SetSize(w,h);
+}
+
 void kGUIScrollContainerObj::CalcChildZone(void)
 {
 	SetChildZone(0,0,GetZoneW(),GetZoneH());

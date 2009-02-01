@@ -315,6 +315,9 @@ bool kGUIInputBoxObj::MoveCursorRow(int delta)
 	int pixelx,nc;
 	kGUIInputLineInfo *lbptr;
 		
+	if(m_recalclines==true)
+		CalcLines(true);
+
 	line=GetLineNum(m_hcursor);
 	newline=line+delta;
 	if(newline<0)
@@ -982,6 +985,12 @@ exitcell:		m_leftoff=0;
 					
 					paste.Replace("\r","");	/* remove c/r, only accept linefeeds */
 
+					if(m_allowenter==false)
+						paste.Replace("\n","");	/* remove c/r */
+
+					if(m_allowtab==false)
+						paste.Replace("\t","");	/* remove tabs */
+
 					/* handle different string types */
 					if(GetEncoding()!=paste.GetEncoding())
 					{
@@ -1364,4 +1373,71 @@ void kGUIInputBoxObj::GetCursorRange(unsigned int *si,unsigned int *ei)
 		*(si)=m_hcursor;
 		*(ei)=m_hstart;
 	}
+}
+
+/***********************************************************/
+kGUIScrollInputBoxObj::kGUIScrollInputBoxObj()
+{
+	SetHAlign(FT_CENTER);
+	SetVAlign(FT_MIDDLE);
+}
+
+bool kGUIScrollInputBoxObj::UpdateInput(void)
+{
+	bool used;
+	int x,w;
+
+	x=GetZoneX();w=GetZoneW();
+	MoveZoneX(x+16);MoveZoneW(w-32);
+	used=kGUIInputBoxObj::UpdateInput();
+	MoveZoneX(x);MoveZoneW(w);
+	if(used==false)
+	{
+		if(kGUI::GetMouseClickLeft()==true)
+		{
+			kGUICorners c;
+			kGUIEvent e;
+
+			int w=kGUI::GetSkin()->GetScrollHorizButtonWidths();
+
+			GetCorners(&c);
+			if(kGUI::GetMouseX()<(c.lx+w))
+			{
+				e.m_value[0].i=-1;					
+				CallEvent(EVENT_PRESSED,&e);	/* left arrow button was pressed */
+				kGUI::CallAAParents(this);
+				used=true;
+			}
+			else if(kGUI::GetMouseX()>(c.rx-w))
+			{
+				e.m_value[0].i=1;					
+				CallEvent(EVENT_PRESSED,&e);	/* right arrow button was pressed */
+				kGUI::CallAAParents(this);
+				used=true;
+			}
+		}
+	}
+	return(used);
+}
+
+void kGUIScrollInputBoxObj::Draw(void)
+{
+	kGUICorners c;
+	int x,w;
+
+	kGUI::PushClip();
+	GetCorners(&c);
+	kGUI::ShrinkClip(&c);
+
+	/* is there anywhere to draw? */
+	if(kGUI::ValidClip())
+	{
+		kGUI::GetSkin()->DrawScrollHoriz(&c);
+
+		x=GetZoneX();w=GetZoneW();
+		MoveZoneX(x+16);MoveZoneW(w-32);
+		kGUIInputBoxObj::Draw();
+		MoveZoneX(x);MoveZoneW(w);
+	}
+	kGUI::PopClip();
 }

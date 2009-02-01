@@ -3755,14 +3755,23 @@ bool kGUIImageObj::UpdateInput(void)
 			}
 		}
 		if(kGUI::GetMouseDoubleClickLeft())
+		{
 			CallEvent(EVENT_LEFTDOUBLECLICK);
+			return(true);
+		}
 		else if(kGUI::GetMouseClickLeft())
+		{
 			CallEvent(EVENT_LEFTCLICK);
+			return(true);
+		}
 		else if(kGUI::GetMouseClickRight())
+		{
 			CallEvent(EVENT_RIGHTCLICK);
+			return(true);
+		}
 	}
 
-	return(true);
+	return(false);
 }
 
 kGUIImageRefObj::~kGUIImageRefObj()

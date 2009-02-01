@@ -122,6 +122,11 @@ void kGUIDownloadEntry::AsyncDownLoad(DataHandle *dh,kGUIString *fullurl)
 	if(GetAsyncActive())
 		WaitFinished();
 
+	/* debug: make sure output datahandle is valid for writing */
+	kGUI::Trace("Check Load %08x '%s'\n",dh,fullurl->GetString());
+
+	dh->CheckWrite();
+
 #if DLDEBUG
 	m_debugstate=2;
 	printf("m_debugstate=%d\n",m_debugstate);
@@ -337,7 +342,15 @@ again:;
 				url.Clear();
 			}
 		}
-		useport=80;
+		/* is there a port number encoded in the domain */
+		cp=strstr(servername.GetString(),":");
+		if(cp)
+		{
+			useport=atoi(cp+1);
+			servername.Clip(cp-servername.GetString());
+		}
+		else
+			useport=80;
 	}
 	else if(strncmp(fullurl,"https://",8)==0)
 	{
@@ -726,6 +739,7 @@ again:;
 				}
 			}
 		}
+	break;
 	case 403:
 		/* no idea why, but if we have a referrer tag then try again without one */
 		if(referer.GetLen())
@@ -1184,6 +1198,7 @@ void kGUIDownloadAuthenticateRealms::Add(kGUIString *domrealm,kGUIString *encnp)
 	{
 		/* allocate a string for the encoded name:password */
 		s=m_enc.GetEntryPtr(m_num++);
+		s->SetString(encnp);
 		m_hash.Add(domrealm->GetString(),&s);
 	}
 }

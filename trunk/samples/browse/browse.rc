@@ -31,10 +31,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 
-#if USEICON
-IDI_LARGEICON           ICON                    "large.ico"
-IDI_SMALLICON           ICON                    "small.ico"
-#endif
+IDI_LARGEICON           ICON                    "browse.ico"
+IDI_SMALLICON           ICON                    "browse.ico"
 
 
 #ifdef APSTUDIO_INVOKED
@@ -72,7 +70,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_APP_TITLE         "Simple"
+    IDS_APP_TITLE         "Armadillo"
     IDC_APP_NAME          "Simple"
 END
 

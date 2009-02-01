@@ -132,7 +132,7 @@ void GammaSample::GammaEvent(kGUIEvent *event)
 		else if(event->m_value[0].i==1)
 			g+=0.01f;
 		m_gamma.Sprintf("%.2f",g);
-		kGUI::m_subpixcollector.SetGamma(g);
+//		kGUI::m_subpixcollector.SetGamma(g);
 		kGUI::GetBackground()->Dirty();
 	break;
 	}
@@ -192,15 +192,15 @@ void GammaVertBox::Draw(void)
 
 void GammaTextBox::Draw(void)
 {
-	double x,y;
+	float x,y;
 	kGUICorners c;
 	kGUIText t;
 
 	GetCorners(&c);
 	kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(255,255,255));
 
-	y=(double)c.ty;
-	x=(double)c.lx;
+	y=(float)c.ty;
+	x=(float)c.lx;
 	t.SetFontSize(9);
 	t.SetString("Hello World!!!!!!!!!!!");
 	do

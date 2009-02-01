@@ -119,6 +119,7 @@ int kGUI::m_dirtyindex;
 kGUICorners kGUI::m_dirtycorners[MAXDIRTY];
 
 kGUICorners kGUI::m_clipcorners;
+kGUIFCorners kGUI::m_clipcornersf;
 kGUIDCorners kGUI::m_clipcornersd;
 int kGUI::m_clipindex;
 kGUICorners kGUI::m_clipstack[MAXCLIPS];
@@ -129,8 +130,10 @@ kGUIDelay kGUI::m_flash;
 int kGUI::m_et;
 int kGUI::m_frame;
 
+bool kGUI::m_keymask;		/* true=stop keys from being read */
 int kGUI::m_numkeys;		/* number of keys in input buffer */
 Array<int>kGUI::m_keys;		/* array of keys in the input buffer */
+bool kGUI::m_keystate[MAXKEYPRESSED];	/* array of pressed states */
 
 bool kGUI::m_keyshift;
 bool kGUI::m_keycontrol;
@@ -155,8 +158,10 @@ kGUIDrawSurface kGUI::m_screensurface;
 kGUIDrawSurface *kGUI::m_currentsurface;
 
 Array<kGUIPoint2>kGUI::m_fatpoints;
+Array<kGUIFPoint2>kGUI::m_ffatpoints;
 Array<kGUIDPoint2>kGUI::m_dfatpoints;
 kGUISubPixelCollector kGUI::m_subpixcollector;
+kGUISubPixelCollectorF kGUI::m_subpixcollectorf;
 
 kGUICallBack kGUI::m_inputcallback;
 kGUISkin *kGUI::m_skin;
@@ -164,6 +169,10 @@ kGUIRandom *kGUI::m_random;
 
 kGUICookieJar *kGUI::m_cookiejar=0;
 kGUISSLManager *kGUI::m_sslmanager=0;
+
+Array<int>kGUI::m_polysortint;
+Array<Edge>kGUI::m_polysortedge;
+Array<FEdge>kGUI::m_polysortedgef;
 
 bool kGUI::m_fastdraw;
 
@@ -310,7 +319,7 @@ void kGUIRootObj::Draw(void)
 }
 
 /* close all children */
-void kGUIRootObj::Close(void)
+bool kGUIRootObj::Close(void)
 {
 	kGUIObj *gobj;
 
@@ -319,14 +328,15 @@ void kGUIRootObj::Close(void)
 		gobj=GetChild(0);
 		static_cast<kGUIContainerObj *>(gobj)->Close();
 	}
+	return(true);
 }
 
 void kGUI::Close(void)
 {
 	assert(m_inputcallback.IsValid()==false,"User Input callback should be disabled first!");
 
-	m_numevents=0;	/* stop calling events */
 	m_rootobj->Close();
+	m_numevents=0;	/* stop calling events */
 	delete m_backgroundobj;
 	delete m_rootobj;
 
@@ -361,14 +371,17 @@ kGUISkin *AllocDefSkin(void);
 
 bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheight,int maximages)
 {
+	unsigned int i;
 	m_sys=sys;
 
+#if 0
 	signal(SIGILL, sighandler);   // install our handler
 	signal(SIGFPE, sighandler);   // install our handler
 	signal(SIGSEGV, sighandler);   // install our handler
 	signal(SIGTERM, sighandler);   // install our handler
 //	signal(SIGBREAK, sighandler);   // install our handler
 	signal(SIGABRT, sighandler);   // install our handler
+#endif
 
 	m_locstrings.Init(&KGUISTRING_DEF);	/* generated data in _text.cpp */
 	assert(KGUILANG_NUMLANGUAGES==KGUISTRING_DEF.numlangs,"Number of Languages Mismatch!");
@@ -389,9 +402,14 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_mousecursor=MOUSECURSOR_DEFAULT;
 	m_tempmouse=false;
 	m_closeapp=false;
+	m_keymask=false;
 	m_numkeys=0;
 	m_keys.Init(32,4);
 	m_keyshift=false;
+
+	/* array of pressed states */
+	for(i=0;i<MAXKEYPRESSED;++i)
+		m_keystate[i]=false;
 
 	/* set default text to english, allow it to be overwritten by user code */
 	SetLanguage(KGUILANG_ENGLISH);
@@ -741,53 +759,6 @@ void kGUI::DrawRect(int x1,int y1,int x2,int y2,kGUIColor color)
 	}
 }
 
-/* draw rect with alpha blending */
-void kGUI::DrawCircle(int x,int y,int r,kGUIColor color,double alpha)
-{
-	int i;
-	kGUIPoint2 points[360+1];
-
-	if(OffClip(x-r,y-r,x+r,y+r)==true)
-		return;
-
-	for(i=0;i<=360;++i)
-	{
-		points[i].x=x+(int)(r*sin(i*(3.141592654f/180.0f)));
-		points[i].y=y+(int)(r*cos(i*(3.141592654f/180.0f)));
-	}
-
-	if(alpha==1.0f)
-		kGUI::DrawPoly(360+1,points,color);
-	else
-		kGUI::DrawPoly(360+1,points,color,alpha);
-}
-
-/* draw rect with alpha blending */
-void kGUI::DrawCircleOutline(int x,int y,int r,int thickness,kGUIColor color,double alpha)
-{
-	int i,r2;
-	kGUIPoint2 points[360+1+360+1];
-
-	if(OffClip(x-r,y-r,x+r,y+r)==true)
-		return;
-
-	r2=r-thickness;
-	for(i=0;i<=360;++i)
-	{
-		points[i].x=x+(int)(r*sin(i*(3.141592654f/180.0f)));
-		points[i].y=y+(int)(r*cos(i*(3.141592654f/180.0f)));
-
-		points[361+(360-i)].x=x+(int)(r2*sin(i*(3.141592654f/180.0f)));
-		points[361+(360-i)].y=y+(int)(r2*cos(i*(3.141592654f/180.0f)));
-
-	}
-
-	if(alpha==1.0f)
-		kGUI::DrawPoly(360+1+360+1,points,color);
-	else
-		kGUI::DrawPoly(360+1+360+1,points,color,alpha);
-}
-
 
 /* draw rect with alpha blending */
 void kGUI::DrawRect(int x1,int y1,int x2,int y2,kGUIColor color,double alpha)
@@ -915,6 +886,11 @@ void kGUI::ResetClip(void)
 	m_clipcorners.ty=0;
 	m_clipcorners.by=h;
 
+	m_clipcornersf.lx=0.0f;
+	m_clipcornersf.rx=(float)w;
+	m_clipcornersf.ty=0.0f;
+	m_clipcornersf.by=(float)h;
+
 	m_clipcornersd.lx=0.0f;
 	m_clipcornersd.rx=(double)w;
 	m_clipcornersd.ty=0.0f;
@@ -941,6 +917,12 @@ void kGUI::SetClip(void)
 		m_clipcorners.rx=w;
 	if(m_clipcorners.by>h)
 		m_clipcorners.by=h;
+
+	/* make copy using floats for the anti-alias draw code */
+	m_clipcornersf.lx=(float)m_clipcorners.lx;
+	m_clipcornersf.rx=(float)m_clipcorners.rx;
+	m_clipcornersf.ty=(float)m_clipcorners.ty;
+	m_clipcornersf.by=(float)m_clipcorners.by;
 
 	/* make copy using doubles for the anti-alias draw code */
 	m_clipcornersd.lx=(double)m_clipcorners.lx;
@@ -1032,6 +1014,7 @@ void kGUI::UpdateInput(void)
 	kGUICorners c;
 	int saveet=m_et;
 
+	SetKeyMask(false);
 	if(m_busymutex.TryLock()==false)
 		return;
 
@@ -1145,7 +1128,8 @@ void kGUI::UpdateInput(void)
 		SetNoMouse(false);
 	}
 
-	kGUI::ClearKey();
+	/* don't pass key presses to these objects */
+	SetKeyMask(true);
 	
 	/* priority 3: pass mouse input down to object under the mouse */
 	for(i=m_rootobj->GetNumChildren()-1;i>=0;--i)
@@ -1155,14 +1139,17 @@ void kGUI::UpdateInput(void)
 		if(MouseOver(&c))
 		{
 			m_askhint=m_sethint;
-			gobj->UpdateInput();
-			goto used;
+			if(gobj->UpdateInput())
+				goto used;
 		}
 	}
 
 used:;
 
 	/* call all events */
+
+	SetKeyMask(false);
+
 	m_et=saveet;
 	for(i=0;i<m_numevents;++i)
 	{
@@ -2138,9 +2125,9 @@ void kGUI::RGBToHSV(unsigned char cr, unsigned char cg, unsigned char cb,double 
 	{
 		ph[0] = 4.0 + (r-g)/delta;
     }
-    ph[0] = ph[0] * 60.0;
+    ph[0] = ph[0] * (1.0f/6.0f);
     if (ph[0] < 0.0)
-		ph[0] += 360.0;
+		ph[0] += 1.0;
 }
 
 void kGUI::HSVToRGB(double h,double s,double v,unsigned char *pr,unsigned char *pg,unsigned char *pb)
@@ -2156,7 +2143,7 @@ void kGUI::HSVToRGB(double h,double s,double v,unsigned char *pr,unsigned char *
 	}
 	else
 	{
-		h /= 60;			// sector 0 to 5
+		h *= 6.0f;			// sector 0 to 5
 		i = (int)floor( h );
 		f = h - i;			// factorial part of h
 		p = v * ( 1 - s );
@@ -2203,6 +2190,116 @@ void kGUI::HSVToRGB(double h,double s,double v,unsigned char *pr,unsigned char *
 	pr[0]=(unsigned char)r;
 	pg[0]=(unsigned char)g;
 	pb[0]=(unsigned char)b;
+}
+
+#if 0
+void kGUI::RGBToHSL(unsigned char cr, unsigned char cg, unsigned char cb,double *ph,double *ps,double *pl)
+void RGB_to_HSL	(r,g,b,h,s,l)
+double 	r,g,b;
+double *h, *s, *l;
+{
+    double v;
+    double m;
+    double vm;
+    double r2, g2, b2;
+
+    v = MAX(r,g);
+    v = MAX(v,b);
+    m = MIN(r,g);
+    m = MIN(m,b);
+
+    if ((*l = (m + v) / 2.0) <= 0.0) return;
+    if ((*s = vm = v - m) > 0.0) {
+		*s /= (*l <= 0.5) ? (v + m ) :
+			(2.0 - v - m) ;
+    } else
+	return;
+
+
+    r2 = (v - r) / vm;
+    g2 = (v - g) / vm;
+    b2 = (v - b) / vm;
+
+    if (r == v)
+		*h = (g == m ? 5.0 + b2 : 1.0 - g2);
+    else if (g == v)
+		*h = (b == m ? 1.0 + r2 : 3.0 - b2);
+    else
+		*h = (r == m ? 3.0 + g2 : 5.0 - r2);
+
+    	*h /= 6;
+	}
+#endif
+
+void kGUI::HSLToRGB(double h,double s,double l,unsigned char *pr,unsigned char *pg,unsigned char *pb)
+{
+    double v;
+
+    v = (l <= 0.5) ? (l * (1.0 + s)) : (l + s - l * s);
+    if (v <= 0)
+	{
+		pr[0]=pg[0]=pb[0]=0;
+    }
+	else
+	{
+		double m;
+		double sv;
+		int sextant;
+		double fract, vsf, mid1, mid2;
+		unsigned char iv;
+		unsigned char im;
+		unsigned char imid1;
+		unsigned char imid2;
+
+		m = l + l - v;
+		sv = (v - m ) / v;
+		h *= 6.0;
+		sextant = h;	
+		fract = h - sextant;
+		vsf = v * sv * fract;
+		mid1 = m + vsf;
+		mid2 = v - vsf;
+
+		im=(unsigned char)(m*255.0f);
+		iv=(unsigned char)(v*255.0f);
+		imid1=(unsigned char)(mid1*255.0f);
+		imid2=(unsigned char)(mid2*255.0f);
+
+
+		switch (sextant)
+		{
+			case 0:
+				pr[0] = iv;
+				pg[0] = imid1;
+				pb[0] = im;
+			break;
+			case 1:
+				pr[0] = imid2;
+				pg[0] = iv;
+				pb[0] = im;
+			break;
+			case 2:
+				pr[0] = im;
+				pg[0] = iv;
+				pb[0] = imid1;
+			break;
+			case 3:
+				pr[0] = im;
+				pg[0] = imid2;
+				pb[0] = iv;
+			break;
+			case 4:
+				pr[0] = imid1;
+				pg[0] = im;
+				pb[0] = iv;
+			break;
+			case 5:
+				pr[0] = iv;
+				pg[0] = im;
+				pb[0] = imid2;
+			break;
+		}
+    }
 }
 
 /***********************************************************************/
@@ -2654,14 +2751,9 @@ void kGUIMsgBoxReq::Init(const char *message,int buttons)
 		}
 	}
 
-	x=(kGUI::GetSurfaceWidth()-w)/2;
-	y=(kGUI::GetSurfaceHeight()-h)/2;
-	if(y<0)
-		y=0;
-
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_window.SetSize(w,h);
-	m_window.SetPos(x,y);
+	m_window.Center();
 	m_window.SetTop(true);
 	kGUI::AddWindow(&m_window);
 	m_result=MSGBOX_ABORT;
@@ -2731,7 +2823,7 @@ void kGUIMsgBoxReq::PressDone(kGUIEvent *event)
 
 kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *result,int closebutton),const char *message,...)
 {
-	int x,y,w,h;
+	int x,y,w,h,bw,lh;
 	kGUIString fmessage;
 	va_list args;
 
@@ -2747,6 +2839,7 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 
 	m_text.SetPos(0,0);
 	m_text.SetString(fmessage.GetString());
+	lh=m_text.GetLineHeight()+8;
 	m_window.AddObject(&m_text);
 	w=m_text.GetZoneW()+20;
 	h=m_text.GetZoneH();
@@ -2755,7 +2848,7 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 	x=20;
 
 	m_input.SetPos(0,y);
-	m_input.SetSize(300,20);
+	m_input.SetSize(300,lh);
 	m_input.SetString("");
 	m_input.SetMaxLen(256);
 
@@ -2765,14 +2858,16 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 	y+=20+20;
 
 	m_ok.SetString(kGUI::GetString(KGUISTRING_OK));
-	m_ok.SetSize(60,20);
+	bw=max(m_ok.GetWidth()+16,60);
+	m_ok.SetSize(bw,lh);
 	m_ok.SetPos(x,y);
 	m_ok.SetEventHandler(this,CALLBACKNAME(PressOK));
 	m_window.AddObject(&m_ok);
 	x+=60+20;
 
 	m_cancel.SetString(kGUI::GetString(KGUISTRING_CANCEL));
-	m_cancel.SetSize(60,20);
+	bw=max(m_cancel.GetWidth()+16,60);
+	m_cancel.SetSize(bw,lh);
 	m_cancel.SetPos(x,y);
 	m_cancel.SetEventHandler(this,CALLBACKNAME(PressCancel));
 	m_window.AddObject(&m_cancel);
@@ -2785,7 +2880,7 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 	m_closebutton=MSGBOX_ABORT;
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_window.SetSize(w,h);
-	m_window.SetPos( (kGUI::GetSurfaceWidth()-w)/2,(kGUI::GetSurfaceHeight()-h)/2);
+	m_window.Center();
 	m_window.SetTop(true);
 	kGUI::AddWindow(&m_window);
 
@@ -3540,6 +3635,23 @@ void kGUIDate::ShortDateTime(kGUIString *s,bool use24)
 	Time(&t,use24);
 	s->Append(" ");
 	s->Append(&t);
+}
+
+void kGUIDate::PrintElapsed(int seconds,kGUIString *s)
+{
+	int h,m;
+
+	h=seconds/3600;
+	seconds-=h*3600;
+	m=seconds/60;
+	seconds-=m*60;
+
+	if(h>0)
+		s->Sprintf("%d:%02d:%02d",h,m,seconds);
+	else if(m>0)
+		s->Sprintf("%d:%02d",m,seconds);
+	else
+		s->Sprintf("%d",seconds);
 }
 
 

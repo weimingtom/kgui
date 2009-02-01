@@ -79,9 +79,11 @@ public:
 	void Alloc(int n,int c);
 	void AddEntry(kGUIBSPPointEntry *re);
 	kGUIBSPZoneEntry *CutAxis(int start,int end,int depth);
+	int GetNumZones(void) {return m_numzones;}
 	void Cut(void) {m_curzones=m_zones;CutAxis(0,m_numentries,m_numcuts-1);}
 	void SelectZone(kGUICorners *c,kGUIBSPZoneEntry *zone);
 	void Select(kGUICorners *c);
+	void SelectZone(int zonenum);
 	kGUIBSPPointEntry *GetEntry(void);
 	static int Sort0(const void *v1,const void *v2);
 	static int Sort1(const void *v1,const void *v2);

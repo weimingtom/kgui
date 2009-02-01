@@ -227,7 +227,7 @@ public:
 
 	inline int GetNumPages(void) {return m_numgrouppages;}
 
-	void GetSubPageInfo(int subpage,int *pw,int *ph,int *poffx,int *poffy);
+	void GetSubHistoryRecord(int subpage,int *pw,int *ph,int *poffx,int *poffy);
 
 	void SetCloseCallBack(void *codeobj,void (*code)(void *,kGUIReport *)) {m_closecallback.Set(codeobj,code);}
 	/* used in script generated reports with fields in the body that are replaced */

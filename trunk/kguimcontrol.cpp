@@ -3,7 +3,7 @@
 /*                                                                               */
 /* Initially Designed and Programmed by Kevin Pickell                            */
 /*                                                                               */
-/* http://code.google.com/p/kgui/                                 */
+/* http://code.google.com/p/kgui/				                                 */
 /*                                                                               */
 /*    kGUI is free software; you can redistribute it and/or modify               */
 /*    it under the terms of the GNU Lesser General Public License as published by*/
@@ -188,6 +188,8 @@ void kGUIMovieControlObj::Move(kGUIEvent *event)
 			time=0;
 		else if(time>=duration)
 			time=duration-1;
+
+		m_movie->SetPlayAudio(false);
 		m_movie->Seek(time);
 	}
 }
@@ -200,6 +202,7 @@ void kGUIMovieControlObj::PressPlayPause(kGUIEvent *event)
 		{
 			if(m_movie->GetDone()==true)
 				m_movie->Seek(0);
+			m_movie->SetPlayAudio(true);
 			m_movie->SetPlaying(true);
 		}
 		else

@@ -1,30 +1,48 @@
 #ifndef __KGUIBROWSE__
 #define __KGUIBROWSE__
 
+#include <new>
 #include "kguicookies.h"
 #include "kguixml.h"
 #include "kguihtml.h"
-#include "kguimovie.h"
 
 /* number of pages that you can go back */
 #define MAXPAGES 100
 
-/*! @internal @class PageInfo 
-	@brief info for a page in the browser 
-    @ingroup kGUIBrowseObj */
-class PageInfo
+//local only classes
+namespace kguibrowselocal
+{
+
+class HTMLPageObj : public kGUIHTMLPageObj
 {
 public:
-	PageInfo() {m_secure=false;m_input=new Hash();m_input->Init(8,0);}
-	~PageInfo() {delete m_input;}
+	HTMLPageObj() {m_colormode=0;}
+	void SetColorMode(int mode) {m_colormode=mode;}
+	int GetColorMode(void) {return m_colormode;}
+	/* override this so we can ( if enabled ) use our color blind simulator */
+	void Draw(void);
+private:
+	int m_colormode;
+};
+
+/*! @internal @class HistoryRecord 
+	@brief info for a page in the browser 
+    @ingroup kGUIBrowseObj */
+class HistoryRecord
+{
+public:
+	HistoryRecord() {m_secure=false;m_input=new Hash();m_input->Init(8,0);}
+	~HistoryRecord() {delete m_input;}
 	void Set(const char *url,const char *post,const char *referer,const char *source,const char *header);
 	void SetSource(kGUIString *source) {m_source.SetString(source);}
 	void SetType(kGUIString *type) {m_type.SetString(type);}
 	void SetTitle(kGUIString *title) {m_title.SetString(title);}
 	void SetURL(kGUIString *url) {m_url.SetString(url);}
 	void SetHeader(kGUIString *header) {m_header.SetString(header);}
+	void SetPost(kGUIString *post) {post==0?m_post.Clear():m_post.SetString(post);}
+	void SetReferer(kGUIString *referer) {referer==0?m_referer.Clear():m_referer.SetString(referer);}
 	void SetSecure(bool s) {m_secure=s;}
-	void Copy(PageInfo *copy) {m_scrolly=copy->m_scrolly;m_title.SetString(&copy->m_title);m_url.SetString(&copy->m_url);m_type.SetString(&copy->m_type);m_referer.SetString(&copy->m_referer);m_post.SetString(&copy->m_post);m_source.SetString(&copy->m_source);m_header.SetString(&copy->m_header);if(m_input)delete m_input;m_input=copy->m_input;copy->m_input=new Hash();copy->m_input->Init(8,0);m_secure=copy->m_secure;};
+	void Copy(HistoryRecord *copy) {m_scrolly=copy->m_scrolly;m_title.SetString(&copy->m_title);m_url.SetString(&copy->m_url);m_type.SetString(&copy->m_type);m_referer.SetString(&copy->m_referer);m_post.SetString(&copy->m_post);m_source.SetString(&copy->m_source);m_header.SetString(&copy->m_header);if(m_input)delete m_input;m_input=copy->m_input;copy->m_input=new Hash();copy->m_input->Init(8,0);m_secure=copy->m_secure;};
 
 	kGUIString *GetTitle(void) {return &m_title;}
 	kGUIString *GetURL(void) {return &m_url;}
@@ -49,6 +67,41 @@ private:
 	bool m_secure:1;	
 	Hash *m_input;
 };
+
+/* object needed for each tab */
+class TabRecord
+{
+public:
+	TabRecord();
+	HistoryRecord *NextPage(void);
+	HistoryRecord *GetHist(int index) {return m_history+index;}
+	HistoryRecord *GetCurHist(void) {return m_histindex==0?0:m_history+m_histindex-1;}
+	HTMLPageObj *GetScreenPage(void) {return &m_screenpage;}
+	void SetIcon(bool valid,DataHandle *dh) {m_iconvalid=valid;m_icon.Copy(dh);}
+	void GetIcon(bool *valid,DataHandle *dh) {*(valid)=m_iconvalid;dh->Copy(&m_icon);}
+	int m_histindex;	
+	int m_histend;
+	HistoryRecord m_history[MAXPAGES];
+	kGUIString m_urlstring;	/* current string in the URL title bar */
+	HTMLPageObj m_screenpage;
+	bool m_iconvalid:1;
+	bool m_reposition:1;
+	bool m_reparse:1;
+	DataHandle m_icon;
+	class DownloadPageRecord *m_curdl;	/* if not null then download page is active */
+};
+
+class DownloadPageRecord
+{
+public:
+	TabRecord *m_tabrecord;
+	DataHandle m_dh;
+	kGUIDownloadEntry m_dl;
+};
+
+}	//end of namespace
+
+using namespace kguibrowselocal;
 
 /* this is seperate so a program can load/save it into it's own config file and then */
 /* attach it to each browse object when they are created */
@@ -113,6 +166,25 @@ private:
 	ClassArray<kGUIBookmark>m_bookmarks;
 };
 
+class kGUIBrowseIcon
+{
+public:
+	kGUIBrowseIcon() {m_valid=false;m_animateeventactive=false;}
+	~kGUIBrowseIcon() {if(m_animateeventactive)kGUI::DelEvent(this,CALLBACKNAME(Animate));}
+	bool GetIsValid(void) {return m_valid;}
+	bool SetIcon(DataHandle *dh);
+	void Draw(int x,int y) {m_icon.Draw(m_currentframe,x,y);}
+	virtual void Dirty(void)=0;
+private:
+	CALLBACKGLUE(kGUIBrowseIcon,Animate);
+	void Animate(void);
+	unsigned int m_currentframe;
+	unsigned int m_animdelay;
+	bool m_animateeventactive:1;
+	bool m_valid:1;
+	kGUIImage m_icon;
+};
+
 /* used to input the URL but draws the input text shifted to the right to allow space */
 /* for the favicon shape */
 class kGUIOffsetInputBoxObj : public kGUIInputBoxObj
@@ -130,6 +202,32 @@ private:
 	bool m_animateeventactive:1;
 	bool m_iconvalid:1;
 	kGUIImage m_icon;
+};
+
+
+/* we will make our own tab class since we want the tabs to have icons and close button on them */
+#define BROWSETABWIDTH 175
+
+class kGUITabBrowseIcon : public kGUIBrowseIcon
+{
+public:
+	void SetTab(class kGUIBrowseTabObj *tabobj,unsigned int tabnum) {m_tabobj=tabobj;m_tabnum=tabnum;}
+	void Dirty(void);
+private:
+	unsigned int m_tabnum;
+	class kGUIBrowseTabObj *m_tabobj;
+};
+
+class kGUIBrowseTabObj : public kGUITabObj
+{
+public:
+	kGUIBrowseTabObj() {m_icons.Init(4,4);}
+	void SetNumTabs(int n) {kGUITabObj::SetNumTabs(n);SetHideTabs(n<2);}
+	unsigned int GetTabWidth(int index) {return BROWSETABWIDTH;}
+	void SetIcon(int tabindex,DataHandle *dh) {m_icons.GetEntryPtr(tabindex)->SetIcon(dh);m_icons.GetEntryPtr(tabindex)->SetTab(this,tabindex);DirtyTab(tabindex);}
+	void DrawTab(int tabindex,kGUIText *text,int x,int y);
+private:
+	ClassArray<kGUITabBrowseIcon>m_icons;
 };
 
 class kGUIBrowseObj : public kGUIContainerObj
@@ -151,51 +249,66 @@ public:
 	/* default page to show, url="", source=passed source */
 	void SetPageSource(kGUIString *s);
 
-	void SetSaveDirectory(const char *dir) {m_screenpage.SetSaveDirectory(dir);}
-	const char *GetSaveDirectory(void) {return m_screenpage.GetSaveDirectory();}
+	void SetSaveDirectory(const char *dir) {m_curscreenpage->SetSaveDirectory(dir);}
+	const char *GetSaveDirectory(void) {return m_curscreenpage->GetSaveDirectory();}
 
-	void SetItemCache(kGUIHTMLItemCache *c) {m_screenpage.SetItemCache(c);m_printpage.SetItemCache(c);}
-	void SetVisitedCache(kGUIHTMLVisitedCache *v) {m_screenpage.SetVisitedCache(v);m_printpage.SetVisitedCache(v);}
+	HistoryRecord *GetCurHist(void) {return m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();}
 
-	kGUIString *GetTitle(void) {return m_screenpage.GetTitle();}
+//these should be passed by settings??
+//	void SetItemCache(kGUIHTMLItemCache *c) {m_curscreenpage->SetItemCache(c);m_printpage.SetItemCache(c);}
+//	void SetVisitedCache(kGUIHTMLVisitedCache *v) {m_curscreenpage->SetVisitedCache(v);m_printpage.SetVisitedCache(v);}
+
+	kGUIString *GetTitle(void) {return m_curscreenpage->GetTitle();}
 	void SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header);
-	PageInfo *NextPage(void);
-	void RePosition(bool rp) {m_screenpage.SetSize(GetChildZoneW(),GetChildZoneH()-m_screenpage.GetZoneY());m_screenpage.RePosition(rp);}
+	HistoryRecord *NextPage(void);
+	void RePosition(bool rp);
 
 	void SetPageChangedCallback(void *codeobj,void (*code)(void *)) {m_pagechangedcallback.Set(codeobj,code);}
+	void SetSettingsChangedCallback(void *codeobj,void (*code)(void *)) {m_settingschangedcallback.Set(codeobj,code);}
 
 	/* default printer to use */
 	void SetPID(int pid) {m_printpage.SetPID(pid);}
 	int GetPID(void) {return m_printpage.GetPID();}
 
 	/* attach plugins */
-	void AddPlugin(kGUIHTMLPluginObj *obj) {m_plugins.SetEntry(m_numplugins++,obj);m_screenpage.AddPlugin(obj);m_printpage.AddPlugin(obj);}
+	void AddPlugin(kGUIHTMLPluginObj *obj) {m_plugins.AddPlugin(obj);}
+
+	/* set the color mode */
+	void SetColorMode(int mode) {m_curscreenpage->SetColorMode(mode);}
+	int GetColorMode(void) {return m_curscreenpage->GetColorMode();}
 
 	kGUIBrowseSettings *GetSettings(void) {return m_settings;}
-	void FlushRuleCache(void) {m_screenpage.FlushRuleCache();m_printpage.FlushRuleCache();}
-	void ShowError(void);
-	void CancelAuthenticate();
+	void FlushRuleCache(void) {m_curscreenpage->FlushRuleCache();m_printpage.FlushRuleCache();}
+	void ShowError(DownloadPageRecord *dle);
 	void Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password);
+
+	void SettingsChanged(void) {m_settingschangedcallback.Call();}
 private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,UrlChanged,kGUIEvent);
-	CALLBACKGLUEVAL(kGUIBrowseObj,PageLoaded,int);
 	CALLBACKGLUEPTR(kGUIBrowseObj,Refresh,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,RefreshAll,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,GoForward,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,GoBack,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,Print,kGUIEvent);
-	CALLBACKGLUEPTRPTRPTR(kGUIBrowseObj,Click,kGUIString,kGUIString,kGUIString);
+	CALLBACKGLUEPTR(kGUIBrowseObj,Click,kGUIHTMLClickInfo);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoMainMenu,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,DoGotoMenu,kGUIEvent);
-	CALLBACKGLUEPTR(kGUIBrowseObj,SetIcon,DataHandle);
+	CALLBACKGLUEPTRPTR(kGUIBrowseObj,SetIcon,kGUIHTMLPageObj,DataHandle);
+	CALLBACKGLUEPTR(kGUIBrowseObj,TabChanged,kGUIEvent);
+	CALLBACKGLUE(kGUIBrowseObj,Update);
 	void UpdateButtons(void);
+	void NewTab(void);
+	void CloseTab(void);
+	void InitTabRecord(TabRecord *tr);
 	void Goto(void);
 	void Load(void);
-	void SetIcon(DataHandle *dh);
+	void StopLoad(void);
+	void SetIcon(kGUIHTMLPageObj *page,DataHandle *dh);
 	void DoMainMenu(kGUIEvent *event);
 	void DoGotoMenu(kGUIEvent *event);
 	void UrlChanged(kGUIEvent *event);
-	void PageLoaded(int result);
+	void TabChanged(kGUIEvent *event);
+	void PageLoaded(DownloadPageRecord *dle,int result);
 	void GoForward(kGUIEvent *event);
 	void GoBack(kGUIEvent *event);
 	void GoForwardMenu(void);
@@ -204,7 +317,8 @@ private:
 	void Refresh(kGUIEvent *event);
 	void RefreshAll(kGUIEvent *event);
 	void SaveCurrent(void);
-	void Click(kGUIString *url,kGUIString *referrer,kGUIString *post);
+	void Click(kGUIHTMLClickInfo *info);
+	void Update(void);
 
 	kGUIBrowseSettings *m_settings;
 
@@ -246,35 +360,30 @@ private:
 	kGUIImageObj m_busyimage;
 
 	kGUITextObj m_statuscaption;
-	kGUIInputBoxObj m_status;
+	kGUITextObj m_status;
 
-	kGUITextObj m_referercaption;
-	kGUIInputBoxObj m_referer;
-
-	kGUIString m_type;
-	kGUIString m_header;
-	kGUIString m_post;
 	kGUITextObj m_linkcaption;
 	kGUITextObj m_linkurl;
 
-	kGUIHTMLPageObj m_screenpage;
+	//we made out own class so we can insert the color blind simulator
+	unsigned int m_curtab;
+	unsigned int m_numtabs;
+	kGUIBrowseTabObj m_tabs;
+	HTMLPageObj *m_curscreenpage;
 	kGUIHTMLPageObj m_printpage;
-	kGUIInputBoxObj m_source;
 
 	kGUIInputBoxObj m_debug;
 
-	DataHandle m_dh;
-	kGUIDownloadEntry m_dl;
+	unsigned int m_numdlactive;
+	Array<DownloadPageRecord *>m_dlactive;
+
 	kGUIDownloadAuthenticateRealms m_ah;
 
-	unsigned int m_numplugins;
-	Array<kGUIHTMLPluginObj *>m_plugins;
-
 	kGUICallBack m_pagechangedcallback;	/* used to tell parent that the window title changed */
+	kGUICallBack m_settingschangedcallback;	/* used to tell parent that settings have changed so it can re-save config */
 	/************************************************************/
-	int m_pageindex;	
-	int m_pageend;
-	PageInfo m_pages[MAXPAGES];
+	kGUIHTMLPluginGroupObj m_plugins;
+	ClassArray<TabRecord>m_tabrecords;
 	int m_pid;
 	bool m_iconvalid;
 	DataHandle m_icon;
@@ -287,11 +396,12 @@ private:
 class AuthenticateWindow
 {
 public:
-	AuthenticateWindow(kGUIBrowseObj *browse,kGUIString *realm,kGUIString *domain);
+	AuthenticateWindow(kGUIBrowseObj *browse,DownloadPageRecord *dle,kGUIString *realm,kGUIString *domain);
 private:
 	CALLBACKGLUEPTR(AuthenticateWindow,Event,kGUIEvent);
 	void Event(kGUIEvent *event);
 
+	DownloadPageRecord *m_dle;
 	kGUIString m_domrealm;
 
 	kGUIWindowObj m_window;

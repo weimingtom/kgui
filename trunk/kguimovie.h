@@ -2,8 +2,7 @@
 #define __KGUIMOVIE__
 
 #include "kgui.h"
-
-#define USERGBBUFFER 0
+#include "kguiaudio.h"
 
 class kGUIMovie: public DataHandle
 {
@@ -13,8 +12,10 @@ public:
 	/* these global functions need to be called once at program startup and shutdown */
 	static void InitGlobals(void);
 	static void PurgeGlobals(void);
+	static const char *GetVersion(void);
 
 	void SetOutputImage(kGUIImage *image);
+	void SetPlayAudio(bool pa) {m_playaudio=pa;}
 	void OpenMovie(void);
 	bool GetIsValid(void) {return m_isvalid;}
 	unsigned int GetMovieWidth(void) {return m_width;}
@@ -39,6 +40,9 @@ private:
 	void Event(void);
 
 	kGUIImage *m_image;
+	kGUIAudioManager m_audiomanager;
+	kGUIAudio *m_audio;
+
 	class kGUIMovieLocal *m_local;
 
 	bool m_frameready:1;
@@ -46,6 +50,7 @@ private:
 	bool m_playing:1;
 	bool m_done:1;
 	bool m_loop:1;
+	bool m_playaudio:1;
 	int m_time;			/* current tick time in TICKSPERSEC */
 	int m_ptime;		/* presentation time to show next frame in TICKSPERSEC */
 	unsigned int m_width,m_height;
@@ -54,6 +59,8 @@ private:
 
 	int m_videoStream;
 	int m_audioStream;
+	unsigned char *m_abraw;
+	unsigned char *m_abalign;
 
 	int m_frameFinished;
 	int m_starttime;

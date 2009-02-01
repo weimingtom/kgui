@@ -21,7 +21,7 @@ ifeq ($(SYS),-DMINGW)
 
 RESOBJ=$(OBJDIR)/simpleres.o
 
-$(RESOBJ): browse.rc
+$(RESOBJ): browse.rc browse.ico
 	windres browse.rc $(RESOBJ)
 
 endif

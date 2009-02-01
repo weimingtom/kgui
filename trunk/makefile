@@ -4,11 +4,12 @@ include makefile.in
 
 LIB_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kgui.cpp kguibasic.cpp kguibrowse.cpp kguibsp.cpp kguicolors.cpp kguicsv.cpp \
 kguidb.cpp kguidir.cpp kguifont.cpp kguigrid.cpp kguihtml.cpp kguiimage.cpp kguilist.cpp kguiobj.cpp \
-kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistring.cpp \
-kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp \
-kguibutton.cpp kguicombo.cpp kguicontrol.cpp kguidivider.cpp kguiinput.cpp \
+kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistring.cpp kguiaudio.cpp \
+kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp kguisubpixel.cpp kguitablexml.cpp \
+kguibutton.cpp kguicombo.cpp kguicontrol.cpp kguidivider.cpp kguiinput.cpp kguidatereq.cpp \
 kguimenu.cpp kguimenu2.cpp kguimcontrol.cpp kguimovie.cpp kguiradio.cpp kguitab.cpp kguitable.cpp kguiwindow.cpp kguitext.cpp \
-kguitick.cpp kguibusy.cpp kguimutex.cpp kguicookies.cpp kguiskin.cpp kguimovieplugin.cpp kguipolygon2.cpp kguifont2.cpp
+kguitick.cpp kguibusy.cpp kguimutex.cpp kguicookies.cpp kguiskin.cpp kguimovieplugin.cpp kguipolygon2.cpp kguifont2.cpp \
+kguimatrix.cpp kguisavemovie.cpp kguifontf.cpp kguipolygonf.cpp kguisubpixelf.cpp
 
 FIXDEP_SRC=fixdep.cpp
 
@@ -40,7 +41,7 @@ FIXDEP_OUT=$(OBJDIR)/fixdep$(EXE)
 
 DEP=makefile_$(OBJDIR).dep
 
-CFLAGS= -I"freetype/include" -I"jpeg" -I"lpng128" -I"zlib" -I"mysql/include" -I"ffmpeg/libswscale" -I"ffmpeg/libavformat" -I"ffmpeg/libavcodec" -I"ffmpeg/libavutil"
+CFLAGS= -I"freetype/include" -I"jpeg" -I"lpng128" -I"zlib" -I"mysql/include" -I"ffmpeg" -I"ffmpeg/libswscale" -I"ffmpeg/libavformat" -I"ffmpeg/libavcodec" -I"ffmpeg/libavutil"
 
 $(OBJDIR)/%.o: %.cpp         # combined w/ next line will compile recently changed .cpp files
 	mkdir -p $(OBJDIR)
@@ -79,12 +80,12 @@ other:		# generate other support libraries
 	$(MAKE) -C zlib
 	$(MAKE) -C jpeg
 	$(MAKE) -C lpng128
-	$(MAKE) -C freetype
 	$(MAKE) -C ffmpeg/libavutil
 	$(MAKE) -C ffmpeg/libavcodec
 	$(MAKE) -C ffmpeg/libavformat
 	$(MAKE) -C ffmpeg/libswscale
 	$(MAKE) -C matrixssl/src
+	$(MAKE) -C freetype
 
 other-clean:		# generate other support libraries
 	$(MAKE) -C zlib clean

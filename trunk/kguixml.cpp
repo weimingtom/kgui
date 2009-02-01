@@ -967,8 +967,12 @@ kGUIXML::kGUIXML()
 	m_namecache=0;
 	m_namecachelocal=false;
 
+#if 0
+	m_pool.SetBlockSize(4096);
+#else
 	m_numinpool=0;
 	m_itempool.Init(256,-1);
+#endif
 }
 
 kGUIXML::~kGUIXML()
@@ -978,9 +982,11 @@ kGUIXML::~kGUIXML()
 	if(m_namecachelocal==true)
 		delete m_namecache;
 
+#if 1
 	/* delete any items left in the pool */
 	for(i=0;i<m_numinpool;++i)
 		delete m_itempool.GetEntry(i);
+#endif
 
 	delete m_root;
 }
@@ -1361,3 +1367,5 @@ done:;
 
 	return(item);
 }
+
+

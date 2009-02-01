@@ -16,7 +16,7 @@ includedir=${prefix}/include
 libdir=${exec_prefix}/lib
 enable_shared=yes
 wl=-Wl,
-hardcode_libdir_flag_spec='${wl}--rpath ${wl}$libdir'
+hardcode_libdir_flag_spec='-L$libdir'
 
 usage()
 {

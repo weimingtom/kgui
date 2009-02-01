@@ -38,6 +38,8 @@ kGUICSV::kGUICSV()
 
 	/* default to comma, allow override */
 	m_split.SetString(",");
+	/* default is to allow empty fields */
+	m_ignoreempty=false;
 }
 
 void kGUICSV::Init(unsigned int numrows,unsigned int numcols)
@@ -87,14 +89,14 @@ bool kGUICSV::Load(void)
 
 	/* read in the first 4 bytes and look for a byte order marker */
 	Read((void *)header,(unsigned long)sizeof(header));
-	printf("%02x %02x %02x %02x\n",header[0],header[1],header[2],header[3]);
+	//printf("%02x %02x %02x %02x\n",header[0],header[1],header[2],header[3]);
 	m_encoding=kGUIString::CheckBOM(sizeof(header),header,&bomsize);
-	printf("encoding=%d\n",m_encoding);
+	//printf("encoding=%d\n",m_encoding);
 	line.SetEncoding(m_encoding);
 
 	Seek((unsigned long long)bomsize);
 
-	sl.SetIgnoreEmpty(false);
+	sl.SetIgnoreEmpty(m_ignoreempty);
 	maxcols=0;
 	do
 	{
@@ -138,12 +140,12 @@ bool kGUICSV::Save(void)
 			if(c)
 				Write(",",1);
 
-			if(cell.StrStr(",")<0)
+			if(cell.Str(",")<0)
 				Write(cell.GetString(),cell.GetLen());
 			else
 			{
 				/* must enclose in quotes */
-				if(cell.StrStr("\"")<0)
+				if(cell.Str("\"")<0)
 					q='\"';
 				else
 					q='\'';

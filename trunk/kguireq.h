@@ -58,6 +58,7 @@ private:
 	kGUIButtonObj m_done;
 	kGUICallBackPtrInt<kGUIFileReq> m_donecallback;
 	int m_type;
+	int m_rowheight;
 	int m_pressed;	/* button that was pressed to close */
 	int m_origwidth;
 	int m_origheight;

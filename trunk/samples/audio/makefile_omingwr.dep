@@ -1,0 +1,4 @@
+omingwr/audio.o: audio.cpp ../../kgui.h ../../hash.h ../../kguistring.h \
+  ../../datahandle.h ../../big.h ../../kguithread.h ../../heap.h \
+  ../../kguiaudio.h resource.h ../../kguisys.cpp ../../kgui.h \
+  ../../kguimingw.cpp

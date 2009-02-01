@@ -31,14 +31,12 @@
 
 #include "kgui.h"
 
-/* minimum window size */
-#define WMINW 128
-#define WMINH 64
-
 kGUIWindowObj::kGUIWindowObj()
 {
 	m_title.SetWindow(this);
 
+	m_minw=128;
+	m_minh=64;
 	m_frame=true;
 	m_background=false;						/* only true for the 1 background window */
 	m_minimized=false;
@@ -64,7 +62,10 @@ void kGUIWindowTitle::FontChanged(void)
 
 void kGUIWindowObj::Center(void)
 {
-	SetPos((kGUI::GetFullScreenWidth()-GetZoneW())>>1,(kGUI::GetFullScreenHeight()-GetZoneH())>>1);
+	kGUIWindowObj *bg;
+
+	bg=kGUI::GetBackground();
+	SetPos((bg->GetZoneW()-GetZoneW())>>1,(bg->GetZoneH()-GetZoneH())>>1);
 }
 
 /* set the position of the window */
@@ -79,18 +80,18 @@ void kGUIWindowObj::SetPos(int x,int y)
 
 void kGUI::MoveWindowPos(int dx,int dy)
 {
-		int x,y,newx,newy,neww,newh;
+	int x,y,newx,newy,neww,newh;
 
-		kGUI::GetWindowPos(&x,&y,&neww,&newh);
-		newx=x+dx;
-		newy=y+dy;
+	kGUI::GetWindowPos(&x,&y,&neww,&newh);
+	newx=x+dx;
+	newy=y+dy;
 
-		kGUI::SetWindowPos(newx,newy);
-		/* since the system may have not moved it where we asked we need to get it's actual position */
-		kGUI::GetWindowPos(&newx,&newy,&neww,&newh);
-		/* since mouse movements are relative to the window, we need to adjust */
-		/* the mouse position if we move the window position */
-		kGUI::AdjustMouse(x-newx,y-newy);
+	kGUI::SetWindowPos(newx,newy);
+	/* since the system may have not moved it where we asked we need to get it's actual position */
+	kGUI::GetWindowPos(&newx,&newy,&neww,&newh);
+	/* since mouse movements are relative to the window, we need to adjust */
+	/* the mouse position if we move the window position */
+	kGUI::AdjustMouse(x-newx,y-newy);
 }
 
 /* set the size of the window, this sets the external size of the */
@@ -103,7 +104,7 @@ void kGUIWindowObj::SetSize(int w,int h)
 	{
 		int x,y;
 
-		kGUI::SetScreenSize(w,h);
+		//kGUI::SetScreenSize(w,h);
 		kGUI::SetWindowSize(w,h);
 
 		/* get actual size because sometimes it is made smaller then what was requested */
@@ -166,13 +167,24 @@ void kGUIWindowObj::Shrink(void)
 
 /* close the window, delete it from the global window list */
 /* and call the users close callback function */
+/* unless the callback function overrides the close, if then don't close */
 
-void kGUIWindowObj::Close(void)
+bool kGUIWindowObj::Close(void)
 {
-	/* if not already done */
+	kGUIEvent e;
+
 	kGUI::DelWindow(this);
 
-	CallEvent(EVENT_CLOSE);
+	e.m_value[0].b=true;		/* set the close flag to true */
+	CallEvent(EVENT_CLOSE,&e);
+	if(e.m_value[0].b!=true)
+	{
+		/* close aborted, so add the window back */
+		kGUI::AddWindow(this);
+		return(false);
+	}
+
+	return(true);
 }
 
 /* expand window to fit all child objects */
@@ -231,6 +243,7 @@ bool kGUIWindowObj::UpdateInput(void)
 	kGUICorners cclose;
 	kGUICorners cfull;
 	kGUICorners cminimize;
+	bool imtop=kGUI::AmITheTopWindow(this);
 
 	GetCorners(&c);
 	
@@ -238,25 +251,18 @@ bool kGUIWindowObj::UpdateInput(void)
 	/* background window, or the current top window . */
 	if(kGUI::GetMouseClick())
 	{
-		if(kGUI::AmITheTopWindow(this)==false)
+		if(imtop==false)
 		{
 			/* has the current window been told to stay on top? */
-			if(kGUI::StayTopWindow()==true)
-				return(false);
-
-			/* I can be moved to the top, unless I am the background */
-			if(m_background==false)
-				kGUI::TopWindow(this);
+			if(kGUI::StayTopWindow()==false)
+			{
+				/* I can be moved to the top, unless I am the background */
+				if(m_background==false)
+					kGUI::TopWindow(this);
+				imtop=true;
+			}
 		}
 	}
-#if 0
-	if(GetTop()==true && ImCurrent()==false)
-	{
-		/* if i'm to stay on top, then make me active! */
-		m_activemode=WINDOWMODE_NONE;
-		kGUI::PushActiveObj(this);
-	}
-#endif
 
 	if(kGUI::GetKey()==GUIKEY_TAB)
 	{
@@ -318,8 +324,8 @@ bool kGUIWindowObj::UpdateInput(void)
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTHORIZ);
 						neww+=dx;
-						if(neww<WMINW)
-							neww=WMINW;
+						if(neww<m_minw)
+							neww=m_minw;
 						else if(neww>kGUI::GetScreenWidth())
 							neww=kGUI::GetScreenWidth();
 					}
@@ -327,8 +333,8 @@ bool kGUIWindowObj::UpdateInput(void)
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTHORIZ);
 						neww+=dx;
-						if(neww<WMINW)
-							neww=WMINW;
+						if(neww<m_minw)
+							neww=m_minw;
 						else if(neww>kGUI::GetBackground()->GetZoneW())
 							neww=kGUI::GetBackground()->GetZoneW();
 					}
@@ -338,8 +344,8 @@ bool kGUIWindowObj::UpdateInput(void)
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTVERT);
 						newh+=dy;
-						if(newh<WMINH)
-							newh=WMINH;
+						if(newh<m_minh)
+							newh=m_minh;
 						else if(newh>kGUI::GetScreenHeight())
 							newh=kGUI::GetScreenHeight();
 					}
@@ -347,8 +353,8 @@ bool kGUIWindowObj::UpdateInput(void)
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTVERT);
 						newh+=dy;
-						if(newh<WMINH)
-							newh=WMINH;
+						if(newh<m_minh)
+							newh=m_minh;
 						else if(newh>kGUI::GetBackground()->GetZoneH())
 							newh=kGUI::GetBackground()->GetZoneH();
 					}
@@ -358,13 +364,13 @@ bool kGUIWindowObj::UpdateInput(void)
 					{
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTSIZE);
 						neww+=dx;
-						if(neww<WMINW)
-							neww=WMINW;
+						if(neww<m_minw)
+							neww=m_minw;
 						else if(neww>kGUI::GetScreenWidth())
 							neww=kGUI::GetScreenWidth();
 						newh+=dy;
-						if(newh<WMINH)
-							newh=WMINH;
+						if(newh<m_minh)
+							newh=m_minh;
 						else if(newh>kGUI::GetScreenHeight())
 							newh=kGUI::GetScreenHeight();
 					}
@@ -373,12 +379,12 @@ bool kGUIWindowObj::UpdateInput(void)
 						kGUI::SetTempMouseCursor(MOUSECURSOR_ADJUSTSIZE);
 						neww+=dx;
 						newh+=dy;
-						if(neww<WMINW)
-							neww=WMINW;
+						if(neww<m_minw)
+							neww=m_minw;
 						else if(neww>kGUI::GetBackground()->GetZoneW())
 							neww=kGUI::GetBackground()->GetZoneW();
-						if(newh<WMINH)
-							newh=WMINH;
+						if(newh<m_minh)
+							newh=m_minh;
 						else if(newh>kGUI::GetBackground()->GetZoneH())
 							newh=kGUI::GetBackground()->GetZoneH();
 					}
@@ -500,21 +506,24 @@ bool kGUIWindowObj::UpdateInput(void)
 		}
 		else if(kGUI::MouseOver(&cclose))
 		{
-			/* make close */
-			newover=WINDOWBUTTON_CLOSE;
-			if(kGUI::GetMouseReleaseLeft()==true)
+			if(imtop)
 			{
-				if(GetBackground()==true)
+				/* make close */
+				newover=WINDOWBUTTON_CLOSE;
+				if(kGUI::GetMouseReleaseLeft()==true)
 				{
-					kGUI::CloseApp();
+					if(GetBackground()==true)
+					{
+						if(Close())
+							kGUI::CloseApp();
+					}
+					else
+					{
+						Dirty();
+						Close();
+					}
+					return(true);
 				}
-				else
-				{
-					Dirty();
-					kGUI::DelWindow(this);
-					Close();
-				}
-				return(true);
 			}
 		}
 		else if(kGUI::GetMouseClickLeft()==true)
@@ -607,6 +616,11 @@ bool kGUIWindowObj::UpdateInput(void)
 		}
 	}
 
+#if 1
+	if(imtop==false)
+		return(false);
+	return(UpdateInputC(0));	/* pass input to children */
+#else
 	if(GetTop()==true)
 	{
 		UpdateInputC(0);	/* pass input to children */
@@ -614,6 +628,7 @@ bool kGUIWindowObj::UpdateInput(void)
 	}
 
 	return(UpdateInputC(0));	/* pass input to children */
+#endif
 }
 
 /* draw the window and all children */

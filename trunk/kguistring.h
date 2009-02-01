@@ -80,10 +80,10 @@ public:
 	bool RemoveQuotes(void);	/* remove quotes and return true if there was any */
 
 	/* string compare functions */
-	int StrStr(kGUIString *ss,unsigned int offset=0);
-	int StrIStr(kGUIString *ss,unsigned int offset=0);
-	int StrStr(const char *ss,unsigned int offset=0);
-	int StrIStr(const char *ss,unsigned int offset=0);
+	int Str(kGUIString *ss,unsigned int offset=0);
+	int IStr(kGUIString *ss,unsigned int offset=0);
+	int Str(const char *ss,unsigned int offset=0);
+	int IStr(const char *ss,unsigned int offset=0);
 
 	/* encoding handling */
 	unsigned int GetEncoding(void) {return m_encoding;}

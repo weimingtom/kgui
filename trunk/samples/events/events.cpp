@@ -7,6 +7,7 @@
 /*********************************************************************************/
 
 #include "kgui.h"
+#include "kguimatrix.h"
 
 #define APPNAME "Events"
 
@@ -19,6 +20,14 @@
 #include "kguisys.cpp"
 
 #define NUMLINES 25
+
+class CustomObj : public kGUIObj
+{
+public:
+	void Draw(void);
+	bool UpdateInput(void) {return false;}
+private:
+};
 
 class EventSample
 {
@@ -47,6 +56,7 @@ private:
 	kGUITextObj m_text2;
 	kGUIScrollContainerObj m_scontainer;
 	kGUITextObj m_lines[NUMLINES];
+	CustomObj m_custom;
 
 	unsigned int m_numwindows;
 	volatile unsigned int m_numopenwindows;
@@ -178,6 +188,10 @@ EventSample::EventSample()
 	/* add the scroll container to the background window */
 	background->AddObject(&m_scontainer);
 
+	m_custom.SetPos(550,225);
+	m_custom.SetSize(300,300);
+	background->AddObject(&m_custom);
+
 	m_button.SetEventHandler(this,CALLBACKNAME(ButtonEvent));
 	m_input.SetEventHandler(this,CALLBACKNAME(InputEvent));
 
@@ -280,4 +294,71 @@ EventSample::~EventSample()
 	/* list as it is deleted and m_numopenwindows will decrement automatically as they are closed */
 	while(m_numopenwindows)
 		m_openwindows.GetEntry(m_numopenwindows-1)->Close();
+}
+
+/* position goes between 0.0 and 1.0 */
+void PointOnCurve(kGUIVector3 *out, double position, kGUIVector3 *plist,int num)
+{
+	int segment;
+	double frac;
+	double f2;
+	double f3;
+	kGUIVector3 *p0;
+	kGUIVector3 *p1;
+	kGUIVector3 *p2;
+	kGUIVector3 *p3;
+
+	segment=(int)(position*(num-1));
+	frac=(position*(num-1))-segment;
+	f2 = frac * frac;
+	f3 = f2 * frac;
+
+	if(segment)
+		p0=plist+segment-1;
+	else
+		p0=plist;
+	p1=plist+segment;
+	p2=plist+segment+1;
+	if(segment==(num-2))
+		p3=p2;
+	else
+		p3=plist+segment+2;
+	out->m_x = 0.5f * ( ( 2.0f * p1->m_x ) + ( -p0->m_x + p2->m_x ) * frac + ( 2.0f * p0->m_x - 5.0f * p1->m_x + 4 * p2->m_x - p3->m_x ) * f2 + ( -p0->m_x + 3.0f * p1->m_x - 3.0f * p2->m_x + p3->m_x ) * f3 );
+	out->m_y = 0.5f * ( ( 2.0f * p1->m_y ) + ( -p0->m_y + p2->m_y ) * frac + ( 2.0f * p0->m_y - 5.0f * p1->m_y + 4 * p2->m_y - p3->m_y ) * f2 + ( -p0->m_y + 3.0f * p1->m_y - 3.0f * p2->m_y + p3->m_y ) * f3 );
+	out->m_z = 0.5f * ( ( 2.0f * p1->m_z ) + ( -p0->m_z + p2->m_z ) * frac + ( 2.0f * p0->m_z - 5.0f * p1->m_z + 4 * p2->m_z - p3->m_z ) * f2 + ( -p0->m_z + 3.0f * p1->m_z - 3.0f * p2->m_z + p3->m_z ) * f3 );
+}
+
+void CustomObj::Draw(void)
+{
+	unsigned int i;
+	kGUICorners c;
+	double d;
+	kGUIVector3 v;
+
+	static kGUIVector3 coords[]={
+		{0.0f,0.0f,0.0f},
+		{50.0f,20.0f,0.0f},
+		{237.0f,50.0f,0.0f},
+		{160.0f,200.0f,0.0f},
+		{220.0f,280.0f,0.0f},
+		{280.0f,150.0f,0.0f}};
+
+	GetCorners(&c);
+	kGUI::ShrinkClip(&c);
+	if(kGUI::ValidClip())
+	{
+		kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(255,0,0));
+
+		for(i=0;i<(sizeof(coords)/sizeof(coords[0]))-1;++i)
+		{
+			kGUI::DrawLine( coords[i].m_x+c.lx,coords[i].m_y+c.ty,
+							coords[i+1].m_x+c.lx,coords[i+1].m_y+c.ty,
+							DrawColor(255,255,255));
+		}
+		for(d=0.0f;d<1.0f;d+=0.001f)
+		{
+			PointOnCurve(&v,d,coords,sizeof(coords)/sizeof(coords[0]));
+			kGUI::DrawRect((int)(c.lx+v.m_x),(int)(c.ty+v.m_y),(int)(c.lx+v.m_x)+2,(int)(c.ty+v.m_y)+2,DrawColor(0,0,255));
+		}
+	}
 }
