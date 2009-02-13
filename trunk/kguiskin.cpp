@@ -669,8 +669,10 @@ void DefSkin::DrawTickbox(kGUICorners *c,bool scale,bool selected,bool current)
 
 void DefSkin::GetRadioSize(int *w,int *h)
 {
-	w[0]=13;
-	h[0]=13;
+	kGUIImage *shape=GetShape(SKIN_RADIOSELECTED);
+
+	w[0]=shape->GetImageWidth();
+	h[0]=shape->GetImageHeight();
 }
 
 void DefSkin::DrawRadio(kGUICorners *c,bool scale,bool selected,bool current)
@@ -683,8 +685,8 @@ void DefSkin::DrawRadio(kGUICorners *c,bool scale,bool selected,bool current)
 	{
 		double sx,sy;
 
-		sx=((c->rx-c->lx)-1)/(double)shape->GetImageWidth();
-		sy=((c->by-c->ty)-1)/(double)shape->GetImageHeight();
+		sx=(c->rx-c->lx)/(double)shape->GetImageWidth();
+		sy=(c->by-c->ty)/(double)shape->GetImageHeight();
 		shape->SetScale(sx,sy);
 	}
 	shape->Draw(0,c->lx,c->ty);

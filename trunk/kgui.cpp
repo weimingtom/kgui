@@ -869,6 +869,50 @@ void kGUI::ShrinkClip(int lx,int ty,int rx,int by)
 	SetClip();
 }
 
+void kGUI::ShrinkClipLX(int lx)
+{
+	kGUICorners *c;
+
+	assert(m_clipindex>0,"Stack Underflow error!");
+	c=&m_clipstack[m_clipindex-1];
+	c->lx=max(c->lx,lx);
+
+	SetClip();
+}
+
+void kGUI::ShrinkClipRX(int rx)
+{
+	kGUICorners *c;
+
+	assert(m_clipindex>0,"Stack Underflow error!");
+	c=&m_clipstack[m_clipindex-1];
+	c->rx=min(c->rx,rx);
+
+	SetClip();
+}
+
+void kGUI::ShrinkClipTY(int ty)
+{
+	kGUICorners *c;
+
+	assert(m_clipindex>0,"Stack Underflow error!");
+	c=&m_clipstack[m_clipindex-1];
+	c->ty=max(c->ty,ty);
+
+	SetClip();
+}
+
+void kGUI::ShrinkClipBY(int by)
+{
+	kGUICorners *c;
+
+	assert(m_clipindex>0,"Stack Underflow error!");
+	c=&m_clipstack[m_clipindex-1];
+	c->by=min(c->by,by);
+
+	SetClip();
+}
+
 void kGUI::ResetClip(void)
 {
 	int w,h;
@@ -1139,8 +1183,9 @@ void kGUI::UpdateInput(void)
 		if(MouseOver(&c))
 		{
 			m_askhint=m_sethint;
-			if(gobj->UpdateInput())
-				goto used;
+//			if(gobj->UpdateInput())
+			gobj->UpdateInput();
+			goto used;
 		}
 	}
 
@@ -2254,7 +2299,7 @@ void kGUI::HSLToRGB(double h,double s,double l,unsigned char *pr,unsigned char *
 		m = l + l - v;
 		sv = (v - m ) / v;
 		h *= 6.0;
-		sextant = h;	
+		sextant = (int)h;	
 		fract = h - sextant;
 		vsf = v * sv * fract;
 		mid1 = m + vsf;
@@ -3368,7 +3413,9 @@ bool kGUIDate::Setz(const char *datestring)
 			goto baddate;
 
 		m_year=atoi(ds);
-		if(m_year<100)
+		if(m_year<50)
+			m_year+=2000;
+		else if(m_year<100)
 			m_year+=1900;
 	
 		/* now get time part */

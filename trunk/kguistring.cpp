@@ -1067,7 +1067,8 @@ int kGUIString::IStr(kGUIString *ss,unsigned int offset)
 
 kGUIStringSplit::kGUIStringSplit()
 {
-	m_trim=true;				/* default is to trim resulting words */
+	m_removequotes=true;	/* default to remove quotes */
+	m_trim=true;			/* default is to trim resulting words */
 	m_ignoreempty=true;		/* default is to ingnore empty words */
 	m_numwords=0;
 	m_list.Init(16,4);
@@ -1112,7 +1113,10 @@ unsigned int kGUIStringSplit::Split(kGUIString *s,const char *splitstring,int ca
 					{
 						w=m_list.GetEntryPtr(m_numwords);
 						w->SetEncoding(encoding);
-						w->SetString(s->m_string+si,ei-si);
+						if(m_removequotes)
+							w->SetString(s->m_string+si,ei-si);
+						else
+							w->SetString(s->m_string+si-1,(ei-si)+2);
 						if(m_trim)
 							w->Trim();
 					}

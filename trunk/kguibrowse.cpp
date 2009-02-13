@@ -56,13 +56,16 @@ class CSSBlockRowObj : public kGUITableRowObj
 public:
 	CSSBlockRowObj(unsigned int index);
 	~CSSBlockRowObj() {}
-	int GetNumObjects(void) {return 2;}
+	int GetNumObjects(void) {return 3;}
 	kGUIObj **GetObjectList(void) {return m_objectlist;}
 	void SetBlocked(bool b) {m_block.SetSelected(b);} 
 	bool GetBlocked(void) {return m_block.GetSelected();}
+	void SetTrace(bool t) {m_trace.SetSelected(t);} 
+	bool GetTrace(void) {return m_trace.GetSelected();}
 private:
-	kGUIObj *m_objectlist[2];
+	kGUIObj *m_objectlist[3];
 	kGUITickBoxObj m_block;
+	kGUITickBoxObj m_trace;
 	kGUIInputBoxObj m_name;
 };
 
@@ -315,7 +318,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_menu.SetIconWidth(22);
 	m_menu.Init(MAINMENU_NUM,mainmenutxt);
 
-	m_bookmarksmenu.SetFontSize(14);
+	m_bookmarksmenu.SetFontSize(16);
 //	m_bookmarksmenu.SetEventHandler(this,CALLBACKNAME(DoBookmarks));
 
 	m_gomenu.SetFontSize(14);
@@ -398,6 +401,16 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_url.SetSize(750,22);
 	m_url.SetEventHandler(this,CALLBACKNAME(UrlChanged));
 	m_browsecontrols.AddObjects(2,&m_urlcaption,&m_url);
+
+	m_searchcaption.SetPos(0,0);
+	m_searchcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
+	m_searchcaption.SetFontID(SMALLCAPTIONFONT);
+	m_searchcaption.SetString("SEARCH");
+
+	m_search.SetPos(0,15);
+	m_search.SetSize(150,22);
+	m_search.SetEventHandler(this,CALLBACKNAME(SearchChanged));
+	m_browsecontrols.AddObjects(2,&m_searchcaption,&m_search);
 	m_browsecontrols.NextLine();
 
 //	m_referercaption.SetPos(0,0);
@@ -1116,7 +1129,8 @@ void kGUIBrowseObj::Load(void)
 	StopLoad();
 
 	/* is there a partial page offet? ie: "page.html#aaaaa" */ 
-	url.SetString(&m_url);
+//	url.SetString(&m_url);
+	url.SetString(hist->GetURL());
 	cp=strstr(url.GetString(),"#");
 	if(cp)
 		url.Clip((int)(cp-url.GetString()));
@@ -1349,6 +1363,36 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 	}
 }
 
+void kGUIBrowseObj::SearchChanged(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_ENTER:
+		if(m_search.GetLen())
+			m_search.SelectAll();
+	break;
+	case EVENT_PRESSRETURN:
+	{
+		HistoryRecord *newhist;
+		kGUIString searchurl;
+		kGUIString encsearch;
+
+		SaveCurrent();
+		newhist=NextPage();
+
+		kGUIHTMLFormObj::Encode(&m_search,&encsearch);
+		searchurl.Sprintf("http://www.google.ca/search?hl=en&q=%s&btnG=Google+Search&meta=",encsearch.GetString());
+
+		newhist->Set(searchurl.GetString(),0,0,0,0);
+		newhist->SetScrollY(0);
+
+		Load();
+	}
+	break;
+	}
+}
+
+
 void kGUIBrowseObj::TabChanged(kGUIEvent *event)
 {
 	switch(event->GetEvent())
@@ -1451,6 +1495,7 @@ void kGUIBrowseObj::PageLoaded(DownloadPageRecord *dle,int result)
 			ShowError(dle);
 		}
 	}
+	UpdateButtons();
 	delete dle;
 }
 
@@ -1753,11 +1798,13 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 
 	/* css enable/disable table */
 
-	m_csstable.SetNumCols(2);
+	m_csstable.SetNumCols(3);
 	m_csstable.SetColTitle(0,"Disable");
-	m_csstable.SetColTitle(1,"Name");
+	m_csstable.SetColTitle(1,"Trace");
+	m_csstable.SetColTitle(2,"Name");
 	m_csstable.SetColWidth(0,50);
-	m_csstable.SetColWidth(1,200);
+	m_csstable.SetColWidth(1,50);
+	m_csstable.SetColWidth(2,200);
 	m_csstable.SetAllowAddNewRow(false);
 	m_csstable.SetAllowDelete(false);
 
@@ -1769,6 +1816,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 
 		row=new CSSBlockRowObj(i);
 		row->SetBlocked(b->GetSettings()->GetCSSBlock(i));
+		row->SetTrace(b->GetSettings()->GetCSSTrace(i));
 		m_csstable.AddRow(row);
 	}
 
@@ -1868,6 +1916,7 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 
 			row=static_cast<CSSBlockRowObj *>(m_csstable.GetRow(i));
 			m_b->GetSettings()->SetCSSBlock(i,row->GetBlocked());
+			m_b->GetSettings()->SetCSSTrace(i,row->GetTrace());
 		}
 
 		/* trigger redraw, and flush rule cache since user rules may have been added */
@@ -1891,9 +1940,11 @@ void ViewSettings::DirtyandCalcChildZone(void)
 CSSBlockRowObj::CSSBlockRowObj(unsigned int index)
 {
 	m_block.SetSelected(false);
+	m_trace.SetSelected(false);
 	m_name.SetString(kGUIHTMLPageObj::GetCSSAttributeName(index));
 	m_objectlist[0]=&m_block;
-	m_objectlist[1]=&m_name;
+	m_objectlist[1]=&m_trace;
+	m_objectlist[2]=&m_name;
 	m_name.SetLocked(true);
 	SetRowHeight(20);
 }

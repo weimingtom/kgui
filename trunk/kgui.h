@@ -880,8 +880,10 @@ MAXKEYPRESSED
 #define DrawColorToRGB(dc,r,g,b) {r=((dc>>7)&0xf8)+4;g=((dc>>2)&0xf8)+4;b=((dc<<3)&0xf8)+4;}
 typedef unsigned short kGUIColor;
 #else
-#define DrawColor(r,g,b) ((((int)r)<<16)|(((int)g)<<8)|((int)b))
+#define DrawColor(r,g,b) (0xff000000|(((int)r)<<16)|(((int)g)<<8)|((int)b))
+#define DrawColorA(r,g,b,a) ((((int)a)<<24)|(((int)r)<<16)|(((int)g)<<8)|((int)b))
 #define DrawColorToRGB(dc,r,g,b) {r=((dc>>16)&0xff);g=((dc>>8)&0xff);b=(dc&0xff);}
+#define DrawColorToRGBA(dc,r,g,b,a) {a=((dc>>24)&0xff);r=((dc>>16)&0xff);g=((dc>>8)&0xff);b=(dc&0xff);}
 typedef unsigned int kGUIColor;
 #endif
 
@@ -2449,11 +2451,56 @@ public:
 	void Draw(void);
 	bool Close(void);
 	bool UpdateInput(void);
+	void SetCurrentChild(kGUIObj *cobj);
+	void SetCurrentChild(int num);
 private:
 	void CalcChildZone(void);
 };
 
-/*! @class kGUIRootObj
+/*! @class kGUIScrollControl
+	@brief this is a scroll container that is attached to a container object */
+
+class kGUIScrollControl
+{
+public:
+	kGUIScrollControl(kGUIContainerObj *obj,int clicksize);
+	~kGUIScrollControl() {}
+	void DrawScroll(kGUICorners *c);
+	bool UpdateScrollInput(kGUICorners *c);
+		
+	void SetInsideSize(int w,int h);
+	void SetShowHoriz(bool h) {m_usehs=h;m_obj->Dirty();}
+	void SetShowVert(bool v) {m_usevs=v;m_obj->Dirty();}
+	void SetMaxWidth(int w) {m_maxwidth=w;UpdateScrollBars();m_obj->Dirty();}
+	void SetMaxHeight(int h) {m_maxheight=h;UpdateScrollBars();m_obj->Dirty();}
+
+	void GotoX(int x) {m_scroll.SetDestX(x);UpdateScrollBars();}
+	void GotoY(int y) {m_scroll.SetDestY(y);UpdateScrollBars();}
+	void Scrolled(void);
+
+private:
+	CALLBACKGLUEPTR(kGUIScrollControl,ScrollMoveRow,kGUIEvent)
+	CALLBACKGLUEPTR(kGUIScrollControl,ScrollMoveCol,kGUIEvent)
+	CALLBACKGLUEPTR(kGUIScrollControl,ScrollEvent,kGUIEvent)
+	void ScrollMoveRow(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveRow(event->m_value[0].i);}
+	void ScrollMoveCol(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveCol(event->m_value[0].i);}
+	void ScrollEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_MOVED)Scrolled();}
+
+	void MoveRow(int delta);
+	void MoveCol(int delta);
+	void UpdateScrollBars(void);
+
+	kGUIContainerObj *m_obj;
+	int m_maxwidth;
+	int m_maxheight;
+	bool m_usehs:1;
+	bool m_usevs:1;
+	kGUIScroll m_scroll;		/* damped source / dest position handler */
+	kGUIScrollBarObj m_hscrollbar;
+	kGUIScrollBarObj m_vscrollbar;
+};
+
+/*! @class kGUIScrollContainerObj
 	@brief this is a container object with scrollbars, essentially it can handle showing a larger area
 	than the view area and handle scrolling around automatically. */
 
@@ -2490,8 +2537,8 @@ private:
 
 	int m_maxwidth;
 	int m_maxheight;
-	bool m_usehs;
-	bool m_usevs;
+	bool m_usehs:1;
+	bool m_usevs:1;
 	kGUIScroll m_scroll;		/* damped source / dest position handler */
 	kGUIScrollBarObj m_hscrollbar;
 	kGUIScrollBarObj m_vscrollbar;
@@ -3752,6 +3799,10 @@ public:
 	static void PushClip(void);
 	static void PopClip(void);
 	static void ShrinkClip(int lx,int ty,int rx,int by);
+	static void ShrinkClipLX(int lx);
+	static void ShrinkClipRX(int rx);
+	static void ShrinkClipTY(int ty);
+	static void ShrinkClipBY(int by);
 	inline static void ShrinkClip(const kGUICorners *c) {ShrinkClip(c->lx,c->ty,c->rx,c->by);}
 	inline static bool ValidArea(const kGUICorners *c) {return((c->lx<c->rx) && (c->ty<c->by));}
 	inline static bool ValidClip(void) {return(ValidArea(&m_clipcorners));}

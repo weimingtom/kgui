@@ -44,6 +44,7 @@
 bool g_trace=false;
 static double xfontsize[7]={9.0f,11.0f,13.0f,16.0f,19.0f,23.0f,28.0f};
 
+TAGLIST_DEF kGUIHTMLPageObj::m_roottag=		{false,false,false,"root",			HTMLTAG_ROOT		,DISPLAY_BLOCK};
 TAGLIST_DEF kGUIHTMLPageObj::m_unknowntag=		{false,false,true,"unknown",			HTMLTAG_UNKNOWN		,DISPLAY_INLINE};
 TAGLIST_DEF kGUIHTMLPageObj::m_texttag=			{false,false,false,"text",			HTMLTAG_IMBEDTEXT	,DISPLAY_INLINE};
 TAGLIST_DEF kGUIHTMLPageObj::m_singleobjtag=	{false,false,false,"xxx",			HTMLTAG_SINGLEOBJ	,DISPLAY_INLINE};
@@ -84,7 +85,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"dfn",			HTMLTAG_DFN			,DISPLAY_INLINE},
 	{false,false,false,"div",			HTMLTAG_DIV			,DISPLAY_BLOCK},
 	{false,true,false ,"dl",			HTMLTAG_DL			,DISPLAY_BLOCK},
-	{true,false,false,"!doctype",		HTMLTAG_DOCTYPE		,DISPLAY_NONE},
+	{true,false,true,"!doctype",		HTMLTAG_DOCTYPE		,DISPLAY_NONE},
 	{false,true,false,"dt",			HTMLTAG_DT			,DISPLAY_BLOCK},
 	{false,false,false,"em",			HTMLTAG_EM			,DISPLAY_INLINE},
 	{false,false,false,"fieldset",	HTMLTAG_FIELDSET	,DISPLAY_INLINE},
@@ -99,10 +100,10 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"h5",			HTMLTAG_H5			,DISPLAY_BLOCK},
 	{false,false,false,"h6",			HTMLTAG_H6			,DISPLAY_BLOCK},
 	{false,true,false,"head",		HTMLTAG_HEAD		,DISPLAY_INLINE},
-	{true ,false,false,"hr",			HTMLTAG_HR			,DISPLAY_BLOCK},
+	{true ,false,true,"hr",			HTMLTAG_HR			,DISPLAY_BLOCK},
 	{false,true,false,"html",		HTMLTAG_HTML		,DISPLAY_BLOCK},
 	{false,false,false,"i",			HTMLTAG_I			,DISPLAY_INLINE},
-	{false,false,false,"iframe",		HTMLTAG_IFRAME		,DISPLAY_BLOCK},
+	{false,false,true,"iframe",		HTMLTAG_IFRAME		,DISPLAY_BLOCK},
 	{true,false,true,"img",			HTMLTAG_IMG			,DISPLAY_INLINE_BLOCK},
 	{true,false,true,"input",		HTMLTAG_INPUT		,DISPLAY_INLINE},
 	{false,false,false,"ins",			HTMLTAG_INS			,DISPLAY_INLINE},
@@ -144,12 +145,13 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,true,false,"th",			HTMLTAG_TH			,DISPLAY_TABLE_CELL},
 	{false,false,false,"title",		HTMLTAG_TITLE		,DISPLAY_NONE},
 	{false,true,false,"tr",			HTMLTAG_TR			,DISPLAY_TABLE_ROW},
-	{false,false,false,"tt",			HTMLTAG_TT			,DISPLAY_BLOCK},
+	{false,false,false,"tt",			HTMLTAG_TT		,DISPLAY_BLOCK},
 	{false,false,false,"u",			HTMLTAG_U			,DISPLAY_INLINE},
 	{false,true,false,"ul",			HTMLTAG_UL			,DISPLAY_BLOCK},
 	{false,false,false,"var",			HTMLTAG_VAR			,DISPLAY_INLINE},
 	{false,false,false,"wbr",			HTMLTAG_WBR			,DISPLAY_INLINE},	/* not standard */
-	{true,false,false,"?xml",			HTMLTAG_XML			,DISPLAY_NONE}};
+	{true,false,false,"?xml",			HTMLTAG_XML			,DISPLAY_NONE},
+	{false,false,true,"?xml-stylesheet",		HTMLTAG_XMLSTYLESHEET	,DISPLAY_INLINE}};
 
 /* if the child is attempted to be put inside the parent then close the parent first */
 /* if the child is listed as optional close object then don't print out a warning */
@@ -163,7 +165,8 @@ POPLIST_DEF kGUIHTMLPageObj::m_poplist[]={
 	{HTMLTAG_P,HTMLTAG_LI},
 	{HTMLTAG_P,HTMLTAG_FORM},
 	{HTMLTAG_P,HTMLTAG_SELECT},
-	{HTMLTAG_P,HTMLTAG_INPUT},
+	{HTMLTAG_P,HTMLTAG_DIV},
+	//{HTMLTAG_P,HTMLTAG_INPUT},
 	{HTMLTAG_P,HTMLTAG_H1},
 	{HTMLTAG_P,HTMLTAG_H2},
 	{HTMLTAG_P,HTMLTAG_H3},
@@ -232,8 +235,10 @@ CSSSELECTOR_ADJACENT,
 CSSSELECTOR_UNIVERSAL,
 CSSSELECTOR_FIRSTCHILD,
 CSSSELECTOR_LASTCHILD,
+CSSSELECTOR_ONLYCHILD,
 CSSSELECTOR_FIRSTLINE,
 CSSSELECTOR_FIRSTLETTER,
+CSSSELECTOR_EMPTY,
 
 CSSSELECTOR_TAG,
 CSSSELECTOR_CLASS,
@@ -401,11 +406,15 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist[]={
 	{"onerror",			HTMLATT_ONERROR			},
 	{"onload",			HTMLATT_ONLOAD			},
 	{"onmousedown",		HTMLATT_ONMOUSEDOWN		},
+	{"onmouseup",		HTMLATT_ONMOUSEUP		},
 	{"onmouseover",		HTMLATT_ONMOUSEOVER		},
 	{"onmouseout",		HTMLATT_ONMOUSEOUT		},
 	{"onkeypress",		HTMLATT_ONKEYPRESS		},
-	{"outline",			HTMLATT_OUTLINE			},
-	{"overflow",		HTMLATT_OVERFLOW		},
+	{"outline",			HTMLATTGROUP_OUTLINE	},
+	{"outline-width",	HTMLATT_OUTLINE_WIDTH	},
+	{"outline-style",	HTMLATT_OUTLINE_STYLE	},
+	{"outline-color",	HTMLATT_OUTLINE_COLOR	},
+	{"overflow",		HTMLATTGROUP_OVERFLOW	},
 	{"overflow-x",		HTMLATT_OVERFLOW_X		},
 	{"overflow-y",		HTMLATT_OVERFLOW_Y		},
 	{"padding",			HTMLATTGROUP_PADDING	},
@@ -649,6 +658,7 @@ HTMLCONST_YELLOW,
 HTMLCONST_YELLOWGREEN,
 
 HTMLCONST_TRANSPARENT,
+HTMLCONST_INVERT,
 
 HTMLCONST_THIN,		/* border thickness */
 HTMLCONST_MEDIUM,
@@ -712,6 +722,8 @@ HTMLCONST_HOVER,
 HTMLCONST_FOCUS,
 HTMLCONST_LASTCHILD,
 HTMLCONST_FIRSTCHILD,
+HTMLCONST_ONLYCHILD,
+HTMLCONST_EMPTY,
 HTMLCONST_BEFORE,
 HTMLCONST_AFTER,
 HTMLCONST_ROOT,
@@ -755,6 +767,15 @@ HTMLCONST_OVERLINE,
 HTMLCONST_LINETHROUGH,
 HTMLCONST_BLINK,
 HTMLCONST_ITALIC,
+HTMLCONST_OBLIQUE,
+HTMLCONST_SMALL_CAPS,
+
+HTMLCONST_CAPTION,
+HTMLCONST_ICON,
+HTMLCONST_MENU,
+HTMLCONST_MESSAGE_BOX,
+HTMLCONST_SMALL_CAPTION,
+HTMLCONST_STATUS_BAR,
 
 HTMLCONST_NOREPEAT,
 HTMLCONST_REPEAT,
@@ -814,6 +835,8 @@ HTMLCONST_URL,
 HTMLCONST_OPEN_QUOTE,
 HTMLCONST_CLOSE_QUOTE,
 
+HTMLCONST_CURRENTCOLOR,
+
 HTMLCONST_CLIP,
 HTMLCONST_ELLIPSIS,
 HTMLCONST_ELLIPSIS_WORD
@@ -822,151 +845,151 @@ HTMLCONST_ELLIPSIS_WORD
 
 /* the order of these correspond to the colors in the const enum list above */
 kGUIColor kGUIHTMLPageObj::m_colors[]={
-	DrawColor(0xf0,0xf8,0xff), /* aliceblue*/
-	DrawColor(0xfa,0xeb,0xd7), /* antiquewhite*/
-	DrawColor(0x00,0xff,0xff), /* aqua*/
-	DrawColor(0x7f,0xff,0xd4), /* aquamarine*/
-	DrawColor(0xf0,0xff,0xff), /* azure*/
-	DrawColor(0xf5,0xf5,0xdc), /* beige*/
-	DrawColor(0xff,0xe4,0xc4), /* bisque*/
-	DrawColor(0x00,0x00,0x00), /* black*/
-	DrawColor(0xff,0xeb,0xcd), /* blanchedalmond*/
-	DrawColor(0x00,0x00,0xff), /* blue*/
-	DrawColor(0x8a,0x2b,0xe2), /* blueviolet*/
-	DrawColor(0xa5,0x2a,0x2a), /* brown*/
-	DrawColor(0xde,0xb8,0x87), /* burlywood*/
-	DrawColor(0x5f,0x9e,0xa0), /* cadetblue*/
-	DrawColor(0x7f,0xff,0x00), /* chartreuse*/
-	DrawColor(0xd2,0x69,0x1e), /* chocolate*/
-	DrawColor(0xff,0x7f,0x50), /* coral*/
-	DrawColor(0x64,0x95,0xed), /* cornflowerblue*/
-	DrawColor(0xff,0xf8,0xdc), /* cornsilk*/
-	DrawColor(0xdc,0x14,0x3c), /* crimson*/
-	DrawColor(0x00,0xff,0xff), /* cyan*/
-	DrawColor(0x00,0x00,0x8b), /* darkblue*/
-	DrawColor(0x00,0x8b,0x8b), /* darkcyan*/
-	DrawColor(0xb8,0x86,0x0b), /* darkgoldenrod*/
-	DrawColor(0xa9,0xa9,0xa9), /* darkgray*/
-	DrawColor(0x00,0x64,0x00), /* darkgreen*/
-	DrawColor(0xbd,0xb7,0x6b), /* darkkhaki*/
-	DrawColor(0x8b,0x00,0x8b), /* darkmagenta*/
-	DrawColor(0x55,0x6b,0x2f), /* darkolivegreen*/
-	DrawColor(0xff,0x8c,0x00), /* darkorange*/
-	DrawColor(0x99,0x32,0xcc), /* darkorchid*/
-	DrawColor(0x8b,0x00,0x00), /* darkred*/
-	DrawColor(0xe9,0x96,0x7a), /* darksalmon*/
-	DrawColor(0x8f,0xbc,0x8f), /* darkseagreen*/
-	DrawColor(0x48,0x3d,0x8b), /* darkslateblue*/
-	DrawColor(0x2f,0x4f,0x4f), /* darkslategray*/
-	DrawColor(0x2f,0x4f,0x4f), /* darkslategrey*/
-	DrawColor(0x00,0xce,0xd1), /* darkturquoise*/
-	DrawColor(0x94,0x00,0xd3), /* darkviolet*/
-	DrawColor(0xff,0x14,0x93), /* deeppink*/
-	DrawColor(0x00,0xbf,0xff), /* deepskyblue*/
-	DrawColor(0x69,0x69,0x69), /* dimgray*/
-	DrawColor(0x69,0x69,0x69), /* dimgrey*/
-	DrawColor(0x1e,0x90,0xff), /* dodgerblue*/
-	DrawColor(0xb2,0x22,0x22), /* firebrick*/
-	DrawColor(0xff,0xfa,0xf0), /* floralwhite*/
-	DrawColor(0x22,0x8b,0x22), /* forestgreen*/
-	DrawColor(0xff,0x00,0xff), /* fuchsia*/
-	DrawColor(0xdc,0xdc,0xdc), /* gainsboro*/
-	DrawColor(0xf8,0xf8,0xff), /* ghostwhite*/
-	DrawColor(0xff,0xd7,0x00), /* gold*/
-	DrawColor(0xda,0xa5,0x20), /* goldenrod*/
-	DrawColor(0x80,0x80,0x80), /* gray*/
-	DrawColor(0x00,0x80,0x00), /* green*/
-	DrawColor(0xad,0xff,0x2f), /* greenyellow*/
-	DrawColor(0x80,0x80,0x80), /* grey*/
-	DrawColor(0xf0,0xff,0xf0), /* honeydew*/
-	DrawColor(0xff,0x69,0xb4), /* hotpink*/
-	DrawColor(0xcd,0x5c,0x5c), /* indianred*/
-	DrawColor(0x4b,0x00,0x82), /* indigo*/
-	DrawColor(0xff,0xff,0xf0), /* ivory*/
-	DrawColor(0xf0,0xe6,0x8c), /* khaki*/
-	DrawColor(0xe6,0xe6,0xfa), /* lavender*/
-	DrawColor(0xff,0xf0,0xf5), /* lavenderblush*/
-	DrawColor(0x7c,0xfc,0x00), /* lawngreen*/
-	DrawColor(0xff,0xfa,0xcd), /* lemonchiffon*/
-	DrawColor(0xad,0xd8,0xe6), /* lightblue*/
-	DrawColor(0xf0,0x80,0x80), /* lightcoral*/
-	DrawColor(0xe0,0xff,0xff), /* lightcyan*/
-	DrawColor(0xfa,0xfa,0xd2), /* lightgoldenrodyellow*/
-	DrawColor(0xd3,0xd3,0xd3), /* lightgray*/
-	DrawColor(0x90,0xee,0x90), /* lightgreen*/
-	DrawColor(0xff,0xb6,0xc1), /* lightpink*/
-	DrawColor(0xff,0xa0,0x7a), /* lightsalmon*/
-	DrawColor(0x20,0xb2,0xaa), /* lightseagreen*/
-	DrawColor(0x87,0xce,0xfa), /* lightskyblue*/
-	DrawColor(0x77,0x88,0x99), /* lightslategray*/
-	DrawColor(0x77,0x88,0x99), /* lightslategrey*/
-	DrawColor(0xb0,0xc4,0xde), /* lightsteelblue*/
-	DrawColor(0xff,0xff,0xe0), /* lightyellow*/
-	DrawColor(0x00,0xff,0x00), /* lime*/
-	DrawColor(0x32,0xcd,0x32), /* limegreen*/
-	DrawColor(0xfa,0xf0,0xe6), /* linen*/
-	DrawColor(0xff,0x00,0xff), /* magenta*/
-	DrawColor(0x80,0x00,0x00), /* maroon*/
-	DrawColor(0x66,0xcd,0xaa), /* mediumaquamarine*/
-	DrawColor(0x00,0x00,0xcd), /* mediumblue*/
-	DrawColor(0xba,0x55,0xd3), /* mediumorchid*/
-	DrawColor(0x93,0x70,0xdb), /* mediumpurple*/
-	DrawColor(0x3c,0xb3,0x71), /* mediumseagreen*/
-	DrawColor(0x7b,0x68,0xee), /* mediumslateblue*/
-	DrawColor(0x00,0xfa,0x9a), /* mediumspringgreen*/
-	DrawColor(0x48,0xd1,0xcc), /* mediumturquoise*/
-	DrawColor(0xc7,0x15,0x85), /* mediumvioletred*/
-	DrawColor(0x19,0x19,0x70), /* midnightblue*/
-	DrawColor(0xf5,0xff,0xfa), /* mintcream*/
-	DrawColor(0xff,0xe4,0xe1), /* mistyrose*/
-	DrawColor(0xff,0xe4,0xb5), /* moccasin*/
-	DrawColor(0xff,0xde,0xad), /* navajowhite*/
-	DrawColor(0x00,0x00,0x80), /* navy*/
-	DrawColor(0xfd,0xf5,0xe6), /* oldlace*/
-	DrawColor(0x80,0x80,0x00), /* olive*/
-	DrawColor(0x6b,0x8e,0x23), /* olivedrab*/
-	DrawColor(0xff,0xa5,0x00), /* orange*/
-	DrawColor(0xff,0x45,0x00), /* orangered*/
-	DrawColor(0xda,0x70,0xd6), /* orchid*/
-	DrawColor(0xee,0xe8,0xaa), /* palegoldenrod*/
-	DrawColor(0x98,0xfb,0x98), /* palegreen*/
-	DrawColor(0xaf,0xee,0xee), /* paleturquoise*/
-	DrawColor(0xdb,0x70,0x93), /* palevioletred*/
-	DrawColor(0xff,0xef,0xd5), /* papayawhip*/
-	DrawColor(0xff,0xda,0xb9), /* peachpuff*/
-	DrawColor(0xcd,0x85,0x3f), /* peru*/
-	DrawColor(0xff,0xc0,0xcb), /* pink*/
-	DrawColor(0xdd,0xa0,0xdd), /* plum*/
-	DrawColor(0xb0,0xe0,0xe6), /* powderblue*/
-	DrawColor(0x80,0x00,0x80), /* purple*/
-	DrawColor(0xff,0x00,0x00), /* red*/
-	DrawColor(0xbc,0x8f,0x8f), /* rosybrown*/
-	DrawColor(0x41,0x69,0xe1), /* royalblue*/
-	DrawColor(0x8b,0x45,0x13), /* saddlebrown*/
-	DrawColor(0xfa,0x80,0x72), /* salmon*/
-	DrawColor(0xf4,0xa4,0x60), /* sandybrown*/
-	DrawColor(0x2e,0x8b,0x57), /* seagreen*/
-	DrawColor(0xff,0xf5,0xee), /* seashell*/
-	DrawColor(0xa0,0x52,0x2d), /* sienna*/
-	DrawColor(0xc0,0xc0,0xc0), /* silver*/
-	DrawColor(0x87,0xce,0xeb), /* skyblue*/
-	DrawColor(0x6a,0x5a,0xcd), /* slateblue*/
-	DrawColor(0x70,0x80,0x90), /* slategray*/
-	DrawColor(0x70,0x80,0x90), /* slategrey*/
-	DrawColor(0xff,0xfa,0xfa), /* snow*/
-	DrawColor(0x00,0xff,0x7f), /* springgreen*/
-	DrawColor(0x46,0x82,0xb4), /* steelblue*/
-	DrawColor(0xd2,0xb4,0x8c), /* tan*/
-	DrawColor(0x00,0x80,0x80), /* teal*/
-	DrawColor(0xd8,0xbf,0xd8), /* thistle*/
-	DrawColor(0xff,0x63,0x47), /* tomato*/
-	DrawColor(0x40,0xe0,0xd0), /* turquoise*/
-	DrawColor(0xee,0x82,0xee), /* violet*/
-	DrawColor(0xf5,0xde,0xb3), /* wheat*/
-	DrawColor(0xff,0xff,0xff), /* white*/
-	DrawColor(0xf5,0xf5,0xf5), /* whitesmoke*/
-	DrawColor(0xff,0xff,0x00), /* yellow*/
-	DrawColor(0x9a,0xcd,0x32), /* yellowgreen*/
+	DrawColorA(0xf0,0xf8,0xff,255), /* aliceblue*/
+	DrawColorA(0xfa,0xeb,0xd7,255), /* antiquewhite*/
+	DrawColorA(0x00,0xff,0xff,255), /* aqua*/
+	DrawColorA(0x7f,0xff,0xd4,255), /* aquamarine*/
+	DrawColorA(0xf0,0xff,0xff,255), /* azure*/
+	DrawColorA(0xf5,0xf5,0xdc,255), /* beige*/
+	DrawColorA(0xff,0xe4,0xc4,255), /* bisque*/
+	DrawColorA(0x00,0x00,0x00,255), /* black*/
+	DrawColorA(0xff,0xeb,0xcd,255), /* blanchedalmond*/
+	DrawColorA(0x00,0x00,0xff,255), /* blue*/
+	DrawColorA(0x8a,0x2b,0xe2,255), /* blueviolet*/
+	DrawColorA(0xa5,0x2a,0x2a,255), /* brown*/
+	DrawColorA(0xde,0xb8,0x87,255), /* burlywood*/
+	DrawColorA(0x5f,0x9e,0xa0,255), /* cadetblue*/
+	DrawColorA(0x7f,0xff,0x00,255), /* chartreuse*/
+	DrawColorA(0xd2,0x69,0x1e,255), /* chocolate*/
+	DrawColorA(0xff,0x7f,0x50,255), /* coral*/
+	DrawColorA(0x64,0x95,0xed,255), /* cornflowerblue*/
+	DrawColorA(0xff,0xf8,0xdc,255), /* cornsilk*/
+	DrawColorA(0xdc,0x14,0x3c,255), /* crimson*/
+	DrawColorA(0x00,0xff,0xff,255), /* cyan*/
+	DrawColorA(0x00,0x00,0x8b,255), /* darkblue*/
+	DrawColorA(0x00,0x8b,0x8b,255), /* darkcyan*/
+	DrawColorA(0xb8,0x86,0x0b,255), /* darkgoldenrod*/
+	DrawColorA(0xa9,0xa9,0xa9,255), /* darkgray*/
+	DrawColorA(0x00,0x64,0x00,255), /* darkgreen*/
+	DrawColorA(0xbd,0xb7,0x6b,255), /* darkkhaki*/
+	DrawColorA(0x8b,0x00,0x8b,255), /* darkmagenta*/
+	DrawColorA(0x55,0x6b,0x2f,255), /* darkolivegreen*/
+	DrawColorA(0xff,0x8c,0x00,255), /* darkorange*/
+	DrawColorA(0x99,0x32,0xcc,255), /* darkorchid*/
+	DrawColorA(0x8b,0x00,0x00,255), /* darkred*/
+	DrawColorA(0xe9,0x96,0x7a,255), /* darksalmon*/
+	DrawColorA(0x8f,0xbc,0x8f,255), /* darkseagreen*/
+	DrawColorA(0x48,0x3d,0x8b,255), /* darkslateblue*/
+	DrawColorA(0x2f,0x4f,0x4f,255), /* darkslategray*/
+	DrawColorA(0x2f,0x4f,0x4f,255), /* darkslategrey*/
+	DrawColorA(0x00,0xce,0xd1,255), /* darkturquoise*/
+	DrawColorA(0x94,0x00,0xd3,255), /* darkviolet*/
+	DrawColorA(0xff,0x14,0x93,255), /* deeppink*/
+	DrawColorA(0x00,0xbf,0xff,255), /* deepskyblue*/
+	DrawColorA(0x69,0x69,0x69,255), /* dimgray*/
+	DrawColorA(0x69,0x69,0x69,255), /* dimgrey*/
+	DrawColorA(0x1e,0x90,0xff,255), /* dodgerblue*/
+	DrawColorA(0xb2,0x22,0x22,255), /* firebrick*/
+	DrawColorA(0xff,0xfa,0xf0,255), /* floralwhite*/
+	DrawColorA(0x22,0x8b,0x22,255), /* forestgreen*/
+	DrawColorA(0xff,0x00,0xff,255), /* fuchsia*/
+	DrawColorA(0xdc,0xdc,0xdc,255), /* gainsboro*/
+	DrawColorA(0xf8,0xf8,0xff,255), /* ghostwhite*/
+	DrawColorA(0xff,0xd7,0x00,255), /* gold*/
+	DrawColorA(0xda,0xa5,0x20,255), /* goldenrod*/
+	DrawColorA(0x80,0x80,0x80,255), /* gray*/
+	DrawColorA(0x00,0x80,0x00,255), /* green*/
+	DrawColorA(0xad,0xff,0x2f,255), /* greenyellow*/
+	DrawColorA(0x80,0x80,0x80,255), /* grey*/
+	DrawColorA(0xf0,0xff,0xf0,255), /* honeydew*/
+	DrawColorA(0xff,0x69,0xb4,255), /* hotpink*/
+	DrawColorA(0xcd,0x5c,0x5c,255), /* indianred*/
+	DrawColorA(0x4b,0x00,0x82,255), /* indigo*/
+	DrawColorA(0xff,0xff,0xf0,255), /* ivory*/
+	DrawColorA(0xf0,0xe6,0x8c,255), /* khaki*/
+	DrawColorA(0xe6,0xe6,0xfa,255), /* lavender*/
+	DrawColorA(0xff,0xf0,0xf5,255), /* lavenderblush*/
+	DrawColorA(0x7c,0xfc,0x00,255), /* lawngreen*/
+	DrawColorA(0xff,0xfa,0xcd,255), /* lemonchiffon*/
+	DrawColorA(0xad,0xd8,0xe6,255), /* lightblue*/
+	DrawColorA(0xf0,0x80,0x80,255), /* lightcoral*/
+	DrawColorA(0xe0,0xff,0xff,255), /* lightcyan*/
+	DrawColorA(0xfa,0xfa,0xd2,255), /* lightgoldenrodyellow*/
+	DrawColorA(0xd3,0xd3,0xd3,255), /* lightgray*/
+	DrawColorA(0x90,0xee,0x90,255), /* lightgreen*/
+	DrawColorA(0xff,0xb6,0xc1,255), /* lightpink*/
+	DrawColorA(0xff,0xa0,0x7a,255), /* lightsalmon*/
+	DrawColorA(0x20,0xb2,0xaa,255), /* lightseagreen*/
+	DrawColorA(0x87,0xce,0xfa,255), /* lightskyblue*/
+	DrawColorA(0x77,0x88,0x99,255), /* lightslategray*/
+	DrawColorA(0x77,0x88,0x99,255), /* lightslategrey*/
+	DrawColorA(0xb0,0xc4,0xde,255), /* lightsteelblue*/
+	DrawColorA(0xff,0xff,0xe0,255), /* lightyellow*/
+	DrawColorA(0x00,0xff,0x00,255), /* lime*/
+	DrawColorA(0x32,0xcd,0x32,255), /* limegreen*/
+	DrawColorA(0xfa,0xf0,0xe6,255), /* linen*/
+	DrawColorA(0xff,0x00,0xff,255), /* magenta*/
+	DrawColorA(0x80,0x00,0x00,255), /* maroon*/
+	DrawColorA(0x66,0xcd,0xaa,255), /* mediumaquamarine*/
+	DrawColorA(0x00,0x00,0xcd,255), /* mediumblue*/
+	DrawColorA(0xba,0x55,0xd3,255), /* mediumorchid*/
+	DrawColorA(0x93,0x70,0xdb,255), /* mediumpurple*/
+	DrawColorA(0x3c,0xb3,0x71,255), /* mediumseagreen*/
+	DrawColorA(0x7b,0x68,0xee,255), /* mediumslateblue*/
+	DrawColorA(0x00,0xfa,0x9a,255), /* mediumspringgreen*/
+	DrawColorA(0x48,0xd1,0xcc,255), /* mediumturquoise*/
+	DrawColorA(0xc7,0x15,0x85,255), /* mediumvioletred*/
+	DrawColorA(0x19,0x19,0x70,255), /* midnightblue*/
+	DrawColorA(0xf5,0xff,0xfa,255), /* mintcream*/
+	DrawColorA(0xff,0xe4,0xe1,255), /* mistyrose*/
+	DrawColorA(0xff,0xe4,0xb5,255), /* moccasin*/
+	DrawColorA(0xff,0xde,0xad,255), /* navajowhite*/
+	DrawColorA(0x00,0x00,0x80,255), /* navy*/
+	DrawColorA(0xfd,0xf5,0xe6,255), /* oldlace*/
+	DrawColorA(0x80,0x80,0x00,255), /* olive*/
+	DrawColorA(0x6b,0x8e,0x23,255), /* olivedrab*/
+	DrawColorA(0xff,0xa5,0x00,255), /* orange*/
+	DrawColorA(0xff,0x45,0x00,255), /* orangered*/
+	DrawColorA(0xda,0x70,0xd6,255), /* orchid*/
+	DrawColorA(0xee,0xe8,0xaa,255), /* palegoldenrod*/
+	DrawColorA(0x98,0xfb,0x98,255), /* palegreen*/
+	DrawColorA(0xaf,0xee,0xee,255), /* paleturquoise*/
+	DrawColorA(0xdb,0x70,0x93,255), /* palevioletred*/
+	DrawColorA(0xff,0xef,0xd5,255), /* papayawhip*/
+	DrawColorA(0xff,0xda,0xb9,255), /* peachpuff*/
+	DrawColorA(0xcd,0x85,0x3f,255), /* peru*/
+	DrawColorA(0xff,0xc0,0xcb,255), /* pink*/
+	DrawColorA(0xdd,0xa0,0xdd,255), /* plum*/
+	DrawColorA(0xb0,0xe0,0xe6,255), /* powderblue*/
+	DrawColorA(0x80,0x00,0x80,255), /* purple*/
+	DrawColorA(0xff,0x00,0x00,255), /* red*/
+	DrawColorA(0xbc,0x8f,0x8f,255), /* rosybrown*/
+	DrawColorA(0x41,0x69,0xe1,255), /* royalblue*/
+	DrawColorA(0x8b,0x45,0x13,255), /* saddlebrown*/
+	DrawColorA(0xfa,0x80,0x72,255), /* salmon*/
+	DrawColorA(0xf4,0xa4,0x60,255), /* sandybrown*/
+	DrawColorA(0x2e,0x8b,0x57,255), /* seagreen*/
+	DrawColorA(0xff,0xf5,0xee,255), /* seashell*/
+	DrawColorA(0xa0,0x52,0x2d,255), /* sienna*/
+	DrawColorA(0xc0,0xc0,0xc0,255), /* silver*/
+	DrawColorA(0x87,0xce,0xeb,255), /* skyblue*/
+	DrawColorA(0x6a,0x5a,0xcd,255), /* slateblue*/
+	DrawColorA(0x70,0x80,0x90,255), /* slategray*/
+	DrawColorA(0x70,0x80,0x90,255), /* slategrey*/
+	DrawColorA(0xff,0xfa,0xfa,255), /* snow*/
+	DrawColorA(0x00,0xff,0x7f,255), /* springgreen*/
+	DrawColorA(0x46,0x82,0xb4,255), /* steelblue*/
+	DrawColorA(0xd2,0xb4,0x8c,255), /* tan*/
+	DrawColorA(0x00,0x80,0x80,255), /* teal*/
+	DrawColorA(0xd8,0xbf,0xd8,255), /* thistle*/
+	DrawColorA(0xff,0x63,0x47,255), /* tomato*/
+	DrawColorA(0x40,0xe0,0xd0,255), /* turquoise*/
+	DrawColorA(0xee,0x82,0xee,255), /* violet*/
+	DrawColorA(0xf5,0xde,0xb3,255), /* wheat*/
+	DrawColorA(0xff,0xff,0xff,255), /* white*/
+	DrawColorA(0xf5,0xf5,0xf5,255), /* whitesmoke*/
+	DrawColorA(0xff,0xff,0x00,255), /* yellow*/
+	DrawColorA(0x9a,0xcd,0x32,255) /* yellowgreen*/
 };
 
 CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
@@ -1119,6 +1142,7 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"yellow", HTMLCONST_YELLOW},
 	{"yellowgreen", HTMLCONST_YELLOWGREEN},
 	{"transparent",		HTMLCONST_TRANSPARENT		},
+	{"invert",		HTMLCONST_INVERT		},
 
 	{"thin",			HTMLCONST_THIN		},
 	{"medium",			HTMLCONST_MEDIUM	},
@@ -1180,6 +1204,8 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"focus",			HTMLCONST_FOCUS		},
 	{"first-child",		HTMLCONST_FIRSTCHILD },
 	{"last-child",		HTMLCONST_LASTCHILD	},
+	{"only-child",		HTMLCONST_ONLYCHILD	},
+	{"empty",			HTMLCONST_EMPTY		},
 	{"not",				HTMLCONST_NOT	},
 	{"before",			HTMLCONST_BEFORE	},
 	{"after",			HTMLCONST_AFTER		},
@@ -1225,6 +1251,15 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"line-through",	HTMLCONST_LINETHROUGH	},
 	{"blink",			HTMLCONST_BLINK	},
 	{"italic",			HTMLCONST_ITALIC	},
+	{"oblique",			HTMLCONST_OBLIQUE	},
+	{"small-caps",		HTMLCONST_SMALL_CAPS	},
+
+	{"caption",			HTMLCONST_CAPTION	},
+	{"icon",			HTMLCONST_ICON	},
+	{"menu",			HTMLCONST_MENU	},
+	{"message-box",		HTMLCONST_MESSAGE_BOX	},
+	{"small-caption",	HTMLCONST_SMALL_CAPTION	},
+	{"status-bar",		HTMLCONST_STATUS_BAR	},
 
 	{"no-repeat",		HTMLCONST_NOREPEAT	},
 	{"repeat",			HTMLCONST_REPEAT	},
@@ -1286,6 +1321,8 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"open-quote",		HTMLCONST_OPEN_QUOTE	},
 	{"close-quote",		HTMLCONST_CLOSE_QUOTE	},
 
+	{"currentcolor",	HTMLCONST_CURRENTCOLOR	},
+
 	{"clip",			HTMLCONST_CLIP	},
 	{"ellipsis",		HTMLCONST_ELLIPSIS	},
 	{"ellipsis-word",	HTMLCONST_ELLIPSIS_WORD	},
@@ -1304,7 +1341,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_plugins=0;	/* pointer to plugins group */
 
 	/* if it find's strict in the header then this is enabled */
-	m_strict=false;
+	m_strict=true;
 
 	m_copytdc=false;
 
@@ -1341,6 +1378,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 
 	m_rootobject=new kGUIHTMLObj();
 	m_rootobject->SetID(HTMLTAG_ROOT);
+	m_rootobject->m_tag=&m_roottag;
 	AddObject(m_rootobject);
 	m_rootobject->m_page=this;
 
@@ -2170,38 +2208,12 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 	RCE_DEF *rcep;
 	unsigned int owner;
 	unsigned int olddisplay;
+//	unsigned int oldtextalign=m_textalign;
+	kGUIStyleInfo si;
 
-	if(ho->m_box)
-		ho->m_box->Reset();
-	ho->m_fixedw=false;
-	ho->m_relw=false;
-	ho->m_fixedh=false;
-	ho->m_relh=false;
-	ho->m_minw=0;
-	ho->m_maxw=0;
-	ho->m_maxy=0;
-	ho->SetOutsideW(0);
-	ho->SetOutsideH(0);
-
+	ho->PreStyle(&si);
 	m_beforecontent=0;
 	m_aftercontent=0;
-
-	/* reset these styles */
-	ho->m_em=GetEM();
-	ho->m_bgcolor.SetTransparent(true);
-	ho->m_bgimage.SetIsValid(false);
-	ho->m_bgrepeatx=true;
-	ho->m_bgrepeaty=true;
-	ho->m_bgfixed=false;
-
-	ho->m_valign=VALIGN_BASELINE;
-
-	ho->m_width.Reset();
-	ho->m_height.Reset();
-	ho->m_left.Reset();
-	ho->m_right.Reset();
-	ho->m_top.Reset();
-	ho->m_bottom.Reset();
 
 	//todo: reset bgx,bgy etc.
 
@@ -2258,6 +2270,8 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 		case HTMLTAG_TD:
 		case HTMLTAG_TR:
 		case HTMLTAG_TH:
+			//technically since these can be any tags we should so this type of blocking
+			//in the poststyle
 			m_applied[HTMLATT_MARGIN_LEFT]=m_appliedlevel;
 			m_applied[HTMLATT_MARGIN_RIGHT]=m_appliedlevel;
 			m_applied[HTMLATT_MARGIN_TOP]=m_appliedlevel;
@@ -2273,8 +2287,8 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 		/* used mainly for user and viewer debugging */
 		if( GetSettings()->GetUseCSS()==false)
 		{
-			ho->SetAttributes(ho,OWNER_AUTHORIMPORTANT);
-			ho->SetAttributes(ho,OWNER_AUTHOR);
+			ho->SetAttributes(ho,OWNER_AUTHORIMPORTANT,&si);
+			ho->SetAttributes(ho,OWNER_AUTHOR,&si);
 		}
 		else
 		{
@@ -2293,7 +2307,7 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 
 					/* null pointer is a flag for when to apply the tag's style */	
 					if(!rule)
-						ho->SetAttributes(ho,owner);
+						ho->SetAttributes(ho,owner,&si);
 					else
 					{
 						switch(rcep->m_status)
@@ -2315,7 +2329,7 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 								rule->GetString(&rs);
 								kGUI::Trace("Rule applied: %S\n",&rs);
 							}
-							ho->SetAttributes(rule,owner);
+							ho->SetAttributes(rule,owner,&si);
 						}
 					}
 					++rcep;
@@ -2363,8 +2377,10 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 					if(!rule)
 					{
 						/* null means apply tag style now */
-						ho->SetAttributes(ho,owner);
-						SetTrueApplied(ho,owner);
+						ho->SetAttributes(ho,owner,&si);
+						//since these can be diffferent for each instance of this tag these
+						//are NOT to be applied to the block list!
+						//SetTrueApplied(ho,owner);
 						++numtrue;
 						if(m_trace)
 							kGUI::Trace("Applying inline style owner=%d\n",owner);
@@ -2373,9 +2389,10 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 					{
 						if(rule->GetPossible()==true)
 						{
-							if(GetTrueBlocked(rule,owner))
+							if(rule->GetSimple()==true && GetTrueBlocked(rule,owner))
 							{
 								(m_ownerrules.GetEntryPtr(i))->m_block=true;
+#if 0
 								if(m_trace)
 								{
 									kGUIString rs;
@@ -2383,6 +2400,7 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 									rule->GetString(&rs);
 									kGUI::Trace("Rule not applied (atts all blocked): %S\n",&rs);
 								}
+#endif
 							}
 							else if(rule->Evaluate(ho,m_appliedlevel)==true)
 							{
@@ -2400,10 +2418,11 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 									rule->GetString(&rs);
 									kGUI::Trace("Rule applied: %S\n",&rs);
 								}
-								ho->SetAttributes(rule,owner);
+								ho->SetAttributes(rule,owner,&si);
 							}
 							else
 							{
+#if 0
 								if(m_trace)
 								{
 									kGUIString rs;
@@ -2411,12 +2430,14 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 									rule->GetString(&rs);
 									kGUI::Trace("Rule not applied (evaluated): %S\n",&rs);
 								}
+#endif
 								if((rule->GetSimple()==false) && (rule->GetHitComplex()==true))
 									++nummaybe;
 							}
 						}
 						else
 						{
+#if 0
 							if(m_trace)
 							{
 								kGUIString rs;
@@ -2424,6 +2445,7 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 								rule->GetString(&rs);
 								kGUI::Trace("Rule not applied ( not possible): %S\n",&rs);
 							}
+#endif
 						}
 					}
 				}
@@ -2495,30 +2517,9 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 		}
 	}
 
-	if(ho->m_display==DISPLAY_ANONYMOUS)
-	{
-		ho->SetVAlign(ho->m_renderparent->GetVAlign());
-	}
+	ho->PostStyle(&si);
 
-	//8.5.2
-	//If an element's border color is not specified with a border property,
-	//user agents must use the value of the element's 'color' property as the
-	//computed value for the border color. 
 
-	if(ho->m_box)
-		ho->m_box->SetUndefinedBorderColors(m_fontcolor.GetColor(),false);
-
-	if(ho->m_id==HTMLTAG_HTML)
-	{
-		/* save color from HTML to clear whole page to */
-		if(ho->m_bgcolor.GetTransparent()==false && ho->m_bgcolor.GetUndefined()==false)
-			m_pagebgcolor=ho->m_bgcolor.GetColor();
-	}
-
-	ho->m_textalign=m_textalign;
-	ho->m_dir=m_dir;
-
-	ho->m_lh=GetLH();
 #if 0
 	/* special cases */
 	if(ho->m_id!=HTMLTAG_SPAN)
@@ -2593,6 +2594,9 @@ void kGUIHTMLPageObj::AddClassStyles(unsigned int baseowner,unsigned int priorit
 	cstring.Replace("\r","");
 	cstring.Replace("\t","");
 	cstring.Trim();
+
+	name.SetEncoding(cstring.GetEncoding());
+	value.SetEncoding(cstring.GetEncoding());
 
 	gotrule=false;
 	inmedia=0;
@@ -2695,6 +2699,8 @@ again:		c=cstring.GetChar(j++);
 					/* set encoding */
 					value.Trim(TRIM_QUOTES);
 					cstring.SetEncoding(kGUIString::GetEncoding(value.GetString()));
+					name.SetEncoding(cstring.GetEncoding());
+					value.SetEncoding(cstring.GetEncoding());
 				break;
 				case HTMLCONST_IMPORT:	/* '@import' */
 				{
@@ -2743,7 +2749,7 @@ again:		c=cstring.GetChar(j++);
 						media.Trim();
 					}
 
-					if(value.Replace("url(",""))
+					if(value.Replace("url(","",0,1))
 						value.Replace(")","");
 
 					MakeURL(url,&value,&newurl);
@@ -2791,8 +2797,27 @@ again:		c=cstring.GetChar(j++);
 					}while(j<l);
 				break;
 				default:
-					/* todo: return false??? report err error, unknown '@' command */
-					error=true;
+				{
+					int bracelevel=0;
+
+					/* we don't understand this so perhaps it is a newer command?? */
+					/* skip ahead until open brace */
+					--j;
+					do
+					{
+						c=cstring.GetChar(j++);
+						if(c=='{')
+							++bracelevel;
+						else if(c=='}')
+						{
+							--bracelevel;
+							if(!bracelevel)
+								break;
+						}
+						else if(c==';')
+							break;
+					}while(j<l);
+				}
 				break;
 				}
 			}
@@ -2835,14 +2860,26 @@ again:		c=cstring.GetChar(j++);
 						bool allok;
 
 						/* add style settings to multiple names */
+						ss.SetIgnoreEmpty(false);
 						numnames=ss.Split(&name,",");
 
-						allok=true;
+						/* error if last chat is a comma */
+						if(name.GetChar(name.GetLen()-1)==',')
+							allok=false;
+						else
+							allok=true;
 						for(n=0;n<numnames;++n)
 						{
 							kGUIHTMLRule *rule;
+							kGUIString *rulename;
 
-							rule=LocateRule(ss.GetWord(n));
+							rulename=ss.GetWord(n);
+							if(!rulename->GetLen())
+							{
+								allok=false;
+								break;
+							}
+							rule=LocateRule(rulename);
 							if(!rule)
 								allok=false;
 						}
@@ -2889,6 +2926,43 @@ void kGUIHTMLRule::UpdateNumOwnerStyles(void)
 		++m_numownerstyles[GetAttrib(i)->GetOwner()];
 }
 
+bool kGUIHTMLRule::ValidateName(kGUIString *s)
+{
+	unsigned int index;
+	unsigned int l;
+	unsigned int c,c2;
+	unsigned int nb;
+
+	/* todo: build a hash table of validated class / id names and add them to it */
+
+	l=s->GetLen();
+	assert(l>0,"Empty name should have been trapped earlier");
+
+	c=s->GetChar(0,&nb);
+	if(c=='-' && l>1)
+	{
+		/* make sure next char is not a number */
+		c2=s->GetChar(1,&nb);
+		if(c2>='0' && c2<='9')
+			return(false);
+	}
+
+	/* > 0xa0 = ok! */
+	if((c>='a' && c<='z') || (c>='A' && c<='Z') || c=='-' || c=='_' || c>=0xa0 || c=='\\')
+	{
+		index=nb;
+		while(index<l)
+		{
+			c=s->GetChar(index,&nb);
+			if(!( (c>='0' && c<='9') || (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='-' || c=='_' || c==':' || c=='.' || c>=0xa0 || c=='\\'))
+				return(false);
+			index+=nb;
+		}
+		return(true);
+	}
+	return(false);
+}
+
 bool kGUIHTMLRule::Parse(kGUIString *string)
 {
 	int c;
@@ -2921,7 +2995,7 @@ bool kGUIHTMLRule::Parse(kGUIString *string)
 	{
 restart:;
 		/* read white space */
-		hadwhite=ReadString(&rs,&tag);
+		hadwhite=ReadString(&rs,&tag,false);
 		if(ignorewhite)
 		{
 			hadwhite=false;
@@ -2944,27 +3018,36 @@ restart:;
 			case '.':	/* class */
 				s.m_selector=CSSSELECTOR_CLASS;
 				tag.Delete(0,1);
+
 				if(!tag.GetLen())
 					return(false);
 
-				c=tag.GetChar(0);
-				if((c>='a' && c<='z') || (c>='A' && c<='Z'))
-				{
-					if(m_page->ClassUseCase())
-						s.m_value=m_page->StringToIDcase(&tag);
-					else
-						s.m_value=m_page->StringToID(&tag);
-					s.m_compare=0; /* not used, set so compiler stops complaining */
-					m_page->ExpandClassList(s.m_value);
-				}
-				else
+				if(ValidateName(&tag)==false)
 					return(false);
+
+				m_page->FixCodes(&tag);
+				tag.Replace("\\","");
+
+				if(m_page->ClassUseCase())
+					s.m_value=m_page->StringToIDcase(&tag);
+				else
+					s.m_value=m_page->StringToID(&tag);
+				s.m_compare=0; /* not used, set so compiler stops complaining */
+				m_page->ExpandClassList(s.m_value);
 			break;
 			case '#':	/* ID */
 				s.m_selector=CSSSELECTOR_ID;
 				tag.Delete(0,1);
+
 				if(!tag.GetLen())
 					return(false);
+
+				if(ValidateName(&tag)==false)
+					return(false);
+
+				m_page->FixCodes(&tag);
+				tag.Replace("\\","");
+
 				if(m_page->ClassUseCase())
 					s.m_value=m_page->StringToIDcase(&tag);
 				else
@@ -3001,6 +3084,8 @@ restart:;
 			case ':':
 				/* there can be more than one leading colon */
 				tag.Delete(0,1);
+
+				m_page->FixCodes(&tag);
 
 				tokenid=m_page->GetConstID(tag.GetString());
 				if(tokenid==HTMLCONST_NOT)
@@ -3146,6 +3231,9 @@ comperr:;
 			{
 				TAGLIST_DEF **tagptr;
 				TAGLIST_DEF *tl;
+
+				m_page->FixCodes(&tag);
+
 				tagptr=m_page->FindTag(&tag);
 				if(tagptr)
 				{
@@ -3316,8 +3404,8 @@ void kGUIHTMLRule::CalcScore(void)
 				
 				/* add me to the list of rules that use this id */
 				m_page->AttachRuleToID(sp->m_value,this);
+				++m_numids;
 			}
-			++m_numids;
 		break;
 		case CSSSELECTOR_CLASS:
 			if(classrefs.GetEntry(sp->m_value)==false)
@@ -3327,8 +3415,8 @@ void kGUIHTMLRule::CalcScore(void)
 				
 				/* add me to the list of rules that use this class */
 				m_page->AttachRuleToClass(sp->m_value,this);
+				++m_numclasses;
 			}
-			++m_numclasses;
 		break;
 		case CSSSELECTOR_ATTEXISTS:
 		case CSSSELECTOR_ATTVALUE:
@@ -3344,6 +3432,8 @@ void kGUIHTMLRule::CalcScore(void)
 		case CSSSELECTOR_LANG:
 		case CSSSELECTOR_FIRSTCHILD:
 		case CSSSELECTOR_LASTCHILD:
+		case CSSSELECTOR_ONLYCHILD:
+		case CSSSELECTOR_EMPTY:
 		case CSSSELECTOR_LINK:
 		case CSSSELECTOR_VISITED:
 		case CSSSELECTOR_ACTIVE:
@@ -3372,7 +3462,7 @@ void kGUIHTMLRule::CalcScore(void)
 /* read a keyword from the current position in the readstring 'rs' and return */
 /* the keyword in the string 's' */
 
-bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s)
+bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s,bool fixcodes)
 {
 	unsigned int c,q;
 	bool done;
@@ -3442,17 +3532,12 @@ bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s)
 				}
 				goto done;
 			break;
-			case ':':
-				/* if word starts with multiple colons then only put one in destination string */
-				if((s->GetLen()==1) && (s->GetChar(0)==':'))
-				{
-					rs->ReadChar();
-					continue;
-				}
-				/* these are only valid at the beginning of a string, stop here if already in a string */
-				if(s->GetLen())
-					goto done;
+			case '\\':
+				s->Append(c);
+				rs->ReadChar();
+				c=rs->PeekChar();
 			break;
+			case ':':
 			case '#':
 			case '.':
 				/* these are only valid at the beginning of a string, stop here if already in a string */
@@ -3465,7 +3550,8 @@ bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s)
 		rs->ReadChar();
 	}while(rs->AtEnd()==false);
 done:;
-	m_page->FixCodes(s);
+	if(fixcodes)
+		m_page->FixCodes(s);
 	return(hadwhite);
 }
 
@@ -3493,6 +3579,12 @@ unsigned int kGUIHTMLRule::GetPseudoClass(unsigned int tokenid)
 	break;
 	case HTMLCONST_LASTCHILD:
 		return(CSSSELECTOR_LASTCHILD);
+	break;
+	case HTMLCONST_ONLYCHILD:
+		return(CSSSELECTOR_ONLYCHILD);
+	break;
+	case HTMLCONST_EMPTY:
+		return(CSSSELECTOR_EMPTY);
 	break;
 	case HTMLCONST_FIRSTCHILD:
 		return(CSSSELECTOR_FIRSTCHILD);
@@ -3630,11 +3722,17 @@ void kGUIHTMLRule::GetString(kGUIString *s)
 		case CSSSELECTOR_LASTCHILD:
 			s->Append(":last-child");
 		break;
+		case CSSSELECTOR_ONLYCHILD:
+			s->Append(":only-child");
+		break;
 		case CSSSELECTOR_FIRSTLINE:
 			s->Append(":first-line");
 		break;
 		case CSSSELECTOR_FIRSTLETTER:
 			s->Append(":first-letter");
+		break;
+		case CSSSELECTOR_EMPTY:
+			s->Append(":empty");
 		break;
 		case CSSSELECTOR_LANG:
 			s->ASprintf(":lang(%s)",m_page->IDToString(sp->m_value)->GetString());
@@ -3725,6 +3823,9 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 						break;
 					if(sib->GetID()!=HTMLTAG_IMBEDTEXTGROUP)
 					{
+						/* if no more entries to check then OK! */
+						if(sindex<0)
+							return(true);
 						/* try this sibling */
 						if(Evaluate(sindex,sib)==true)
 							return(true);
@@ -3763,6 +3864,10 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 				}while(sib->GetID()==HTMLTAG_IMBEDTEXTGROUP);
 				if(sib)
 				{
+					/* if no more entries to check then OK! */
+					if(sindex<0)
+						return(true);
+
 					/* try my previous sibling first */
 					if(Evaluate(sindex,sib)==true)
 						return(true);
@@ -3778,6 +3883,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			kGUIHTMLObj *hop=ho->m_styleparent;
 			kGUIHTMLObj *child;
 
+			m_hitcomplex=true;
 			/* don't count inserted content ( text is inserted too ) */
 			if(!hop)
 				res=false;
@@ -3796,11 +3902,63 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 		break;
 		case CSSSELECTOR_LASTCHILD:
 		{
-			kGUIHTMLObj *hop=ho->m_styleparent;
+			unsigned int index;
+			bool found=false;
 
-			if(!hop)
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(hop)
+			{
+				index=hop->m_numstylechildren-1;
+				while(index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==HTMLTAG_IMBEDTEXTGROUP)
+					{
+						if(!index)
+							break;
+						--index;
+					}
+					else
+					{
+						if(sib==ho)
+							found=true;
+						break;
+					}
+				}
+			}
+			if(!found)
 				res=false;
-			else if(hop->m_stylechildren.GetEntry(hop->m_numstylechildren-1)!=ho)
+		}
+		break;
+		case CSSSELECTOR_ONLYCHILD:
+		{
+			unsigned int index;
+			unsigned int nc;
+			bool found=false;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(hop)
+			{
+				nc=hop->m_numstylechildren;
+				for(index=0;index<nc;++index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()!=HTMLTAG_IMBEDTEXTGROUP)
+					{
+						if(sib==ho)
+							found=true;
+						else
+							found=false;
+					}
+				}
+			}
+			if(!found)
 				res=false;
 		}
 		break;
@@ -3845,6 +4003,11 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			if(found==false)
 				res=false;
 		}
+		break;
+		case CSSSELECTOR_EMPTY:
+			m_hitcomplex=true;
+			if(ho->GetNumStyleChildren())
+				res=false;
 		break;
 		case CSSSELECTOR_ATTEXISTS:
 			m_hitcomplex=true;
@@ -4176,7 +4339,6 @@ kGUIHTMLRule *kGUIHTMLPageObj::LocateRule(kGUIString *string)
 		rsn.SetString(&rs);
 		rsn.Replace(" ","");
 		rsn.Replace("\"","");
-		rsn.Replace("::",":");
 	
 		if(stricmp(sn.GetString(),rsn.GetString()))
 			m_parseerrors.ASprintf("Rule in='%s', out='%s'\n",string->GetString(),rs.GetString());
@@ -4675,10 +4837,13 @@ void kGUIHTMLPageObj::Draw(void)
 	g_trace=false;
 }
 
+
+
 void kGUIHTMLObj::DrawBG(kGUICorners *c,bool fixed,int offlx,int offty,int offrx,int offby)
 {
 	int tw,th;
 	kGUICorners bgc;
+	double alpha;
 
 #if 0
 	if(m_error)
@@ -4696,7 +4861,12 @@ void kGUIHTMLObj::DrawBG(kGUICorners *c,bool fixed,int offlx,int offty,int offrx
 	{
 		if(m_bgcolor.GetTransparent()==false && fixed==false)
 		{
-			kGUI::DrawRect(c->lx,c->ty,c->rx,c->by,m_bgcolor.GetColor());
+			alpha=m_bgcolor.GetAlpha();
+
+			if(alpha==1.0f)
+				kGUI::DrawRect(c->lx,c->ty,c->rx,c->by,m_bgcolor.GetColor());
+			else if(alpha>0.0f)
+				kGUI::DrawRect(c->lx,c->ty,c->rx,c->by,m_bgcolor.GetColor(),alpha);
 		}
 		/* might be "valid", but not loaded yet, so we check width & height as well to see if it is ready */
 
@@ -4832,12 +5002,101 @@ void kGUIHTMLObj::CalcChildZone(int yoff)
 	SetChildZone(x,y+yoff,w,h-yoff);
 }
 
+class HandleOpacity
+{
+public:
+	HandleOpacity() {m_w=0;}
+	void Save(const kGUICorners *c,double opacity);
+	void Blend(void);
+private:
+	double m_opacity;
+	int m_x;
+	int m_y;
+	int m_w;
+	int m_h;
+	kGUIColor *m_buffer;
+};
+
+/* save screen area under opacitay are for mixing later, clear to black */
+void HandleOpacity::Save(const kGUICorners *c,double opacity)
+{
+	int x,y;
+	kGUIColor *sp;
+	kGUIColor *bp;
+
+	m_x=c->lx;
+	m_y=c->ty;
+	m_w=c->rx-c->lx;
+	m_h=c->by-c->ty;
+
+	m_opacity=opacity;
+	m_buffer=new kGUIColor[m_w*m_h];
+	bp=m_buffer;
+
+	for(y=0;y<m_h;++y)
+	{
+		sp=kGUI::GetSurfacePtr(m_x,y+m_y);
+		for(x=0;x<m_w;++x)
+		{
+			*(bp++)=*(sp++);
+			//*(sp++)=0xffffffff;
+		}
+	}
+}
+
+void HandleOpacity::Blend(void)
+{
+	int x,y;
+	kGUIColor *sp;
+	kGUIColor *bp;
+	kGUIColor b,s;
+	int sr,sg,sb,br,bg,bb;
+	int newr,newg,newb;
+	double salpha=m_opacity;
+	double balpha=1.0f-salpha;
+
+	if(!m_w)
+		return;
+
+	bp=m_buffer;
+	for(y=0;y<m_h;++y)
+	{
+		sp=kGUI::GetSurfacePtr(m_x,y+m_y);
+		for(x=0;x<m_w;++x)
+		{
+			s=*(sp);
+			if(!s)
+			{
+				*(sp++)=*(bp++);
+			}
+			else
+			{
+				b=*(bp++);
+			
+				/* extract rgb from current screen contents */
+				DrawColorToRGB(s,sr,sg,sb);
+				/* extract rgb from saved buffer contents */
+				DrawColorToRGB(b,br,bg,bb);
+
+				/* blend them */
+				newr=(int)(sr*salpha)+(int)(br*balpha);
+				newg=(int)(sg*salpha)+(int)(bg*balpha);
+				newb=(int)(sb*salpha)+(int)(bb*balpha);
+
+				*(sp++)=DrawColor(newr,newg,newb);
+			}
+		}
+	}
+	delete []m_buffer;
+}
+
 void kGUIHTMLObj::Draw(void)
 {
 	kGUICorners c;
 	kGUICorners mc;
+	HandleOpacity opacity;
 
-	if((m_display==DISPLAY_NONE) || (m_visible==VISIBLE_HIDDEN))
+	if((m_display==DISPLAY_NONE) || m_opacity==0.0f|| (m_visible==VISIBLE_HIDDEN))
 	{
 		if(m_page->GetTrace())
 			kGUI::Trace("Container Hidden so draw aborted \n");
@@ -4845,6 +5104,16 @@ void kGUIHTMLObj::Draw(void)
 	}
 	kGUI::PushClip();
 	GetCorners(&c);
+
+	if(m_opacity!=1.0)
+	{
+		kGUI::PushClip();
+		kGUI::ShrinkClip(&c);
+		if(kGUI::ValidClip())
+			opacity.Save(kGUI::GetClipCorners(),m_opacity);
+		kGUI::PopClip();
+	}
+
 	if(m_page->GetTrace())
 	{
 		kGUIString ts;
@@ -4853,7 +5122,32 @@ void kGUIHTMLObj::Draw(void)
 		kGUI::Trace("Draw Container %s lx=%d,rx=%d,ty=%d,by=%d\n",ts.GetString(),c.lx,c.rx,c.ty,c.by);
 	}
 
-	kGUI::ShrinkClip(&c);
+	/* handle overflow clipping modes */
+	switch(m_overflowx)
+	{
+	case OVERFLOW_VISIBLE:
+		/* let content overflow */
+	break;
+	case OVERFLOW_HIDDEN:
+	case OVERFLOW_SCROLL:	/* scroll bar allows viewing by scrolling */
+	case OVERFLOW_AUTO:
+		kGUI::ShrinkClipLX(c.lx);
+		kGUI::ShrinkClipRX(c.rx);
+	break;
+	}
+
+	switch(m_overflowy)
+	{
+	case OVERFLOW_VISIBLE:
+		/* let content overflow */
+	break;
+	case OVERFLOW_HIDDEN:
+	case OVERFLOW_SCROLL:	/* scroll bar allows viewing by scrolling */
+	case OVERFLOW_AUTO:
+		kGUI::ShrinkClipTY(c.ty);
+		kGUI::ShrinkClipBY(c.by);
+	break;
+	}
 
 	/* is there anywhere to draw? */
 	if(kGUI::ValidClip())
@@ -4866,15 +5160,15 @@ void kGUIHTMLObj::Draw(void)
 			DrawBG(&c,false,0,0,0,0);
 		else
 		{
-			mc.lx=c.lx+m_box->GetBoxLeftMargin();
-			mc.rx=c.rx-m_box->GetBoxRightMargin();
-			mc.ty=c.ty+m_box->GetBoxTopMargin();
-			mc.by=c.by-m_box->GetBoxBottomMargin();
-			kGUI::ShrinkClip(&mc);
+			mc.lx=c.lx+m_box->GetBoxPosLeftMargin();
+			mc.rx=c.rx-m_box->GetBoxPosRightMargin();
+			mc.ty=c.ty+m_box->GetBoxPosTopMargin();
+			mc.by=c.by-m_box->GetBoxPosBottomMargin();
+			//kGUI::ShrinkClip(&mc);
 
 			DrawBG(&mc,false,m_box->GetBoxLeftBorder(),m_box->GetBoxTopBorder(),m_box->GetBoxRightBorder(),m_box->GetBoxBottomBorder());
 		}
-		if(m_id==HTMLTAG_TH || m_id==HTMLTAG_TD)
+		if(m_display==DISPLAY_TABLE_CELL)
 		{
 			if(m_box)
 			{
@@ -4891,7 +5185,7 @@ void kGUIHTMLObj::Draw(void)
 				c.ty+=m_ti->m_cellborder->GetBoxTopWidth();
 				c.rx-=m_ti->m_cellborder->GetBoxRightWidth();
 				c.by-=m_ti->m_cellborder->GetBoxBottomWidth();
-				kGUI::ShrinkClip(&c);
+				//kGUI::ShrinkClip(&c);
 			}
 		}
 		else if(m_box)
@@ -4901,6 +5195,10 @@ void kGUIHTMLObj::Draw(void)
 			c.ty+=m_box->GetBoxTopWidth();
 			c.rx-=m_box->GetBoxRightWidth();
 			c.by-=m_box->GetBoxBottomWidth();
+			/* are there scroll bars attached to this object? */
+			if(m_scroll)
+				m_scroll->DrawScroll(&c);
+
 		}
 	}
 	else
@@ -4913,7 +5211,7 @@ void kGUIHTMLObj::Draw(void)
 	/* table and rows are a slight special case since cells with a rowspan larger than one */
 	/* can cause problem when the next row overdraws the cell above that hangs down */
 	/* so, we instead draw all rows first, then go and draw all cells second */
-	if(m_id==HTMLTAG_TABLE)
+	if(m_display==DISPLAY_TABLE || m_display==DISPLAY_INLINE_TABLE)
 	{
 		unsigned int r;
 		unsigned int c;
@@ -4939,7 +5237,7 @@ void kGUIHTMLObj::Draw(void)
 			}
 		}
 	}
-	else if(m_id!=HTMLTAG_TR)
+	else if(m_display!=DISPLAY_TABLE_ROW)
 	{
 #if 1
 		int e,nc;
@@ -4950,7 +5248,7 @@ void kGUIHTMLObj::Draw(void)
 		GetChildCorners(&c);
 
 		kGUI::PushClip();
-		kGUI::ShrinkClip(&c);
+		//kGUI::ShrinkClip(&c);
 		
 		/* is there anywhere to draw? */
 		if(kGUI::ValidClip())
@@ -4989,6 +5287,8 @@ void kGUIHTMLObj::Draw(void)
 		kGUI::DrawCurrentFrame(c2.lx,c2.ty,c2.rx,c2.by);
 	}
 #endif
+	if(m_opacity!=1.0f)
+		opacity.Blend();
 	kGUI::PopClip();
 }
 
@@ -5026,9 +5326,9 @@ void kGUIHTMLPageObj::InitPosition(void)
 	m_debug.ASprintf("******* Start Position ********\n");
 
 	/* default font color to black */
-	m_fontcolor.Set((kGUIColor)DrawColor(0,0,0));
-	m_textdecorationcolor=DrawColor(0,0,0);
-	m_pagebgcolor=DrawColor(255,255,255);
+	m_fontcolor.Set((kGUIColor)DrawColorA(0,0,0,255));
+	m_textdecorationcolor=DrawColorA(0,0,0,255);
+	m_pagebgcolor=DrawColorA(255,255,255,255);
 
 	m_reposition=false;
 	m_link=0;
@@ -5042,14 +5342,15 @@ void kGUIHTMLPageObj::InitPosition(void)
 	m_whitespace=WHITESPACE_NORMAL;
 	m_textdecoration=TEXTDECORATION_NONE;
 	m_texttransform=TEXTTRANSFORM_NONE;
-	m_textalign=ALIGN_LEFT;
+//	m_textalign=ALIGN_LEFT;
+
 	/* lineheight as a ratio */
 	m_lineheightratio.SetUnitType(UNITS_PERCENT);
 	m_lineheightratio.SetUnitValue(120);
 	/* lineheight as a pixel value */
 	m_pagelineheightpix=m_lineheightratio.CalcUnitValue((int)m_pageem,(int)m_pageem);
 
-	m_textshadowr=0;
+	m_textshadowr=-1;
 	m_textshadowx=0;
 	m_textshadowy=0;
 	m_textshadowcolor.Set((kGUIColor)DrawColor(255,255,255));
@@ -5058,7 +5359,8 @@ void kGUIHTMLPageObj::InitPosition(void)
 	m_liststyleurl=0;
 	m_liststyleurlreferer=0;
 
-	m_textindent.Zero();
+//	m_patttextindent=0;
+//	m_textindent.Zero();
 	m_letterspacing.Zero();
 	m_wordspacing.Zero();
 
@@ -5083,6 +5385,7 @@ int kGUIHTMLPageObj::PositionPrint(int width)
 	m_rootobject->SetZone(0,0,GetZoneW(),GetZoneH());
 	m_rootobject->SetPage(this);
 	m_rootobject->SetID(HTMLTAG_ROOT);
+	m_rootobject->m_tag=&m_roottag;
 	m_mode=MODE_MINMAX;
 
 	/* set all containers to minimum size, calc max size too */
@@ -5119,6 +5422,7 @@ void kGUIHTMLPageObj::Position(void)
 	m_rootobject->CalcChildZone();
 	m_rootobject->SetPage(this);
 	m_rootobject->SetID(HTMLTAG_ROOT);
+	m_rootobject->m_tag=&m_roottag;
 	m_absobject=m_rootobject;
 
 	m_fixedfgobject->SetZone(0,0,width,height);
@@ -5299,6 +5603,15 @@ bool kGUIHTMLPageObj::UpdateInput(void)
 	bool over;
 	bool used;
 	bool changed=false;
+
+	/* if i'm current but not in the top window then unactivate me */
+	if(this==kGUI::GetActiveObj() && ImCurrent()==false)
+	{
+		kGUI::PopActiveObj();
+
+		Dirty();
+		return(false);
+	}
 
 	switch(kGUI::GetKey())
 	{
@@ -5811,8 +6124,10 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	assert(GetSettings()!=0,"Need to Set Settings!");
 
 	for(i=0;i<HTMLATT_UNKNOWN;++i)
+	{
 		m_blocked[i]=GetSettings()->GetCSSBlock(i);
-
+		m_traceatt[i]=GetSettings()->GetCSSTrace(i);
+	}
 	m_scripts.Clear();
 
 	m_defstyle.Clear();
@@ -5861,6 +6176,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	delete m_rootobject;
     m_rootobject=new kGUIHTMLObj();
 	m_rootobject->SetID(HTMLTAG_ROOT);
+	m_rootobject->m_tag=&m_roottag;
 
 	delete m_fixedfgobject;
     m_fixedfgobject=new kGUIHTMLObj();
@@ -6141,7 +6457,6 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 	CID_DEF cid;
 	kGUIStringSplit ss;
 	kGUIString *word;
-	char c;
 	int oldtcilen;
 	kGUIHTMLRuleCache **cacheptr;
 
@@ -6161,8 +6476,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 		case HTMLATT_CLASS:
 			if(!strstr(att->GetValue()->GetString()," "))
 			{
-				c=att->GetValue()->GetChar(0);
-				if((c>='a' && c<='z') || (c>='A' && c<='Z'))
+				if(kGUIHTMLRule::ValidateName(att->GetValue()))
 				{
 					cid.m_type=CID_CLASS;
 					if(ClassUseCase())
@@ -6172,6 +6486,10 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 					ExpandClassList(cid.m_id);
 					obj->m_cids.SetEntry(obj->m_numcids++,cid);
 				}
+				else
+				{
+					//fuck
+				}
 			}
 			else
 			{
@@ -6180,26 +6498,25 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 				for(j=0;j<ss.GetNumWords();++j)
 				{
 					word=ss.GetWord(j);
-					if(word->GetLen())
+					if(kGUIHTMLRule::ValidateName(word))
 					{
-						c=word->GetChar(0);
-						if((c>='a' && c<='z') || (c>='A' && c<='Z'))
-						{
-							cid.m_type=CID_CLASS;
-							if(ClassUseCase())
-								cid.m_id=StringToIDcase(word);
-							else
-								cid.m_id=StringToID(word);
-							ExpandClassList(cid.m_id);
-							obj->m_cids.SetEntry(obj->m_numcids++,cid);
-						}
+						cid.m_type=CID_CLASS;
+						if(ClassUseCase())
+							cid.m_id=StringToIDcase(word);
+						else
+							cid.m_id=StringToID(word);
+						ExpandClassList(cid.m_id);
+						obj->m_cids.SetEntry(obj->m_numcids++,cid);
+					}
+					else
+					{
+						/* error */
 					}
 				}
 			}
 		break;
 		case HTMLATT_ID:
-			c=att->GetValue()->GetChar(0);
-			if((c>='a' && c<='z') || (c>='A' && c<='Z'))
+			if(kGUIHTMLRule::ValidateName(att->GetValue()))
 			{
 				cid.m_type=CID_ID;
 //				cid.m_id=StringToIDcase(att->GetValue());
@@ -6216,6 +6533,10 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 					if(!strcmp(att->GetValue()->GetString(),m_target.GetString()))
 						m_targetobj=obj;
 				}
+			}
+			else
+			{
+				/* error */
 			}
 		break;
 		}
@@ -6243,6 +6564,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 		if(att)
 			m_lang=StringToID(att->GetValue());
 	break;
+	case HTMLTAG_XMLSTYLESHEET:
 	case HTMLTAG_LINK:
 	{
 		kGUIString url;
@@ -6480,7 +6802,6 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 	break;
 	case HTMLTAG_IMG:
 	{
-		double alpha;
 		kGUIString url;
 
 		att=obj->FindAttrib(HTMLATT_SRC);
@@ -6489,14 +6810,6 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 			MakeURL(IDToString(obj->GetOwnerURL()),att->GetValue(),&url);
 			obj->m_obj.m_imageobj->SetURL(this,&url,IDToString(obj->GetOwnerURL()));
 		}
-		
-		att=obj->FindAttrib(HTMLATT_OPACITY);
-		if(att)
-			alpha=att->GetValue()->GetDouble();
-		else
-			alpha=1.0f;
-
-		obj->m_obj.m_imageobj->SetAlpha(alpha);
 	}
 	break;
 	case HTMLTAG_MAP:
@@ -7286,13 +7599,29 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 	{
 		CheckTags();
 
-		if(tagparent->m_id==HTMLTAG_TEXTAREA)
+		if(!strnicmp(fp,"<![CDATA[",9))
+		{
+			sfp=fp+9;
+			/* skip ahead till ']]>' */
+			fp=strstri(fp,"]]>");
+			if(fp)
+			{
+				attvalue.SetString(sfp,(int)(fp-sfp));
+				fp+=3;	/* skip ']]>' */
+				goto gotblock2;
+			}
+			else
+				fp=sfp;
+		}
+		else if(tagparent->m_id==HTMLTAG_TEXTAREA)
 		{
 			/* special case for textarea, ignore valid html between open and close tag */
 			sfp=fp;
 			fp=strstri(fp,"</textarea>");
 			if(fp)
 				goto gotblock;
+			else
+				fp=sfp;
 		}
 		else if(tagparent->m_id==HTMLTAG_SCRIPT)
 		{
@@ -7338,7 +7667,7 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 		{
 gotblock:;
 			attvalue.SetString(sfp,(int)(fp-sfp));
-
+gotblock2:;
 			switch(tagparent->m_id)
 			{
 			case HTMLTAG_TITLE:
@@ -7632,8 +7961,8 @@ abortclose:;
 				{
 					switch(tagparent->GetID())
 					{
-					case HTMLTAG_ROOT:	/* internal base object, next NEEDS to be "html" (!doctype is ok, ?xml is ok ) */
-						if(tag->tokenid!=HTMLTAG_HTML && tag->tokenid!=HTMLTAG_DOCTYPE && tag->tokenid!=HTMLTAG_XML)
+					case HTMLTAG_ROOT:	/* internal base object, next NEEDS to be "html" (!doctype is ok, ?xml is ok ?xml-stylesheet is ok) */
+						if(tag->tokenid!=HTMLTAG_HTML && tag->tokenid!=HTMLTAG_DOCTYPE && tag->tokenid!=HTMLTAG_XML && tag->tokenid!=HTMLTAG_XMLSTYLESHEET)
 						{
 							InsertTag("html");
 							CheckTags();
@@ -7719,6 +8048,8 @@ abortclose:;
 					/* is there a form back in the tree? */
 					if(p)
 						p->m_obj.m_formobj->AddObject(newobj);
+#if 0
+					//since javascript can use these as well we should not report this as an error
 					else
 					{
 						int line,col;
@@ -7726,6 +8057,7 @@ abortclose:;
 						CalcPlace(htmlstart,sfp,&line,&col);
 						m_errors.ASprintf("object '%s' only allowed inside a <form> tag (line=%d,col=%d)\n",name.GetString(),line,col);
 					}
+#endif
 				}
 				break;
 				}
@@ -7864,15 +8196,30 @@ ignoretag:;
 								}
 							}
 
-							kGUIXMLCODES::Shrink(&attvalue,&attname);
-
-							if(attid==HTMLATT_STYLE)
+							switch(attid)
 							{
+							case HTMLATT_CLASS:
+								kGUIXMLCODES::Shrink(&attvalue,&attname);
+								if(attname.GetLen())
+									attparent->AddAndSplitAttribute(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,attid,&attname,true);
+							break;
+							case HTMLATT_ID:
+								/* no &encoding allowed for ID or Class values */
+								if(attvalue.GetLen())
+									attparent->AddAndSplitAttribute(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,attid,&attvalue,true);
+							break;
+							case HTMLATT_STYLE:
 								if(GetSettings()->GetUseCSS())
+								{
+									kGUIXMLCODES::Shrink(&attvalue,&attname);
 									attparent->AddAttributes(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,&attname);
-							}
-							else
+								}
+							break;
+							default:
+								kGUIXMLCODES::Shrink(&attvalue,&attname);
 								attparent->AddAndSplitAttribute(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,attid,&attname,true);
+							break;
+							}
 						}
 					}
 					if(skipeq)
@@ -8055,6 +8402,7 @@ void kGUIHTMLObj::Init(void)
 	m_id=0;
 	m_subid=0;
 	m_box=0;
+	m_scroll=0;
 	m_beforeobj=0;
 	m_afterobj=0;
 	m_ti=0;	/* pointer to table info, only allocated for table objects */
@@ -8066,6 +8414,7 @@ void kGUIHTMLObj::Init(void)
 	m_overflowx=OVERFLOW_VISIBLE;
 	m_overflowy=OVERFLOW_VISIBLE;
 	m_textoverflow=TEXTOVERFLOW_CLIP;
+	m_opacity=1.0f;
 
 	m_insert=false;
 	m_rulecache=0;
@@ -8107,6 +8456,7 @@ void kGUIHTMLObj::Init(void)
 	m_relw=false;
 	m_relh=false;
 	m_fixedpos=false;
+	m_abspos=false;
 	m_relpos=false;
 	m_skipbr=false;
 	m_maxchildy=0;
@@ -8137,9 +8487,6 @@ void kGUIHTMLObj::SetID(int id)
 		m_obj.m_shapeobj=new kGUIHTMLShapeObj();
 		m_obj.m_shapeobj->MovePos(0,0);
 		AddObject(m_obj.m_shapeobj);
-	break;
-	case HTMLTAG_TABLE:
-		m_ti=new kGUIHTMLTableInfo();
 	break;
 	case HTMLTAG_FORM:
 		m_obj.m_formobj=new kGUIHTMLFormObj();
@@ -8191,6 +8538,243 @@ kGUIString *kGUIHTMLObj::GetReferrer(void)
 	break;
 	}
 	return(0);
+}
+
+/* called on the min-max pass before applying css style to the object */
+void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
+{
+	si->m_cc=0;
+	si->m_oldposition=m_position;
+
+	MoveZoneW(0);
+	MoveZoneH(0);
+
+	if(m_box)
+		m_box->Reset();
+	m_fixedw=false;
+	m_relw=false;
+	m_fixedh=false;
+	m_relh=false;
+	m_minw=0;
+	m_maxw=0;
+	m_maxy=0;
+	SetOutsideW(0);
+	SetOutsideH(0);
+
+	/* reset these styles */
+	m_em=m_page->GetEM();
+	m_bgcolor.SetTransparent(true);
+	m_bgimage.SetIsValid(false);
+	m_bgrepeatx=true;
+	m_bgrepeaty=true;
+	m_bgfixed=false;
+	m_outlinewidth=0;
+	m_outlinecolor.Reset();
+	m_outlinecolor.SetInverse(true);
+	m_outlinestyle=BORDERSTYLE_NONE;
+	m_opacity=1.0f;
+
+	m_valign=VALIGN_BASELINE;
+
+	m_width.Reset();
+	m_height.Reset();
+	m_left.Reset();
+	m_right.Reset();
+	m_top.Reset();
+	m_bottom.Reset();
+
+	m_textalign=ALIGN_UNDEFINED;
+	m_patttextindent=0;
+
+	m_pattmarginleft=0;
+	m_pattmarginright=0;
+	m_pattmargintop=0;
+	m_pattmarginbottom=0;
+
+	m_pattborderleft=0;
+	m_pattborderright=0;
+	m_pattbordertop=0;
+	m_pattborderbottom=0;
+
+	m_pattpaddingleft=0;
+	m_pattpaddingright=0;
+	m_pattpaddingtop=0;
+	m_pattpaddingbottom=0;
+}
+
+/* called on the min-max pass after applying css style to the object */
+void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
+{
+	/* check for styles to inherit */
+	if(m_styleparent)
+	{
+		if(!m_patttextindent)
+			m_patttextindent=m_styleparent->m_patttextindent;
+
+		/* inherit from parent if undefined or inline or anonymous */
+		if(m_textalign==ALIGN_UNDEFINED || m_display==DISPLAY_INLINE || m_display==DISPLAY_ANONYMOUS)
+			m_textalign=m_styleparent->m_textalign;
+
+	}
+	else
+	{
+		m_textalign=ALIGN_LEFT;
+	}
+
+	if(m_display==DISPLAY_TABLE || m_display==DISPLAY_INLINE_TABLE)
+	{
+		if(!m_ti)
+			m_ti=new kGUIHTMLTableInfo();
+	}
+	else
+	{
+		//if(m_ti)
+		//{
+		//	delete m_ti;
+		//	m_ti=0;
+		//}
+	}
+
+	/* if we are floating an inline object then switch to an inline block */
+	if(m_display==DISPLAY_INLINE && m_float!=FLOAT_NONE)
+		m_display=DISPLAY_INLINE_BLOCK;
+
+	if(m_display==DISPLAY_ANONYMOUS)
+	{
+		SetVAlign(m_renderparent->GetVAlign());
+	}
+
+	if(si->m_oldposition!=m_position)
+	{
+		if(si->m_oldposition==POSITION_ABSOLUTE || si->m_oldposition==POSITION_FIXED)
+		{
+			/* put back into the render tree in it's previous position */
+			m_renderparent->DelObject(this);
+			m_oldrenderparent->AddObject(this);
+			m_renderparent=m_oldrenderparent;
+		}
+	}
+
+	if(m_position!=POSITION_STATIC)
+	{
+		if(m_position==POSITION_ABSOLUTE)
+		{
+			/* remove me from my regular render parent and attach me to my new render parent */
+			/* leave me in the style tree at the same position though so any css rules will still match! */
+			if(m_renderparent!=m_page->m_absobject)
+			{
+				m_oldrenderparent=m_renderparent;
+				m_renderparent->DelObject(this);
+				m_page->m_absobject->AddObject(this);
+				m_page->m_absobject->SetAllowOverlappingChildren(true);
+				m_renderparent=m_page->m_absobject;
+			}
+		}
+		else if(m_position==POSITION_FIXED)
+		{
+			if(m_renderparent!=m_page->m_fixedfgobject)
+			{
+				m_oldrenderparent=m_renderparent;
+				m_renderparent->DelObject(this);
+				m_page->m_fixedfgobject->AddObject(this);
+				m_renderparent=m_page->m_fixedfgobject;
+			}
+			}
+	}
+
+	//8.5.2
+	//If an element's border color is not specified with a border property,
+	//user agents must use the value of the element's 'color' property as the
+	//computed value for the border color. 
+
+	if(m_box)
+		m_box->SetUndefinedBorderColors(m_page->m_fontcolor.GetColor(),false);
+
+//	if(m_overflowx==OVERFLOW_VISIBLE || m_overflowy==OVERFLOW_VISIBLE)
+		SetAllowOverlappingChildren(true);
+
+	/* do we need to allocate a scroll controller for this container? */
+	if(m_overflowx==OVERFLOW_SCROLL || m_overflowy==OVERFLOW_SCROLL)
+	{
+		if(!m_scroll)
+			m_scroll=new kGUIScrollControl(this,10);
+	}
+	else
+	{
+		if(m_scroll)
+		{
+			delete m_scroll;
+			m_scroll=0;
+		}
+	}
+
+	/* set current color for anything?? */
+	if(si->m_cc&CURRENTCOLOR_BACKGROUND)
+		m_bgcolor.CopyFrom(&m_page->m_fontcolor);
+
+	if(si->m_cc&CURRENTCOLOR_BORDER_TOP)
+		GetBox()->SetBorderColor(BORDER_TOP,&m_page->m_fontcolor);
+
+	if(si->m_cc&CURRENTCOLOR_BORDER_BOTTOM)
+		GetBox()->SetBorderColor(BORDER_BOTTOM,&m_page->m_fontcolor);
+
+	if(si->m_cc&CURRENTCOLOR_BORDER_LEFT)
+		GetBox()->SetBorderColor(BORDER_LEFT,&m_page->m_fontcolor);
+
+	if(si->m_cc&CURRENTCOLOR_BORDER_RIGHT)
+		GetBox()->SetBorderColor(BORDER_RIGHT,&m_page->m_fontcolor);
+
+	if(m_id==HTMLTAG_HTML)
+	{
+		/* save color from HTML to clear whole page to */
+		if(m_bgcolor.GetTransparent()==false && m_bgcolor.GetUndefined()==false)
+			m_page->m_pagebgcolor=m_bgcolor.GetColor();
+	}
+
+
+	m_dir=m_page->m_dir;
+	//m_textindent.CopyFrom(&m_page->m_textindent);
+	m_lh=m_page->GetLH();
+
+	ApplyRelative();
+}
+
+void kGUIHTMLObj::ApplyRelative(void)
+{
+	if(m_pattmarginleft)
+		GetBox()->SetMarginWidth(MARGIN_LEFT,m_pattmarginleft->GetValue(),m_renderparent);
+	if(m_pattmarginright)
+		GetBox()->SetMarginWidth(MARGIN_RIGHT,m_pattmarginright->GetValue(),m_renderparent);
+	if(m_pattmargintop)
+		GetBox()->SetMarginWidth(MARGIN_TOP,m_pattmargintop->GetValue(),m_renderparent);
+	if(m_pattmarginbottom)
+		GetBox()->SetMarginWidth(MARGIN_BOTTOM,m_pattmarginbottom->GetValue(),m_renderparent);
+
+	if(m_pattborderleft)
+		GetBox()->SetBorderWidth(BORDER_LEFT,m_pattborderleft->GetValue(),m_renderparent);
+	if(m_pattborderright)
+		GetBox()->SetBorderWidth(BORDER_RIGHT,m_pattborderright->GetValue(),m_renderparent);
+	if(m_pattbordertop)
+		GetBox()->SetBorderWidth(BORDER_TOP,m_pattbordertop->GetValue(),m_renderparent);
+	if(m_pattborderbottom)
+		GetBox()->SetBorderWidth(BORDER_BOTTOM,m_pattborderbottom->GetValue(),m_renderparent);
+
+	if(m_pattpaddingleft)
+		GetBox()->SetPaddingWidth(PADDING_LEFT,m_pattpaddingleft->GetValue(),m_renderparent);
+	if(m_pattpaddingright)
+		GetBox()->SetPaddingWidth(PADDING_RIGHT,m_pattpaddingright->GetValue(),m_renderparent);
+	if(m_pattpaddingtop)
+		GetBox()->SetPaddingWidth(PADDING_TOP,m_pattpaddingtop->GetValue(),m_renderparent);
+	if(m_pattpaddingbottom)
+		GetBox()->SetPaddingWidth(PADDING_BOTTOM,m_pattpaddingbottom->GetValue(),m_renderparent);
+
+}
+
+/* called on the position pass before positioning the object */
+void kGUIHTMLObj::PrePosition(void)
+{
+	/* re-apply incase they use parent size % */
+	ApplyRelative();
 }
 
 /* allocate or deallocate and special objects */
@@ -8354,6 +8938,8 @@ kGUIHTMLObj::~kGUIHTMLObj()
 	}
 	DeleteChildren(true);
 
+	if(m_scroll)
+		delete m_scroll;
 	if(m_box)
 		delete m_box;
 	if(m_string)
@@ -8412,7 +8998,7 @@ bool kGUIHTMLPageObj::GetTrueBlocked(kGUIStyleObj *slist,unsigned int owner)
 }
 
 
-void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
+void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyleInfo *si)
 {
 	unsigned int i;
 	unsigned int id;
@@ -8435,13 +9021,18 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
 			continue;
 
 		if(applied[id]==appliedlevel && m_page->GetTrace())
-			kGUI::Trace("Attribute NOT! applied: %S %S\n",m_page->IDToString(att->GetID()),att->GetValue());
+		{
+			if(m_page->m_traceatt[att->GetID()])
+				kGUI::Trace("Attribute NOT! applied: %S %S\n",m_page->IDToString(att->GetID()),att->GetValue());
+		}
 
 		if(applied[id]!=appliedlevel && m_page->GetSettings()->GetCSSBlock(id)==false)
 		{
 			if(m_page->GetTrace())
-				kGUI::Trace("Attribute applied: %S %S\n",m_page->IDToString(att->GetID()),att->GetValue());
-
+			{
+				if(m_page->m_traceatt[att->GetID()])
+					kGUI::Trace("Attribute applied: %S %S\n",m_page->IDToString(att->GetID()),att->GetValue());
+			}
 			applied[id]=appliedlevel;
 			switch(id)
 			{
@@ -8682,7 +9273,7 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
 					kGUIString *parenturl;
 
 					word.SetString(att->GetValue());
-					word.Replace("url(","");
+					word.Replace("url(","",0,1);
 					word.Replace(")","");
 					
 					/* this is only defined on rules, not on inline tag styles so those refer to the page url */
@@ -8797,6 +9388,9 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
 				code=att->GetVID();
 				switch(code)
 				{
+				case HTMLCONST_CURRENTCOLOR:
+					si->m_cc|=CURRENTCOLOR_BACKGROUND;
+				break;
 				case HTMLCONST_INHERIT:
 					m_bgcolor.CopyFrom(&m_renderparent->m_bgcolor);
 				break;
@@ -8806,24 +9400,24 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
 				}
 			break;
 			case HTMLATT_TEXT_ALIGN:
-				m_page->PushStyle(sizeof(m_page->m_textalign),&m_page->m_textalign);
+//				m_page->PushStyle(sizeof(m_page->m_textalign),&m_page->m_textalign);
 				code=att->GetVID();
 				switch(code)
 				{
 				case HTMLCONST_LEFT:
-					m_page->m_textalign=ALIGN_LEFT;
+					m_textalign=ALIGN_LEFT;
 				break;
 				case HTMLCONST_RIGHT:
-					m_page->m_textalign=ALIGN_RIGHT;
+					m_textalign=ALIGN_RIGHT;
 				break;
 				case HTMLCONST_CENTER:
-					m_page->m_textalign=ALIGN_CENTER;
+					m_textalign=ALIGN_CENTER;
 				break;
 				case HTMLCONST_JUSTIFY:
-					m_page->m_textalign=ALIGN_JUSTIFY;
+					m_textalign=ALIGN_JUSTIFY;
 				break;
 				case HTMLCONST_INHERIT:
-					m_page->m_textalign=m_styleparent->m_textalign;
+					m_textalign=m_styleparent->m_textalign;
 				break;
 				default:
 					m_page->m_errors.ASprintf("Unknown tag parm '%s' for TEXT_ALIGN\n",att->GetValue()->GetString());
@@ -8832,8 +9426,9 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner)
 			break;
 			case HTMLATT_TEXT_INDENT:
 				/* inherited by all children elements */
-				m_page->PushStyle(sizeof(m_page->m_textindent),&m_page->m_textindent);
-				m_page->m_textindent.Set(m_page,att->GetValue());
+				m_patttextindent=att;
+//				m_page->PushStyle(sizeof(m_page->m_textindent),&m_page->m_textindent);
+//				m_page->m_textindent.Set(m_page,att->GetValue());
 			break;
 			case HTMLATT_LETTER_SPACING:
 				/* inherited by all children elements */
@@ -8998,16 +9593,16 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				applied[HTMLATT_BORDER_WIDTH_RIGHT]=appliedlevel;
 			break;
 			case HTMLATT_BORDER_WIDTH_TOP:
-				GetBox()->SetBorderWidth(BORDER_TOP,att->GetValue(),m_renderparent);
+				m_pattbordertop=att;
 			break;
 			case HTMLATT_BORDER_WIDTH_BOTTOM:
-				GetBox()->SetBorderWidth(BORDER_BOTTOM,att->GetValue(),m_renderparent);
+				m_pattborderbottom=att;
 			break;
 			case HTMLATT_BORDER_WIDTH_LEFT:
-				GetBox()->SetBorderWidth(BORDER_LEFT,att->GetValue(),m_renderparent);
+				m_pattborderleft=att;
 			break;
 			case HTMLATT_BORDER_WIDTH_RIGHT:
-				GetBox()->SetBorderWidth(BORDER_RIGHT,att->GetValue(),m_renderparent);
+				m_pattborderright=att;
 			break;
 			case HTMLATT_BORDER_STYLE_TOP:
 				GetBox()->SetBorderStyle(BORDER_TOP,att->GetValue());
@@ -9022,40 +9617,56 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				GetBox()->SetBorderStyle(BORDER_RIGHT,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_TOP:
-				GetBox()->SetBorderColor(BORDER_TOP,att->GetValue());
+				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
+					si->m_cc|=CURRENTCOLOR_BORDER_TOP;
+				else
+					GetBox()->SetBorderColor(BORDER_TOP,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_BOTTOM:
-				GetBox()->SetBorderColor(BORDER_BOTTOM,att->GetValue());
+				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
+					si->m_cc|=CURRENTCOLOR_BORDER_BOTTOM;
+				else
+					GetBox()->SetBorderColor(BORDER_BOTTOM,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_LEFT:
-				GetBox()->SetBorderColor(BORDER_LEFT,att->GetValue());
+				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
+					si->m_cc|=CURRENTCOLOR_BORDER_LEFT;
+				else
+					GetBox()->SetBorderColor(BORDER_LEFT,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_RIGHT:
-				GetBox()->SetBorderColor(BORDER_RIGHT,att->GetValue());
+				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
+					si->m_cc|=CURRENTCOLOR_BORDER_RIGHT;
+				else
+					GetBox()->SetBorderColor(BORDER_RIGHT,att->GetValue());
 			break;
 			case HTMLATT_MARGIN_LEFT:
-				GetBox()->SetMarginWidth(MARGIN_LEFT,att->GetValue(),m_renderparent);
+				m_pattmarginleft=att;
 			break;
 			case HTMLATT_MARGIN_RIGHT:
-				GetBox()->SetMarginWidth(MARGIN_RIGHT,att->GetValue(),m_renderparent);
+				m_pattmarginright=att;
 			break;
 			case HTMLATT_MARGIN_TOP:
-				GetBox()->SetMarginWidth(MARGIN_TOP,att->GetValue(),m_renderparent);
+				m_pattmargintop=att;
 			break;
 			case HTMLATT_MARGIN_BOTTOM:
-				GetBox()->SetMarginWidth(MARGIN_BOTTOM,att->GetValue(),m_renderparent);
+				m_pattmarginbottom=att;
 			break;
 			case HTMLATT_PADDING_LEFT:
-				GetBox()->SetPaddingWidth(PADDING_LEFT,att->GetValue(),m_renderparent);
+				/* todo: if NEG or malformed then don't set */
+				m_pattpaddingleft=att;
 			break;
 			case HTMLATT_PADDING_RIGHT:
-				GetBox()->SetPaddingWidth(PADDING_RIGHT,att->GetValue(),m_renderparent);
+				/* todo: if NEG or malformed then don't set */
+				m_pattpaddingright=att;
 			break;
 			case HTMLATT_PADDING_TOP:
-				GetBox()->SetPaddingWidth(PADDING_TOP,att->GetValue(),m_renderparent);
+				/* todo: if NEG or malformed then don't set */
+				m_pattpaddingtop=att;
 			break;
 			case HTMLATT_PADDING_BOTTOM:
-				GetBox()->SetPaddingWidth(PADDING_BOTTOM,att->GetValue(),m_renderparent);
+				/* todo: if NEG or malformed then don't set */
+				m_pattpaddingbottom=att;
 			break;
 			case HTMLATT_BORDER_COLLAPSE:
 				code=att->GetVID();
@@ -9073,8 +9684,49 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				}
 			break;
 			case HTMLATT_BORDER_SPACING_HORIZ:
+				//fuck
 			break;
 			case HTMLATT_BORDER_SPACING_VERT:
+				//fuck
+			break;
+			case HTMLATT_OUTLINE_WIDTH:
+			{
+				kGUIUnits unit;
+				int wpix;
+
+				code=att->GetVID();
+				switch(code)
+				{
+				case HTMLCONST_THIN:
+					wpix=1;
+				break;
+				case HTMLCONST_MEDIUM:
+					wpix=3;
+				break;
+				case HTMLCONST_THICK:
+					wpix=5;
+				break;
+				case HTMLCONST_LENGTH:
+					wpix=14;
+				break;
+				case -1:
+					/* todo, get width as units may be a percent?? */
+					unit.Set(m_page,att->GetValue());
+					wpix=unit.CalcUnitValue(0,m_renderparent->GetEM());
+				break;
+				default:
+					m_page->m_errors.ASprintf("unknown outline-width '%s'\n",att->GetValue()->GetString());
+					return;
+				break;
+				}
+				m_outlinewidth=wpix;
+			}
+			break;
+			case HTMLATT_OUTLINE_STYLE:
+				//fuck
+			break;
+			case HTMLATT_OUTLINE_COLOR:
+				m_page->GetColor(att->GetValue(),&m_outlinecolor);
 			break;
 			case HTMLATT_CELLSPACING:
 				m_page->PushStyle(sizeof(m_page->m_cellspacing),&m_page->m_cellspacing);
@@ -9087,6 +9739,18 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			case HTMLATT_COLOR:
 				m_page->PushStyle(sizeof(m_page->m_fontcolor),&m_page->m_fontcolor);
 				m_page->GetColor(att->GetValue(),&m_page->m_fontcolor);
+			break;
+			case HTMLATT_OPACITY:
+			{
+				double opacity;
+
+				opacity=att->GetValue()->GetDouble();
+				if(opacity<0.0f)
+					opacity=0.0f;
+				else if(opacity>1.0f)
+					opacity=1.0f;
+				m_opacity=opacity;
+			}
 			break;
 			case HTMLATT_LANG:
 				m_page->PushStyle(sizeof(m_page->m_lang),&m_page->m_lang);
@@ -9300,7 +9964,7 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				else
 				{
 					word.SetString(att->GetValue());
-					word.Replace("url(","");
+					word.Replace("url(","",0,1);
 					word.Replace(")","");
 					
 					/* this is only defined on rules, not on inline tag styles so those refer to the page url */
@@ -9478,6 +10142,10 @@ void kGUIHTMLObj::CheckFixed(void)
 	int ph;
 	int ow;
 	int oh;
+	int negmarginleft;
+	int negmarginright;
+	int negmargintop;
+	int negmarginbottom;
 	kGUIHTMLObj *p=GetParentObj();
 
 	/* on the min/max pass the parent width is undefined so use 0 */
@@ -9495,6 +10163,7 @@ void kGUIHTMLObj::CheckFixed(void)
 	m_fixedw=false;
 	m_fixedh=false;
 	m_fixedpos=false;
+	m_abspos=false;
 	m_relw=false;
 	m_relh=false;
 	m_relpos=false;
@@ -9552,7 +10221,7 @@ void kGUIHTMLObj::CheckFixed(void)
 
 	if(m_position!=POSITION_STATIC)
 	{
-		int xoff,yoff;
+		int xoff=0,yoff=0;
 
 		if(m_left.GetUnitType()!=UNITS_UNDEFINED)
 		{
@@ -9571,7 +10240,7 @@ void kGUIHTMLObj::CheckFixed(void)
 				{
 					int rx=pw-m_right.CalcUnitValue(pw,m_em);
 					ow=rx-xoff;
-					SetInsideW(ow);
+					SetOutsideW(ow);
 					m_fixedw=true;
 				}
 			}
@@ -9594,9 +10263,49 @@ void kGUIHTMLObj::CheckFixed(void)
 		else
 		{
 			if(m_bottom.GetUnitType()!=UNITS_UNDEFINED)
-				yoff=-m_bottom.CalcUnitValue(ph,m_em);
+			{
+				yoff=ph-(oh+m_bottom.CalcUnitValue(ph,m_em));
+				p->m_childusesheight=true;
+			}
 			else
 				yoff=0;
+		}
+
+		/* handle negative margins */
+		if(m_box)
+		{
+			negmarginleft=m_box->GetBoxLeftMargin();
+			negmargintop=m_box->GetBoxTopMargin();
+			negmarginright=m_box->GetBoxRightMargin();
+			negmarginbottom=m_box->GetBoxBottomMargin();
+			
+			if(negmarginleft<0 && negmarginright<0)
+			{
+				/* expand width */
+				xoff+=negmarginleft;
+				SetOutsideW(GetOutsideW()-(negmarginleft+negmarginright));
+			}
+			else
+			{
+				if(negmarginleft<0 && m_right.GetUnitType()==UNITS_UNDEFINED)
+					xoff+=negmarginleft;
+				if(negmarginright<0 && m_left.GetUnitType()==UNITS_UNDEFINED)
+					xoff-=negmarginright;
+			}
+
+			if(negmargintop<0 && negmarginbottom<0)
+			{
+				/* expand height */
+				yoff+=negmargintop;
+				SetOutsideW(GetOutsideW()-(negmarginleft+negmarginright));
+			}
+			else
+			{
+				if(negmargintop<0 && m_bottom.GetUnitType()==UNITS_UNDEFINED)
+					yoff+=negmargintop;
+				if(negmarginbottom<0 && m_top.GetUnitType()==UNITS_UNDEFINED)
+					yoff-=negmarginbottom;
+			}
 		}
 
 		switch(m_position)
@@ -9605,7 +10314,7 @@ void kGUIHTMLObj::CheckFixed(void)
 			/* position the box relative to the containing box */
 			MoveZoneX(xoff);
 			MoveZoneY(yoff);
-			m_fixedpos=true;
+			m_abspos=true;
 		break;
 		case POSITION_FIXED:
 			/* position the box relative to the containing box, and don't move if page scrolls */
@@ -9745,6 +10454,7 @@ void kGUIHTMLObj::Clear(int c)
 void kGUIHTMLObj::PositionBreak(bool wrap)
 {
 	int i,y,by,xoff;
+	int rx,ry;
 	double gap=0.0f;
 	PO_DEF *pop;
 	kGUIObj *robj;
@@ -9786,8 +10496,17 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 	}
 
 	//change renderparent to getparentobj
-	m_pos->m_curx=m_page->m_textindent.CalcUnitValue((m_page->m_mode==MODE_MINMAX || !m_renderparent)?0:m_renderparent->GetChildZoneW(),m_em);
+	if(!m_pos->m_line && m_patttextindent)
+	{
+		kGUIUnits tiu;
 
+		tiu.Set(m_page,m_patttextindent->GetValue());
+		m_pos->m_curx=tiu.CalcUnitValue((m_page->m_mode==MODE_MINMAX || !m_renderparent)?0:m_renderparent->GetChildZoneW(),m_em);
+	}
+	else
+	{
+		m_pos->m_curx=0;
+	}
 	by=m_pos->m_cury+m_pos->m_lineasc+m_pos->m_linedesc;
 	for(i=0;i<m_pos->m_ponum;++i)
 	{
@@ -9797,16 +10516,26 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 		/* error checking */
 		assert(robj->GetZoneW()==pop->width && robj->GetZoneH()==pop->height,"Size Changed!\n");
 
+		if(pop->obj->m_relpos)
+		{
+			rx=robj->GetZoneX();
+			ry=robj->GetZoneY();
+		}
+		else
+		{
+			rx=0;
+			ry=0;
+		}
 		if(m_page->m_mode==MODE_MINMAX)
-			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx /*+obj->GetZoneX()*/ );
+			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx+rx /*+obj->GetZoneX()*/ );
 		else
 		{
 			if(m_potextalign==ALIGN_JUSTIFY && gap!=0.0f)
 				xoff=(int)((i*gap)/m_pos->m_ponum);
-			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx+xoff /*+obj->GetZoneX()*/);
+			robj->MoveZoneX(m_pos->m_leftw+m_pos->m_curx+xoff+rx /*+obj->GetZoneX()*/);
 		}
 //		obj->MoveZoneY(m_y+(m_lineasc-obj->GetZoneH())+obj->GetZoneY());
-		robj->MoveZoneY(m_pos->m_cury+((m_pos->m_lineasc-robj->GetZoneH())+pop->baseline));
+		robj->MoveZoneY(m_pos->m_cury+((m_pos->m_lineasc-robj->GetZoneH())+pop->baseline)+ry);
 
 		if(robj->GetZoneY()<0)
 			kGUI::Trace("Error!\n");
@@ -9823,7 +10552,7 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 		y=robj->GetZoneY()+robj->GetZoneH();
 		if(y>by)
 			by=y;
-		m_pos->m_curx+=robj->GetZoneW();
+		m_pos->m_curx+=pop->width;	//robj->GetZoneW();
 	}
 	m_pos->m_cury=by;
 	if(m_pos->m_cury>m_maxy)
@@ -9855,6 +10584,7 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 	m_pos->m_linedesc=0;
 	m_pos->m_ponum=0;
 	m_pos->m_curx=0;
+	m_pos->m_line++;
 }
 
 /* position container object within another container object */
@@ -9975,6 +10705,19 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 			m_maxy=by;
 		return;
 	}
+	else if(obj->m_abspos)
+	{
+		rx=robj->GetZoneX()+ow;
+		by=max(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
+		if(rx>m_minw)
+			m_minw=rx;
+		if(rx>m_maxw)
+			m_maxw=rx;
+		if(by>m_maxy)
+			m_maxy=by;
+		return;
+	}
+
 
 	if(obj->GetAlign()==ALIGN_LEFT || obj->m_float==FLOAT_LEFT)
 	{
@@ -10165,8 +10908,11 @@ dotext:;
 		/* save align mode for objects */
 		m_potextalign=obj->m_textalign;
 
-		robj->MoveZoneX(0);
-		robj->MoveZoneY(0);
+		if(obj->m_relpos==false)
+		{
+			robj->MoveZoneX(0);
+			robj->MoveZoneY(0);
+		}
 		po.obj=obj;
 		po.robj=robj;
 		po.above=above;
@@ -10226,7 +10972,7 @@ kGUIHTMLTableInfo::~kGUIHTMLTableInfo()
 	delete m_cellborder;
 }
 
-void kGUIHTMLTableInfo::Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,unsigned int *num,unsigned int tagid)
+void kGUIHTMLTableInfo::Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,unsigned int *num,unsigned int display)
 {
 	unsigned int r;
 	kGUIHTMLObj *child;
@@ -10234,14 +10980,18 @@ void kGUIHTMLTableInfo::Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,un
 	for(r=0;r<obj->m_numstylechildren;++r)
 	{
 		child=obj->m_stylechildren.GetEntry(r);
-		if(child->GetID()==tagid)
+		if(child->m_display==display)
 		{
 			if(objectarray)
 				objectarray->SetEntry(*(num),static_cast<kGUIHTMLObj *>(child));
 			*(num)=*(num)+1;
 		}
-		else if(child->GetID()!=HTMLTAG_TABLE)	/* don't continue looking if we encounter another table */
-			Get(child,objectarray,num,tagid);
+		else if(child->m_display!=DISPLAY_TABLE && child->m_display!=DISPLAY_NONE)
+		{
+			/* don't continue looking if we encounter another table */
+			/* or a hidden object */
+			Get(child,objectarray,num,display);
+		}
 	}
 }
 
@@ -10265,10 +11015,10 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 	for(i=0;i<table->m_numstylechildren;++i)
 	{
 		row=table->m_stylechildren.GetEntry(i);
-		if(row->GetID()==HTMLTAG_TR)
+		if(row->m_display==DISPLAY_TABLE_ROW)
 			++m_numrows;
 		else
-			Get(row,0,&m_numrows,HTMLTAG_TR);
+			Get(row,0,&m_numrows,DISPLAY_TABLE_ROW);
 	}
 
 	/* allocate pointer table for each row and number of columns for each row */
@@ -10282,10 +11032,10 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 	for(i=0;i<table->m_numstylechildren;++i)
 	{
 		row=table->m_stylechildren.GetEntry(i);
-		if(row->GetID()==HTMLTAG_TR)
+		if(row->m_display==DISPLAY_TABLE_ROW)
 			m_rowptrs.SetEntry(r++,static_cast<kGUIHTMLObj *>(row));
 		else
-			Get(row,&m_rowptrs,&r,HTMLTAG_TR);
+			Get(row,&m_rowptrs,&r,DISPLAY_TABLE_ROW);
 	}
 
 	/* build row pointer table and then count number of cols per row */
@@ -10297,10 +11047,11 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 		for(j=0;j<crow->m_numstylechildren;++j)
 		{
 			cell=crow->m_stylechildren.GetEntry(j);
-			if(cell->GetID()==HTMLTAG_TD || cell->GetID()==HTMLTAG_TH)
+			if(cell->m_display==DISPLAY_TABLE_CELL)
 				ccell=static_cast<kGUIHTMLObj *>(cell);
 			else
 			{
+				/* todo, change this to look at display for DISPLAY_TABLE_CELL */
 				cell=cell->FindStyleChild(HTMLTAG_TD);
 				if(cell)
 					ccell=static_cast<kGUIHTMLObj *>(cell);
@@ -10312,16 +11063,23 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 				/* assign rowspan and colspan variables */
 				att=ccell->FindAttrib(HTMLATT_COLSPAN);
 				if(att)
+				{
 					ccell->m_colspan=att->GetValue()->GetInt();
+					if(ccell->m_colspan<1)
+						ccell->m_colspan=1;/* todo: this should be trapped earlier on */
+				}
 				else
 					ccell->m_colspan=1;
 
 				att=ccell->FindAttrib(HTMLATT_ROWSPAN);
 				if(att)
+				{
 					ccell->m_rowspan=att->GetValue()->GetInt();
+					if(ccell->m_rowspan<1)
+						ccell->m_rowspan=1;	/* todo: this should be trapped earlier on */
+				}
 				else
 					ccell->m_rowspan=1;
-
 
 				/* trim rowspan if off end of the table */
 				while((r+ccell->m_rowspan)>m_numrows)
@@ -10347,10 +11105,11 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 		for(j=0;j<crow->m_numstylechildren;++j)
 		{
 			cell=crow->m_stylechildren.GetEntry(j);
-			if(cell->GetID()==HTMLTAG_TD || cell->GetID()==HTMLTAG_TH)
+			if(cell->m_display==DISPLAY_TABLE_CELL)
 				ccell=static_cast<kGUIHTMLObj *>(cell);
 			else
 			{
+				//todo change to look for display type
 				cell=cell->FindStyleChild(HTMLTAG_TD);
 				if(cell)
 					ccell=static_cast<kGUIHTMLObj *>(cell);
@@ -11245,11 +12004,16 @@ void kGUIHTMLObj::Position(bool placeme)
 
 	/* get me a position class to use for positioning my children */
 	m_pos=m_page->GetPos();
+	m_pos->m_line=0;
 	m_pos->m_ponum=0;
 
 	pass=false;
 
-	if(m_page->m_mode==MODE_MINMAX)
+	if(m_page->m_mode==MODE_POSITION)
+	{
+		PrePosition();
+	}
+	else //if(m_page->m_mode==MODE_MINMAX)
 	{
 		m_page->ApplyStyleRules(this,PSEUDO_NONE);
 
@@ -11315,7 +12079,7 @@ void kGUIHTMLObj::Position(bool placeme)
 			case DISPLAY_RUN_IN:
 			case DISPLAY_BLOCK:
 			case DISPLAY_LIST_ITEM:
-				if(m_float==FLOAT_NONE)
+				if(m_float==FLOAT_NONE && m_left.GetUnitType()==UNITS_UNDEFINED && m_right.GetUnitType()==UNITS_UNDEFINED && m_width.GetUnitType()==UNITS_UNDEFINED)
 				{
 					if(rp->m_pos->m_leftw || rp->m_pos->m_rightw)
 					{
@@ -11400,7 +12164,17 @@ void kGUIHTMLObj::Position(bool placeme)
 
 dopass2:;
 
-	m_pos->m_curx=0;
+	if(!m_pos->m_line && m_patttextindent)
+	{
+		kGUIUnits tiu;
+
+		tiu.Set(m_page,m_patttextindent->GetValue());
+
+		m_pos->m_curx=tiu.CalcUnitValue((m_page->m_mode==MODE_MINMAX || !m_renderparent)?0:m_renderparent->GetChildZoneW(),m_em);
+	}
+	else
+		m_pos->m_curx=0;
+
 	m_pos->m_cury=0;
 	m_maxy=0;
 	m_maxchildy=0;
@@ -11429,33 +12203,7 @@ dopass2:;
 
 	if(m_position!=POSITION_STATIC)
 	{
-		if(m_page->m_mode==MODE_MINMAX)
-		{
-			if(m_position==POSITION_ABSOLUTE)
-			{
-				/* remove me from my regular render parent and attach me to my new render parent */
-				/* leave me in the style tree at the same position though so any css rules will still match! */
-				if(m_renderparent!=m_page->m_absobject)
-				{
-					/* possible bug, if this position style changes later then it will never re-attach back to the correct place */
-					m_renderparent->DelObject(this);
-					m_page->m_absobject->AddObject(this);
-					m_page->m_absobject->SetAllowOverlappingChildren(true);
-					m_renderparent=m_page->m_absobject;
-				}
-			}
-			else if(m_position==POSITION_FIXED)
-			{
-				if(m_renderparent!=m_page->m_fixedfgobject)
-				{
-					/* possible bug, if this position style changes later then it will never re-attach back to the correct place */
-					m_renderparent->DelObject(this);
-					m_page->m_fixedfgobject->AddObject(this);
-					m_renderparent=m_page->m_fixedfgobject;
-				}
-
-			}
-		}
+		/* should this only be done on the style pass??? */
 
 		/* any non-static object becomes the renderparent for abs positioned children */
 		/* update the lastest ABS render parent object to me */
@@ -11667,6 +12415,7 @@ typechanged:;
 
 			textobj->SetFontSize(m_em);
 			textobj->SetColor(m_page->m_fontcolor.GetColor());
+			textobj->SetAlpha(m_page->m_fontcolor.GetAlpha());
 			textobj->SetLetterSpacing(m_page->m_letterspacing.CalcUnitValue(0,m_em));
 			textobj->SetLink(m_page->m_link);
 
@@ -11679,7 +12428,7 @@ typechanged:;
 				w=max(w,(int)(textobj->GetFixedWidth()*m_em));	/* used for LI prefix as it is right aligned and wider */
 
 			if(textobj->GetPlusSpace())
-				w+=(int)(0.3f*m_em)+(m_page->m_wordspacing.CalcUnitValue(0,m_em));
+				w+=(int)(0.33f*m_em)+(m_page->m_wordspacing.CalcUnitValue(0,m_em));
 			textobj->MoveZoneW(w);
 
 			h=textobj->GetLineHeight();
@@ -11936,7 +12685,20 @@ typechanged:;
 		if(m_fixedw || m_relw)
 			childwidth=GetInsideW();
 		else
-			childwidth=imagewidth;
+		{
+			if(m_fixedh || m_relh)
+			{
+				if(imageheight)
+					childwidth=(int)(imagewidth*((double)GetInsideH()/(double)imageheight));
+				else
+				{
+					imagewidth=0;
+					childwidth=0;
+				}
+			}
+			else
+				childwidth=imagewidth;
+		}
 
 		if(imagewidth)
 			wscale=(double)childwidth/(double)imagewidth;
@@ -12344,10 +13106,11 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 	}
 #endif
 
-	if(addme==true)
+	if(addme==true || m_relpos)
 	{
-		if(rp && m_fixedpos==false)
+		if(rp && m_position!=POSITION_FIXED && m_position!=POSITION_ABSOLUTE)
 		{
+#if 0
 			if(m_relpos==true)
 			{
 				int xoff,yoff;
@@ -12359,6 +13122,7 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				MoveZoneY(GetZoneY()+yoff);
 			}
 			else
+#endif
 				rp->PositionChild(this,this,GetZoneH(),0);
 		}
 	}
@@ -12373,9 +13137,16 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 		}
 	}
 
+	if(m_page->m_mode==MODE_POSITION && m_scroll)
+	{
+		//since the size may have changed, re postion the scrollbars 
+		m_scroll->Scrolled();
+	}
+
 done:;
 	if(m_pos->m_ponum)
 		PositionBreak();
+
 	m_page->PopStyles(popindex);
 	m_page->RemovePossibleRules(this);
 
@@ -12611,7 +13382,7 @@ void kGUIHTMLObj::Contain(bool force)
 		}
 	break;
 	default:
-#if 1
+#if 0
 		/* double check to make sure I am big enough to hold my children */
 		/* since some could have been absolutely positioned outside of me or */
 		/* relatively positioned outside of me */
@@ -12957,21 +13728,32 @@ void kGUIUnits::Set(kGUIHTMLPageObj *page,kGUIString *s)
 
 	if(s->GetChar(s->GetLen()-1)=='%')
 		m_units=UNITS_PERCENT;
-	else if(strstri(s->GetString(),"em"))
-		m_units=UNITS_EM;
-	else if(strstri(s->GetString(),"px"))
-		m_units=UNITS_PIXELS;
-	else if(strstri(s->GetString(),"cm"))
-		m_units=UNITS_CM;
-	else if(strstri(s->GetString(),"pt"))
-		m_units=UNITS_POINTS;
-	else if(strstri(s->GetString(),"auto"))
+	else if(!strcmpi(s->GetString(),"auto"))
 		m_units=UNITS_AUTO;
-	else if((s->GetChar(0)>='0' && s->GetChar(0)<='9') || (s->GetChar(0)=='-') || (s->GetChar(0)=='+') || (s->GetChar(0)=='.'))
-		m_units=UNITS_PIXELS;
 	else
-		m_units=UNITS_UNDEFINED;
-
+	{
+		/* find the suffix */
+		if(strstri(s->GetString(),"em"))
+			m_units=UNITS_EM;
+		else if(strstri(s->GetString(),"ex"))
+			m_units=UNITS_EX;
+		else if(strstri(s->GetString(),"px"))
+			m_units=UNITS_PIXELS;
+		else if(strstri(s->GetString(),"cm"))
+			m_units=UNITS_CM;
+		else if(strstri(s->GetString(),"mm"))
+			m_units=UNITS_MM;
+		else if(strstri(s->GetString(),"in"))
+			m_units=UNITS_IN;
+		else if(strstri(s->GetString(),"pc"))
+			m_units=UNITS_PC;
+		else if(strstri(s->GetString(),"pt"))
+			m_units=UNITS_POINTS;
+		else if((s->GetChar(0)>='0' && s->GetChar(0)<='9') || (s->GetChar(0)=='-') || (s->GetChar(0)=='+') || (s->GetChar(0)=='.'))
+			m_units=UNITS_PIXELS;
+		else
+			m_units=UNITS_UNDEFINED;
+	}
 	/* is the constant an int or a double? */
 	if(strstr(s->GetString(),"."))
 	{
@@ -13003,14 +13785,29 @@ int kGUIUnits::CalcUnitValue(int scale100,int em)
 		else
 			return((int)(m_value.i*em));
 	break;
+	case UNITS_EX:
+		if(m_vint==false)
+			return((int)(m_value.d*em*0.5f));
+		else
+			return((int)(m_value.i*em*0.5f));
+	break;
 	case UNITS_CM:
-		return(GetUnitValue()*(int)(72.0f/2.54f));
+		return((int)(GetUnitValueD()*(72.0f/2.54f)));
+	break;
+	case UNITS_MM:
+		return((int)(GetUnitValueD()*(72.0f/25.4f)));
+	break;
+	case UNITS_IN:
+		return((int)(GetUnitValueD()*72.0f));
+	break;
+	case UNITS_PC:
+		return((int)(GetUnitValueD()*12.0f));
 	break;
 	case UNITS_PIXELS:
 		return(GetUnitValue());
 	break;
 	case UNITS_POINTS:
-		return((int)(GetUnitValueD()*1.3334f));
+		return(GetUnitValue());
 	break;
 	case UNITS_AUTO:
 		assert(false,"This should be handled externally!");
@@ -13034,14 +13831,26 @@ double kGUIUnits::CalcUnitValue(double scale100,double em)
 	case UNITS_EM:
 		return (GetUnitValueD()*em);
 	break;
+	case UNITS_EX:
+		return (GetUnitValueD()*em*0.5f);
+	break;
 	case UNITS_PIXELS:
 		return(GetUnitValueD());
 	break;
 	case UNITS_CM:
 		return(GetUnitValueD()*(72.0f/2.54f));
 	break;
+	case UNITS_MM:
+		return(GetUnitValueD()*(72.0f/25.4f));
+	break;
+	case UNITS_IN:
+		return(GetUnitValueD()*72.0f);
+	break;
+	case UNITS_PC:
+		return(GetUnitValueD()*12.0f);
+	break;
 	case UNITS_POINTS:
-		return(GetUnitValueD()*1.3334f);
+		return(GetUnitValue());
 	break;
 	case UNITS_AUTO:
 		assert(false,"This should be handled externally!");
@@ -13177,6 +13986,44 @@ vagain:;
 	}
 }
 
+/* collapse space between parms for rgb() and rgba() and hsl() so that splitting on */
+/* spaces leaves them grouped together */
+
+void kGUIStyleObj::FixParms(kGUIString *s)
+{
+	unsigned int index;
+	unsigned int nb;
+	unsigned int c;
+	unsigned int q=0;
+	unsigned int l;
+	bool inbrackets=false;
+
+	index=0;
+	l=s->GetLen();
+	while(index<l)
+	{
+		c=s->GetChar(index,&nb);
+		index+=nb;
+		if(q && c==q)
+			q=0;
+		else if(!q && (c=='\"' || c=='\''))
+			q=c;
+		else if(!q)
+		{
+			if(!inbrackets && c=='(')
+				inbrackets=true;
+			else if(inbrackets && c==')')
+				inbrackets=false;
+			else if(inbrackets && c==' ')
+			{
+				/* all whitespace has been converted to characters so remove it! */
+				s->Delete(index-1,1);
+				--l;
+			}
+		}
+	}
+}
+
 void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int content,unsigned int baseowner,unsigned int priority,unsigned int attid,kGUIString *value,bool addempty)
 {
 	int x,w,numwords,code;
@@ -13191,6 +14038,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 	unsigned int owner;
 	bool goterr=false;
 
+	ss.SetRemoveQuotes(false);
 	/* some places have !imp and others ! imp */
 	while(value->Replace("! ","!"));
 
@@ -13217,6 +14065,50 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 	/* split group commands into their individual commands */
 	switch(attid)
 	{
+	case HTMLATT_COLOR:
+	{
+		/* check for malformed syntax */
+		kGUIHTMLColor color;
+
+		switch(page->GetConstID(value->GetString()))
+		{
+		case HTMLCONST_INHERIT:
+			AddAttribute(attid,owner,priority,value);
+		break;
+		case HTMLCONST_CURRENTCOLOR:
+		{
+			kGUIString inherit;
+
+			inherit.SetString("inherit");
+			AddAttribute(attid,owner,priority,&inherit);
+		}
+		break;
+		default:
+			if(page->GetColor(value,&color))
+				AddAttribute(attid,owner,priority,value);
+			else
+				page->m_errors.ASprintf("Malformed color '%s' for COLOR tag\n",value->GetString());
+		break;
+		}
+	}
+	break;
+	case HTMLATT_WIDTH:
+	case HTMLATT_HEIGHT:
+	case HTMLATT_LEFT:
+	case HTMLATT_RIGHT:
+	case HTMLATT_TOP:
+	case HTMLATT_BOTTOM:
+	case HTMLATT_MINWIDTH:
+	case HTMLATT_MAXWIDTH:
+	case HTMLATT_MINHEIGHT:
+	case HTMLATT_MAXHEIGHT:
+		/* syntax check before adding (so as to not replace a valid one with an invalid one) */
+		u.Set(page,value);
+		if(u.GetUnitType()==UNITS_UNDEFINED)
+			page->m_errors.ASprintf("Malformed units '%s' for ATTID=%d\n",value->GetString(),attid);
+		else
+			AddAttribute(attid,owner,priority,value);
+	break;
 	case HTMLATT_CONTENT:
 		/* content is a special case, it can only be applied to rules that either have */
 		/* before or after in them and not in any other case */
@@ -13231,7 +14123,167 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 			AddAttribute(content,owner,priority,value);
 		}
 	break;
-	case HTMLATT_OVERFLOW:
+	case HTMLATTGROUP_FONT:
+	{
+		kGUIString s;
+		bool inherit=false;
+		bool gotstyle=false;
+		bool gotvariant=false;
+		bool gotweight=false;
+		bool gotsize=false;
+		bool gotlineheight=false;
+		bool gotfamily=false;;
+
+		numwords=ss.Split(value," ");
+
+		for(w=0;w<numwords;++w)
+		{
+			word=ss.GetWord(w);
+
+			if(strstr(word->GetString(),"/"))
+			{
+				/* is this fontsize / lineheight?? */
+			}
+			else
+			{
+				switch(page->GetConstID(word->GetString()))
+				{
+				case HTMLCONST_INHERIT:
+					/* ignore for now */
+				break;
+				case HTMLCONST_NORMAL:
+					/* ignore for now */
+				break;
+				case HTMLCONST_ITALIC:
+				case HTMLCONST_OBLIQUE:
+					if(gotstyle==false)
+					{
+						AddAttribute(HTMLATT_FONT_STYLE,owner,priority,word);
+						gotstyle=true;
+					}
+					else
+					{
+						goterr=true;
+						page->m_csserrors.ASprintf("Duplicate tag parm '%s' for FONT (style)\n",word->GetString());
+					}
+				break;
+				case HTMLCONST_SMALL_CAPS:
+					if(gotvariant==false)
+					{
+						AddAttribute(HTMLATT_FONT_VARIANT,owner,priority,word);
+						gotvariant=true;
+					}
+					else
+					{
+						goterr=true;
+						page->m_csserrors.ASprintf("Duplicate tag parm '%s' for FONT (variant)\n",word->GetString());
+					}
+				break;
+				case HTMLCONST_BOLD:		/* weight */
+				case HTMLCONST_BOLDER:		/* weight */
+				case HTMLCONST_LIGHTER:		/* weight */
+	isweight:		if(gotweight==false)
+					{
+						AddAttribute(HTMLATT_FONT_WEIGHT,owner,priority,word);
+						gotweight=true;
+					}
+					else
+					{
+						goterr=true;
+						page->m_csserrors.ASprintf("Duplicate tag parm '%s' for FONT (weight)\n",word->GetString());
+					}
+				break;
+
+					// 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | inherit
+
+					inherit=true;
+				break;
+				case HTMLCONST_XXSMALL:
+				case HTMLCONST_XSMALL:
+				case HTMLCONST_SMALL:
+				case HTMLCONST_MEDIUM:
+				case HTMLCONST_LARGE:
+				case HTMLCONST_XLARGE:
+				case HTMLCONST_XXLARGE:
+				case HTMLCONST_SMALLER:
+				case HTMLCONST_LARGER:
+					if(gotsize==false)
+					{
+						AddAttribute(HTMLATT_FONT_SIZE,owner,priority,word);
+						gotsize=true;
+					}
+					else
+					{
+						goterr=true;
+						page->m_csserrors.ASprintf("Duplicate tag parm '%s' for FONT (size)\n",word->GetString());
+					}
+
+				break;
+				case HTMLCONST_CAPTION:
+				case HTMLCONST_ICON:
+				case HTMLCONST_MENU:
+				case HTMLCONST_MESSAGE_BOX:
+				case HTMLCONST_SMALL_CAPTION:
+				case HTMLCONST_STATUS_BAR:
+					/* todo */
+				break;
+				default:
+					u.Set(page,word);
+
+					/* 100,200,300,400,500,600,700,800,900 */
+					switch(u.GetUnitType())
+					{
+					case UNITS_PIXELS:
+						goto isweight;
+					break;
+					case UNITS_POINTS:
+					break;
+					default:
+						/* what is this?? */
+					break;
+					}
+				break;
+				}
+			}
+		}
+
+		if(gotstyle==false)
+		{
+			s.SetString("normal");
+			AddAttribute(HTMLATT_FONT_STYLE,owner,priority,&s);
+		}
+
+		if(gotvariant==false)
+		{
+			s.SetString("normal");
+			AddAttribute(HTMLATT_FONT_VARIANT,owner,priority,&s);
+		}
+
+		if(gotweight==false)
+		{
+			s.SetString("normal");
+			AddAttribute(HTMLATT_FONT_WEIGHT,owner,priority,&s);
+		}
+
+		if(gotsize==false)
+		{
+			s.SetString("medium");
+			AddAttribute(HTMLATT_FONT_SIZE,owner,priority,&s);
+		}
+
+		if(gotlineheight==false)
+		{
+			s.SetString("1.2em");
+			AddAttribute(HTMLATT_LINE_HEIGHT,owner,priority,&s);
+		}
+
+		if(gotfamily==false)
+		{
+			/* leave */
+		}
+	}
+	break;
+	case HTMLATTGROUP_OVERFLOW:
 		/* hmmm, can there be more than one value? */
 		AddAttribute(HTMLATT_OVERFLOW_X,owner,priority,value);
 		AddAttribute(HTMLATT_OVERFLOW_Y,owner,priority,value);
@@ -13351,6 +14403,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 		bool gotnone=false;
 		static int shadowfields[]={HTMLATT_TEXT_SHADOW_X,HTMLATT_TEXT_SHADOW_Y,HTMLATT_TEXT_SHADOW_R};
 
+		goterr=true;
 		//text-shadow: #6374AB 20px -12px 2px;
 		// [none] color, xoffset, yoffset and blur radius
 
@@ -13365,7 +14418,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 			{
 			case HTMLCONST_NONE:
 				gotnone=true;
-				word->SetString("0");						/* we will use a 0 radius to signify "not enabled" */
+				word->SetString("-1");						/* we will use a 0 radius to signify "not enabled" */
 				AddAttribute(HTMLATT_TEXT_SHADOW_R,owner,priority,word);
 			break;
 			default:
@@ -13468,10 +14521,12 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 		kGUIString url;
 		kGUIString fn;
 		kGUIString center;
+		bool inherit=false;
+		bool gotx=false,goty=false,gotcenter=false,gotcolor=false,gotattachment=false,gotrepeat=false,gotimage=false;
 
-		bool gotx=false,goty=false,gotcenter=false,gotcolor=false;
 		center.SetString("Center");
 
+		FixParms(value);
 		numwords=ss.Split(value," ");
 
 		for(w=0;w<numwords;++w)
@@ -13480,41 +14535,33 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 			switch(page->GetConstID(word->GetString()))
 			{
 			case HTMLCONST_INHERIT:
-				/* inherit it all */
-				if(numwords==1)
-				{
-					kGUIString inherit;
-
-					inherit.SetString("inherit");
-					AddAttribute(HTMLATT_BACKGROUND_ATTACHMENT,owner,priority,&inherit);
-					AddAttribute(HTMLATT_BACKGROUND_REPEAT,owner,priority,&inherit);
-					AddAttribute(HTMLATT_BACKGROUND_POSITIONY,owner,priority,&inherit);
-					AddAttribute(HTMLATT_BACKGROUND_POSITIONX,owner,priority,&inherit);
-					AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,&inherit);
-					AddAttribute(HTMLATT_BACKGROUND_IMAGE,owner,priority,&inherit);
-				}
-				else
-				{
-					//inherit what?
-				}
+				inherit=true;			/* inherit all undefined values */
+			break;
+			case HTMLCONST_CURRENTCOLOR:
+				gotcolor=true;
+				AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,word);
 			break;
 			case HTMLCONST_NONE:
 			{
-				kGUIString w;
-
-				w.SetString("transparent");
-				AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,&w);
-				gotcolor=true;
+				//kGUIString w;
+				//w.SetString("transparent");
+				//AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,&w);
+				//gotcolor=true;
+				//w.SetString("none");
+				gotimage=true;
+				AddAttribute(HTMLATT_BACKGROUND_IMAGE,owner,priority,word);
 			}
 			break;
 			case HTMLCONST_FIXED:
 			case HTMLCONST_SCROLL:
+				gotattachment=true;
 				AddAttribute(HTMLATT_BACKGROUND_ATTACHMENT,owner,priority,word);
 			break;
 			case HTMLCONST_NOREPEAT:
 			case HTMLCONST_REPEAT:
 			case HTMLCONST_REPEATX:
 			case HTMLCONST_REPEATY:
+				gotrepeat=true;
 				AddAttribute(HTMLATT_BACKGROUND_REPEAT,owner,priority,word);
 			break;
 			case HTMLCONST_LEFT:
@@ -13554,7 +14601,10 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 				else
 				{
 					if(!strcmpin(word->GetString(),"url(",4) || strstr(word->GetString(),"."))
+					{
+						gotimage=true;
 						AddAttribute(HTMLATT_BACKGROUND_IMAGE,owner,priority,word);
+					}
 					else
 					{
 						u.Set(page,word);
@@ -13581,15 +14631,42 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 			break;
 			}
 		}
+
 		if(gotcenter==true)
 		{
 			if(gotx==false)
+			{
 				AddAttribute(HTMLATT_BACKGROUND_POSITIONX,owner,priority,&center);
+				gotx=true;
+			}
 			if(goty==false)
+			{
 				AddAttribute(HTMLATT_BACKGROUND_POSITIONY,owner,priority,&center);
-
+				goty=true;
+			}
 		}
-		if(gotcolor==false)
+
+		if(inherit)
+		{
+			kGUIString inherit;
+
+			/* inherit all undefined fields */
+			inherit.SetString("inherit");
+			if(gotattachment==false)
+				AddAttribute(HTMLATT_BACKGROUND_ATTACHMENT,owner,priority,&inherit);
+			if(gotrepeat==false)
+				AddAttribute(HTMLATT_BACKGROUND_REPEAT,owner,priority,&inherit);
+			if(goty==false)
+				AddAttribute(HTMLATT_BACKGROUND_POSITIONY,owner,priority,&inherit);
+			if(gotx==false)
+				AddAttribute(HTMLATT_BACKGROUND_POSITIONX,owner,priority,&inherit);
+			if(gotcolor==false)
+				AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,&inherit);
+			if(gotimage==false)
+				AddAttribute(HTMLATT_BACKGROUND_IMAGE,owner,priority,&inherit);
+		}
+#if 0
+		else if(gotcolor==false)
 		{
 			/* make color transparent */
 			kGUIString w;
@@ -13597,6 +14674,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 			w.SetString("transparent");
 			AddAttribute(HTMLATT_BACKGROUND_COLOR,owner,priority,&w);
 		}
+#endif
 	}
 	break;
 	case HTMLATT_MARGIN:
@@ -13785,7 +14863,6 @@ setborder:;
 		}
 		else
 		{
-			/* width, style, color, is the proper order, but these are usually always messed up so we will figure it out */
 			for(w=0;w<numwords;++w)
 			{
 				word=ss.GetWord(w);
@@ -13949,6 +15026,79 @@ setborder:;
 			wt=0;
 			page->m_csserrors.ASprintf("BORDER_SPACING, bad # keywords %d, '%s'\n",numwords,value->GetString());
 		break;
+		}
+	break;
+	case HTMLATTGROUP_OUTLINE:
+	{
+		int gotcolor=0;
+		int gotstyle=0;
+		int gotsize=0;
+		kGUIString color;
+		kGUIString style;
+		kGUIString size;
+
+		color.SetString("invert");
+		size.SetString("medium");
+
+		numwords=ss.Split(value," ");
+
+		for(w=0;w<numwords;++w)
+		{
+			word=ss.GetWord(w);
+			code=page->GetConstID(word->GetString());
+			switch(code)
+			{
+			case HTMLCONST_NONE:
+			case HTMLCONST_HIDDEN:
+			case HTMLCONST_DOTTED:
+			case HTMLCONST_DASHED:
+			case HTMLCONST_SOLID:
+			case HTMLCONST_DOUBLE:
+			case HTMLCONST_GROOVE:
+			case HTMLCONST_RIDGE:
+			case HTMLCONST_INSET:
+			case HTMLCONST_OUTSET:
+				++gotstyle;
+				style.SetString(word);
+			break;
+			case HTMLCONST_THIN:
+			case HTMLCONST_MEDIUM:
+			case HTMLCONST_THICK:
+			case HTMLCONST_LENGTH:
+				++gotsize;
+				size.SetString(word);
+			break;
+			default:
+				/* is this a unit measure? */
+				u.Set(page,word);
+				if(u.GetUnitType()!=UNITS_UNDEFINED)
+				{
+					/* must be a size */
+					++gotsize;
+					size.SetString(word);
+				}
+				else
+				{
+					/* must be a color */
+					if(page->GetColor(word,&c))
+					{
+						++gotcolor;
+						color.SetString(word);
+					}
+				}
+			break;
+			}
+			/* was this all valid? */
+			if(gotstyle<2 && gotcolor<2 && gotsize<2)
+			{
+				if(style.GetLen())
+					AddAttribute(HTMLATT_OUTLINE_STYLE,owner,priority,&style);
+				if(size.GetLen())
+					AddAttribute(HTMLATT_OUTLINE_WIDTH,owner,priority,&size);
+				if(color.GetLen())
+					AddAttribute(HTMLATT_OUTLINE_COLOR,owner,priority,&color);
+				}
+			}
 		}
 	break;
 	default:
@@ -14127,6 +15277,45 @@ bool kGUIHTMLPageObj::DigOnly(kGUIString *s)
 	return(true);
 }
 
+bool kGUIHTMLPageObj::DigOnlyP(kGUIString *s)
+{
+	unsigned int i,n;
+	unsigned int nb;
+	int c;
+
+	n=s->GetLen();
+	if(!n)
+		return(false);
+	i=0;
+	while(i<n)
+	{
+		c=s->GetChar(i,&nb);
+		switch(c)
+		{
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case '-':
+		case '.':
+			/* ok */
+		break;
+		default:
+			return(false);
+		break;
+		}
+		i+=nb;
+	}
+	return(true);
+}
+
+
 /* true=string is only digits, period or percent, false=other char found */
 bool kGUIHTMLPageObj::DigOnlyPP(kGUIString *s,bool *percent)
 {
@@ -14230,7 +15419,74 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 			else if(b>255)
 				b=255;
 
-			kc=DrawColor(r,g,b);
+			kc=DrawColorA(r,g,b,255);
+			c->Set(kc);
+			m_colorhash.Add(col->GetString(),&kc);
+			return(true);
+		}
+		return(false);
+	}
+
+	cp=col->GetString();
+	if(!strcmpin(cp,"rgba(",5))
+	{
+		int num;
+		double a;
+		kGUIString s;
+		kGUIStringSplit ss;
+		bool pr=false,pg=false,pb=false;
+
+		s.SetString(col->GetString()+5);
+		s.Clip(s.GetLen()-1);
+		num=ss.Split(&s,",");
+		if(num==4)
+		{
+			if(DigOnlyPP(ss.GetWord(0),&pr)==false || DigOnlyPP(ss.GetWord(1),&pg)==false || DigOnlyPP(ss.GetWord(2),&pb)==false || DigOnlyP(ss.GetWord(3))==false)
+			{
+				/* an invalid charcter was found! */
+				if(m_strict)
+					return(false);
+			}
+			if(pr!=pg || pr!=pb || pg!=pb)
+			{
+				/* either all 3 are percent or none are! */
+				if(m_strict)
+					return(false);
+			}
+
+			r=ss.GetWord(0)->GetInt();
+
+			if(pr==true)		/* if this a percent? */
+				r=(int)(r*(255.0f/100.0f));
+			if(r<0)
+				r=0;
+			else if(r>255)
+				r=255;
+
+			g=ss.GetWord(1)->GetInt();
+			if(pg==true)		/* if this a percent? */
+				g=(int)(g*(255.0f/100.0f));
+			if(g<0)
+				g=0;
+			else if(g>255)
+				g=255;
+
+			b=ss.GetWord(2)->GetInt();
+			if(pb==true)		/* if this a percent? */
+				b=(int)(b*(255.0f/100.0f));
+			if(b<0)
+				b=0;
+			else if(b>255)
+				b=255;
+
+			a=ss.GetWord(3)->GetDouble();
+			if(a<0.0f)
+				a=0.0f;
+			else if(a>1.0f)
+				a=1.0f;
+			a*=255.0f;
+
+			kc=DrawColorA(r,g,b,(int)a);
 			c->Set(kc);
 			m_colorhash.Add(col->GetString(),&kc);
 			return(true);
@@ -14272,12 +15528,106 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 			}
 
 			ch=ss.GetWord(0)->GetDouble();
+			if(ch>=360.0f)
+			{
+				num=(int)(ch/360.0f);
+				ch-=num*360.0;
+			}
+			else if(ch<=0.0f)
+			{
+				num=(int)(-ch/360.0f);
+				ch+=num*360.0;
+				if(ch<0.0f)
+					ch+=360.0f;
+			}
 			cs=ss.GetWord(1)->GetDouble();
+			if(cs<0.0f)
+				cs=0.0f;
+			else if(cs>100.0f)
+				cs=100.0f;
 			cl=ss.GetWord(2)->GetDouble();
+			if(cl<0.0f)
+				cl=0.0f;
+			else if(cl>100.0f)
+				cl=100.0f;
 
 			kGUI::HSLToRGB(ch/360.0f,cs/100.0f,cl/100.0f,&ur,&ug,&ub);
 
-			kc=DrawColor(ur,ug,ub);
+			kc=DrawColorA(ur,ug,ub,255);
+			c->Set(kc);
+			m_colorhash.Add(col->GetString(),&kc);
+			return(true);
+		}
+		return(false);
+	}
+
+	/* hsla */
+	if(!strcmpin(cp,"hsla(",5))
+	{
+		int num;
+
+		kGUIString s;
+		kGUIStringSplit ss;
+		bool ph=false,ps=false,pl=false;
+		double ch,cs,cl,a;
+		unsigned char ur;
+		unsigned char ug;
+		unsigned char ub;
+
+		s.SetString(col->GetString()+5);
+		s.Clip(s.GetLen()-1);
+		num=ss.Split(&s,",");
+		if(num==4)
+		{
+			if(DigOnlyPP(ss.GetWord(0),&ph)==false || DigOnlyPP(ss.GetWord(1),&ps)==false || DigOnlyPP(ss.GetWord(2),&pl)==false || DigOnlyP(ss.GetWord(3))==false)
+			{
+				/* an invalid charcter was found! */
+				if(m_strict)
+					return(false);
+			}
+			/* s & v should have % after them, h should not */
+
+			if(ph!=false || ps!=true || pl!=true)
+			{
+				/* either all 3 are percent or none are! */
+				if(m_strict)
+					return(false);
+			}
+
+			ch=ss.GetWord(0)->GetDouble();
+			if(ch>=360.0f)
+			{
+				num=(int)(ch/360.0f);
+				ch-=num*360.0;
+			}
+			else if(ch<=0.0f)
+			{
+				num=(int)(-ch/360.0f);
+				ch+=num*360.0;
+				if(ch<0.0f)
+					ch+=360.0f;
+			}
+			cs=ss.GetWord(1)->GetDouble();
+			if(cs<0.0f)
+				cs=0.0f;
+			else if(cs>100.0f)
+				cs=100.0f;
+			cl=ss.GetWord(2)->GetDouble();
+			if(cl<0.0f)
+				cl=0.0f;
+			else if(cl>100.0f)
+				cl=100.0f;
+
+			kGUI::HSLToRGB(ch/360.0f,cs/100.0f,cl/100.0f,&ur,&ug,&ub);
+
+			a=ss.GetWord(3)->GetDouble();
+			if(a<0.0f)
+				a=0.0f;
+			else if(a>1.0f)
+				a=1.0f;
+			a*=255.0f;
+
+			kc=DrawColorA(ur,ug,ub,a);
 			c->Set(kc);
 			m_colorhash.Add(col->GetString(),&kc);
 			return(true);
@@ -14294,8 +15644,9 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 		gothash=false;
 
 	cid=GetConstID(cp);
-	if(cid==-1)
+	switch(cid)
 	{
+	case -1:
 		/* todo, if strict then must have gothash here */
 		if(strlen(cp)==6)
 		{
@@ -14316,7 +15667,7 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 				return(false);
 			}
 
-			kc=DrawColor(r,g,b);
+			kc=DrawColorA(r,g,b,255);
 			c->Set(kc);
 			m_colorhash.Add(col->GetString(),&kc);
 			return(true);
@@ -14340,22 +15691,29 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 				return(false);
 			}
 
-			kc=DrawColor(((r<<4)|r),((g<<4)|g),((b<<4)|b));
+			kc=DrawColorA(((r<<4)|r),((g<<4)|g),((b<<4)|b),255);
 			c->Set(kc);
 			m_colorhash.Add(col->GetString(),&kc);
 			return(true);
 		}
-	}
-	else if(cid==HTMLCONST_TRANSPARENT)
-	{
+	break;
+	case HTMLCONST_TRANSPARENT:
 		c->SetTransparent(true);
 		return(true);
-	}
-	else if(cid>=0 && cid<HTMLCONST_TRANSPARENT)
-	{
-		c->Set(m_colors[cid]);
-		m_colorhash.Add(col->GetString(),&m_colors[cid]);
+	break;
+	case HTMLCONST_INVERT:
+		c->SetInverse(true);
 		return(true);
+	break;
+	default:
+		if(cid>=0 && cid<HTMLCONST_TRANSPARENT)
+		{
+			/* todo: add these to the colorhash table in the init code */
+			c->Set(m_colors[cid]);
+			m_colorhash.Add(col->GetString(),&m_colors[cid]);
+			return(true);
+		}
+	break;
 	}
 
 	return(false);
@@ -14901,6 +16259,9 @@ void kGUIHTMLTextObj::Draw(void)
 	int h;
 	kGUICorners c;
 
+	if(GetAlpha()==0.0f)
+		return;
+
 	kGUI::PushClip();
 	GetCorners(&c);
 	kGUI::ShrinkClip(&c);
@@ -14924,7 +16285,7 @@ void kGUIHTMLTextObj::Draw(void)
 
 		if(m_draw==true)	/* toggled when in blink mode */
 		{
-			if(m_shadowr)
+			if(m_shadowr>=0)
 				kGUIText::Draw(c.lx+m_shadowx,c.ty+m_shadowy,0,0,m_shadowcolor);
 
 			kGUIText::Draw(c.lx,c.ty,GetZoneW(),GetZoneH());
@@ -14942,12 +16303,8 @@ void kGUIHTMLTextObj::Draw(void)
 			h=GetAscHeight()>>1;
 			kGUI::DrawRect(c.lx,c.ty+h,c.rx,c.ty+h+1,m_textdecorationcolor);
 		}
-		if(m_textdecoration&TEXTDECORATION_BLINK)
-		{
-			// todo, 
-		}
-			/* debug */
-	//		kGUI::DrawCurrentFrame(c.lx,c.ty,c.rx,c.by);
+		/* debug */
+		//	kGUI::DrawCurrentFrame(c.lx,c.ty,c.rx,c.by);
 	}
 	kGUI::PopClip();
 }
@@ -15244,33 +16601,33 @@ bool kGUIHTMLBox::GetValid(void)
 unsigned int kGUIHTMLBox::GetBoxTopWidth(void)
 {
 	if(m_topstyle==BORDERSTYLE_NONE)
-		return m_topmw+m_toppw;
+		return GetBoxPosTopMargin()+m_toppw;
 	else
-		return m_topbw+m_topmw+m_toppw;
+		return m_topbw+GetBoxPosTopMargin()+m_toppw;
 }
 
 unsigned int kGUIHTMLBox::GetBoxLeftWidth(void)
 {
 	if(m_leftstyle==BORDERSTYLE_NONE)
-		return m_leftmw+m_leftpw;
+		return GetBoxPosLeftMargin()+m_leftpw;
 	else
-		return m_leftbw+m_leftmw+m_leftpw;
+		return m_leftbw+GetBoxPosLeftMargin()+m_leftpw;
 }
 
 unsigned int kGUIHTMLBox::GetBoxRightWidth(void)
 {
 	if(m_rightstyle==BORDERSTYLE_NONE)
-		return m_rightmw+m_rightpw;
+		return GetBoxPosRightMargin()+m_rightpw;
 	else
-		return m_rightbw+m_rightmw+m_rightpw;
+		return m_rightbw+GetBoxPosRightMargin()+m_rightpw;
 }
 
 unsigned int kGUIHTMLBox::GetBoxBottomWidth(void)
 {
 	if(m_bottomstyle==BORDERSTYLE_NONE)
-		return m_bottommw+m_bottompw;
+		return GetBoxPosBottomMargin()+m_bottompw;
 	else
-		return m_bottombw+m_bottommw+m_bottompw;
+		return m_bottombw+GetBoxPosBottomMargin()+m_bottompw;
 }
 
 void kGUIHTMLBox::SetBorder(unsigned int w)
@@ -15363,21 +16720,25 @@ void kGUIHTMLBox::SetMarginWidth(unsigned int mm,kGUIString *s,kGUIHTMLObj *pare
 	}
 
 	u.Set(m_page,s);
-	if(u.GetUnitType()==UNITS_AUTO)
-		m_marginauto|=mm;
-	else
+	switch(u.GetUnitType())
 	{
-		wpix=u.CalcUnitValue(0,parent->GetEM());
-
-		if(mm&MARGIN_LEFT)
-			m_leftmw=wpix;
-		if(mm&MARGIN_RIGHT)
-			m_rightmw=wpix;
-		if(mm&MARGIN_TOP)
-			m_topmw=wpix;
-		if(mm&MARGIN_BOTTOM)
-			m_bottommw=wpix;
+	case UNITS_AUTO:
+		m_marginauto|=mm;
+		return;
+	break;
+	default:
+		wpix=u.CalcUnitValue(parent->GetOutsideW(),parent->GetEM());
+	break;
 	}
+
+	if(mm&MARGIN_LEFT)
+		m_leftmw=wpix;
+	if(mm&MARGIN_RIGHT)
+		m_rightmw=wpix;
+	if(mm&MARGIN_TOP)
+		m_topmw=wpix;
+	if(mm&MARGIN_BOTTOM)
+		m_bottommw=wpix;
 }
 
 void kGUIHTMLBox::SetUndefinedBorderColors(kGUIColor c,bool iscell)
@@ -15487,6 +16848,19 @@ void kGUIHTMLBox::SetBorderColor(unsigned int bb,kGUIString *s)
 	}
 	m_page->m_errors.ASprintf("unknown border-color '%s'\n",s->GetString());
 }
+
+void kGUIHTMLBox::SetBorderColor(unsigned int bb,kGUIHTMLColor *c)
+{
+	if(bb&BORDER_LEFT)
+		m_leftcolor.Set(c);
+	if(bb&BORDER_RIGHT)
+		m_rightcolor.Set(c);
+	if(bb&BORDER_TOP)
+		m_topcolor.Set(c);
+	if(bb&BORDER_BOTTOM)
+		m_bottomcolor.Set(c);
+}
+
 
 void kGUIHTMLBox::SetBorderStyle(unsigned int bb,kGUIString *s)
 {
@@ -15707,10 +17081,10 @@ void kGUIHTMLBox::Draw(kGUICorners *c)
 	else
 		bb=m_bottombw;
 
-	lx=c->lx+m_leftmw;
-	rx=c->rx-m_rightmw;
-	ty=c->ty+m_topmw;
-	by=c->by-m_bottommw;
+	lx=c->lx+GetBoxPosLeftMargin();
+	rx=c->rx-GetBoxPosRightMargin();
+	ty=c->ty+GetBoxPosTopMargin();
+	by=c->by-GetBoxPosBottomMargin();
 
 	cc.lx=lx;
 	cc.rx=rx;
@@ -17152,3 +18526,61 @@ void kGUIHTMLPageObj::TraceBack(kGUIHTMLObj *obj)
 		TraceBack(obj->m_renderparent);
 }
 #endif
+
+/* call updateinput for all children in the specified group */
+/* since children can be totally outside of the parent area we will */
+/* not do any position culling */
+
+bool kGUIHTMLPageObj::UpdateInputC(int num)
+{
+	int e,nc;
+	bool objret;
+	kGUIObj *gobj;
+
+	nc=GetNumChildren(num);
+	for(e=0;e<nc;++e)
+	{
+		gobj=GetChild(num,e);
+		objret=gobj->UpdateInput();
+
+		/* if I am the active object then by default I must also */
+		/* be the current object too, so force this if it is not already so */
+		if( gobj==kGUI::GetActiveObj() )
+		{
+			if(gobj->ImCurrent()==false)
+				gobj->SetCurrent();
+		}
+		if(objret==true)
+			return(objret);
+	}
+	return(false);	/* not used by and children */
+}
+
+/* call updateinput for all children in the specified group */
+/* since children can be totally outside of the parent area we will */
+/* not do any position culling */
+
+bool kGUIHTMLObj::UpdateInputC(int num)
+{
+	int e,nc;
+	bool objret;
+	kGUIObj *gobj;
+
+	nc=GetNumChildren(num);
+	for(e=0;e<nc;++e)
+	{
+		gobj=GetChild(num,e);
+		objret=gobj->UpdateInput();
+
+		/* if I am the active object then by default I must also */
+		/* be the current object too, so force this if it is not already so */
+		if( gobj==kGUI::GetActiveObj() )
+		{
+			if(gobj->ImCurrent()==false)
+				gobj->SetCurrent();
+		}
+		if(objret==true)
+			return(objret);
+	}
+	return(false);	/* not used by and children */
+}

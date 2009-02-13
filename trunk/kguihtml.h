@@ -156,6 +156,7 @@ HTMLTAG_UL,
 HTMLTAG_VAR,
 HTMLTAG_WBR,
 HTMLTAG_XML,
+HTMLTAG_XMLSTYLESHEET,
 
 HTMLTAG_IMBEDTEXTGROUP,			/* used for inline text before whilespare rule applied */
 HTMLTAG_IMBEDTEXT,				/* individual words after whitespace applied */
@@ -221,7 +222,11 @@ UNITS_POINTS,
 UNITS_EM,
 UNITS_PERCENT,
 UNITS_AUTO,
-UNITS_UNDEFINED
+UNITS_MM,
+UNITS_IN,
+UNITS_PC,
+UNITS_EX,
+UNITS_UNDEFINED		/* :4 need to update bits in struct below when adding */
 };
 
 /*! @internal @class kGUIUnits
@@ -246,7 +251,7 @@ public:
 	void Reset(void);
 	void Zero(void) {m_units=UNITS_PIXELS;m_vint=true;m_value.i=0;}
 private:
-	unsigned int m_units:3;
+	unsigned int m_units:4;
 	bool m_vint:1;
 	union{
 		double d;
@@ -495,7 +500,7 @@ public:
 	void Submit(kGUIHTMLObj *button);
 	void CheckSimpleSubmit(void);
 	void Reset(void);
-	void Encode(kGUIString *in,kGUIString *out);
+	static void Encode(kGUIString *in,kGUIString *out);
 	unsigned int GetNumChildren(void) {return m_numchildren;}
 	kGUIHTMLObj *GetChild(unsigned int index) {return m_children.GetEntry(index);}
 private:
@@ -513,24 +518,41 @@ class kGUIHTMLTableInfo;
 
 /*! HTML color, contains RGB color or transparent
     @ingroup kGUIHTMLObjects */
-class kGUIHTMLColor
+
+enum
+{
+COLORTYPE_UNDEFINED,
+COLORTYPE_TRANSPARENT,
+COLORTYPE_INVERSE,
+COLORTYPE_SOLID};
+
+class kGUIHTMLColor	
 {
 public:
 	kGUIHTMLColor() {Reset();}
-	void Reset(void) {m_undefined=true;m_transparent=false;m_color=DrawColor(0,0,0);}
-	void Set(kGUIHTMLColor *c) {m_transparent=c->m_transparent;m_undefined=c->m_undefined;m_color=c->m_color;}
-	void Set(kGUIColor c) {m_undefined=false;m_transparent=false;m_color=c;}
-	void SetUndefined(bool u) {m_undefined=u;}
-	bool GetUndefined(void) {return m_undefined;}
-	void SetTransparent(bool t) {m_transparent=t;}
-	bool GetTransparent(void) {return m_transparent;}
+	void Reset(void) {m_type=COLORTYPE_UNDEFINED;m_color=DrawColor(0,0,0);}
+	void Set(kGUIHTMLColor *c) {m_type=c->m_type;m_color=c->m_color;}
+	void Set(kGUIColor c) {m_type=COLORTYPE_SOLID;m_color=c;}
+	void SetUndefined(bool u) {m_type=COLORTYPE_UNDEFINED;}
+	bool GetUndefined(void) {return m_type==COLORTYPE_UNDEFINED;}
+	void SetTransparent(bool t) {m_type=COLORTYPE_TRANSPARENT;}
+	bool GetTransparent(void) {return m_type==COLORTYPE_TRANSPARENT;}
+	void SetInverse(bool t) {m_type=COLORTYPE_INVERSE;}
+	bool GetInverse(void) {return m_type==COLORTYPE_INVERSE;}
 	kGUIColor GetColor(void) {return m_color;}
-	void CopyFrom(kGUIHTMLColor *c) {m_transparent=c->m_transparent;m_undefined=c->m_undefined;m_color=c->m_color;}
+	double GetAlpha(void) {if(GetTransparent())return 0.0f;{int r,g,b,a;DrawColorToRGBA(m_color,r,g,b,a);return (a/255.0f);}}
+	void SetAlpha(double da) {int r,g,b,a;DrawColorToRGB(m_color,r,g,b);a=(int)(da*255.0f);m_color=DrawColorA(r,g,b,a);}
+	void CopyFrom(kGUIHTMLColor *c) {m_type=c->m_type;m_color=c->m_color;}
 private:
 	kGUIColor m_color;
-	bool m_transparent:1;
-	bool m_undefined:1;
+	unsigned int m_type:2;
 };
+
+#define CURRENTCOLOR_BORDER_LEFT 1
+#define CURRENTCOLOR_BORDER_RIGHT 2
+#define CURRENTCOLOR_BORDER_TOP 4
+#define CURRENTCOLOR_BORDER_BOTTOM 8
+#define CURRENTCOLOR_BACKGROUND 16
 
 #define BORDER_LEFT 1
 #define BORDER_RIGHT 2
@@ -576,6 +598,7 @@ public:
 	void SetBorder(unsigned int w);
 	void SetBorderWidth(unsigned int bb,kGUIString *s,class kGUIHTMLObj *parent);
 	void SetBorderColor(unsigned int bb,kGUIString *s);
+	void SetBorderColor(unsigned int bb,kGUIHTMLColor *c);
 	void SetBorderStyle(unsigned int bb,kGUIString *s);
 	void SetUndefinedBorderColors(kGUIColor c,bool iscell);
 
@@ -589,12 +612,21 @@ public:
 	int GetMarginAlign(void);
 	void SetPaddingWidth(unsigned int pp,kGUIString *s,kGUIHTMLObj *parent);
 
-	unsigned int GetBoxLeftMargin(void) {return m_leftmw;}
-	unsigned int GetBoxRightMargin(void) {return m_rightmw;}
-	unsigned int GetBoxTopMargin(void) {return m_topmw;}
-	unsigned int GetBoxBottomMargin(void) {return m_bottommw;}
-	void SetBoxLeftMargin(unsigned int lm) {m_leftmw=lm;}
-	void SetBoxRightMargin(unsigned int rm) {m_rightmw=rm;}
+	int GetBoxLeftMargin(void) {return m_leftmw;}
+	int GetBoxRightMargin(void) {return m_rightmw;}
+	int GetBoxTopMargin(void) {return m_topmw;}
+	int GetBoxBottomMargin(void) {return m_bottommw;}
+
+	/* return 0 if negative */
+	int GetBoxPosLeftMargin(void) {return m_leftmw>0?m_leftmw:0;}
+	int GetBoxPosRightMargin(void) {return m_rightmw>0?m_rightmw:0;}
+	int GetBoxPosTopMargin(void) {return m_topmw>0?m_topmw:0;}
+	int GetBoxPosBottomMargin(void) {return m_bottommw>0?m_bottommw:0;}
+
+	void SetBoxLeftMargin(int lm) {m_leftmw=lm;}
+	void SetBoxRightMargin(int rm) {m_rightmw=rm;}
+	void SetBoxTopMargin(int tm) {m_topmw=tm;}
+	void SetBoxBottomMargin(int bm) {m_bottommw=bm;}
 
 	unsigned int GetBoxWidth(void) {return m_bw;}
 	unsigned int GetBoxTopWidth(void);
@@ -610,10 +642,10 @@ private:
 	unsigned int m_leftbw;
 	unsigned int m_rightbw;
 	unsigned int m_bottombw;
-	unsigned int m_topmw;
-	unsigned int m_leftmw;
-	unsigned int m_rightmw;
-	unsigned int m_bottommw;
+	int m_topmw;
+	int m_leftmw;
+	int m_rightmw;
+	int m_bottommw;
 	unsigned int m_marginauto:4;
 	unsigned int m_toppw;
 	unsigned int m_leftpw;
@@ -689,7 +721,7 @@ public:
 	void ExpandTable(kGUIHTMLObj *table,int em);
 	int GetSpanWidth(int startcol,int endcol);
 	int GetSpanHeight(int startrow,int endrow);
-	void Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,unsigned int *num,unsigned int tagid);
+	void Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,unsigned int *num,unsigned int display);
 	unsigned int m_numrows;
 	unsigned int m_numcols;
 
@@ -869,6 +901,7 @@ public:
 
 	/* this splits attributes that take multiple values into their individual values */
 	void AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int content,unsigned int baseowner,unsigned int priority,unsigned int attid,kGUIString *value,bool addempty);
+	static void FixParms(kGUIString *s);
 
 	/* this call checks for duplicates and updates the value if the att already exists */
 	/* also nulls values are ignored */
@@ -906,8 +939,9 @@ class kGUIHTMLRule : public kGUIStyleObj
 public:
 	kGUIHTMLRule(kGUIHTMLPageObj *page);
 	~kGUIHTMLRule() {}
+	static bool ValidateName(kGUIString *string);
 	bool Parse(kGUIString *string);
-	bool ReadString(kGUIReadString *rs,kGUIString *s);
+	bool ReadString(kGUIReadString *rs,kGUIString *s,bool fixcodes=true);
 	unsigned int GetPseudoClass(unsigned int tokenid);
 	void GetString(kGUIString *string);
 	void CalcScore(void);
@@ -1044,6 +1078,7 @@ class kGUIHTMLPosInfo
 {
 public:
 	kGUIHTMLPosInfo () {m_ponum=0;m_polist.Init(256,32);}
+	int m_line;			/* line number */
 	int m_ponum;		/* number of position objects */
 	int m_curx;
 	int m_cury;
@@ -1059,6 +1094,15 @@ public:
 	Array<PO_DEF>m_polist;
 
 };
+
+/* temp class used during style pass */
+class kGUIStyleInfo
+{
+public:
+	unsigned int m_cc:5;	/* currentcolor copy bits */
+	unsigned int m_oldposition;
+};
+
 
 /*! @internal @class kGUIHTMLObj
 	@brief Internal class used by the kGUIHTMLPageObj class.
@@ -1081,6 +1125,10 @@ public:
 	~kGUIHTMLObj();
 	void Init(void);
 	void Purge(void);
+	void PreStyle(kGUIStyleInfo *si);
+	void PostStyle(kGUIStyleInfo *si);
+	void ApplyRelative(void);
+	void PrePosition(void);
 	kGUIHTMLPageObj *GetPage(void) {return m_page;}
 	void SetID(int id);
 	unsigned int GetID(void) {return m_id;}
@@ -1095,11 +1143,13 @@ public:
 	void InsertFrame(void);
 	bool DetectObject(void);
     bool UpdateHover(void);
+	bool UpdateInput(void) {return UpdateInputC(0);}
+	bool UpdateInputC(int num);
 	void ClipMinMaxWidth(int pw);
 	void ClipMinMaxHeight(int ph);
 	void CheckFixed(void);
 
-	void SetAttributes(kGUIStyleObj *slist,unsigned int owner);
+	void SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyleInfo *si);
 	unsigned int GetNumStyleChildren(void) {return m_numstylechildren;}
 	kGUIHTMLObj *GetStyleChild(unsigned int n) {return m_stylechildren.GetEntry(n);}
 	void AddStyleChild(kGUIHTMLObj *child) {child->SetParent(this);m_stylechildren.SetEntry(m_numstylechildren++,child);}
@@ -1128,7 +1178,6 @@ public:
 	void Draw(void);
 	void CalcChildZone(void);
 	void CalcChildZone(int yoff);
-	bool UpdateInput(void) {return UpdateInputC(0);}
 	kGUIHTMLObj *GetParentObj(void);
 
 	void SavePosition(void);
@@ -1168,10 +1217,12 @@ private:
 	kGUIHTMLBox *m_box;
 	kGUIHTMLPageObj *m_page;
 	kGUIHTMLObj *m_renderparent;
+	kGUIHTMLObj *m_oldrenderparent;
 	kGUIHTMLObj *m_styleparent;
 	kGUIString *m_string;
 	kGUIHTMLObj *m_beforeobj;
 	kGUIHTMLObj *m_afterobj;
+	kGUIScrollControl *m_scroll;	/* only valid for overflow=scroll containers */
 
 	unsigned int m_subid:8;
 	bool m_error:1;
@@ -1180,6 +1231,7 @@ private:
 	bool m_relw:1;
 	bool m_relh:1;
 	bool m_fixedpos:1;
+	bool m_abspos:1;
 	bool m_relpos:1;
 	bool m_skipbr:1;
 	unsigned int m_em:12;
@@ -1211,6 +1263,24 @@ private:
 		kGUIListboxObj *m_listboxobj;
 		kGUIObj *m_singleobj;
 	}m_obj;
+
+	kGUIHTMLAttrib *m_patttextindent;
+
+	kGUIHTMLAttrib *m_pattmarginleft;
+	kGUIHTMLAttrib *m_pattmarginright;
+	kGUIHTMLAttrib *m_pattmargintop;
+	kGUIHTMLAttrib *m_pattmarginbottom;
+
+	kGUIHTMLAttrib *m_pattborderleft;
+	kGUIHTMLAttrib *m_pattborderright;
+	kGUIHTMLAttrib *m_pattbordertop;
+	kGUIHTMLAttrib *m_pattborderbottom;
+
+	kGUIHTMLAttrib *m_pattpaddingleft;
+	kGUIHTMLAttrib *m_pattpaddingright;
+	kGUIHTMLAttrib *m_pattpaddingtop;
+	kGUIHTMLAttrib *m_pattpaddingbottom;
+
 	kGUIUnits m_width;
 	kGUIUnits m_height;
 	kGUIUnits m_left;
@@ -1222,6 +1292,7 @@ private:
 	kGUIUnits m_maxwidth;
 	kGUIUnits m_maxheight;
 	kGUIUnits m_valignoffset;
+	//kGUIUnits m_textindent;
 
 	bool m_insert:1;
 	bool m_hover:1;
@@ -1241,11 +1312,14 @@ private:
 	bool m_bgfixed:1;
 	bool m_objinit:1;
 	bool m_hashover:1;		/* there is a hover style for this tag, so refresh when hover status changes */
+	int m_outlinewidth:5;	/* max 31 wide, no need for more than that */
+	kGUIHTMLColor m_outlinecolor;
+	unsigned int m_outlinestyle:4;
 
 	kGUIUnits m_bgx,m_bgy;
 	kGUIOnlineImageObj m_bgimage;
 	kGUIHTMLColor m_bgcolor;
-
+	double m_opacity;		/* todo: change to 8 bits 0 to 255 to save space??? */
 	int m_minw;
 	int m_maxw;
 	int m_maxy;
@@ -1375,7 +1449,9 @@ HTMLATT_MAXHEIGHT,
 HTMLATT_MINWIDTH,
 HTMLATT_MAXWIDTH,
 HTMLATT_NOWRAP,
-HTMLATT_OUTLINE,
+HTMLATT_OUTLINE_WIDTH,
+HTMLATT_OUTLINE_STYLE,
+HTMLATT_OUTLINE_COLOR,
 HTMLATT_OVERFLOW_X,
 HTMLATT_OVERFLOW_Y,
 HTMLATT_PADDING_LEFT,
@@ -1414,6 +1490,7 @@ HTMLATT_TABLE_LAYOUT,
 HTMLATT_ZOOM,
 HTMLATT_CONTENT_BEFORE,
 HTMLATT_CONTENT_AFTER,
+HTMLATT_OPACITY,
 
 HTMLATT_UNKNOWN,
 
@@ -1431,7 +1508,8 @@ HTMLATTGROUP_BORDER_RIGHT,
 HTMLATTGROUP_BORDER_SPACING,
 HTMLATTGROUP_TEXT_SHADOW,
 HTMLATTGROUP_LIST_STYLE,
-HTMLATT_OVERFLOW,				/* converts to OVERFLOW_X and OVERFLOW_Y */
+HTMLATTGROUP_OVERFLOW,				/* converts to OVERFLOW_X and OVERFLOW_Y */
+HTMLATTGROUP_OUTLINE,			/* converts to OUTLINE_STYLE,OUTLINE_WIDTH,OUTLINE_COLOR */
 HTMLATT_HSPACE,					/* converts to MARGIN_LEFT and MARGIN_RIGHT  */
 HTMLATT_VSPACE,					/* converts to MARGIN_TOP and MARGIN_BOTTOM */
 HTMLATT_HREFLANG,
@@ -1479,6 +1557,7 @@ HTMLATT_ONCLICK,
 HTMLATT_ONERROR,
 HTMLATT_ONLOAD,
 HTMLATT_ONMOUSEDOWN,
+HTMLATT_ONMOUSEUP,
 HTMLATT_ONMOUSEOVER,
 HTMLATT_ONMOUSEOUT,
 HTMLATT_LANGUAGE,
@@ -1487,7 +1566,6 @@ HTMLATT_HTTP_EQUIV,
 HTMLATT_TYPE,
 HTMLATT_NAME,
 HTMLATT_DATA,
-HTMLATT_OPACITY,
 HTMLATT_RULES,
 HTMLATT_ACCESSKEY,
 HTMLATT_TABINDEX,
@@ -1725,7 +1803,7 @@ private:
 class kGUIHTMLSettings
 {
 public:
-	kGUIHTMLSettings() {m_loadimages=true;m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i)m_cssblock[i]=false;}
+	kGUIHTMLSettings() {m_loadimages=true;m_usecss=true;m_useusercss=true;m_drawboxes=false;m_drawareas=false;m_areacolor=DrawColor(255,255,255);for(unsigned int i=0;i<HTMLATT_UNKNOWN;++i){m_cssblock[i]=false;m_csstrace[i]=false;}}
 	void Load(kGUIXMLItem *group);
 	void Save(kGUIXMLItem *group);
 
@@ -1749,6 +1827,9 @@ public:
 
 	inline bool GetCSSBlock(unsigned int n) {return m_cssblock[n];}
 	inline void SetCSSBlock(unsigned int n,bool b) {m_cssblock[n]=b;}
+
+	inline bool GetCSSTrace(unsigned int n) {return m_csstrace[n];}
+	inline void SetCSSTrace(unsigned int n,bool t) {m_csstrace[n]=t;}
 private:
 	bool m_drawboxes:1;
 	bool m_drawareas:1;
@@ -1758,6 +1839,7 @@ private:
 	kGUIString m_usercss;
 	kGUIColor m_areacolor;
 	bool m_cssblock[HTMLATT_UNKNOWN];
+	bool m_csstrace[HTMLATT_UNKNOWN];
 };
 
 /* this is used to keep a listing of named links within a page, so when a "local" link */
@@ -1796,6 +1878,7 @@ public:
 	/* these are needed for a drawable object */
 	void Draw(void);
 	bool UpdateInput(void);
+	bool UpdateInputC(int num);
 	void CalcChildZone(void);
 	void UpdateScrollBars(void);
 	void Preview(void);
@@ -1907,6 +1990,7 @@ public:
 
 	void FixCodes(kGUIString *s);
 	bool DigOnly(kGUIString *s);
+	bool DigOnlyP(kGUIString *s);
 	bool DigOnlyPP(kGUIString *s,bool *percent);
 	bool GetColor(kGUIString *col,kGUIHTMLColor *c);
 
@@ -2004,6 +2088,7 @@ public:
 	Hash *GetUnitsCache(void) {return &m_unitscache;}
 
 	static TAGLIST_DEF m_taglist[];
+	static TAGLIST_DEF m_roottag;
 	static TAGLIST_DEF m_unknowntag;
 	static TAGLIST_DEF m_singleobjtag;
 	static TAGLIST_DEF m_texttag;
@@ -2064,7 +2149,10 @@ private:
 	unsigned int m_applied[HTMLATT_UNKNOWN];
 	unsigned int m_trueapplied[HTMLATT_UNKNOWN];
 	bool m_poppossrules;
+
+	/* these two arrays are for debugging */
 	bool m_blocked[HTMLATT_UNKNOWN];
+	bool m_traceatt[HTMLATT_UNKNOWN];
 
 	kGUIHTMLSettings *m_settings;
 	kGUIHTMLItemCache *m_itemcache;
@@ -2205,7 +2293,7 @@ private:
 	unsigned int m_whitespace;
 	unsigned int m_texttransform;
 	unsigned int m_textdecoration;
-	unsigned int m_textalign;
+//	unsigned int m_textalign;
 	unsigned int m_dir;
 	kGUIUnits m_lineheightratio;
 	int m_pagelineheightpix;
@@ -2222,14 +2310,13 @@ private:
 	int m_fontid;
 	kGUIHTMLColor m_fontcolor;
 	kGUIColor m_textdecorationcolor;
-	kGUIUnits m_textindent;
+	//kGUIUnits m_textindent;
 	kGUIUnits m_letterspacing;
 	kGUIUnits m_wordspacing;
 	kGUIColor m_pagebgcolor;
 
 	unsigned int m_posindex;
 	ClassArray<kGUIHTMLPosInfo>m_posinfo;
-
 	double m_fontscale;
 	
 	double m_fontsize;
