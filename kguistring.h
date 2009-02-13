@@ -116,8 +116,10 @@ public:
 	kGUIString *GetWord(unsigned int index);
 	void SetTrim(bool trim) {m_trim=trim;}
 	void SetIgnoreEmpty(bool ignoreempty) {m_ignoreempty=ignoreempty;}
+	void SetRemoveQuotes(bool removequotes) {m_removequotes=removequotes;}
 private:
 	bool m_trim:1;
+	bool m_removequotes:1;
 	bool m_ignoreempty:1;
 	unsigned int m_numwords;
 	ClassArray<kGUIString>m_list;

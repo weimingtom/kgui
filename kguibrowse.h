@@ -285,6 +285,7 @@ public:
 	void SettingsChanged(void) {m_settingschangedcallback.Call();}
 private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,UrlChanged,kGUIEvent);
+	CALLBACKGLUEPTR(kGUIBrowseObj,SearchChanged,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,Refresh,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,RefreshAll,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,GoForward,kGUIEvent);
@@ -307,6 +308,7 @@ private:
 	void DoMainMenu(kGUIEvent *event);
 	void DoGotoMenu(kGUIEvent *event);
 	void UrlChanged(kGUIEvent *event);
+	void SearchChanged(kGUIEvent *event);
 	void TabChanged(kGUIEvent *event);
 	void PageLoaded(DownloadPageRecord *dle,int result);
 	void GoForward(kGUIEvent *event);
@@ -356,6 +358,9 @@ private:
 
 	kGUITextObj m_urlcaption;
 	kGUIOffsetInputBoxObj m_url;
+
+	kGUITextObj m_searchcaption;
+	kGUIOffsetInputBoxObj m_search;
 
 	kGUIImageObj m_busyimage;
 
