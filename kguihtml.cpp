@@ -235,6 +235,13 @@ CSSSELECTOR_ADJACENT,
 CSSSELECTOR_UNIVERSAL,
 CSSSELECTOR_FIRSTCHILD,
 CSSSELECTOR_LASTCHILD,
+CSSSELECTOR_NTHCHILD,
+CSSSELECTOR_NTHLASTCHILD,
+CSSSELECTOR_NTHOFTYPE,
+CSSSELECTOR_NTHLASTOFTYPE,
+CSSSELECTOR_FIRSTOFTYPE,
+CSSSELECTOR_ONLYOFTYPE,
+CSSSELECTOR_LASTOFTYPE,
 CSSSELECTOR_ONLYCHILD,
 CSSSELECTOR_FIRSTLINE,
 CSSSELECTOR_FIRSTLETTER,
@@ -721,8 +728,15 @@ HTMLCONST_ACTIVE,
 HTMLCONST_HOVER,
 HTMLCONST_FOCUS,
 HTMLCONST_LASTCHILD,
+HTMLCONST_NTHCHILD,
+HTMLCONST_NTHLASTCHILD,
+HTMLCONST_NTHOFTYPE,
+HTMLCONST_NTHLASTOFTYPE,
 HTMLCONST_FIRSTCHILD,
 HTMLCONST_ONLYCHILD,
+HTMLCONST_FIRSTOFTYPE,
+HTMLCONST_LASTOFTYPE,
+HTMLCONST_ONLYOFTYPE,
 HTMLCONST_EMPTY,
 HTMLCONST_BEFORE,
 HTMLCONST_AFTER,
@@ -836,6 +850,9 @@ HTMLCONST_OPEN_QUOTE,
 HTMLCONST_CLOSE_QUOTE,
 
 HTMLCONST_CURRENTCOLOR,
+
+HTMLCONST_ODD,
+HTMLCONST_EVEN,
 
 HTMLCONST_CLIP,
 HTMLCONST_ELLIPSIS,
@@ -1204,7 +1221,14 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"focus",			HTMLCONST_FOCUS		},
 	{"first-child",		HTMLCONST_FIRSTCHILD },
 	{"last-child",		HTMLCONST_LASTCHILD	},
+	{"nth-child",		HTMLCONST_NTHCHILD	},
+	{"nth-last-child",	HTMLCONST_NTHLASTCHILD	},
+	{"nth-of-type",		HTMLCONST_NTHOFTYPE	},
+	{"nth-last-of-type",HTMLCONST_NTHLASTOFTYPE	},
 	{"only-child",		HTMLCONST_ONLYCHILD	},
+	{"first-of-type",	HTMLCONST_FIRSTOFTYPE	},
+	{"last-of-type",	HTMLCONST_LASTOFTYPE	},
+	{"only-of-type",	HTMLCONST_ONLYOFTYPE	},
 	{"empty",			HTMLCONST_EMPTY		},
 	{"not",				HTMLCONST_NOT	},
 	{"before",			HTMLCONST_BEFORE	},
@@ -1322,6 +1346,9 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"close-quote",		HTMLCONST_CLOSE_QUOTE	},
 
 	{"currentcolor",	HTMLCONST_CURRENTCOLOR	},
+
+	{"odd",				HTMLCONST_ODD	},
+	{"even",			HTMLCONST_EVEN	},
 
 	{"clip",			HTMLCONST_CLIP	},
 	{"ellipsis",		HTMLCONST_ELLIPSIS	},
@@ -2989,6 +3016,7 @@ bool kGUIHTMLRule::Parse(kGUIString *string)
 	m_entries.Init(4,4);
 	m_sorder.Init(4,4);		/* order for regenerating the string */
 	m_numentries=0;
+	m_addtcistart=0;
 	s.m_not=false;
 
 	do
@@ -3073,6 +3101,7 @@ restart:;
 				s.m_compare=0; //not used, set so compiler stops complaining
 				hadwhite=false;	/* ignore white space before and after */
 				ignorewhite=true;
+				m_addtcistart=m_numentries+1;
 			break;
 			case '+':	/* Adjacent Sibling */
 				s.m_selector=CSSSELECTOR_ADJACENT;
@@ -3080,9 +3109,9 @@ restart:;
 				s.m_compare=0; //not used, set so compiler stops complaining
 				hadwhite=false;	/* ignore white space before and after */
 				ignorewhite=true;
+				m_addtcistart=m_numentries+1;
 			break;
 			case ':':
-				/* there can be more than one leading colon */
 				tag.Delete(0,1);
 
 				m_page->FixCodes(&tag);
@@ -3093,6 +3122,18 @@ restart:;
 					ReadString(&rs,&tag);
 					if(strcmp(tag.GetString(),"("))
 						return(false);	/* not a valid pseudo class tag */
+
+					/* if white space was found before the item then insert a descendant selector */
+					if(hadwhite)
+					{
+						s2.m_selector=CSSSELECTOR_DESCENDANT;
+						s2.m_compare=0;	//not used, set so compiler stops complaining
+						s2.m_value=0;	//not used, set so compiler stops complaining
+						s2.m_not=false;	//not used, set so compiler stops complaining
+						m_entries.SetEntry(m_numentries,s2);
+						m_sorder.SetEntry(m_numentries,m_numentries);
+						m_numentries++;
+					}
 
 					/* negate the next result */
 					s.m_not=true;
@@ -3136,9 +3177,94 @@ restart:;
 						return(false);
 					}
 				break;
+				case CSSSELECTOR_NTHCHILD:
+				case CSSSELECTOR_NTHLASTCHILD:
+				case CSSSELECTOR_NTHOFTYPE:
+				case CSSSELECTOR_NTHLASTOFTYPE:
+				{
+					kGUIString nn;
+
+					ReadString(&rs,&tag);	//(
+					if(strcmp(tag.GetString(),"("))
+					{
+						/* unknown comparator */
+						m_page->m_errors.ASprintf("expected '(' n-th child found in rule, but found='/%s'\n",tag.GetString());
+						return(false);
+					}
+					ReadString(&rs,&nn);
+					do
+					{
+						ReadString(&rs,&tag);	//)
+						if(!strcmp(tag.GetString(),")"))
+							break;
+						nn.Append(&tag);
+					}while(1);
+					
+					switch(m_page->GetConstID(nn.GetString()))
+					{
+					case HTMLCONST_ODD:
+						s.m_value=2;
+						s.m_compare=1;
+					break;
+					case HTMLCONST_EVEN:
+						s.m_value=2;
+						s.m_compare=2;
+					break;
+					default:
+					{
+						unsigned int index=0;
+						bool neg=false;
+
+						if(nn.GetChar(0)=='-')
+						{
+							neg=true;
+							++index;
+						}
+						if(nn.GetChar(index)=='n')
+						{
+							s.m_value=1;
+							++index;
+						}
+						else
+						{
+							s.m_value=0;
+							while(nn.GetChar(index)>='0' && nn.GetChar(index)<='9')
+							{
+								s.m_value=s.m_value*10+(nn.GetChar(index)-'0');
+								if(++index==nn.GetLen())
+									break;
+							}
+							if(nn.GetChar(index)=='n')
+								++index;
+						}
+						if(neg)
+							s.m_value=-s.m_value;
+						s.m_compare=0;
+						if(index<nn.GetLen())
+						{
+							neg=false;
+							if(nn.GetChar(index)=='-')
+							{
+								neg=false;
+								++index;
+							}
+							else if(nn.GetChar(index)=='+')
+								++index;
+
+							while(nn.GetChar(index)>='0' && nn.GetChar(index)<='9')
+							{
+								s.m_compare=s.m_compare*10+(nn.GetChar(index)-'0');
+								if(++index==nn.GetLen())
+									break;
+							}
+							if(neg)
+								s.m_compare=-s.m_compare;
+						}
+					}
+					break;
+					}
 				}
-				/* try moving selector up in the list to be processed earlier */
-				trybefore=true;
+			}
 			break;
 			case '[':
 				/* read name of comparator */
@@ -3386,37 +3512,46 @@ void kGUIHTMLRule::CalcScore(void)
 			/* zero! */
 		break;
 		case CSSSELECTOR_TAG:
-			if(tagrefs[sp->m_value]==false)
+			if(i>=m_addtcistart && sp->m_not==false)
 			{
-				++m_numrefs;
-				tagrefs[sp->m_value]=true;
-				
-				/* add me to the list of rules that use this TAG */
-				m_page->AttachRuleToTag(sp->m_value,this);
+				if(tagrefs[sp->m_value]==false)
+				{
+					++m_numrefs;
+					tagrefs[sp->m_value]=true;
+					
+					/* add me to the list of rules that use this TAG */
+					m_page->AttachRuleToTag(sp->m_value,this);
+				}
 			}
 			++m_numtags;
 		break;
 		case CSSSELECTOR_ID:
-			if(idrefs.GetEntry(sp->m_value)==false)
+			if(i>=m_addtcistart && sp->m_not==false)
 			{
-				++m_numrefs;
-				idrefs.SetEntry(sp->m_value,true);
-				
-				/* add me to the list of rules that use this id */
-				m_page->AttachRuleToID(sp->m_value,this);
-				++m_numids;
+				if(idrefs.GetEntry(sp->m_value)==false)
+				{
+					++m_numrefs;
+					idrefs.SetEntry(sp->m_value,true);
+					
+					/* add me to the list of rules that use this id */
+					m_page->AttachRuleToID(sp->m_value,this);
+				}
 			}
+			++m_numids;
 		break;
 		case CSSSELECTOR_CLASS:
-			if(classrefs.GetEntry(sp->m_value)==false)
+			if(i>=m_addtcistart && sp->m_not==false)
 			{
-				++m_numrefs;
-				classrefs.SetEntry(sp->m_value,true);
-				
-				/* add me to the list of rules that use this class */
-				m_page->AttachRuleToClass(sp->m_value,this);
-				++m_numclasses;
+				if(classrefs.GetEntry(sp->m_value)==false)
+				{
+					++m_numrefs;
+					classrefs.SetEntry(sp->m_value,true);
+					
+					/* add me to the list of rules that use this class */
+					m_page->AttachRuleToClass(sp->m_value,this);
+				}
 			}
+			++m_numclasses;
 		break;
 		case CSSSELECTOR_ATTEXISTS:
 		case CSSSELECTOR_ATTVALUE:
@@ -3432,7 +3567,14 @@ void kGUIHTMLRule::CalcScore(void)
 		case CSSSELECTOR_LANG:
 		case CSSSELECTOR_FIRSTCHILD:
 		case CSSSELECTOR_LASTCHILD:
+		case CSSSELECTOR_NTHCHILD:
+		case CSSSELECTOR_NTHLASTCHILD:
+		case CSSSELECTOR_NTHOFTYPE:
+		case CSSSELECTOR_NTHLASTOFTYPE:
 		case CSSSELECTOR_ONLYCHILD:
+		case CSSSELECTOR_FIRSTOFTYPE:
+		case CSSSELECTOR_LASTOFTYPE:
+		case CSSSELECTOR_ONLYOFTYPE:
 		case CSSSELECTOR_EMPTY:
 		case CSSSELECTOR_LINK:
 		case CSSSELECTOR_VISITED:
@@ -3446,10 +3588,7 @@ void kGUIHTMLRule::CalcScore(void)
 			++m_numclasses;
 		break;
 		case CSSSELECTOR_TARGET:
-			++m_numclasses;
-		break;
 		case CSSSELECTOR_ROOT:
-			m_simple=false;
 			++m_numclasses;
 		break;
 		default:
@@ -3580,8 +3719,29 @@ unsigned int kGUIHTMLRule::GetPseudoClass(unsigned int tokenid)
 	case HTMLCONST_LASTCHILD:
 		return(CSSSELECTOR_LASTCHILD);
 	break;
+	case HTMLCONST_NTHCHILD:
+		return(CSSSELECTOR_NTHCHILD);
+	break;
+	case HTMLCONST_NTHLASTCHILD:
+		return(CSSSELECTOR_NTHLASTCHILD);
+	break;
+	case HTMLCONST_NTHOFTYPE:
+		return(CSSSELECTOR_NTHOFTYPE);
+	break;
+	case HTMLCONST_NTHLASTOFTYPE:
+		return(CSSSELECTOR_NTHLASTOFTYPE);
+	break;
 	case HTMLCONST_ONLYCHILD:
 		return(CSSSELECTOR_ONLYCHILD);
+	break;
+	case HTMLCONST_FIRSTOFTYPE:
+		return(CSSSELECTOR_FIRSTOFTYPE);
+	break;
+	case HTMLCONST_LASTOFTYPE:
+		return(CSSSELECTOR_LASTOFTYPE);
+	break;
+	case HTMLCONST_ONLYOFTYPE:
+		return(CSSSELECTOR_ONLYOFTYPE);
 	break;
 	case HTMLCONST_EMPTY:
 		return(CSSSELECTOR_EMPTY);
@@ -3722,8 +3882,77 @@ void kGUIHTMLRule::GetString(kGUIString *s)
 		case CSSSELECTOR_LASTCHILD:
 			s->Append(":last-child");
 		break;
+		case CSSSELECTOR_NTHCHILD:
+			if(sp->m_value==2 && sp->m_compare==1)
+				s->Append(":nth-child(odd)");
+			else if(sp->m_value==2 && sp->m_compare==2)
+				s->Append(":nth-child(even)");
+			else
+			{
+				if(!sp->m_compare)
+					s->ASprintf(":nth-child(%dn)",sp->m_value);
+				else if(sp->m_compare<0)
+					s->ASprintf(":nth-child(%dn%d)",sp->m_value,sp->m_compare);
+				else
+					s->ASprintf(":nth-child(%dn+%d)",sp->m_value,sp->m_compare);
+			}
+		break;
+		case CSSSELECTOR_NTHLASTCHILD:
+			if(sp->m_value==2 && sp->m_compare==1)
+				s->Append(":nth-last-child(odd)");
+			else if(sp->m_value==2 && sp->m_compare==2)
+				s->Append(":nth-last-child(even)");
+			else
+			{
+				if(!sp->m_compare)
+					s->ASprintf(":nth-last-child(%dn)",sp->m_value);
+				else if(sp->m_compare<0)
+					s->ASprintf(":nth-last-child(%dn%d)",sp->m_value,sp->m_compare);
+				else
+					s->ASprintf(":nth-last-child(%dn+%d)",sp->m_value,sp->m_compare);
+			}
+		break;
+		case CSSSELECTOR_NTHOFTYPE:
+			if(sp->m_value==2 && sp->m_compare==1)
+				s->Append(":nth-of-type(odd)");
+			else if(sp->m_value==2 && sp->m_compare==2)
+				s->Append(":nth-of-type(even)");
+			else
+			{
+				if(!sp->m_compare)
+					s->ASprintf(":nth-of-type(%dn)",sp->m_value);
+				else if(sp->m_compare<0)
+					s->ASprintf(":nth-of-type(%dn%d)",sp->m_value,sp->m_compare);
+				else
+					s->ASprintf(":nth-of-type(%dn+%d)",sp->m_value,sp->m_compare);
+			}
+		break;
+		case CSSSELECTOR_NTHLASTOFTYPE:
+			if(sp->m_value==2 && sp->m_compare==1)
+				s->Append(":nth-last-of-type(odd)");
+			else if(sp->m_value==2 && sp->m_compare==2)
+				s->Append(":nth-last-of-type(even)");
+			else
+			{
+				if(!sp->m_compare)
+					s->ASprintf(":nth-last-of-type(%dn)",sp->m_value);
+				else if(sp->m_compare<0)
+					s->ASprintf(":nth-last-of-type(%dn%d)",sp->m_value,sp->m_compare);
+				else
+					s->ASprintf(":nth-last-of-type(%dn+%d)",sp->m_value,sp->m_compare);
+			}
+		break;
 		case CSSSELECTOR_ONLYCHILD:
 			s->Append(":only-child");
+		break;
+		case CSSSELECTOR_FIRSTOFTYPE:
+			s->Append(":first-of-type");
+		break;
+		case CSSSELECTOR_LASTOFTYPE:
+			s->Append(":last-of-type");
+		break;
+		case CSSSELECTOR_ONLYOFTYPE:
+			s->Append(":only-of-type");
 		break;
 		case CSSSELECTOR_FIRSTLINE:
 			s->Append(":first-line");
@@ -3784,14 +4013,23 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 		{
 			kGUIHTMLObj *hop=ho->m_styleparent;
 
-			/* loop through the parents until we find one that matches */
-			while(hop)
+			/* cannot go deeper than HTML */
+			if(ho->m_id==HTMLTAG_HTML)
+				res=false;
+			else
 			{
-				if(Evaluate(sindex,hop)==true)
-					return(true);
-				hop=hop->m_styleparent;
+				/* loop through the parents until we find one that matches */
+				while(hop)
+				{
+					if(Evaluate(sindex,hop)==true)
+					{
+						/* ?? do we need to check for NOT??? */
+						return(true);
+					}
+					hop=hop->m_styleparent;
+				}
+				res=false;	/* no parents match! */
 			}
-			res=false;	/* no parents match! */
 		}
 		break;
 		case CSSSELECTOR_CHILD:
@@ -3885,7 +4123,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 
 			m_hitcomplex=true;
 			/* don't count inserted content ( text is inserted too ) */
-			if(!hop)
+			if(ho->m_id==HTMLTAG_HTML || !hop)
 				res=false;
 			else
 			{
@@ -3909,7 +4147,9 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			kGUIHTMLObj *sib;
 
 			m_hitcomplex=true;
-			if(hop)
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
 			{
 				index=hop->m_numstylechildren-1;
 				while(index)
@@ -3933,6 +4173,224 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 				res=false;
 		}
 		break;
+		case CSSSELECTOR_NTHCHILD:
+		{
+			unsigned int index;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=1;
+				for(index=0;index<hop->m_numstylechildren;++index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()!=HTMLTAG_IMBEDTEXTGROUP)
+					{
+						if(sib==ho)
+						{
+							if(!sel->m_compare)
+							{
+								if(sel->m_value!=rem)
+									res=false;
+							}
+							else if(sel->m_value<0)
+							{
+								if(rem>sel->m_compare)
+									res=false;
+							}
+							else
+							{
+								if(sel->m_compare!=rem)
+									res=false;
+							}
+							break;
+						}
+						else
+						{
+							if(sel->m_value<0 || !sel->m_compare)
+								++rem;
+							else
+							{
+								if(++rem>sel->m_value)
+									rem=1;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
+		case CSSSELECTOR_NTHLASTCHILD:
+		{
+			unsigned int index;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=1;
+				index=hop->m_numstylechildren;
+				while(index)
+				{
+					--index;
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()!=HTMLTAG_IMBEDTEXTGROUP)
+					{
+						if(sib==ho)
+						{
+							if(!sel->m_compare)
+							{
+								if(sel->m_value!=rem)
+									res=false;
+							}
+							else if(sel->m_value<0)
+							{
+								if(rem>sel->m_compare)
+									res=false;
+							}
+							else
+							{
+								if(sel->m_compare!=rem)
+									res=false;
+							}
+							break;
+						}
+						else
+						{
+							if(sel->m_value<0 || !sel->m_compare)
+								++rem;
+							else
+							{
+								if(++rem>sel->m_value)
+									rem=1;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
+		case CSSSELECTOR_NTHOFTYPE:
+		{
+			unsigned int index;
+			unsigned int type=ho->m_id;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=1;
+				for(index=0;index<hop->m_numstylechildren;++index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==type)
+					{
+						if(sib==ho)
+						{
+							if(!sel->m_compare)
+							{
+								if(sel->m_value!=rem)
+									res=false;
+							}
+							else if(sel->m_value<0)
+							{
+								if(rem>sel->m_compare)
+									res=false;
+							}
+							else
+							{
+								if(sel->m_compare!=rem)
+									res=false;
+							}
+							break;
+						}
+						else
+						{
+							if(sel->m_value<0 || !sel->m_compare)
+								++rem;
+							else
+							{
+								if(++rem>sel->m_value)
+									rem=1;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
+		case CSSSELECTOR_NTHLASTOFTYPE:
+		{
+			unsigned int index;
+			unsigned int type=ho->m_id;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=1;
+				index=hop->m_numstylechildren;
+				while(index)
+				{
+					--index;
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==type)
+					{
+						if(sib==ho)
+						{
+							if(!sel->m_compare)
+							{
+								if(sel->m_value!=rem)
+									res=false;
+							}
+							else if(sel->m_value<0)
+							{
+								if(rem>sel->m_compare)
+									res=false;
+							}
+							else
+							{
+								if(sel->m_compare!=rem)
+									res=false;
+							}
+							break;
+						}
+						else
+						{
+							if(sel->m_value<0 || !sel->m_compare)
+								++rem;
+							else
+							{
+								if(++rem>sel->m_value)
+									rem=1;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
 		case CSSSELECTOR_ONLYCHILD:
 		{
 			unsigned int index;
@@ -3943,7 +4401,9 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			kGUIHTMLObj *sib;
 
 			m_hitcomplex=true;
-			if(hop)
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
 			{
 				nc=hop->m_numstylechildren;
 				for(index=0;index<nc;++index)
@@ -3957,9 +4417,99 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 							found=false;
 					}
 				}
+				if(!found)
+					res=false;
 			}
-			if(!found)
+		}
+		break;
+		case CSSSELECTOR_FIRSTOFTYPE:
+		{
+			unsigned int index;
+			unsigned int type=ho->m_id;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
 				res=false;
+			else
+			{
+				rem=1;
+				for(index=0;index<hop->m_numstylechildren;++index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==type)
+					{
+						if(sib==ho)
+						{
+							res=(rem==1);
+							break;
+						}
+						else
+							++rem;
+					}
+				}
+			}
+		}
+		break;
+		case CSSSELECTOR_LASTOFTYPE:
+		{
+			unsigned int index;
+			unsigned int type=ho->m_id;
+			int rem;
+
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=1;
+				index=hop->m_numstylechildren;
+				while(index)
+				{
+					--index;
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==type)
+					{
+						if(sib==ho)
+						{
+							res=(rem==1);
+							break;
+						}
+						else
+							++rem;
+					}
+				}
+			}
+		}
+		break;
+		case CSSSELECTOR_ONLYOFTYPE:
+		{
+			unsigned int index;
+			unsigned int type=ho->m_id;
+			int rem;
+			kGUIHTMLObj *hop=ho->m_styleparent;
+			kGUIHTMLObj *sib;
+
+			m_hitcomplex=true;
+			if(ho->m_id==HTMLTAG_HTML || !hop)
+				res=false;
+			else
+			{
+				rem=0;
+				for(index=0;index<hop->m_numstylechildren;++index)
+				{
+					sib=hop->m_stylechildren.GetEntry(index);
+					if(sib->GetID()==type)
+						++rem;
+				}
+				res=(rem==1);
+			}
 		}
 		break;
 		case CSSSELECTOR_CLASS:
@@ -4211,10 +4761,14 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			kGUIHTMLAttrib *att;
 
 			m_hitcomplex=true;
-			att=ho->FindAttrib(HTMLATT_DISABLED);
-			if(att)
+			if(ho->m_id!=HTMLTAG_INPUT && ho->m_id!=HTMLTAG_BUTTON)
+				res=false;	/* only valid for input type objects */
+			else
 			{
-				if(att->GetVID()==HTMLCONST_DISABLED)
+				att=ho->FindAttrib(HTMLATT_DISABLED);
+				if(!att)
+					res=true;
+				else if(att->GetVID()==HTMLCONST_DISABLED)
 					res=false;
 			}
 		}
@@ -4224,11 +4778,16 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			kGUIHTMLAttrib *att;
 
 			m_hitcomplex=true;
-			att=ho->FindAttrib(HTMLATT_DISABLED);
-			if(!att)
-				res=false;
-			else if(att->GetVID()!=HTMLCONST_DISABLED)
-				res=false;
+			if(ho->m_id!=HTMLTAG_INPUT && ho->m_id!=HTMLTAG_BUTTON)
+				res=false;	/* only valid for input type objects */
+			else
+			{
+				att=ho->FindAttrib(HTMLATT_DISABLED);
+				if(!att)
+					res=true;
+				else if(att->GetVID()!=HTMLCONST_DISABLED)
+					res=false;
+			}
 		}
 		break;
 		case CSSSELECTOR_CHECKED:
@@ -5401,6 +5960,8 @@ int kGUIHTMLPageObj::PositionPrint(int width)
 	m_mode=MODE_POSITION;
 	m_posindex=0;
 	m_rootobject->Position();
+	m_maxpagew=0;
+	m_maxpageh=0;
 	m_rootobject->Contain();
 	return(m_rootobject->GetZoneH());
 }
@@ -5432,6 +5993,8 @@ void kGUIHTMLPageObj::Position(void)
 //	kGUI::Trace("Pass 1 Root size=%d\n",GetZoneW());
 	m_posindex=0;
 	m_rootobject->Position();
+	m_maxpagew=0;
+	m_maxpageh=0;
 	m_rootobject->Contain(true);
 
 	/* if width is less than pagewidth then expand root to pagewidth */
@@ -5455,6 +6018,8 @@ void kGUIHTMLPageObj::Position(void)
 	m_mode=MODE_POSITION;
 	m_posindex=0;
 	m_rootobject->Position();
+	m_maxpagew=0;
+	m_maxpageh=0;
 	m_rootobject->Contain();
 
 	if(m_rootobject->GetOutsideH()>height)
@@ -5477,6 +6042,8 @@ void kGUIHTMLPageObj::Position(void)
 			m_mode=MODE_POSITION;
 			m_posindex=0;
 			m_rootobject->Position();
+			m_maxpagew=0;
+			m_maxpageh=0;
 			m_rootobject->Contain();
 		}
 	}
@@ -6320,7 +6887,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	m_refreshurl.Clear();
 	m_refreshdelay=0;
 
-	PreProcess(&tci,m_rootobject);
+	PreProcess(&tci,m_rootobject,false);
 
 	/* save parse errors */
 	m_parseerrors.SetString(&m_errors);
@@ -6449,7 +7016,7 @@ void kGUIHTMLPageObj::ExpandIDList(unsigned int num)
 /* it is also called each time a frame has been loaded and is just run on that */
 /* newly loaded frame */
 
-void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
+void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 {
 	unsigned int i;
 	unsigned int j;
@@ -6648,22 +7215,25 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj)
 			switch(att->GetVID())
 			{
 			case HTMLCONST_REFRESH:
-				att=obj->FindAttrib(HTMLATT_CONTENT);
-				if(att)
+				if(inframe==false)
 				{
-					char *u;
-					kGUIString url;
-
-					u=strstri(att->GetValue()->GetString(),"url=");
-					if(u)
+					att=obj->FindAttrib(HTMLATT_CONTENT);
+					if(att)
 					{
-						url.SetString(u+4);
-						url.RemoveQuotes();
-						MakeURL(&m_url,&url,&m_refreshurl);
+						char *u;
+						kGUIString url;
 
-						/* todo, add an option to disable this or ASK permission */
-						m_refreshdelay=(int)max(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
-						
+						u=strstri(att->GetValue()->GetString(),"url=");
+						if(u)
+						{
+							url.SetString(u+4);
+							url.RemoveQuotes();
+							MakeURL(&m_url,&url,&m_refreshurl);
+
+							/* todo, add an option to disable this or ASK permission */
+							m_refreshdelay=(int)max(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
+							
+						}
 					}
 				}
 			break;
@@ -7211,7 +7781,7 @@ settextboxsize:;
 	}
 
 	for(i=0;i<obj->m_numstylechildren;++i)
-		PreProcess(tci,obj->m_stylechildren.GetEntry(i));
+		PreProcess(tci,obj->m_stylechildren.GetEntry(i),inframe);
 
 	tci->Clip(oldtcilen);
 }
@@ -8612,9 +9182,8 @@ void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 			m_patttextindent=m_styleparent->m_patttextindent;
 
 		/* inherit from parent if undefined or inline or anonymous */
-		if(m_textalign==ALIGN_UNDEFINED || m_display==DISPLAY_INLINE || m_display==DISPLAY_ANONYMOUS)
+		if(m_textalign==ALIGN_UNDEFINED)
 			m_textalign=m_styleparent->m_textalign;
-
 	}
 	else
 	{
@@ -8679,7 +9248,7 @@ void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 				m_page->m_fixedfgobject->AddObject(this);
 				m_renderparent=m_page->m_fixedfgobject;
 			}
-			}
+		}
 	}
 
 	//8.5.2
@@ -10219,7 +10788,7 @@ void kGUIHTMLObj::CheckFixed(void)
 	ow=GetOutsideW();	/* object width */
 	oh=GetOutsideH();	/* object height */
 
-	if(m_position!=POSITION_STATIC)
+	//if(m_position!=POSITION_STATIC)
 	{
 		int xoff=0,yoff=0;
 
@@ -10262,7 +10831,7 @@ void kGUIHTMLObj::CheckFixed(void)
 			yoff=m_top.CalcUnitValue(ph,m_em);
 		else
 		{
-			if(m_bottom.GetUnitType()!=UNITS_UNDEFINED)
+			if(m_bottom.GetUnitType()!=UNITS_UNDEFINED && m_bottom.GetUnitType()!=UNITS_AUTO)
 			{
 				yoff=ph-(oh+m_bottom.CalcUnitValue(ph,m_em));
 				p->m_childusesheight=true;
@@ -10324,6 +10893,14 @@ void kGUIHTMLObj::CheckFixed(void)
 			MoveZoneX(xoff);
 			MoveZoneY(yoff);
 			m_fixedpos=true;
+		break;
+		case POSITION_STATIC:
+			if(xoff || yoff)
+			{
+				MoveZoneX(xoff);
+				MoveZoneY(yoff);
+				m_relpos=true;
+			}
 		break;
 		case POSITION_RELATIVE:
 			/* position the box relative to the default position */
@@ -13075,37 +13652,6 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 	else
 		addme=false;
 
-	/* double check to make sure I am big enough to hold my children */
-#if 0
-	if(m_page->m_mode==MODE_POSITION)
-	{
-		int neww,newh;
-		/* debug, am I big enough to hold all my children? */
-		m_error=false;
-		neww=GetZoneW();
-		newh=GetZoneH();
-		for(i=0;i<GetNumChildren();++i)
-		{
-			kGUIZone *z;
-
-			z=GetChild(i);
-			if(z->GetZoneRX()>GetZoneW() || z->GetZoneBY()>GetZoneH())
-			{
-				neww=max(neww,z->GetZoneRX());		
-				newh=max(newh,z->GetZoneBY());		
-				m_error=true;
-			}
-		}
-		if(m_error==true)
-		{
-			SetSize(neww,newh);
-			/* since I might overlap another object, tell the input handler to not abort processing */
-			/* if it can'f find an active object inside me, keep trying.... */
-			SetAllowOverlappingChildren(true);
-		}
-	}
-#endif
-
 	if(addme==true || m_relpos)
 	{
 		if(rp && m_position!=POSITION_FIXED && m_position!=POSITION_ABSOLUTE)
@@ -13200,8 +13746,8 @@ void kGUIHTMLObj::InsertFrame(void)
 
 	{
 		kGUIString header;
-		/* todo, put proper page header in here! */
 
+		/* todo, put proper page header in here! */
 		m_page->Parse(this,s.GetString(),s.GetLen(),&header);
 	}
 
@@ -13212,7 +13758,7 @@ void kGUIHTMLObj::InsertFrame(void)
 	{
 		child=m_stylechildren.GetEntry(i);
 		if(urlid==child->GetOwnerURL())
-			m_page->PreProcess(&tci,child);
+			m_page->PreProcess(&tci,child,true);
 	}
 
 	m_page->SetURL(&oldurl);
@@ -13310,9 +13856,29 @@ void kGUIHTMLObj::Contain(bool force)
 	int olx,orx,oty,oby;
 	kGUIHTMLObj *sobj;
 	kGUIObj *obj;
+	kGUICorners c;
+	kGUICorners cc;
 
 	if(m_display==DISPLAY_NONE)
 		return;
+
+	/* keep track of widest and tallest item in page, and it's children */
+	GetCorners(&c);
+	nc=GetNumChildren();
+	for(i=0;i<nc;++i)
+	{
+		obj=GetChild(i);
+		obj->GetCorners(&cc);
+		if(cc.rx>c.rx)
+			c.rx=cc.rx;
+		if(cc.by>c.by)
+			c.by=cc.by;
+	}
+
+	if(c.rx>m_page->m_maxpagew)
+		m_page->m_maxpagew=c.rx;
+	if(c.by>m_page->m_maxpageh)
+		m_page->m_maxpageh=c.by;
 
 	for(i=0;i<m_numstylechildren;++i)
 	{
@@ -13386,7 +13952,7 @@ void kGUIHTMLObj::Contain(bool force)
 		/* double check to make sure I am big enough to hold my children */
 		/* since some could have been absolutely positioned outside of me or */
 		/* relatively positioned outside of me */
-		if((m_page->m_mode==MODE_POSITION) || force)
+		if(/*(m_page->m_mode==MODE_POSITION) ||*/ (m_id==HTMLTAG_BODY || m_id==HTMLTAG_ROOT) || force)
 		{
 			int oldw,oldh;
 			int neww,newh;
@@ -13428,6 +13994,17 @@ void kGUIHTMLObj::Contain(bool force)
 		}
 #endif
 	break;
+	}
+
+	/* this is probably a hack that can go away once some other bug is fixed */
+	if(m_page->m_mode==MODE_POSITION)
+	{
+		if(m_id==HTMLTAG_BODY || m_id==HTMLTAG_ROOT)
+		{
+			/* adjust for scroll values by subtracting page scroll offsets */
+			MoveZoneW(m_page->m_maxpagew-c.lx);
+			MoveZoneH(m_page->m_maxpageh-c.ty);
+		}
 	}
 }
 

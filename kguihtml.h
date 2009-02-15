@@ -922,8 +922,10 @@ typedef struct
 {
 	unsigned int m_selector:16;
 	bool m_not:1;
-	unsigned int m_value;
-	unsigned int m_compare;
+	int m_value;
+	int m_compare;
+	//unsigned int m_value;
+	//unsigned int m_compare;
 }kGUIHTMLSelector;
 
 enum
@@ -989,6 +991,7 @@ private:
 
 	/* the sum of these should match m_numentries */
 	unsigned int m_numentries;
+	unsigned int m_addtcistart;
 	Array<kGUIHTMLSelector>m_entries;
 	Array<unsigned int>m_sorder;
 
@@ -1885,7 +1888,7 @@ public:
 
 	void PurgeRules(void);
 	void GetCorrectedSource(kGUIString *cs);
-	void PreProcess(kGUIString *tci,kGUIHTMLObj *obj);
+	void PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe);
 
 	void SetMedia(kGUIString *media) {m_curmedia.SetString(media);}
 	kGUIString *GetURL(void) {return &m_url;}
@@ -2328,6 +2331,8 @@ private:
 	int m_mode;
 	int m_pagew;	/* size after scroll bar space is subtracted */
 	int m_pageh;
+	int m_maxpagew;	/* size of page */
+	int m_maxpageh;	/* size of page */
 
 	/* link object that cursor is hovering over */
 	kGUIHTMLLinkObj *m_linkhover;
