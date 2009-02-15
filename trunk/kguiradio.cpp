@@ -67,14 +67,15 @@ void kGUIRadioObj::CallAfterUpdate(void)
 
 bool kGUIRadioObj::UpdateInput(void)
 {
+	kGUICorners c;
+
+	GetCorners(&c);
+	if(kGUI::MouseOver(&c)==false)
+		return(false);
+
 	/* does the user want a hint? */
 	if(kGUI::WantHint()==true && m_hint)
-	{
-		kGUICorners c;
-
-		GetCorners(&c);
 		kGUI::SetHintString(c.lx+10,c.ty-15,m_hint->GetString());
-	}
 
 	if(m_locked==false)
 	{
@@ -90,6 +91,7 @@ bool kGUIRadioObj::UpdateInput(void)
 	}
 	return(true);
 }
+
 
 void kGUIRadioObj::Draw(void)
 {

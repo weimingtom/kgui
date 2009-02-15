@@ -333,6 +333,9 @@ bool kGUIComboBoxObj::UpdateInput(void)
 
 	GetCorners(&c);
 	over=kGUI::MouseOver(&c);
+	if(over==false && this!=kGUI::GetActiveObj())
+		return(false);
+
 	if(over==false && kGUI::GetMouseClick()==true)
 	{
 		if(this==kGUI::GetActiveObj())
