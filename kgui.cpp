@@ -93,8 +93,8 @@ bool kGUI::m_trace;
 int kGUI::m_fullscreenwidth;
 int kGUI::m_fullscreenheight;
 /* this is the screen size not counting the windows header and footer on the top/bottom and sides */
-int kGUI::m_screenwidth;
-int kGUI::m_screenheight;
+//int kGUI::m_screenwidth;
+//int kGUI::m_screenheight;
 
 kGUIDelay kGUI::m_mouserightrelesetick;
 kGUIDelay kGUI::m_mouseleftrelesetick;
@@ -419,8 +419,8 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_fullscreenheight=fullheight;
 
 	/* windows "child" area which is essentially the full area minus the frame area on the top/bottom and sides */
-	m_screenwidth=width;
-	m_screenheight=height;
+//	m_screenwidth=width;
+//	m_screenheight=height;
 
 	m_imagesizefilename=0;
 	m_imagesizehash.Init(16,sizeof(kGUIImageSizeCache));
@@ -682,6 +682,24 @@ void kGUI::DelWindow(kGUIObj *window)
 	{
 		if(newtopobj)
 			newtopobj->Dirty();
+	}
+}
+
+void kGUI::AdjustMinimizedWindows(int deltaheight)
+{
+	unsigned int i;
+	kGUIObj *obj;
+	kGUIWindowObj *window;
+
+	for(i=0;i<m_rootobj->GetNumChildren();++i)
+	{
+		obj=m_rootobj->GetChild(i);
+		if(obj->IsWindow())
+		{
+			window=static_cast<kGUIWindowObj*>(obj);
+			if(window->GetIsMinimized())
+				window->SetZoneY(window->GetZoneY()+deltaheight);
+		}
 	}
 }
 
@@ -2548,7 +2566,7 @@ void kGUI::MakeURL(kGUIString *parentbase,kGUIString *parentroot,kGUIString *in,
 		}
 		else
 		{
-			while(c>0 && numback)
+			while(c>(int)parentbase->GetLen() && numback)
 			{
 				if(parentroot->GetChar(c)=='/')
 				{

@@ -83,7 +83,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,true,false ,"dd",			HTMLTAG_DD			,DISPLAY_BLOCK},
 	{false,false,false,"del",			HTMLTAG_DEL			,DISPLAY_INLINE},
 	{false,false,false,"dfn",			HTMLTAG_DFN			,DISPLAY_INLINE},
-	{false,false,false,"div",			HTMLTAG_DIV			,DISPLAY_BLOCK},
+	{false,false,true,"div",			HTMLTAG_DIV			,DISPLAY_BLOCK},
 	{false,true,false ,"dl",			HTMLTAG_DL			,DISPLAY_BLOCK},
 	{true,false,true,"!doctype",		HTMLTAG_DOCTYPE		,DISPLAY_NONE},
 	{false,true,false,"dt",			HTMLTAG_DT			,DISPLAY_BLOCK},
@@ -126,7 +126,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"pre",			HTMLTAG_PRE			,DISPLAY_INLINE},
 	{false,false,false,"q",			HTMLTAG_Q			,DISPLAY_INLINE},
 	{false,false,false,"s",			HTMLTAG_S			,DISPLAY_INLINE},	
-	{false,false,false,"samp",		HTMLTAG_SAMP		,DISPLAY_BLOCK},
+	{false,false,false,"samp",		HTMLTAG_SAMP		,DISPLAY_INLINE},
 	{false,false,false,"script",		HTMLTAG_SCRIPT		,DISPLAY_INLINE},
 	{false,false,false,"select",		HTMLTAG_SELECT		,DISPLAY_INLINE},
 	{false,false,false,"small",		HTMLTAG_SMALL		,DISPLAY_INLINE},
@@ -164,9 +164,8 @@ POPLIST_DEF kGUIHTMLPageObj::m_poplist[]={
 	{HTMLTAG_P,HTMLTAG_UL},
 	{HTMLTAG_P,HTMLTAG_LI},
 	{HTMLTAG_P,HTMLTAG_FORM},
-	{HTMLTAG_P,HTMLTAG_SELECT},
 	{HTMLTAG_P,HTMLTAG_DIV},
-	//{HTMLTAG_P,HTMLTAG_INPUT},
+	{HTMLTAG_P,HTMLTAG_HR},
 	{HTMLTAG_P,HTMLTAG_H1},
 	{HTMLTAG_P,HTMLTAG_H2},
 	{HTMLTAG_P,HTMLTAG_H3},
@@ -176,6 +175,7 @@ POPLIST_DEF kGUIHTMLPageObj::m_poplist[]={
 	{HTMLTAG_P,HTMLTAG_DT},
 	{HTMLTAG_P,HTMLTAG_DD},
 	{HTMLTAG_P,HTMLTAG_DL},
+	{HTMLTAG_P,HTMLTAG_TABLE},
 
 	{HTMLTAG_OPTION,HTMLTAG_OPTION},
 	{HTMLTAG_LI,HTMLTAG_LI},
@@ -487,7 +487,7 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist2[]={
 	{"after",					HTMLATT_CONTENT_AFTER	},
 	{"border-spacing-horiz",	HTMLATT_BORDER_SPACING_HORIZ	},
 	{"border-spacing-vert",		HTMLATT_BORDER_SPACING_VERT		},
-	{"border-width",			HTMLATT_BORDER_WIDTH			},
+	{"border",					HTMLATT_HTML_BORDER			},
 	{"text-shadow-x",			HTMLATT_TEXT_SHADOW_X			},
 	{"text-shadow-y",			HTMLATT_TEXT_SHADOW_Y			},
 	{"text-shadow-radius",		HTMLATT_TEXT_SHADOW_R			},
@@ -720,6 +720,7 @@ HTMLCONST_IMPORT,
 HTMLCONST_CHARSET,
 HTMLCONST_MEDIA,
 HTMLCONST_PAGE,
+HTMLCONST_NAMESPACE,
 
 HTMLCONST_NOT,
 HTMLCONST_LINK,
@@ -786,7 +787,6 @@ HTMLCONST_SMALL_CAPS,
 
 HTMLCONST_CAPTION,
 HTMLCONST_ICON,
-HTMLCONST_MENU,
 HTMLCONST_MESSAGE_BOX,
 HTMLCONST_SMALL_CAPTION,
 HTMLCONST_STATUS_BAR,
@@ -856,9 +856,43 @@ HTMLCONST_EVEN,
 
 HTMLCONST_CLIP,
 HTMLCONST_ELLIPSIS,
-HTMLCONST_ELLIPSIS_WORD
+HTMLCONST_ELLIPSIS_WORD,
 
+/* system colors */
+HTMLCONST_ACTIVEBORDER,
+HTMLCONST_ACTIVECAPTION,
+HTMLCONST_APPWORKSPACE,
+HTMLCONST_BACKGROUND,
+HTMLCONST_BUTTONFACE,
+HTMLCONST_BUTTONHIGHLIGHT,
+HTMLCONST_BUTTONSHADOW,
+HTMLCONST_BUTTONTEXT,
+HTMLCONST_CAPTIONTEXT,
+HTMLCONST_GRAYTEXT,
+HTMLCONST_HIGHLIGHT,
+HTMLCONST_HIGHLIGHTTEXT,
+HTMLCONST_INACTIVEBORDER,
+HTMLCONST_INACTIVECAPTION,
+HTMLCONST_INACTIVECAPTIONTEXT,
+HTMLCONST_INFOBACKGROUND,
+HTMLCONST_INFOTEXT,
+HTMLCONST_MENU,
+HTMLCONST_MENUTEXT,
+HTMLCONST_SCROLLBAR,
+HTMLCONST_THREEDDARKSHADOW,
+HTMLCONST_THREEDFACE,
+HTMLCONST_THREEDHIGHLIGHT,
+HTMLCONST_THREEDLIGHTSHADOW,
+HTMLCONST_THREEDSHADOW,
+HTMLCONST_WINDOW,
+HTMLCONST_WINDOWFRAME,
+HTMLCONST_WINDOWTEXT
 };
+
+#define FIRST_SYSCOLOR HTMLCONST_ACTIVEBORDER
+#define LAST_SYSCOLOR HTMLCONST_WINDOWTEXT
+
+kGUIColor kGUIHTMLPageObj::m_syscolors[(LAST_SYSCOLOR+1)-FIRST_SYSCOLOR];
 
 /* the order of these correspond to the colors in the const enum list above */
 kGUIColor kGUIHTMLPageObj::m_colors[]={
@@ -1213,6 +1247,7 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"charset",			HTMLCONST_CHARSET	},
 	{"media",			HTMLCONST_MEDIA	},
 	{"page",			HTMLCONST_PAGE	},
+	{"namespace",		HTMLCONST_NAMESPACE	},
 
 	{"link",			HTMLCONST_LINK	},
 	{"visited",			HTMLCONST_VISITED	},
@@ -1280,7 +1315,6 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 
 	{"caption",			HTMLCONST_CAPTION	},
 	{"icon",			HTMLCONST_ICON	},
-	{"menu",			HTMLCONST_MENU	},
 	{"message-box",		HTMLCONST_MESSAGE_BOX	},
 	{"small-caption",	HTMLCONST_SMALL_CAPTION	},
 	{"status-bar",		HTMLCONST_STATUS_BAR	},
@@ -1353,6 +1387,37 @@ CONSTLIST_DEF kGUIHTMLPageObj::m_constlist[]={
 	{"clip",			HTMLCONST_CLIP	},
 	{"ellipsis",		HTMLCONST_ELLIPSIS	},
 	{"ellipsis-word",	HTMLCONST_ELLIPSIS_WORD	},
+
+	{"ActiveBorder",	HTMLCONST_ACTIVEBORDER},	//Active window border.
+	{"ActiveCaption",	HTMLCONST_ACTIVECAPTION},	//Active window caption.
+	{"AppWorkspace",	HTMLCONST_APPWORKSPACE},	//Background color of multiple document interface.
+	{"Background"	,	HTMLCONST_BACKGROUND},		//Desktop background.
+	{"ButtonFace",		HTMLCONST_BUTTONFACE},		//Face color for three-dimensional display elements.
+	{"ButtonHighlight",	HTMLCONST_BUTTONHIGHLIGHT},	//Dark shadow for three-dimensional display elements (for edges facing away from the light source).
+	{"ButtonShadow",	HTMLCONST_BUTTONSHADOW},	//Shadow color for three-dimensional display elements.
+	{"ButtonText",		HTMLCONST_BUTTONTEXT},		//Text on push buttons.
+
+	{"CaptionText",		HTMLCONST_CAPTIONTEXT},		//Text in caption, size box, and scrollbar arrow box.
+	{"GrayText",		HTMLCONST_GRAYTEXT},		//Grayed (disabled) text. This color is set to #000 if the current display driver does not support a solid gray color. 
+	{"Highlight",		HTMLCONST_HIGHLIGHT},		//Item(s) selected in a control.
+	{"HighlightText",	HTMLCONST_HIGHLIGHTTEXT},	//Text of item(s) selected in a control.
+	{"InactiveBorder",	HTMLCONST_INACTIVEBORDER},	//Inactive window border.
+	{"InactiveCaption",	HTMLCONST_INACTIVECAPTION},	//Inactive window caption.
+	{"InactiveCaptionText",	HTMLCONST_INACTIVECAPTIONTEXT},	//Color of text in an inactive caption.
+	{"InfoBackground",	HTMLCONST_INFOBACKGROUND},	//Background color for tooltip controls.
+	{"InfoText",		HTMLCONST_INFOTEXT},		//Text color for tooltip controls.
+	{"Menu",			HTMLCONST_MENU},			//Menu background.
+	{"MenuText",		HTMLCONST_MENUTEXT},		//Text in menus.
+
+	{"Scrollbar",		HTMLCONST_SCROLLBAR},		//Scroll bar gray area.
+	{"ThreeDDarkShadow",HTMLCONST_THREEDDARKSHADOW},//Dark shadow for three-dimensional display elements.
+	{"ThreeDFace",		HTMLCONST_THREEDFACE},		//Face color for three-dimensional display elements.
+	{"ThreeDHighlight",	HTMLCONST_THREEDHIGHLIGHT},	//Highlight color for three-dimensional display elements.
+	{"ThreeDLightShadow",HTMLCONST_THREEDLIGHTSHADOW},//Light color for three-dimensional display elements (for edges facing the light source).
+	{"ThreeDShadow",	HTMLCONST_THREEDSHADOW},	//Dark shadow for three-dimensional display elements.
+	{"Window",			HTMLCONST_WINDOW},			//Window background.	
+	{"WindowFrame",		HTMLCONST_WINDOWFRAME},		//Window frame.
+	{"WindowText",		HTMLCONST_WINDOWTEXT},		//Text in windows.
 };
 
 kGUIHTMLPageObj::kGUIHTMLPageObj()
@@ -1485,6 +1550,42 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 			m_pophash.Add(pops.GetString(),0);
 			++pl;
 		}
+
+		//System colors: todo: get from the Skin code
+		m_syscolors[HTMLCONST_ACTIVEBORDER-FIRST_SYSCOLOR]=DrawColor(32,32,255);
+		m_syscolors[HTMLCONST_ACTIVECAPTION-FIRST_SYSCOLOR]=DrawColor(32,32,32);
+		m_syscolors[HTMLCONST_APPWORKSPACE-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_BACKGROUND-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+
+		m_syscolors[HTMLCONST_BUTTONFACE-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_BUTTONHIGHLIGHT-FIRST_SYSCOLOR]=DrawColor(160,160,160);
+		m_syscolors[HTMLCONST_BUTTONSHADOW-FIRST_SYSCOLOR]=DrawColor(80,80,80);
+		m_syscolors[HTMLCONST_BUTTONTEXT-FIRST_SYSCOLOR]=DrawColor(0,0,0);
+
+		m_syscolors[HTMLCONST_CAPTIONTEXT-FIRST_SYSCOLOR]=DrawColor(0,0,0);
+		m_syscolors[HTMLCONST_GRAYTEXT-FIRST_SYSCOLOR]=DrawColor(128,128,128);
+		m_syscolors[HTMLCONST_HIGHLIGHT-FIRST_SYSCOLOR]=DrawColor(0,0,0);
+		m_syscolors[HTMLCONST_HIGHLIGHTTEXT-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+
+		m_syscolors[HTMLCONST_INACTIVEBORDER-FIRST_SYSCOLOR]=DrawColor(255,255,0);
+		m_syscolors[HTMLCONST_INACTIVECAPTION-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_INACTIVECAPTIONTEXT-FIRST_SYSCOLOR]=DrawColor(128,128,128);
+		m_syscolors[HTMLCONST_INFOBACKGROUND-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+
+		m_syscolors[HTMLCONST_INFOTEXT-FIRST_SYSCOLOR]=DrawColor(0,0,2505);
+		m_syscolors[HTMLCONST_MENU-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_MENUTEXT-FIRST_SYSCOLOR]=DrawColor(0,0,0);
+		m_syscolors[HTMLCONST_SCROLLBAR-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+
+		m_syscolors[HTMLCONST_THREEDDARKSHADOW-FIRST_SYSCOLOR]=DrawColor(80,80,80);
+		m_syscolors[HTMLCONST_THREEDFACE-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_THREEDHIGHLIGHT-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_THREEDLIGHTSHADOW-FIRST_SYSCOLOR]=DrawColor(160,160,160);
+
+		m_syscolors[HTMLCONST_THREEDSHADOW-FIRST_SYSCOLOR]=DrawColor(120,120,120);
+		m_syscolors[HTMLCONST_WINDOW-FIRST_SYSCOLOR]=DrawColor(255,255,255);
+		m_syscolors[HTMLCONST_WINDOWFRAME-FIRST_SYSCOLOR]=DrawColor(0,0,0);
+		m_syscolors[HTMLCONST_WINDOWTEXT-FIRST_SYSCOLOR]=DrawColor(0,0,0);
 	}
 
 	m_srnum=0;
@@ -2093,6 +2194,14 @@ void kGUIHTMLPageObj::MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out)
 	const char *cp;
 
 	assert(parent!=0,"Unknown parent URL!");
+
+	/* is this inline data and not a URL? */
+	if(!strcmpin(in->GetString(),"data:",5))
+	{
+		out->SetString(in);
+		return;
+	}
+
 	if(in->GetChar(0)=='#' || in->GetChar(0)=='?')
 	{
 		temp.SetString(parent);
@@ -2546,41 +2655,6 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 
 	ho->PostStyle(&si);
 
-
-#if 0
-	/* special cases */
-	if(ho->m_id!=HTMLTAG_SPAN)
-	{
-		//	if(ho->m_float!=FLOAT_NONE && (ho->m_display==DISPLAY_BLOCK || ho->m_display==DISPLAY_INLINE))
-		if(ho->m_float!=FLOAT_NONE && (ho->m_display==DISPLAY_INLINE))
-			ho->m_display=DISPLAY_INLINE_BLOCK;
-		else if(ho->m_display==DISPLAY_INLINE)
-		{
-			/* defined width,height,left,right etc */
-	//		if(ho->m_valign!=VALIGN_UNDEFINED)
-	//			ho->m_display=DISPLAY_INLINE_BLOCK;
-			if(ho->m_height.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_width.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_left.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_right.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_top.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_bottom.GetUnitType()!=UNITS_UNDEFINED)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_position!=POSITION_STATIC)
-				ho->m_display=DISPLAY_INLINE_BLOCK;
-			else if(ho->m_box!=0)
-			{
-				if(ho->m_box->GetValid())
-					ho->m_display=DISPLAY_INLINE_BLOCK;
-			}
-		}
-	}
-#endif
 	if(ho->m_display!=olddisplay)
 		ho->ChangeDisplay(olddisplay);
 }
@@ -2597,10 +2671,11 @@ void kGUIHTMLPageObj::AddClassStyles(unsigned int baseowner,unsigned int priorit
 	int priorityafter=priority;
 	bool validmedia;
 	bool gotrule;
-	bool error=false;
 	kGUIString cstring;
 	unsigned int nb;
 	int ch;
+	int numnamespaces=0;
+//	kGUIReadString rs; //todo: change 
 
 	m_css.Append(string);
 
@@ -2739,7 +2814,25 @@ again:		c=cstring.GetChar(j++);
 					q=0;
 					do
 					{
-						c=cstring.GetChar(j++);
+iagain:					c=cstring.GetChar(j++);
+						if(c=='/' && !q)
+						{
+							if(cstring.GetChar(j)=='*')
+							{
+								/* yes we found a comment */
+								++j;
+								do
+								{
+									if(cstring.GetChar(j)=='*' && cstring.GetChar(j+1)=='/')
+									{
+										j+=2;
+										goto iagain;
+									}
+								}while(++j<l);
+								return;				/* unclosed comment */
+							}
+						}
+
 						if(!q)
 						{
 							if(c=='\"' || c=='\'')
@@ -2810,6 +2903,29 @@ again:		c=cstring.GetChar(j++);
 
 					validmedia=ValidMedia(&value);
 					++inmedia;
+				break;
+				case HTMLCONST_NAMESPACE:	/* '@namespace' */
+					/* get namespace strings up until ';' */
+					do
+					{
+						c=cstring.GetChar(j++);
+						if(c==';')
+							break;
+						value.Append(c);
+					}while(j<l);
+					/* todo ... handle namespaces */
+					switch(ss.Split(&value," "))
+					{
+					case 1:
+						/* if 1 then this is the default namespace */
+					break;
+					case 2:
+						/* if 2 then this is a named namespace */
+					break;
+					default:
+						/* malformed namespace */
+					break;
+					}
 				break;
 				case HTMLCONST_PAGE:	/* '@page' */
 					/* todo: handle page attributes */
@@ -2890,7 +3006,7 @@ again:		c=cstring.GetChar(j++);
 						ss.SetIgnoreEmpty(false);
 						numnames=ss.Split(&name,",");
 
-						/* error if last chat is a comma */
+						/* error if last char is a comma */
 						if(name.GetChar(name.GetLen()-1)==',')
 							allok=false;
 						else
@@ -3803,7 +3919,7 @@ void kGUIHTMLRule::GetString(kGUIString *s)
 		{
 		case CSSSELECTOR_TAG:
 		{
-			assert(sp->m_value<(sizeof(kGUIHTMLPageObj::m_taglist)/sizeof(TAGLIST_DEF)),"TagID is off of end of list!");
+			assert(sp->m_value<(int)(sizeof(kGUIHTMLPageObj::m_taglist)/sizeof(TAGLIST_DEF)),"TagID is off of end of list!");
 
 			s->Append(kGUIHTMLPageObj::m_taglist[sp->m_value].name);
 		}
@@ -4001,7 +4117,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 		switch(sel->m_selector)
 		{
 		case CSSSELECTOR_TAG:
-			if(ho->m_id!=sel->m_value)
+			if(ho->m_id!=(unsigned int)sel->m_value)
 				res=false;
 		break;
 		case CSSSELECTOR_UNIVERSAL:
@@ -4575,7 +4691,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			else
 			{
 				/* should this be case sensative or not?? */
-				if(m_page->StringToID(att->GetValue())!=sel->m_compare)
+				if(m_page->StringToID(att->GetValue())!=(unsigned int)sel->m_compare)
 					res=false;
 			}
 		}
@@ -5564,7 +5680,7 @@ void kGUIHTMLObj::CalcChildZone(int yoff)
 class HandleOpacity
 {
 public:
-	HandleOpacity() {m_w=0;}
+	HandleOpacity() {m_x=0;m_y=0;m_w=0;m_h=0;m_buffer=0;m_opacity=0.0f;}
 	void Save(const kGUICorners *c,double opacity);
 	void Blend(void);
 private:
@@ -5729,6 +5845,7 @@ void kGUIHTMLObj::Draw(void)
 		}
 		if(m_display==DISPLAY_TABLE_CELL)
 		{
+			/* cell box has higher priority then table box */
 			if(m_box)
 			{
 				m_box->Draw(&c);
@@ -5737,13 +5854,21 @@ void kGUIHTMLObj::Draw(void)
 				c.rx-=m_box->GetBoxRightWidth();
 				c.by-=m_box->GetBoxBottomWidth();
 			}
-			if(m_ti)
+			else if(m_ti && m_ti->m_cellborder)
 			{
+#if 0
+				m_ti->m_box->Draw(&c);
+				c.lx+=m_ti->m_box->GetBoxLeftWidth();
+				c.ty+=m_ti->m_box->GetBoxTopWidth();
+				c.rx-=m_ti->m_box->GetBoxRightWidth();
+				c.by-=m_ti->m_box->GetBoxBottomWidth();
+#else
 				m_ti->m_cellborder->Draw(&c);
 				c.lx+=m_ti->m_cellborder->GetBoxLeftWidth();
 				c.ty+=m_ti->m_cellborder->GetBoxTopWidth();
 				c.rx-=m_ti->m_cellborder->GetBoxRightWidth();
 				c.by-=m_ti->m_cellborder->GetBoxBottomWidth();
+#endif
 				//kGUI::ShrinkClip(&c);
 			}
 		}
@@ -5924,7 +6049,8 @@ void kGUIHTMLPageObj::InitPosition(void)
 	m_wordspacing.Zero();
 
 	m_fontid=0;
-	m_cellspacing=1;
+	m_cellspacingh=1;
+	m_cellspacingv=1;
 	m_cellpadding=1;
 
 	/* reset the attribute applied table */
@@ -5972,92 +6098,100 @@ void kGUIHTMLPageObj::Position(void)
 	int width=GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth();
 	int height=GetZoneH();
 
-	m_ownerrulesbuilt=false;
-
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
-
-	m_mode=MODE_MINMAX;
-	InitPosition();
-
-	m_rootobject->SetZone(0,0,width,height);
-	m_rootobject->CalcChildZone();
-	m_rootobject->SetPage(this);
-	m_rootobject->SetID(HTMLTAG_ROOT);
-	m_rootobject->m_tag=&m_roottag;
-	m_absobject=m_rootobject;
-
-	m_fixedfgobject->SetZone(0,0,width,height);
-	m_fixedfgobject->CalcChildZone();
-
-	/* set all containers to minimum size, calc max size too */
-//	kGUI::Trace("Pass 1 Root size=%d\n",GetZoneW());
-	m_posindex=0;
-	m_rootobject->Position();
-	m_maxpagew=0;
-	m_maxpageh=0;
-	m_rootobject->Contain(true);
-
-	/* if width is less than pagewidth then expand root to pagewidth */
-	if(m_rootobject->GetZoneW()<=width)
+	do
 	{
-		m_usehs=false;
-		m_pagew=width;
-		m_rootobject->SetOutsideW(width);
+		/* m_again is set if new rules are added in a frame and if so */
+		/* we need to relayout the page all over again */
+		m_again=false;
+		m_ownerrulesbuilt=false;
+
+		m_mode=MODE_MINMAX;
+		InitPosition();
+
+		m_rootobject->SetZone(0,0,width,height);
 		m_rootobject->CalcChildZone();
-		m_scroll.SetDestX(0);
-	}
-	else
-	{
-		m_usehs=true;
-		m_pagew=width;
-	}
-	/* expand all tables as large as they can go */
-	m_debug.ASprintf("*********** Start Expand *************\n");
-	m_debug.ASprintf("*********** End Expand *************\n");
-//	kGUI::Trace("Pass 2 Root size=%d\n",GetZoneW());
-	m_mode=MODE_POSITION;
-	m_posindex=0;
-	m_rootobject->Position();
-	m_maxpagew=0;
-	m_maxpageh=0;
-	m_rootobject->Contain();
+		m_rootobject->SetPage(this);
+		m_rootobject->SetID(HTMLTAG_ROOT);
+		m_rootobject->m_tag=&m_roottag;
+		m_absobject=m_rootobject;
 
-	if(m_rootobject->GetOutsideH()>height)
-	{
-		m_usevs=true;
-		m_pageh=height-kGUI::GetSkin()->GetScrollbarHeight();
-	}
-	else
-	{
-		m_usevs=false;
-		m_pageh=height;
-		m_scroll.Goto(0,0);
-		if(!m_usehs)
+		m_fixedfgobject->SetZone(0,0,width,height);
+		m_fixedfgobject->CalcChildZone();
+
+		/* set all containers to minimum size, calc max size too */
+	//	kGUI::Trace("Pass 1 Root size=%d\n",GetZoneW());
+		m_posindex=0;
+		m_rootobject->Position();
+		m_maxpagew=0;
+		m_maxpageh=0;
+		m_rootobject->Contain(true);
+
+		/* if width is less than pagewidth then expand root to pagewidth */
+		if(m_rootobject->GetZoneW()<=width)
 		{
-			/* expand width to full width as whole page fits in window without scrolling */
-			m_pagew=GetZoneW();
-			m_rootobject->SetOutsideW(m_pagew);
+			m_usehs=false;
+			m_pagew=width;
+			m_rootobject->SetOutsideW(width);
 			m_rootobject->CalcChildZone();
-
-			m_mode=MODE_POSITION;
-			m_posindex=0;
-			m_rootobject->Position();
-			m_maxpagew=0;
-			m_maxpageh=0;
-			m_rootobject->Contain();
+			m_scroll.SetDestX(0);
 		}
-	}
-
-	UpdateScrollBars();
-	m_debug.ASprintf("******* End Position ********\n");
-
-	if(m_status)
-	{
-		if(m_numloading)
-			m_status->Sprintf("Loading %d items...",m_numloading);
 		else
-			m_status->Sprintf("Done");
-	}
+		{
+			m_usehs=true;
+			m_pagew=width;
+		}
+		/* expand all tables as large as they can go */
+		m_debug.ASprintf("*********** Start Expand *************\n");
+		m_debug.ASprintf("*********** End Expand *************\n");
+	//	kGUI::Trace("Pass 2 Root size=%d\n",GetZoneW());
+		m_mode=MODE_POSITION;
+		m_posindex=0;
+		m_rootobject->Position();
+		m_maxpagew=0;
+		m_maxpageh=0;
+		m_rootobject->Contain();
+
+		if(m_rootobject->GetOutsideH()>height)
+		{
+			m_usevs=true;
+			m_pageh=height-kGUI::GetSkin()->GetScrollbarHeight();
+		}
+		else
+		{
+			m_usevs=false;
+			m_pageh=height;
+			m_scroll.Goto(0,0);
+			if(!m_usehs)
+			{
+				/* expand width to full width as whole page fits in window without scrolling */
+				m_pagew=GetZoneW();
+				m_rootobject->SetOutsideW(m_pagew);
+				m_rootobject->CalcChildZone();
+
+				m_mode=MODE_POSITION;
+				m_posindex=0;
+				m_rootobject->Position();
+				m_maxpagew=0;
+				m_maxpageh=0;
+				m_rootobject->Contain();
+			}
+		}
+
+		UpdateScrollBars();
+		m_debug.ASprintf("******* End Position ********\n");
+
+		if(m_status)
+		{
+			if(m_numloading)
+				m_status->Sprintf("Loading %d items...",m_numloading);
+			else
+				m_status->Sprintf("Done");
+		}
+		if(m_again)
+			InvalidateTCICache();
+
+	}while(m_again);
 
 	kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
 	m_trace=false;
@@ -6625,6 +6759,7 @@ typedef struct
 }DEFAULTRULES_DEF;
 
 DEFAULTRULES_DEF defrules[]={
+	{"body","margin-left: 8px;margin-right: 8px;margin-top: 8px;margin-bottom: 8px;"},
 	{"a:visited","color: purple"},
 	{"a:link","color: blue"},
 	{"ul ul ul","list-style-type: square"},
@@ -6792,7 +6927,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	/* Parse returns false if this is NOT a html page, so it must be an image or */
 	/* movie or other special object */
 	m_singlemode=false;
-	if(Parse(renderparent,m_fp,m_len,&m_header)==false)
+	if(Parse(renderparent,m_fp,m_len,&m_header,false)==false)
 	{
 		/* can this be an image? */
 		kGUIImageObj *image;
@@ -6946,22 +7081,23 @@ void kGUIHTMLPageObj::Link(kGUIString *linkline)
 		for(a=0;a<num;++a)
 		{
 			w=ss.GetWord(a);
-			if(w->GetChar(0)=='<')
+			w->Trim();
+			if(w->GetChar(0)=='<' && a==0)
 			{
 				/* got a URL */
 
-				url.SetString(ss.GetWord(0));
+				url.SetString(w);
 				url.Replace("<","");
 				url.Replace(">","");
 				MakeURL(&m_url,&url,&fullurl);
 			}
-			else if(strnicmp(w->GetString(),"rel=",4))
+			else if(!strnicmp(w->GetString(),"rel=",4))
 			{
 				rel.SetString(w);
 				rel.Replace("rel=","");
 				rel.RemoveQuotes();
 			}
-			else if(strnicmp(w->GetString(),"type=",5))
+			else if(!strnicmp(w->GetString(),"type=",5))
 			{
 				/* we don't need this do we? */
 				type.SetString(w);
@@ -7041,69 +7177,75 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 		switch(att->GetID())
 		{
 		case HTMLATT_CLASS:
-			if(!strstr(att->GetValue()->GetString()," "))
+			if(att->GetValue()->GetLen())
 			{
-				if(kGUIHTMLRule::ValidateName(att->GetValue()))
+				if(!strstr(att->GetValue()->GetString()," "))
 				{
-					cid.m_type=CID_CLASS;
-					if(ClassUseCase())
-						cid.m_id=StringToIDcase(att->GetValue());
-					else
-						cid.m_id=StringToID(att->GetValue());
-					ExpandClassList(cid.m_id);
-					obj->m_cids.SetEntry(obj->m_numcids++,cid);
-				}
-				else
-				{
-					//fuck
-				}
-			}
-			else
-			{
-				/* split the space seperated class list */
-				ss.Split(att->GetValue()," ");
-				for(j=0;j<ss.GetNumWords();++j)
-				{
-					word=ss.GetWord(j);
-					if(kGUIHTMLRule::ValidateName(word))
+					if(kGUIHTMLRule::ValidateName(att->GetValue()))
 					{
 						cid.m_type=CID_CLASS;
 						if(ClassUseCase())
-							cid.m_id=StringToIDcase(word);
+							cid.m_id=StringToIDcase(att->GetValue());
 						else
-							cid.m_id=StringToID(word);
+							cid.m_id=StringToID(att->GetValue());
 						ExpandClassList(cid.m_id);
 						obj->m_cids.SetEntry(obj->m_numcids++,cid);
 					}
 					else
 					{
-						/* error */
+						//fuck
+					}
+				}
+				else
+				{
+					/* split the space seperated class list */
+					ss.Split(att->GetValue()," ");
+					for(j=0;j<ss.GetNumWords();++j)
+					{
+						word=ss.GetWord(j);
+						if(kGUIHTMLRule::ValidateName(word))
+						{
+							cid.m_type=CID_CLASS;
+							if(ClassUseCase())
+								cid.m_id=StringToIDcase(word);
+							else
+								cid.m_id=StringToID(word);
+							ExpandClassList(cid.m_id);
+							obj->m_cids.SetEntry(obj->m_numcids++,cid);
+						}
+						else
+						{
+							/* error */
+						}
 					}
 				}
 			}
 		break;
 		case HTMLATT_ID:
-			if(kGUIHTMLRule::ValidateName(att->GetValue()))
+			if(att->GetValue()->GetLen())
 			{
-				cid.m_type=CID_ID;
-//				cid.m_id=StringToIDcase(att->GetValue());
-				cid.m_id=StringToID(att->GetValue());
-				ExpandIDList(cid.m_id);
-				obj->m_cids.SetEntry(obj->m_numcids++,cid);
-
-				/* add to list of local links */
-				AddLocalLink(att->GetValue(),obj);
-	
-				/* keep track of target object for css :target: rule pseudo selector */
-				if(m_target.GetLen())
+				if(kGUIHTMLRule::ValidateName(att->GetValue()))
 				{
-					if(!strcmp(att->GetValue()->GetString(),m_target.GetString()))
-						m_targetobj=obj;
+					cid.m_type=CID_ID;
+	//				cid.m_id=StringToIDcase(att->GetValue());
+					cid.m_id=StringToID(att->GetValue());
+					ExpandIDList(cid.m_id);
+					obj->m_cids.SetEntry(obj->m_numcids++,cid);
+
+					/* add to list of local links */
+					AddLocalLink(att->GetValue(),obj);
+		
+					/* keep track of target object for css :target: rule pseudo selector */
+					if(m_target.GetLen())
+					{
+						if(!strcmp(att->GetValue()->GetString(),m_target.GetString()))
+							m_targetobj=obj;
+					}
 				}
-			}
-			else
-			{
-				/* error */
+				else
+				{
+					/* error */
+				}
 			}
 		break;
 		}
@@ -7329,6 +7471,11 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			/*error, no URL for object*/
 		}
 	}
+	break;
+	case HTMLTAG_BASE:
+		att=obj->FindAttrib(HTMLATT_HREF);
+		if(att)
+			SetBaseURL(att->GetValue());
 	break;
 	case HTMLTAG_A:
 	{
@@ -8030,10 +8177,12 @@ void kGUIHTMLPageObj::CalcPlace(const char *start,const char *place,int *pline,i
 }
 
 /* change \r\n to \n, also change \r to \n, then remove any leading or trailing returns */
-bool kGUIHTMLPageObj::TrimCR(kGUIString *s)
+bool kGUIHTMLPageObj::TrimCR(kGUIString *s,bool *hasendreturn)
 {
 	int l;
 
+	if(hasendreturn)
+		hasendreturn[0]=false;
 	s->Replace("\r\n","\n");
 	s->Replace("\r","\n");
 	if(!s->GetLen())
@@ -8049,6 +8198,8 @@ bool kGUIHTMLPageObj::TrimCR(kGUIString *s)
 	/* remove trailing return */
 	if(s->GetChar(l-1)=='\n')
 	{
+		if(hasendreturn)
+			hasendreturn[0]=true;
 		s->Clip(l-1);
 		--l;
 	}
@@ -8056,7 +8207,7 @@ bool kGUIHTMLPageObj::TrimCR(kGUIString *s)
 }
 
 /* new and improved parse */
-bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmllen,kGUIString *header)
+bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmllen,kGUIString *header,bool inframe)
 {
 	kGUIHTMLObj *renderparent;
 	kGUIHTMLObj *tagparent;
@@ -8082,6 +8233,7 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 	unsigned int encoding=ENCODING_8BIT;
 	unsigned int attid;
 	bool popped=false;
+	bool gottitle=false;
 
 	numtags=0;
 	tagstack.Init(32,32);
@@ -8104,6 +8256,11 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 		if(ExtractFromHeader(header,"Content-Type:",&line))
 		{
 			const char *cp;
+
+			/* if XML then default is UTF-8 */
+			cp=strstr(line.GetString(),"xml");
+			if(cp)
+				encoding=ENCODING_UTF8;
 
 			/* check for encoding */
 			cp=strstr(line.GetString(),"charset=");
@@ -8244,7 +8401,14 @@ gotblock2:;
 				kGUIXMLCODES::Shrink(&attvalue,&attname);
 				TrimCR(&attname);
 				attname.Trim();
-				SetTitle(&attname);
+
+				//some pages have multiple titles, so only handle the first one!
+				if(inframe==false && gottitle==false)
+				{
+					gottitle=true;
+					SetTitle(&attname);
+				}
+
 				{
 					kGUIHTMLObj *textobj;
 
@@ -8274,10 +8438,11 @@ gotblock2:;
 			default:
 			{
 				kGUIHTMLObj *textobj;
+				bool hasendreturn=false;
 
 				kGUIXMLCODES::Shrink(&attvalue,&attname);
 
-				if(TrimCR(&attname))
+				if(TrimCR(&attname,&hasendreturn))
 				{
 					switch(renderparent->m_id)
 					{
@@ -8303,7 +8468,7 @@ gotblock2:;
 					}
 
 					textobj=new kGUIHTMLObj(renderparent,this,&m_textgrouptag);
-					textobj->SetString(&attname,false,false);
+					textobj->SetString(&attname,false,hasendreturn);
 					tagparent->AddStyleChild(textobj);
 				}
 ignoretext:;
@@ -8785,6 +8950,9 @@ ignoretag:;
 									attparent->AddAttributes(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,&attname);
 								}
 							break;
+							case HTMLATTGROUP_BORDER:
+								attid=HTMLATT_HTML_BORDER;	/* HTML border 0,1,2.... not style border */
+								/* fall through... */
 							default:
 								kGUIXMLCODES::Shrink(&attvalue,&attname);
 								attparent->AddAndSplitAttribute(this,HTMLATT_CONTENT,OWNER_AUTHOR,0,attid,&attname,true);
@@ -9012,15 +9180,14 @@ void kGUIHTMLObj::Init(void)
 
 	m_width.Reset();
 	m_height.Reset();
-	m_minwidth.Reset();
-	m_minheight.Reset();
-	m_maxwidth.Reset();
-	m_maxheight.Reset();
+
 	m_hashover=false;
 	m_position=POSITION_STATIC;
 	m_float=FLOAT_NONE;
 	m_clear=CLEAR_NONE;
 
+	m_clipw=false;
+	m_cliph=false;
 	m_fixedw=false;
 	m_fixedh=false;
 	m_relw=false;
@@ -9116,15 +9283,19 @@ void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
 	si->m_cc=0;
 	si->m_oldposition=m_position;
 
+	MoveZoneX(0);
+	MoveZoneY(0);
 	MoveZoneW(0);
 	MoveZoneH(0);
 
 	if(m_box)
 		m_box->Reset();
 	m_fixedw=false;
-	m_relw=false;
 	m_fixedh=false;
+	m_relw=false;
 	m_relh=false;
+	m_clipw=false;
+	m_cliph=false;
 	m_minw=0;
 	m_maxw=0;
 	m_maxy=0;
@@ -9170,6 +9341,11 @@ void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
 	m_pattpaddingright=0;
 	m_pattpaddingtop=0;
 	m_pattpaddingbottom=0;
+
+	m_pattminwidth=0;
+	m_pattmaxwidth=0;
+	m_pattminheight=0;
+	m_pattmaxheight=0;
 }
 
 /* called on the min-max pass after applying css style to the object */
@@ -9192,6 +9368,7 @@ void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 
 	if(m_display==DISPLAY_TABLE || m_display==DISPLAY_INLINE_TABLE)
 	{
+		/* todo, this can leak for non HTML_TABLE items.. need to fix */
 		if(!m_ti)
 			m_ti=new kGUIHTMLTableInfo();
 	}
@@ -9205,7 +9382,8 @@ void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 	}
 
 	/* if we are floating an inline object then switch to an inline block */
-	if(m_display==DISPLAY_INLINE && m_float!=FLOAT_NONE)
+	if(m_display==DISPLAY_INLINE && ( m_float!=FLOAT_NONE || m_box!=0))
+//	if(m_display==DISPLAY_INLINE && ( m_float!=FLOAT_NONE))
 		m_display=DISPLAY_INLINE_BLOCK;
 
 	if(m_display==DISPLAY_ANONYMOUS)
@@ -9257,7 +9435,7 @@ void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 	//computed value for the border color. 
 
 	if(m_box)
-		m_box->SetUndefinedBorderColors(m_page->m_fontcolor.GetColor(),false);
+		m_box->SetUndefinedBorderColors(m_page->m_fontcolor.GetColor());
 
 //	if(m_overflowx==OVERFLOW_VISIBLE || m_overflowy==OVERFLOW_VISIBLE)
 		SetAllowOverlappingChildren(true);
@@ -9445,6 +9623,7 @@ void kGUIHTMLObj::SetString(kGUIString *string,bool ps,bool pcr)
 	break;
 	case HTMLTAG_IMBEDTEXTGROUP:
 		m_obj.m_textgroup->SetString(string);
+		m_obj.m_textgroup->SetPlusCR(pcr);
 	break;
 	case HTMLTAG_CONTENTGROUP:
 		m_obj.m_contentgroup->SetChanged(true);
@@ -9844,7 +10023,8 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyle
 					word.SetString(att->GetValue());
 					word.Replace("url(","",0,1);
 					word.Replace(")","");
-					
+					word.Trim(TRIM_QUOTES);
+
 					/* this is only defined on rules, not on inline tag styles so those refer to the page url */
 					if(slist->GetOwnerURL())
 						parenturl=m_page->IDToString(slist->GetOwnerURL());
@@ -10154,12 +10334,47 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				break;
 				}
 			break;
-			case HTMLATT_BORDER_WIDTH:
-				GetBox()->SetBorder(att->GetValue()->GetInt());
-				applied[HTMLATT_BORDER_WIDTH_TOP]=appliedlevel;
-				applied[HTMLATT_BORDER_WIDTH_BOTTOM]=appliedlevel;
-				applied[HTMLATT_BORDER_WIDTH_LEFT]=appliedlevel;
-				applied[HTMLATT_BORDER_WIDTH_RIGHT]=appliedlevel;
+			case HTMLATT_HTML_BORDER:
+			{
+				kGUIString style;
+				kGUIString color;
+				kGUIHTMLBox *box;
+				int w=att->GetValue()->GetInt();
+
+				if(m_id==HTMLTAG_TABLE)
+				{
+					if(m_ti && w>0)
+					{
+						if(!m_ti->m_cellborder)
+							m_ti->m_cellborder=new kGUIHTMLBox(m_page);
+
+						box=m_ti->m_cellborder;
+
+						style.SetString("solid");
+
+						//always in pixels!
+						box->SetBorderWidth(BORDER_TOP|BORDER_BOTTOM|BORDER_LEFT|BORDER_RIGHT,w);
+						box->SetBorderStyle(BORDER_TOP|BORDER_BOTTOM|BORDER_LEFT|BORDER_RIGHT,&style);
+
+						color.SetString("#8d8d8d");
+						box->SetBorderColor(BORDER_TOP|BORDER_LEFT,&color);
+						color.SetString("#c0c0c0");
+						box->SetBorderColor(BORDER_BOTTOM|BORDER_RIGHT,&color);
+					}
+					else
+						box=0;
+				}
+				else
+				{
+					//usually image!
+					box=GetBox();
+					box->SetBorderWidth(BORDER_TOP|BORDER_BOTTOM|BORDER_LEFT|BORDER_RIGHT,w);
+					applied[HTMLATT_BORDER_WIDTH_TOP]=appliedlevel;
+					applied[HTMLATT_BORDER_WIDTH_BOTTOM]=appliedlevel;
+					applied[HTMLATT_BORDER_WIDTH_LEFT]=appliedlevel;
+					applied[HTMLATT_BORDER_WIDTH_RIGHT]=appliedlevel;
+				}
+			}
 			break;
 			case HTMLATT_BORDER_WIDTH_TOP:
 				m_pattbordertop=att;
@@ -10188,24 +10403,32 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			case HTMLATT_BORDER_COLOR_TOP:
 				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
 					si->m_cc|=CURRENTCOLOR_BORDER_TOP;
+				else if(att->GetVID()==HTMLCONST_INHERIT)
+					GetBox()->SetBorderColor(BORDER_TOP,m_renderparent->GetBox());
 				else
 					GetBox()->SetBorderColor(BORDER_TOP,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_BOTTOM:
 				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
 					si->m_cc|=CURRENTCOLOR_BORDER_BOTTOM;
+				else if(att->GetVID()==HTMLCONST_INHERIT)
+					GetBox()->SetBorderColor(BORDER_BOTTOM,m_renderparent->GetBox());
 				else
 					GetBox()->SetBorderColor(BORDER_BOTTOM,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_LEFT:
 				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
 					si->m_cc|=CURRENTCOLOR_BORDER_LEFT;
+				else if(att->GetVID()==HTMLCONST_INHERIT)
+					GetBox()->SetBorderColor(BORDER_LEFT,m_renderparent->GetBox());
 				else
 					GetBox()->SetBorderColor(BORDER_LEFT,att->GetValue());
 			break;
 			case HTMLATT_BORDER_COLOR_RIGHT:
 				if(att->GetVID()==HTMLCONST_CURRENTCOLOR)
 					si->m_cc|=CURRENTCOLOR_BORDER_RIGHT;
+				else if(att->GetVID()==HTMLCONST_INHERIT)
+					GetBox()->SetBorderColor(BORDER_RIGHT,m_renderparent->GetBox());
 				else
 					GetBox()->SetBorderColor(BORDER_RIGHT,att->GetValue());
 			break;
@@ -10253,10 +10476,12 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				}
 			break;
 			case HTMLATT_BORDER_SPACING_HORIZ:
-				//fuck
+				m_page->PushStyle(sizeof(m_page->m_cellspacingh),&m_page->m_cellspacingh);
+				m_page->m_cellspacingh=att->GetValue()->GetInt();
 			break;
 			case HTMLATT_BORDER_SPACING_VERT:
-				//fuck
+				m_page->PushStyle(sizeof(m_page->m_cellspacingv),&m_page->m_cellspacingv);
+				m_page->m_cellspacingv=att->GetValue()->GetInt();
 			break;
 			case HTMLATT_OUTLINE_WIDTH:
 			{
@@ -10296,10 +10521,6 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			break;
 			case HTMLATT_OUTLINE_COLOR:
 				m_page->GetColor(att->GetValue(),&m_outlinecolor);
-			break;
-			case HTMLATT_CELLSPACING:
-				m_page->PushStyle(sizeof(m_page->m_cellspacing),&m_page->m_cellspacing);
-				m_page->m_cellspacing=att->GetValue()->GetInt();
 			break;
 			case HTMLATT_CELLPADDING:
 				m_page->PushStyle(sizeof(m_page->m_cellpadding),&m_page->m_cellpadding);
@@ -10446,6 +10667,7 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				switch(code)
 				{
 				case HTMLCONST_NORMAL:
+				case HTMLCONST_AUTO:
 					m_page->m_lineheightratio.SetUnitType(UNITS_PERCENT);
 					m_page->m_lineheightratio.SetUnitValue(120);
 				break;
@@ -10483,14 +10705,6 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				break;
 				}
 			break;
-			case HTMLATT_HREF:
-				if(m_id==HTMLTAG_BASE)
-				{
-					/* hmmm, are we actually using this? should we push/pop it? */				
-					/* set the base URL */
-					m_page->SetBaseURL(att->GetValue());
-				}
-			break;
 			case HTMLATT_REL:
 			break;
 			case HTMLATT_HEIGHT:
@@ -10500,16 +10714,20 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				m_width.Set(m_page,att->GetValue());
 			break;
 			case HTMLATT_MINWIDTH:
-				m_minwidth.Set(m_page,att->GetValue());
+				/* todo check if valid, also negative is invalid */
+				m_pattminwidth=att;
 			break;
 			case HTMLATT_MAXWIDTH:
-				m_maxwidth.Set(m_page,att->GetValue());
+				/* todo check if valid, also negative is invalid */
+				m_pattmaxwidth=att;
 			break;
 			case HTMLATT_MINHEIGHT:
-				m_minheight.Set(m_page,att->GetValue());
+				/* todo check if valid, also negative is invalid */
+				m_pattminheight=att;
 			break;
 			case HTMLATT_MAXHEIGHT:
-				m_maxheight.Set(m_page,att->GetValue());
+				/* todo check if valid, also negative is invalid */
+				m_pattmaxheight=att;
 			break;
 			case HTMLATT_LIST_STYLE_IMAGE:
 			{
@@ -10535,7 +10753,8 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 					word.SetString(att->GetValue());
 					word.Replace("url(","",0,1);
 					word.Replace(")","");
-					
+					word.Trim(TRIM_QUOTES);
+
 					/* this is only defined on rules, not on inline tag styles so those refer to the page url */
 					if(slist->GetOwnerURL())
 						parenturl=m_page->IDToString(slist->GetOwnerURL());
@@ -10643,25 +10862,32 @@ kGUIHTMLObj *kGUIHTMLObj::GetParentObj(void)
 	return(p);
 }
 
+//todo: handle width / height clip as per the table below
+//http://www.w3.org/TR/CSS21/visudet.html#min-max-widths
+
+
 void kGUIHTMLObj::ClipMinMaxWidth(int pw)
 {
 	int iw,mw;
 	bool clipped;
+	kGUIUnits u;
 
 	clipped=false;
 	iw=GetInsideW();
-	if(m_maxwidth.GetUnitType()!=UNITS_UNDEFINED)
+	if(m_pattmaxwidth)
 	{
-		mw=m_maxwidth.CalcUnitValue(pw,m_em);
+		u.Set(m_page,m_pattmaxwidth->GetValue());
+		mw=u.CalcUnitValue(pw,m_em);
 		if(iw>mw)
 		{
 			iw=mw;
 			clipped=true;
 		}
 	}		
-	if(m_minwidth.GetUnitType()!=UNITS_UNDEFINED)
+	if(m_pattminwidth)
 	{
-		mw=m_minwidth.CalcUnitValue(pw,m_em);
+		u.Set(m_page,m_pattminwidth->GetValue());
+		mw=u.CalcUnitValue(pw,m_em);
 		if(iw<mw)
 		{
 			iw=mw;
@@ -10669,28 +10895,34 @@ void kGUIHTMLObj::ClipMinMaxWidth(int pw)
 		}
 	}
 	if(clipped)
+	{
+		m_clipw=true;
 		SetInsideW(iw);
+	}
 }
 
 void kGUIHTMLObj::ClipMinMaxHeight(int ph)
 {
 	int ih,mh;
 	bool clipped;
+	kGUIUnits u;
 
 	clipped=false;
 	ih=GetInsideH();
-	if(m_maxheight.GetUnitType()!=UNITS_UNDEFINED)
+	if(m_pattmaxheight)
 	{
-		mh=m_maxheight.CalcUnitValue(ph,m_em);
+		u.Set(m_page,m_pattmaxheight->GetValue());
+		mh=u.CalcUnitValue(ph,m_em);
 		if(ih>mh)
 		{
 			ih=mh;
 			clipped=true;
 		}
 	}		
-	if(m_minheight.GetUnitType()!=UNITS_UNDEFINED)
+	if(m_pattminheight)
 	{
-		mh=m_minheight.CalcUnitValue(ph,m_em);
+		u.Set(m_page,m_pattminheight->GetValue());
+		mh=u.CalcUnitValue(ph,m_em);
 		if(ih<mh)
 		{
 			ih=mh;
@@ -10698,7 +10930,10 @@ void kGUIHTMLObj::ClipMinMaxHeight(int ph)
 		}
 	}
 	if(clipped)
+	{
+		m_cliph=true;
 		SetInsideH(ih);
+	}
 }
 
 
@@ -10762,15 +10997,14 @@ void kGUIHTMLObj::CheckFixed(void)
 		}
 
 		SetInsideW(ow);
-		ClipMinMaxWidth(pw);
 	}
+	ClipMinMaxWidth(pw);
 
 	/* there is a defined height */
 	if(m_height.GetUnitType()!=UNITS_UNDEFINED && m_height.GetUnitType()!=UNITS_AUTO)
 	{
 		oh=m_height.CalcUnitValue(ph,m_em);
 		SetInsideH(oh);
-		ClipMinMaxHeight(ph);
 
 		/* if we reference our parents height then the position needs to do two passes */
 		if(m_height.GetUnitType()==UNITS_PERCENT)
@@ -10784,6 +11018,7 @@ void kGUIHTMLObj::CheckFixed(void)
 		else
 			m_fixedh=true;
 	}
+	ClipMinMaxHeight(ph);
 
 	ow=GetOutsideW();	/* object width */
 	oh=GetOutsideH();	/* object height */
@@ -10816,7 +11051,7 @@ void kGUIHTMLObj::CheckFixed(void)
 		}
 		else
 		{
-			if(m_right.GetUnitType()!=UNITS_UNDEFINED)
+			if(m_right.GetUnitType()!=UNITS_UNDEFINED && m_right.GetUnitType()!=UNITS_AUTO)
 				xoff=pw-ow-m_right.CalcUnitValue(pw,m_em);
 			else
 				xoff=0;
@@ -11115,7 +11350,7 @@ void kGUIHTMLObj::PositionBreak(bool wrap)
 		robj->MoveZoneY(m_pos->m_cury+((m_pos->m_lineasc-robj->GetZoneH())+pop->baseline)+ry);
 
 		if(robj->GetZoneY()<0)
-			kGUI::Trace("Error!\n");
+			kGUI::Trace("Error?? Y is less than zero!\n");
 
 		/* if this is the last child of an inline tag then call ContainChildren to make the box surround them */
 
@@ -11427,8 +11662,11 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 		break;
 		}
 dotext:;
-		if(isbox && m_pos->m_ponum)
-			PositionBreak();
+		if(isbox)
+		{
+			if(m_pos->m_ponum)
+				PositionBreak();
+		}
 		else if(m_pos->m_ponum)
 		{
 			/* if the text-align mode changes then flush the previous ones */
@@ -11541,12 +11779,14 @@ kGUIHTMLTableInfo::kGUIHTMLTableInfo()
 	m_numrows=0;
 	m_numcols=0;
 	m_box=0;
-	m_cellborder=new kGUIHTMLBox(0);
+	m_cellborder=0;
+	//new kGUIHTMLBox(0);
 }
 
 kGUIHTMLTableInfo::~kGUIHTMLTableInfo()
 {
-	delete m_cellborder;
+	if(m_cellborder)
+		delete m_cellborder;
 }
 
 void kGUIHTMLTableInfo::Get(kGUIHTMLObj *obj,Array<kGUIHTMLObj *>*objectarray,unsigned int *num,unsigned int display)
@@ -11889,15 +12129,15 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 	table->m_maxw=0;
 	for(c=0;c<m_numcols;++c)
 	{
-		table->m_minw+=m_cellspacing;
-		table->m_maxw+=m_cellspacing;
+		table->m_minw+=m_cellspacingh;
+		table->m_maxw+=m_cellspacingh;
 		table->m_minw+=m_colmin.GetEntry(c);
 		table->m_maxw+=m_colmax.GetEntry(c);
 	}
 	if(m_numcols)
 	{
-		table->m_minw+=m_cellspacing;
-		table->m_maxw+=m_cellspacing;
+		table->m_minw+=m_cellspacingh;
+		table->m_maxw+=m_cellspacingh;
 	}
 
 	/* only expand table to fit cells, don't make smaller */
@@ -11943,16 +12183,16 @@ void kGUIHTMLTableInfo::ExpandCols(int startcol,int numcols,int width,bool expan
 	for(i=0;i<numcols;++i)
 	{
 		curw+=m_colwidth.GetEntry(startcol+i);
-		curw+=m_cellspacing;
+		curw+=m_cellspacingh;
 		if(m_colwidthfixed.GetEntry(startcol+i)==true)
 		{
 			maxw+=m_colwidth.GetEntry(startcol+i);
-			maxw+=m_cellspacing;
+			maxw+=m_cellspacingh;
 		}
 		else
 		{
 			maxw+=m_colmax.GetEntry(startcol+i);
-			maxw+=m_cellspacing;
+			maxw+=m_cellspacingh;
 		}
 	}
 	/* current width is already past this! */
@@ -12216,7 +12456,7 @@ void kGUIHTMLTableInfo::ExpandTable(kGUIHTMLObj *table,int em)
 		expand=false;
 	}
 	tw-=m_cellpadding<<1;
-	tw-=(m_numcols+1)*m_cellspacing;
+	tw-=(m_numcols+1)*m_cellspacingh;
 
 	ExpandCols(0,m_numcols,tw,expand,true);
 
@@ -12225,12 +12465,12 @@ void kGUIHTMLTableInfo::ExpandTable(kGUIHTMLObj *table,int em)
 	w=0;
 	for(i=0;i<m_numcols;++i)
 	{
-		w+=m_cellspacing;
+		w+=m_cellspacingh;
 		m_colx.SetEntry(i,w);
 		w+=m_colwidth.GetEntry(i);
 	}
 	if(m_numcols)
-		w+=m_cellspacing;
+		w+=m_cellspacingh;
 
 	table->SetOutsideW(w);
 	table->CalcChildZone();
@@ -12300,7 +12540,7 @@ void kGUIHTMLTableInfo::PositionCells(kGUIHTMLObj *table)
 	rowx=0;
 	for(i=0;i<m_numcols;++i)
 	{
-		rowx+=m_cellspacing;
+		rowx+=m_cellspacingh;
 #if 0
 		kGUI::Trace("Col %d, lx=%d,rx=%d\n",i,rowx,rowx+m_colwidth.GetEntry(i));
 #endif
@@ -12308,7 +12548,7 @@ void kGUIHTMLTableInfo::PositionCells(kGUIHTMLObj *table)
 		rowx+=m_colwidth.GetEntry(i);
 	}
 	if(m_numcols)
-		rowx+=m_cellspacing;
+		rowx+=m_cellspacingh;
 	tablex=rowx;
 	if(table->m_box)
 		tablex+=(table->m_box->GetBoxLeftWidth()+table->m_box->GetBoxRightWidth());
@@ -12390,13 +12630,13 @@ void kGUIHTMLTableInfo::PositionCells(kGUIHTMLObj *table)
 	y=0;
 	for(i=0;i<m_numrows;++i)
 	{
-		y+=m_cellspacing;
+		y+=m_cellspacingv;
 		m_coly.SetEntry(i,y);
 		y+=m_rowheight.GetEntry(i);
 //		kGUI::Trace("Row %d, y=%d\n",i,y);
 	}
 	if(m_numrows)
-		y+=m_cellspacing;
+		y+=m_cellspacingv;
 
 	if(table->m_height.GetUnitType()==UNITS_PIXELS)
 		table->m_pos->m_cury=table->m_height.GetUnitValue();
@@ -12463,7 +12703,7 @@ void kGUIHTMLTableInfo::PositionCells(kGUIHTMLObj *table)
 		crow=m_rowptrs.GetEntry(i);
 		crow->MoveZoneX(0);
 		crow->MoveZoneY(m_coly.GetEntry(i));
-		crow->SetOutsideH(tallest+m_cellspacing);
+		crow->SetOutsideH(tallest+m_cellspacingv);
 		crow->SetOutsideW(rowx);
 		crow->CalcChildZone();
 	}
@@ -12658,6 +12898,7 @@ void kGUIHTMLObj::Position(bool placeme)
 			case DISPLAY_LIST_ITEM:
 				if(m_float==FLOAT_NONE && m_left.GetUnitType()==UNITS_UNDEFINED && m_right.GetUnitType()==UNITS_UNDEFINED && m_width.GetUnitType()==UNITS_UNDEFINED)
 				{
+#if 0
 					if(rp->m_pos->m_leftw || rp->m_pos->m_rightw)
 					{
 						pw+=rp->m_pos->m_leftw+rp->m_pos->m_rightw;
@@ -12666,6 +12907,7 @@ void kGUIHTMLObj::Position(bool placeme)
 						if((int)GetBox()->GetBoxRightMargin()<rp->m_pos->m_rightw)
 							GetBox()->SetBoxRightMargin(rp->m_pos->m_rightw);
 					}
+#endif
 
 					SetOutsideW(pw);
 				}
@@ -13017,11 +13259,16 @@ typechanged:;
 
 		/* this isn't needed, I just have it for debugging */
 		m_minw=m_maxw=textobj->GetZoneW();
+#if 1
+		SetInsideW(m_minw);
+		SetInsideH(textobj->GetZoneH());
+#else
 		MoveZoneW(m_minw);
 		MoveZoneH(textobj->GetZoneH());
+#endif
+		rp->PositionChild(this,textobj,textobj->GetAscHeight(),textobj->GetDescHeight()+2);
 
 //		kGUI::Trace("Text='%s'\n",textobj->GetString());
-		rp->PositionChild(this,textobj,textobj->GetAscHeight(),textobj->GetDescHeight()+2);
 
 
 		if(textobj->GetPlusCR())	/* only set in PRE mode */
@@ -13055,6 +13302,8 @@ typechanged:;
 
 		if(m_page->m_mode==MODE_MINMAX)
 		{
+			inputobj->MoveZoneX(0);
+			inputobj->MoveZoneY(0);
 			inputobj->SetTextDecoration(m_page->m_textdecoration);
 			inputobj->SetTextDecorationColor(m_page->m_textdecorationcolor);
 			if(m_page->m_fontweight>=700)
@@ -13259,11 +13508,13 @@ typechanged:;
 		imageheight=m_obj.m_imageobj->GetImageHeight();
 
 		/* calc width/height of box and then width/height of image */
-		if(m_fixedw || m_relw)
+		ClipMinMaxWidth(rp->GetInsideW());
+		ClipMinMaxHeight(rp->GetInsideW());
+		if(m_fixedw || m_relw || m_clipw)
 			childwidth=GetInsideW();
 		else
 		{
-			if(m_fixedh || m_relh)
+			if(m_fixedh || m_relh || m_cliph)
 			{
 				if(imageheight)
 					childwidth=(int)(imagewidth*((double)GetInsideH()/(double)imageheight));
@@ -13282,10 +13533,10 @@ typechanged:;
 		else
 			wscale=0.0f;
 
-		if(m_fixedh==false && m_relh==false)
+		if(m_fixedh==false && m_relh==false || m_cliph)
 		{
 			/* example: image= 500x400, style="width=150px" */
-			if(m_fixedw==true || m_relw==true)
+			if(m_fixedw==true || m_relw==true || m_clipw)
 				childheight=(int)(wscale*imageheight);
 			else
 				childheight=imageheight;
@@ -13464,6 +13715,8 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				else
 					bold=0;
 
+				inputboxobj->MoveZoneX(0);
+				inputboxobj->MoveZoneY(0);
 				inputboxobj->SetTextDecoration(m_page->m_textdecoration);
 				inputboxobj->SetTextDecorationColor(m_page->m_textdecorationcolor);
 				inputboxobj->SetFontID(m_page->m_fontid+bold);
@@ -13532,13 +13785,8 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 			SetAllowOverlappingChildren(true);
 			/* calc number of rows and columns and min/max size of table*/
 			m_ti->m_box=m_box;
-			m_ti->m_cellborder->SetBorder(0);
-			if(m_box)
-			{
-				m_ti->m_cellborder->SetBorder(m_box->GetBoxWidth()>0?1:0);
-				m_ti->m_cellborder->SetUndefinedBorderColors(DrawColor(0,0,0),true);
-			}
-			m_ti->m_cellspacing=m_page->m_cellspacing;
+			m_ti->m_cellspacingh=m_page->m_cellspacingh;
+			m_ti->m_cellspacingv=m_page->m_cellspacingv;
 			m_ti->m_cellpadding=m_page->m_cellpadding;
 			m_ti->CalcMinMax(this,(int)(m_page->m_fontsize*m_page->m_fontscale));
 		}
@@ -13567,7 +13815,11 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 
 	m_maxchildy=max(m_pos->m_cury,m_maxy);
 	if(m_fixedh==false && m_relh==false)
+	{
 		SetInsideH(m_maxchildy);
+		if(rp)
+			ClipMinMaxHeight(rp->GetInsideH());
+	}
 	else
 	{
 		if(m_maxchildy>GetInsideH())
@@ -13708,6 +13960,7 @@ void kGUIHTMLObj::InsertFrame(void)
 	kGUIString oldurl;
 	kGUIHTMLObj *child;
 	unsigned int urlid;
+	unsigned int numrules;
 
 	unsigned int i,n;
 	HashEntry *he;
@@ -13744,12 +13997,9 @@ void kGUIHTMLObj::InsertFrame(void)
 	m_page->SetURL(link->GetURL());
 //	kGUI::Trace("Setting New URL as %s\n",link->GetURL()->GetString());
 
-	{
-		kGUIString header;
+	numrules=m_page->m_numrules;
 
-		/* todo, put proper page header in here! */
-		m_page->Parse(this,s.GetString(),s.GetLen(),&header);
-	}
+	m_page->Parse(this,s.GetString(),s.GetLen(),link->GetHeader(),true);
 
 	/* don't call for me again, just call for my children that were just added */
 	/* skip any children that were there before the frame was inserted */
@@ -13760,6 +14010,10 @@ void kGUIHTMLObj::InsertFrame(void)
 		if(urlid==child->GetOwnerURL())
 			m_page->PreProcess(&tci,child,true);
 	}
+
+	/* if any rules were added during parse then we need to Invalidate the TCI cache */
+	if(numrules!=m_page->m_numrules)
+		m_page->m_again=true;
 
 	m_page->SetURL(&oldurl);
 //	kGUI::Trace("Restoring Old URL as %s\n",oldurl.GetString());
@@ -13999,10 +14253,10 @@ void kGUIHTMLObj::Contain(bool force)
 	/* this is probably a hack that can go away once some other bug is fixed */
 	if(m_page->m_mode==MODE_POSITION)
 	{
-		if(m_id==HTMLTAG_BODY || m_id==HTMLTAG_ROOT)
+		if(m_id==HTMLTAG_HTML || m_id==HTMLTAG_ROOT)
 		{
 			/* adjust for scroll values by subtracting page scroll offsets */
-			MoveZoneW(m_page->m_maxpagew-c.lx);
+		//	MoveZoneW(m_page->m_maxpagew-c.lx);
 			MoveZoneH(m_page->m_maxpageh-c.ty);
 		}
 	}
@@ -14309,27 +14563,33 @@ void kGUIUnits::Set(kGUIHTMLPageObj *page,kGUIString *s)
 		m_units=UNITS_AUTO;
 	else
 	{
-		/* find the suffix */
-		if(strstri(s->GetString(),"em"))
-			m_units=UNITS_EM;
-		else if(strstri(s->GetString(),"ex"))
-			m_units=UNITS_EX;
-		else if(strstri(s->GetString(),"px"))
-			m_units=UNITS_PIXELS;
-		else if(strstri(s->GetString(),"cm"))
-			m_units=UNITS_CM;
-		else if(strstri(s->GetString(),"mm"))
-			m_units=UNITS_MM;
-		else if(strstri(s->GetString(),"in"))
-			m_units=UNITS_IN;
-		else if(strstri(s->GetString(),"pc"))
-			m_units=UNITS_PC;
-		else if(strstri(s->GetString(),"pt"))
-			m_units=UNITS_POINTS;
-		else if((s->GetChar(0)>='0' && s->GetChar(0)<='9') || (s->GetChar(0)=='-') || (s->GetChar(0)=='+') || (s->GetChar(0)=='.'))
-			m_units=UNITS_PIXELS;
+		if((s->GetChar(0)>='0' && s->GetChar(0)<='9') || (s->GetChar(0)=='-') || (s->GetChar(0)=='+') || (s->GetChar(0)=='.'))
+		{
+			/* find the suffix */
+			if(strstri(s->GetString(),"em"))
+				m_units=UNITS_EM;
+			else if(strstri(s->GetString(),"ex"))
+				m_units=UNITS_EX;
+			else if(strstri(s->GetString(),"px"))
+				m_units=UNITS_PIXELS;
+			else if(strstri(s->GetString(),"cm"))
+				m_units=UNITS_CM;
+			else if(strstri(s->GetString(),"mm"))
+				m_units=UNITS_MM;
+			else if(strstri(s->GetString(),"in"))
+				m_units=UNITS_IN;
+			else if(strstri(s->GetString(),"pc"))
+				m_units=UNITS_PC;
+			else if(strstri(s->GetString(),"pt"))
+				m_units=UNITS_POINTS;
+			else
+				m_units=UNITS_PIXELS;
+		}
 		else
+		{
 			m_units=UNITS_UNDEFINED;
+			return;
+		}
 	}
 	/* is the constant an int or a double? */
 	if(strstr(s->GetString(),"."))
@@ -15410,6 +15670,36 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 		x=BORDER_RIGHT;
 		goto setborder;
 	break;
+#if 0
+	case HTMLATTGROUP_BORDER2:
+		/* this is a border="n" in the HTML tag, not a css style */
+		/* border so we will treat it differently */
+
+		AddAttribute(HTMLATT_BORDER_WIDTH_TOP2,owner,priority,value);
+		AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM2,owner,priority,value);
+		AddAttribute(HTMLATT_BORDER_WIDTH_LEFT2,owner,priority,value);
+		AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT2,owner,priority,value);
+
+		if(value->GetInt()>0)
+		{
+			kGUIString color;
+			kGUIString style;
+
+			style.SetString("solid");
+			AddAttribute(HTMLATT_BORDER_STYLE_LEFT2,owner,priority,&style);
+			AddAttribute(HTMLATT_BORDER_STYLE_RIGHT2,owner,priority,&style);
+			AddAttribute(HTMLATT_BORDER_STYLE_TOP2,owner,priority,&style);
+			AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM2,owner,priority,&style);
+
+			color.SetString("#8d8d8d");
+			AddAttribute(HTMLATT_BORDER_COLOR_LEFT2,owner,priority,&color);
+			AddAttribute(HTMLATT_BORDER_COLOR_TOP2,owner,priority,&color);
+			color.SetString("#c0c0c0");
+			AddAttribute(HTMLATT_BORDER_COLOR_RIGHT2,owner,priority,&color);
+			AddAttribute(HTMLATT_BORDER_COLOR_BOTTOM2,owner,priority,&color);
+		}
+	break;
+#endif
 	case HTMLATTGROUP_BORDER:
 		x=BORDER_ALL;
 setborder:;
@@ -15425,132 +15715,135 @@ setborder:;
 		//size.SetString("medium");
 
 		numwords=ss.Split(value," ");
-		if(numwords==1 && x==BORDER_ALL && page->DigOnly(value))
+		for(w=0;w<numwords;++w)
 		{
-			/* tbis is the old style for tables "border=1" (etc) */
-			AddAttribute(HTMLATT_BORDER_WIDTH,owner,priority,value);
-			if(value->GetInt()>0)
+			word=ss.GetWord(w);
+			code=page->GetConstID(word->GetString());
+			switch(code)
 			{
-				style.SetString("solid");
-				AddAttribute(HTMLATT_BORDER_STYLE_LEFT,owner,priority,&style);
-				AddAttribute(HTMLATT_BORDER_STYLE_RIGHT,owner,priority,&style);
-				AddAttribute(HTMLATT_BORDER_STYLE_TOP,owner,priority,&style);
-				AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM,owner,priority,&style);
-			}
-		}
-		else
-		{
-			for(w=0;w<numwords;++w)
-			{
-				word=ss.GetWord(w);
-				code=page->GetConstID(word->GetString());
-				switch(code)
+			case HTMLCONST_NONE:
+			case HTMLCONST_HIDDEN:
+			case HTMLCONST_DOTTED:
+			case HTMLCONST_DASHED:
+			case HTMLCONST_SOLID:
+			case HTMLCONST_DOUBLE:
+			case HTMLCONST_GROOVE:
+			case HTMLCONST_RIDGE:
+			case HTMLCONST_INSET:
+			case HTMLCONST_OUTSET:
+				++gotstyle;
+				style.SetString(word);
+			break;
+			case HTMLCONST_THIN:
+			case HTMLCONST_MEDIUM:
+			case HTMLCONST_THICK:
+			case HTMLCONST_LENGTH:
+				++gotsize;
+				size.SetString(word);
+			break;
+			case HTMLCONST_CURRENTCOLOR:
+				++gotcolor;
+				color.SetString(word);
+			break;
+			case HTMLCONST_INHERIT:
+				++gotcolor;
+				color.SetString(word);
+			break;
+			default:
+				/* is this a unit measure? */
+				u.Set(page,word);
+				if(u.GetUnitType()!=UNITS_UNDEFINED)
 				{
-				case HTMLCONST_NONE:
-				case HTMLCONST_HIDDEN:
-				case HTMLCONST_DOTTED:
-				case HTMLCONST_DASHED:
-				case HTMLCONST_SOLID:
-				case HTMLCONST_DOUBLE:
-				case HTMLCONST_GROOVE:
-				case HTMLCONST_RIDGE:
-				case HTMLCONST_INSET:
-				case HTMLCONST_OUTSET:
-					++gotstyle;
-					style.SetString(word);
-				break;
-				case HTMLCONST_THIN:
-				case HTMLCONST_MEDIUM:
-				case HTMLCONST_THICK:
-				case HTMLCONST_LENGTH:
+					/* must be a size */
 					++gotsize;
 					size.SetString(word);
-				break;
-				default:
-					/* is this a unit measure? */
-					u.Set(page,word);
-					if(u.GetUnitType()!=UNITS_UNDEFINED)
-					{
-						/* must be a size */
-						++gotsize;
-						size.SetString(word);
-					}
-					else
-					{
-						/* must be a color */
-						if(page->GetColor(word,&c))
-						{
-							++gotcolor;
-							color.SetString(word);
-						}
-					}
-				break;
 				}
-			}
-			/* was this all valid? */
-			if(gotstyle<2 && gotcolor<2 && gotsize<2)
-			{
-				switch(x)
+				else
 				{
-				case BORDER_LEFT:
-					if(gotstyle)
-						AddAttribute(HTMLATT_BORDER_STYLE_LEFT,owner,priority,&style);
-					if(gotsize)
-						AddAttribute(HTMLATT_BORDER_WIDTH_LEFT,owner,priority,&size);
-					if(gotcolor)
-						AddAttribute(HTMLATT_BORDER_COLOR_LEFT,owner,priority,&color);
-				break;
-				case BORDER_RIGHT:
-					if(gotstyle)
-						AddAttribute(HTMLATT_BORDER_STYLE_RIGHT,owner,priority,&style);
-					if(gotsize)
-						AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT,owner,priority,&size);
-					if(gotcolor)
-						AddAttribute(HTMLATT_BORDER_COLOR_RIGHT,owner,priority,&color);
-				break;
-				case BORDER_TOP:
-					if(gotstyle)
-						AddAttribute(HTMLATT_BORDER_STYLE_TOP,owner,priority,&style);
-					if(gotsize)
-						AddAttribute(HTMLATT_BORDER_WIDTH_TOP,owner,priority,&size);
-					if(gotcolor)
-						AddAttribute(HTMLATT_BORDER_COLOR_TOP,owner,priority,&color);
-				break;
-				case BORDER_BOTTOM:
-					if(gotstyle)
-						AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM,owner,priority,&style);
-					if(gotsize)
-						AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,&size);
-					if(gotcolor)
-						AddAttribute(HTMLATT_BORDER_COLOR_BOTTOM,owner,priority,&color);
-				break;
-				case BORDER_ALL:
-					if(gotstyle)
+					/* must be a color */
+					if(page->GetColor(word,&c))
 					{
-						AddAttribute(HTMLATT_BORDER_STYLE_TOP,owner,priority,&style);
-						AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM,owner,priority,&style);
-						AddAttribute(HTMLATT_BORDER_STYLE_LEFT,owner,priority,&style);
-						AddAttribute(HTMLATT_BORDER_STYLE_RIGHT,owner,priority,&style);
+						++gotcolor;
+						color.SetString(word);
 					}
-					if(gotsize)
-					{
-						AddAttribute(HTMLATT_BORDER_WIDTH_TOP,owner,priority,&size);
-						AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,&size);
-						AddAttribute(HTMLATT_BORDER_WIDTH_LEFT,owner,priority,&size);
-						AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT,owner,priority,&size);
-					}
-					if(gotcolor)
-					{
-						AddAttribute(HTMLATT_BORDER_COLOR_TOP,owner,priority,&color);
-						AddAttribute(HTMLATT_BORDER_COLOR_BOTTOM,owner,priority,&color);
-						AddAttribute(HTMLATT_BORDER_COLOR_LEFT,owner,priority,&color);
-						AddAttribute(HTMLATT_BORDER_COLOR_RIGHT,owner,priority,&color);
-					}
-				break;
 				}
+			break;
 			}
 		}
+		/* was this all valid? */
+		if(gotstyle<2 && gotcolor<2 && gotsize<2)
+		{
+			if(!gotcolor)
+			{
+				gotcolor=true;
+				color.SetString("CurrentColor");
+			}
+			if(!gotstyle)
+			{
+				gotstyle=true;
+				style.SetString("none");
+			}
+
+			switch(x)
+			{
+			case BORDER_LEFT:
+				if(gotstyle)
+					AddAttribute(HTMLATT_BORDER_STYLE_LEFT,owner,priority,&style);
+				if(gotsize)
+					AddAttribute(HTMLATT_BORDER_WIDTH_LEFT,owner,priority,&size);
+				if(gotcolor)
+					AddAttribute(HTMLATT_BORDER_COLOR_LEFT,owner,priority,&color);
+			break;
+			case BORDER_RIGHT:
+				if(gotstyle)
+					AddAttribute(HTMLATT_BORDER_STYLE_RIGHT,owner,priority,&style);
+				if(gotsize)
+					AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT,owner,priority,&size);
+				if(gotcolor)
+					AddAttribute(HTMLATT_BORDER_COLOR_RIGHT,owner,priority,&color);
+			break;
+			case BORDER_TOP:
+				if(gotstyle)
+					AddAttribute(HTMLATT_BORDER_STYLE_TOP,owner,priority,&style);
+				if(gotsize)
+					AddAttribute(HTMLATT_BORDER_WIDTH_TOP,owner,priority,&size);
+				if(gotcolor)
+					AddAttribute(HTMLATT_BORDER_COLOR_TOP,owner,priority,&color);
+			break;
+			case BORDER_BOTTOM:
+				if(gotstyle)
+					AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM,owner,priority,&style);
+				if(gotsize)
+					AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,&size);
+				if(gotcolor)
+					AddAttribute(HTMLATT_BORDER_COLOR_BOTTOM,owner,priority,&color);
+			break;
+			case BORDER_ALL:
+				if(gotstyle)
+				{
+					AddAttribute(HTMLATT_BORDER_STYLE_TOP,owner,priority,&style);
+					AddAttribute(HTMLATT_BORDER_STYLE_BOTTOM,owner,priority,&style);
+					AddAttribute(HTMLATT_BORDER_STYLE_LEFT,owner,priority,&style);
+					AddAttribute(HTMLATT_BORDER_STYLE_RIGHT,owner,priority,&style);
+				}
+				if(gotsize)
+				{
+					AddAttribute(HTMLATT_BORDER_WIDTH_TOP,owner,priority,&size);
+					AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,&size);
+					AddAttribute(HTMLATT_BORDER_WIDTH_LEFT,owner,priority,&size);
+					AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT,owner,priority,&size);
+				}
+				if(gotcolor)
+				{
+					AddAttribute(HTMLATT_BORDER_COLOR_TOP,owner,priority,&color);
+					AddAttribute(HTMLATT_BORDER_COLOR_BOTTOM,owner,priority,&color);
+					AddAttribute(HTMLATT_BORDER_COLOR_LEFT,owner,priority,&color);
+					AddAttribute(HTMLATT_BORDER_COLOR_RIGHT,owner,priority,&color);
+				}
+			break;
+			}
 		}
+	}
 	break;
 	case HTMLATTGROUP_BORDER_WIDTH:
 		numwords=ss.Split(value," ");
@@ -15586,6 +15879,16 @@ setborder:;
 			AddAttribute(HTMLATT_BORDER_WIDTH_RIGHT,owner,priority,wr);
 			AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,wb);
 		}
+	break;
+	case HTMLATT_CELLSPACING:
+	{
+		kGUIString size;
+
+		/* add px */
+		size.Sprintf("%dpx",value->GetInt());
+		AddAttribute(HTMLATT_BORDER_SPACING_HORIZ,owner,priority,&size);
+		AddAttribute(HTMLATT_BORDER_SPACING_VERT,owner,priority,&size);
+	}
 	break;
 	case HTMLATTGROUP_BORDER_SPACING:
 		numwords=ss.Split(value," ");
@@ -15955,6 +16258,7 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 
 		s.SetString(col->GetString()+4);
 		s.Clip(s.GetLen()-1);
+		ss.SetIgnoreEmpty(false);
 		num=ss.Split(&s,",");
 		if(num==3)
 		{
@@ -16015,6 +16319,7 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 
 		s.SetString(col->GetString()+5);
 		s.Clip(s.GetLen()-1);
+		ss.SetIgnoreEmpty(false);
 		num=ss.Split(&s,",");
 		if(num==4)
 		{
@@ -16086,6 +16391,7 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 
 		s.SetString(col->GetString()+4);
 		s.Clip(s.GetLen()-1);
+		ss.SetIgnoreEmpty(false);
 		num=ss.Split(&s,",");
 		if(num==3)
 		{
@@ -16153,6 +16459,7 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 
 		s.SetString(col->GetString()+5);
 		s.Clip(s.GetLen()-1);
+		ss.SetIgnoreEmpty(false);
 		num=ss.Split(&s,",");
 		if(num==4)
 		{
@@ -16288,6 +16595,13 @@ bool kGUIHTMLPageObj::GetColor(kGUIString *col,kGUIHTMLColor *c)
 			/* todo: add these to the colorhash table in the init code */
 			c->Set(m_colors[cid]);
 			m_colorhash.Add(col->GetString(),&m_colors[cid]);
+			return(true);
+		}
+		else if(cid>=FIRST_SYSCOLOR && cid<=LAST_SYSCOLOR)
+		{
+			/* todo: add these to the colorhash table in the init code */
+			c->Set(m_syscolors[cid-FIRST_SYSCOLOR]);
+			m_colorhash.Add(col->GetString(),&m_syscolors[cid-FIRST_SYSCOLOR]);
 			return(true);
 		}
 	break;
@@ -17220,6 +17534,18 @@ void kGUIHTMLBox::SetBorder(unsigned int w)
 		m_topstyle=m_bottomstyle=m_leftstyle=m_rightstyle=BORDERSTYLE_HIDDEN;
 }
 
+void kGUIHTMLBox::SetBorderWidth(unsigned int bb,int wpix)
+{
+	if(bb&BORDER_LEFT)
+		m_leftbw=wpix;
+	if(bb&BORDER_RIGHT)
+		m_rightbw=wpix;
+	if(bb&BORDER_TOP)
+		m_topbw=wpix;
+	if(bb&BORDER_BOTTOM)
+		m_bottombw=wpix;
+}
+
 void kGUIHTMLBox::SetBorderWidth(unsigned int bb,kGUIString *s,kGUIHTMLObj *parent)
 {
 	unsigned int code;
@@ -17318,23 +17644,23 @@ void kGUIHTMLBox::SetMarginWidth(unsigned int mm,kGUIString *s,kGUIHTMLObj *pare
 		m_bottommw=wpix;
 }
 
-void kGUIHTMLBox::SetUndefinedBorderColors(kGUIColor c,bool iscell)
+void kGUIHTMLBox::SetUndefinedBorderColors(kGUIColor c)
 {
 	/* if a border color is not defined then we will set it to the */
 	/* objects text color, unless it is a table cell then we will set */
 	/* it to two shades of gray to make a beveled 3d look */
 
 	if(m_topcolor.GetUndefined())
-		m_topcolor.Set(iscell==false?c:DrawColor(0x8d,0x8d,0x8d));
+		m_topcolor.Set(c);
 
 	if(m_leftcolor.GetUndefined())
-		m_leftcolor.Set(iscell==false?c:DrawColor(0x8d,0x8d,0x8d));
+		m_leftcolor.Set(c);
 
 	if(m_rightcolor.GetUndefined())
-		m_rightcolor.Set(iscell==false?c:DrawColor(0xc0,0xc0,0xc0));
+		m_rightcolor.Set(c);
 
 	if(m_bottomcolor.GetUndefined())
-		m_bottomcolor.Set(iscell==false?c:DrawColor(0xc0,0xc0,0xc0));
+		m_bottomcolor.Set(c);
 }
 
 
@@ -17438,6 +17764,17 @@ void kGUIHTMLBox::SetBorderColor(unsigned int bb,kGUIHTMLColor *c)
 		m_bottomcolor.Set(c);
 }
 
+void kGUIHTMLBox::SetBorderColor(unsigned int bb,kGUIHTMLBox *box)
+{
+	if(bb&BORDER_LEFT)
+		m_leftcolor.Set(&box->m_leftcolor);
+	if(bb&BORDER_RIGHT)
+		m_rightcolor.Set(&box->m_rightcolor);
+	if(bb&BORDER_TOP)
+		m_topcolor.Set(&box->m_topcolor);
+	if(bb&BORDER_BOTTOM)
+		m_bottomcolor.Set(&box->m_bottomcolor);
+}
 
 void kGUIHTMLBox::SetBorderStyle(unsigned int bb,kGUIString *s)
 {
@@ -17632,11 +17969,8 @@ solid:;
 
 void kGUIHTMLBox::Draw(kGUICorners *c)
 {
-	unsigned int i;
 	unsigned int w;
-	int lx,rx,ty,by;
 	unsigned int tb,lb,rb,bb;	/* border widths */
-	kGUICorners cc;
 
 	if(m_topstyle==BORDERSTYLE_NONE)
 		tb=0;
@@ -17658,47 +17992,54 @@ void kGUIHTMLBox::Draw(kGUICorners *c)
 	else
 		bb=m_bottombw;
 
-	lx=c->lx+GetBoxPosLeftMargin();
-	rx=c->rx-GetBoxPosRightMargin();
-	ty=c->ty+GetBoxPosTopMargin();
-	by=c->by-GetBoxPosBottomMargin();
-
-	cc.lx=lx;
-	cc.rx=rx;
-	cc.ty=ty;
-	cc.by=by;
-	kGUI::PushClip();
-	kGUI::ShrinkClip(&cc);
-
 	w=max(max(tb,bb),max(lb,rb));
-	for(i=0;i<w;++i)
+	if(w)
 	{
-		if(i<tb)
+		unsigned int i;
+		int lx,rx,ty,by;
+		kGUICorners cc;
+
+		lx=c->lx+GetBoxPosLeftMargin();
+		rx=c->rx-GetBoxPosRightMargin();
+		ty=c->ty+GetBoxPosTopMargin();
+		by=c->by-GetBoxPosBottomMargin();
+
+		cc.lx=lx;
+		cc.rx=rx;
+		cc.ty=ty;
+		cc.by=by;
+		kGUI::PushClip();
+		kGUI::ShrinkClip(&cc);
+
+		for(i=0;i<w;++i)
 		{
-			DrawLine(BORDER_TOP,i,tb,lx,ty+i,rx,ty+i+1,m_topcolor.GetColor(),m_topstyle);
-			++cc.ty;
-			kGUI::ShrinkClip(&cc);
+			if(i<tb)
+			{
+				DrawLine(BORDER_TOP,i,tb,lx,ty+i,rx,ty+i+1,m_topcolor.GetColor(),m_topstyle);
+				++cc.ty;
+				kGUI::ShrinkClip(&cc);
+			}
+			if(i<bb)
+			{
+				DrawLine(BORDER_BOTTOM,i,bb,lx,by-1-i,rx,by-i,m_bottomcolor.GetColor(),m_bottomstyle);
+				--cc.by;
+				kGUI::ShrinkClip(&cc);
+			}
+			if(i<lb)
+			{
+				DrawLine(BORDER_LEFT,i,lb,lx+i,ty,lx+i+1,by,m_leftcolor.GetColor(),m_leftstyle);
+				++cc.lx;
+				kGUI::ShrinkClip(&cc);
+			}
+			if(i<rb)
+			{
+				DrawLine(BORDER_RIGHT,i,rb,rx-i-1,ty,rx-i,by,m_rightcolor.GetColor(),m_rightstyle);
+				--cc.rx;
+				kGUI::ShrinkClip(&cc);
+			}
 		}
-		if(i<bb)
-		{
-			DrawLine(BORDER_BOTTOM,i,bb,lx,by-1-i,rx,by-i,m_bottomcolor.GetColor(),m_bottomstyle);
-			--cc.by;
-			kGUI::ShrinkClip(&cc);
+		kGUI::PopClip();
 		}
-		if(i<lb)
-		{
-			DrawLine(BORDER_LEFT,i,lb,lx+i,ty,lx+i+1,by,m_leftcolor.GetColor(),m_leftstyle);
-			++cc.lx;
-			kGUI::ShrinkClip(&cc);
-		}
-		if(i<rb)
-		{
-			DrawLine(BORDER_RIGHT,i,rb,rx-i-1,ty,rx-i,by,m_rightcolor.GetColor(),m_rightstyle);
-			--cc.rx;
-			kGUI::ShrinkClip(&cc);
-		}
-	}
-	kGUI::PopClip();
 }
 
 void kGUIHTMLAttrib::SetValue(kGUIString *value)
@@ -18560,6 +18901,8 @@ void kGUIHTMLTextGroup::Split(unsigned int whitespace,unsigned int transform,kGU
 //		m_tempstring.Replace("\r","\n");
 		numwords=ss.Split(&m_tempstring,"\n",0,false);
 		pluscr=numwords-1;
+		if(m_pluscr)
+			++pluscr;
 		goto addwords;
 	}
 	else if(whitespace==WHITESPACE_PRELINE)
@@ -18573,6 +18916,8 @@ void kGUIHTMLTextGroup::Split(unsigned int whitespace,unsigned int transform,kGU
 
 		numwords=ss.Split(&m_tempstring,"\n",0,false);
 		pluscr=numwords-1;
+		if(m_pluscr)
+			++pluscr;
 		goto addwords;
 	}
 	else

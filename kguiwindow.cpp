@@ -326,8 +326,8 @@ bool kGUIWindowObj::UpdateInput(void)
 						neww+=dx;
 						if(neww<m_minw)
 							neww=m_minw;
-						else if(neww>kGUI::GetScreenWidth())
-							neww=kGUI::GetScreenWidth();
+						else if(neww>kGUI::GetFullScreenWidth())
+							neww=kGUI::GetFullScreenWidth();
 					}
 					else
 					{
@@ -346,8 +346,10 @@ bool kGUIWindowObj::UpdateInput(void)
 						newh+=dy;
 						if(newh<m_minh)
 							newh=m_minh;
-						else if(newh>kGUI::GetScreenHeight())
-							newh=kGUI::GetScreenHeight();
+						else if(newh>kGUI::GetFullScreenHeight())
+							newh=kGUI::GetFullScreenHeight();
+						if(newh!=oldh)
+							kGUI::AdjustMinimizedWindows(newh-oldh);
 					}
 					else
 					{
@@ -366,13 +368,15 @@ bool kGUIWindowObj::UpdateInput(void)
 						neww+=dx;
 						if(neww<m_minw)
 							neww=m_minw;
-						else if(neww>kGUI::GetScreenWidth())
-							neww=kGUI::GetScreenWidth();
+						else if(neww>kGUI::GetFullScreenWidth())
+							neww=kGUI::GetFullScreenWidth();
 						newh+=dy;
 						if(newh<m_minh)
 							newh=m_minh;
-						else if(newh>kGUI::GetScreenHeight())
-							newh=kGUI::GetScreenHeight();
+						else if(newh>kGUI::GetFullScreenHeight())
+							newh=kGUI::GetFullScreenHeight();
+						if(newh!=oldh)
+							kGUI::AdjustMinimizedWindows(newh-oldh);
 					}
 					else
 					{
@@ -662,4 +666,17 @@ void kGUIWindowObj::Draw(void)
 		}
 	}
 	kGUI::PopClip();
+}
+
+void kGUIWindowObj::Control(unsigned int command,KGCONTROL_DEF *data)
+{
+	switch(command)
+	{
+	case KGCONTROL_GETISWINDOW:
+		data->m_bool=true;
+	break;
+	default:
+		kGUIContainerObj::Control(command,data);
+	break;
+	}
 }

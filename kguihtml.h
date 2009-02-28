@@ -347,15 +347,17 @@ WHITESPACE_PRELINE
 class kGUIHTMLTextGroup : public kGUIString
 {
 public:
-	kGUIHTMLTextGroup(kGUIHTMLPageObj *page) {m_page=page;m_lastwhitespace=WHITESPACE_UNDEFINED;m_lasttransform=TEXTTRANSFORM_NONE;m_numchunks=0;m_chunks.Init(16,16);}
+	kGUIHTMLTextGroup(kGUIHTMLPageObj *page) {m_pluscr=false;m_page=page;m_lastwhitespace=WHITESPACE_UNDEFINED;m_lasttransform=TEXTTRANSFORM_NONE;m_numchunks=0;m_chunks.Init(16,16);}
 	void Split(unsigned int whitespace,unsigned int transform,kGUIHTMLObj *renderparent,kGUIHTMLObj *parent);
 	unsigned int GetLastWhitespace(void) {return m_lastwhitespace;}
 	unsigned int GetLastTransform(void) {return m_lasttransform;}
 	unsigned int GetNumChildren(void) {return m_numchunks;}
+	void SetPlusCR(bool ps) {m_pluscr=ps;}		/* true is string was split in PRE mode */
+	bool GetPlusCR(void) {return m_pluscr;}
 private:
 	unsigned int m_lastwhitespace:2;
 	unsigned int m_lasttransform:2;
-
+	bool m_pluscr:1;
 	unsigned int m_numchunks;
 	kGUIHTMLPageObj *m_page;
 	kGUIString m_tempstring;
@@ -597,10 +599,12 @@ public:
 	bool GetValid(void);		/* false=same state as reset, true=has valid settings */
 	void SetBorder(unsigned int w);
 	void SetBorderWidth(unsigned int bb,kGUIString *s,class kGUIHTMLObj *parent);
+	void SetBorderWidth(unsigned int bb,int wpix);
 	void SetBorderColor(unsigned int bb,kGUIString *s);
 	void SetBorderColor(unsigned int bb,kGUIHTMLColor *c);
+	void SetBorderColor(unsigned int bb,kGUIHTMLBox *box);
 	void SetBorderStyle(unsigned int bb,kGUIString *s);
-	void SetUndefinedBorderColors(kGUIColor c,bool iscell);
+	void SetUndefinedBorderColors(kGUIColor c);
 
 	unsigned int GetBoxLeftBorder(void) {return m_leftstyle==BORDERSTYLE_NONE?0:m_leftbw;}
 	unsigned int GetBoxRightBorder(void) {return m_rightstyle==BORDERSTYLE_NONE?0:m_rightbw;}
@@ -727,7 +731,8 @@ public:
 
 	kGUIHTMLBox *m_box;			/* copy of tables border info */
 	kGUIHTMLBox *m_cellborder;		/* all cells share this */
-	int m_cellspacing;
+	int m_cellspacingh;
+	int m_cellspacingv;
 	int m_cellpadding;
 	Array<int>m_colx;
 	Array<int>m_coly;
@@ -1233,6 +1238,8 @@ private:
 	bool m_fixedh:1;
 	bool m_relw:1;
 	bool m_relh:1;
+	bool m_clipw:1;
+	bool m_cliph:1;
 	bool m_fixedpos:1;
 	bool m_abspos:1;
 	bool m_relpos:1;
@@ -1284,18 +1291,18 @@ private:
 	kGUIHTMLAttrib *m_pattpaddingtop;
 	kGUIHTMLAttrib *m_pattpaddingbottom;
 
+	kGUIHTMLAttrib *m_pattminwidth;
+	kGUIHTMLAttrib *m_pattmaxwidth;
+	kGUIHTMLAttrib *m_pattminheight;
+	kGUIHTMLAttrib *m_pattmaxheight;
+
 	kGUIUnits m_width;
 	kGUIUnits m_height;
 	kGUIUnits m_left;
 	kGUIUnits m_right;
 	kGUIUnits m_top;
 	kGUIUnits m_bottom;
-	kGUIUnits m_minwidth;
-	kGUIUnits m_minheight;
-	kGUIUnits m_maxwidth;
-	kGUIUnits m_maxheight;
 	kGUIUnits m_valignoffset;
-	//kGUIUnits m_textindent;
 
 	bool m_insert:1;
 	bool m_hover:1;
@@ -1394,26 +1401,28 @@ HTMLATT_BACKGROUND_REPEAT,
 HTMLATT_BACKGROUND_POSITIONX,
 HTMLATT_BACKGROUND_POSITIONY,
 HTMLATT_BACKGROUND_COLOR,
+HTMLATT_BORDER_SPACING_HORIZ,
+HTMLATT_BORDER_SPACING_VERT,
+
 HTMLATT_BORDER_COLOR_TOP,
 HTMLATT_BORDER_COLOR_BOTTOM,
 HTMLATT_BORDER_COLOR_LEFT,
 HTMLATT_BORDER_COLOR_RIGHT,
-HTMLATT_BORDER_SPACING_HORIZ,
-HTMLATT_BORDER_SPACING_VERT,
 HTMLATT_BORDER_STYLE_TOP,
 HTMLATT_BORDER_STYLE_BOTTOM,
 HTMLATT_BORDER_STYLE_LEFT,
 HTMLATT_BORDER_STYLE_RIGHT,
-HTMLATT_BORDER_WIDTH,
 HTMLATT_BORDER_WIDTH_TOP,
 HTMLATT_BORDER_WIDTH_BOTTOM,
 HTMLATT_BORDER_WIDTH_LEFT,
 HTMLATT_BORDER_WIDTH_RIGHT,
+
+HTMLATT_HTML_BORDER,
+
 HTMLATT_BORDER_COLLAPSE,
 HTMLATT_BORDERCOLOR,
 HTMLATT_BOTTOM,
 HTMLATT_CELLPADDING,
-HTMLATT_CELLSPACING,
 HTMLATT_CLEAR,
 HTMLATT_COLOR,
 HTMLATT_COLS,
@@ -1501,6 +1510,7 @@ HTMLATT_UNKNOWN,
 HTMLATTGROUP_BACKGROUND_POSITION,
 HTMLATTGROUP_PADDING,
 HTMLATTGROUP_BORDER,
+//HTMLATTGROUP_BORDER2,
 HTMLATTGROUP_BORDER_STYLE,
 HTMLATTGROUP_BORDER_COLOR,
 HTMLATTGROUP_BORDER_WIDTH,
@@ -1511,7 +1521,8 @@ HTMLATTGROUP_BORDER_RIGHT,
 HTMLATTGROUP_BORDER_SPACING,
 HTMLATTGROUP_TEXT_SHADOW,
 HTMLATTGROUP_LIST_STYLE,
-HTMLATTGROUP_OVERFLOW,				/* converts to OVERFLOW_X and OVERFLOW_Y */
+HTMLATTGROUP_OVERFLOW,			/* converts to OVERFLOW_X and OVERFLOW_Y */
+HTMLATT_CELLSPACING,			/* converts to BORDER_SPACING_X BORDER_SPACING_Y */	
 HTMLATTGROUP_OUTLINE,			/* converts to OUTLINE_STYLE,OUTLINE_WIDTH,OUTLINE_COLOR */
 HTMLATT_HSPACE,					/* converts to MARGIN_LEFT and MARGIN_RIGHT  */
 HTMLATT_VSPACE,					/* converts to MARGIN_TOP and MARGIN_BOTTOM */
@@ -1948,8 +1959,8 @@ public:
 
 	void RemoveComments(kGUIString *s);
 	void Parse(bool doprint);
-	bool Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmllen,kGUIString *header);
-	bool TrimCR(kGUIString *s);
+	bool Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmllen,kGUIString *header,bool inframe);
+	bool TrimCR(kGUIString *s,bool *hasendreturn=0);
 	bool AllWhite(kGUIString *s);
 	void CalcPlace(const char *start,const char *place,int *pline,int *pcol);
 	void AddDefaultRules(void);
@@ -2104,6 +2115,7 @@ public:
 	static ATTLIST_DEF m_attlist2[];
 	static CONSTLIST_DEF m_constlist[];
 	static kGUIColor m_colors[];
+	static kGUIColor m_syscolors[];
 	static kGUIString m_attstrings[HTMLATT_NUM];
 	static POPLIST_DEF m_poplist[];
 
@@ -2234,6 +2246,7 @@ private:
 	bool m_ownerrulesbuilt;
 	unsigned int m_numownerrules;
 	Array<RO_DEF>m_ownerrules;
+	bool m_again;
 
 	kGUIHTMLObj *m_rootobject;		/* base object container */
 	kGUIHTMLObj *m_fixedfgobject;	/* container for fixed position forground objects */
@@ -2290,7 +2303,8 @@ private:
 	int m_refreshdelay;
 
 	/* table settings */
-	int m_cellspacing;
+	int m_cellspacingh;
+	int m_cellspacingv;
 	int m_cellpadding;
 
 	unsigned int m_whitespace;

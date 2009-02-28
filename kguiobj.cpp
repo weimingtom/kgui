@@ -53,6 +53,7 @@ void kGUIObj::Control(unsigned int command,KGCONTROL_DEF *data)
 	switch(command)
 	{
 	case KGCONTROL_GETISCONTAINER:
+	case KGCONTROL_GETISWINDOW:
 		/* is this a single object or a container? */
 		data->m_bool=false;
 	break;
