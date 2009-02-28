@@ -1467,6 +1467,7 @@ private:
 enum
 {
 KGCONTROL_GETISCONTAINER,
+KGCONTROL_GETISWINDOW,
 KGCONTROL_GETSKIPTAB,
 KGCONTROL_GETENABLED
 };
@@ -1523,6 +1524,9 @@ public:
 	/*! return if this object is a container or a not
 	    @return true = is a container, false = not a container */
 	bool IsContainer(void) {KGCONTROL_DEF c;Control(KGCONTROL_GETISCONTAINER,&c);return c.m_bool;}
+	/*! return if this object is a window or a not
+	    @return true = is a window, false = not a window */
+	bool IsWindow(void) {KGCONTROL_DEF c;Control(KGCONTROL_GETISWINDOW,&c);return c.m_bool;}
 	/*! return if this object should be skipped when pressing tab
 	    @return true = skip it, false = don't skip */
 	bool SkipTab(void) {KGCONTROL_DEF c;Control(KGCONTROL_GETSKIPTAB,&c);return c.m_bool;}
@@ -2628,6 +2632,7 @@ public:
 	virtual unsigned int GetTabWidth(int tabindex) {return m_tabnames.GetEntryPtr(tabindex)->GetWidth();}
 	virtual void DrawTab(int tabindex,kGUIText *text,int x,int y) {text->Draw(x,y,0,0);}
 	void DirtyTab(int tab);
+	inline void SetSize(int w,int h) {kGUIObj::SetSize(w,h);UpdateTabs();}
 private:
 	void CalcChildZone(void);
 	void UpdateTabs(void);
@@ -3049,6 +3054,7 @@ public:
 	void SetInsideSize(int w,int h);
 	void Draw(void);
 	void SetMinSize(int mw,int mh) {m_minw=mw;m_minh=mh;}
+	void Control(unsigned int command,KGCONTROL_DEF *data);
 
 	bool UpdateInput(void);
 	
@@ -3699,6 +3705,7 @@ public:
 	static int GetET(void) {return m_et;}
 	static int GetFrame(void) {return m_frame;}
 	/* Window stuff */
+	static void AdjustMinimizedWindows(int deltaheight);
 	static void AddWindow(kGUIObj *window);
 	static void DelWindow(kGUIObj *window);
 	static bool AmITheTopWindow(kGUIObj *window);
@@ -3952,11 +3959,11 @@ public:
 	/*! Set the size of the screen
 	    @param w width in pixels
 		@param h height in pixels */
-	static void SetScreenSize(int w,int h) {m_screenwidth=w;m_screenheight=h;}
+//	static void SetScreenSize(int w,int h) {m_screenwidth=w;m_screenheight=h;}
 	/*! @return screen width in pixels */
-	static int GetScreenWidth(void) {return m_screenwidth;}
+	static int GetScreenWidth(void) {return kGUI::GetBackground()->GetZoneW();/*m_screenwidth;*/}
 	/*! @return screen height in pixels */
-	static int GetScreenHeight(void) {return m_screenheight;}
+	static int GetScreenHeight(void) {return kGUI::GetBackground()->GetZoneH();/*return m_screenheight;*/}
 
 	/*! @return full screen width in pixels */
 	static int GetFullScreenWidth(void) {return m_fullscreenwidth;}
@@ -4171,7 +4178,7 @@ private:
 	static int m_defreportfontsize;
 	static kGUIString m_ftversion;	/* freetype version */
 	static int m_fullscreenwidth,m_fullscreenheight;
-	static int m_screenwidth,m_screenheight;
+//	static int m_screenwidth,m_screenheight;
 
 	static char *m_imagesizefilename;
 	static Hash m_imagesizehash;

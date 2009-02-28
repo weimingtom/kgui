@@ -1082,6 +1082,7 @@ unsigned int kGUIStringSplit::Split(kGUIString *s,const char *splitstring,int ca
 	int pass;
 	unsigned int si;
 	unsigned int ei;
+	unsigned int srclen=s->GetLen();
 	unsigned int sslen=(unsigned int)strlen(splitstring);
 	unsigned char match;
 	int skip;
@@ -1097,7 +1098,7 @@ unsigned int kGUIStringSplit::Split(kGUIString *s,const char *splitstring,int ca
 		}
 		m_numwords=0;
 		si=0;
-		while(si<s->GetLen())
+		while(si<srclen)
 		{
 			/* if multiple words enclosed in double quotes then don't look for split character within? */
 			if(s->m_string[si]=='"' && usequotes==true)
@@ -1128,7 +1129,7 @@ unsigned int kGUIStringSplit::Split(kGUIString *s,const char *splitstring,int ca
 			}
 			skip=0;
 			ei=si;
-			while(ei<s->GetLen())
+			while(ei<srclen)
 			{
 				if(casemode==0)
 					match=strncmp(s->m_string+ei,splitstring,sslen);
@@ -1137,6 +1138,21 @@ unsigned int kGUIStringSplit::Split(kGUIString *s,const char *splitstring,int ca
 				if(!match)
 				{
 					skip=sslen;
+					/* do we have a delimiter at the end of the string?? */
+					if(m_ignoreempty==false)
+					{
+						if(ei+sslen==srclen)
+						{
+							++m_numwords;
+							if(pass)
+							{
+								/* add empty word to end */
+								w=m_list.GetEntryPtr(m_numwords-1);
+								w->SetEncoding(encoding);
+								w->Clear();
+							}
+						}
+					}
 					break;
 				}
 				++ei;

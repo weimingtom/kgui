@@ -94,7 +94,7 @@ Browse::Browse()
 	kGUI::SetDefFontSize(13);
 	kGUI::SetDefReportFontSize(13);
 
-    	/* init character encoding tables */
+   	/* init character encoding tables */
 	kGUIXMLCODES::Init();
 
 	/* Init Cookie Handler */
@@ -103,6 +103,8 @@ Browse::Browse()
 #if USESSL
 	/* Init SSL Handler */
 	/* NOTE: This SSL Handler is GPL'd not LGPL'ed */
+
+	bf->Extract("CAcertSrv.pem","CAcertSrv.pem");
 	kGUI::SetSSLManager(new kGUIMatrixSSLManager("CAcertSrv.pem"));
 #endif
 
