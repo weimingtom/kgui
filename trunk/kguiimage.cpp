@@ -866,7 +866,7 @@ nextframe:;
 
 	code_size=dhgetc(this);
 	start_table_size=(1<<code_size);
-	assert((unsigned int)start_table_size<(sizeof(node)/sizeof(GifNode)),"Overflow");
+	assert((unsigned int)start_table_size<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
 	for (t=0; t<start_table_size; t++)
 	{
 		node[t].prev=-1;
@@ -985,7 +985,7 @@ nextframe:;
 							goto endframe;
 					}
 				}
-				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Overflow");
+				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
 				node[next_code].color=temp_buffer[t-1];
 				node[next_code].prev=old_code;
 
@@ -1002,13 +1002,13 @@ nextframe:;
 				r=old_code;
 				while(1)
 				{
-					assert((unsigned int)t<sizeof(temp_buffer),"Overflow");
+					assert((unsigned int)t<sizeof(temp_buffer),"Gif Overflow");
 					temp_buffer[t++]=node[r].color;
 					if (node[r].prev==-1)
 						break;
 					r=node[r].prev;
 				}
-				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Overflow");
+				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
 				node[next_code].color=temp_buffer[t-1];
 				node[next_code].prev=old_code;
 

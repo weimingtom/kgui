@@ -38,7 +38,7 @@ COMBOEDIT_USERTYPE,
 COMBOEDIT_NONE
 };
 
-kGUIListboxObj::kGUIListboxObj()
+kGUIListBoxObj::kGUIListBoxObj()
 {
 	m_editmode=COMBOEDIT_NONE;
 	m_hint=0;
@@ -63,25 +63,25 @@ kGUIListboxObj::kGUIListboxObj()
 //	Dirty();
 }
 
-kGUIText *kGUIListboxObj::GetEntryTextPtr(unsigned int index)
+kGUIText *kGUIListBoxObj::GetEntryTextPtr(unsigned int index)
 {
 	return m_tableentries[index]->GetText();
 }
 
-void kGUIListboxObj::SetColorMode(unsigned int width)
+void kGUIListBoxObj::SetColorMode(unsigned int width)
 {
 	assert(m_tableentries==0,"Need to set this (SetColorMode) before setting the number of entries!");
 	m_colorcolwidth=width;
 	m_colormode=true;
 }
 
-void kGUIListboxObj::SetColorBox(unsigned int index,kGUIColor c)
+void kGUIListBoxObj::SetColorBox(unsigned int index,kGUIColor c)
 {
-	assert(index<m_numentries,"kGUIListboxObj: index too large");
+	assert(index<m_numentries,"kGUIListBoxObj: index too large");
 	m_tableentries[index]->SetBox(m_colorcolwidth,c);
 }
 
-kGUIListboxObj::~kGUIListboxObj()
+kGUIListBoxObj::~kGUIListBoxObj()
 {
 	unsigned int i;
 
@@ -96,7 +96,7 @@ kGUIListboxObj::~kGUIListboxObj()
 	}
 }
 
-void kGUIListboxObj::SetNumEntries(unsigned int n)
+void kGUIListBoxObj::SetNumEntries(unsigned int n)
 {
 	unsigned int i;
 
@@ -134,9 +134,9 @@ void kGUIListboxObj::SetNumEntries(unsigned int n)
 }
 
 
-void kGUIListboxObj::SetEntry(unsigned int index,const char *entryname,int entryval)
+void kGUIListBoxObj::SetEntry(unsigned int index,const char *entryname,int entryval)
 {
-	assert(index<m_numentries,"kGUIListboxObj: index too large");
+	assert(index<m_numentries,"kGUIListBoxObj: index too large");
 
 	/* default to global, allow override */
 	m_tableentries[index]->SetFontInfo(this);
@@ -147,36 +147,9 @@ void kGUIListboxObj::SetEntry(unsigned int index,const char *entryname,int entry
 	Dirty();
 }
 
-void kGUIListboxObj::SetEntry(unsigned int index,const char *entryname,const char *entryval)
+void kGUIListBoxObj::SetEntry(unsigned int index,const char *entryname,const char *entryval)
 {
-	assert(index<m_numentries,"kGUIListboxObj: index too large");
-
-	/* default to global, allow override */
-	m_tableentries[index]->SetFontInfo(this);
-
-	m_tableentries[index]->SetString(entryname);
-	m_tableentries[index]->SetRowHeight(m_tableentries[index]->GetHeight()+4);
-	m_tableentries[index]->SetValue(index);
-	m_tableentries[index]->SetValue(entryval);
-	Dirty();
-}
-
-void kGUIListboxObj::SetEntry(unsigned int index,kGUIString *entryname,int entryval)
-{
-	assert(index<m_numentries,"kGUIListboxObj: index too large");
-
-	/* default to global, allow override */
-	m_tableentries[index]->SetFontInfo(this);
-
-	m_tableentries[index]->SetString(entryname);
-	m_tableentries[index]->SetRowHeight(m_tableentries[index]->GetHeight()+4);
-	m_tableentries[index]->SetValue(entryval);
-	Dirty();
-}
-
-void kGUIListboxObj::SetEntry(unsigned int index,kGUIString *entryname,kGUIString *entryval)
-{
-	assert(index<m_numentries,"kGUIListboxObj: index too large");
+	assert(index<m_numentries,"kGUIListBoxObj: index too large");
 
 	/* default to global, allow override */
 	m_tableentries[index]->SetFontInfo(this);
@@ -188,7 +161,34 @@ void kGUIListboxObj::SetEntry(unsigned int index,kGUIString *entryname,kGUIStrin
 	Dirty();
 }
 
-void kGUIListboxObj::RenameEntry(const char *oldname,const char *newname)
+void kGUIListBoxObj::SetEntry(unsigned int index,kGUIString *entryname,int entryval)
+{
+	assert(index<m_numentries,"kGUIListBoxObj: index too large");
+
+	/* default to global, allow override */
+	m_tableentries[index]->SetFontInfo(this);
+
+	m_tableentries[index]->SetString(entryname);
+	m_tableentries[index]->SetRowHeight(m_tableentries[index]->GetHeight()+4);
+	m_tableentries[index]->SetValue(entryval);
+	Dirty();
+}
+
+void kGUIListBoxObj::SetEntry(unsigned int index,kGUIString *entryname,kGUIString *entryval)
+{
+	assert(index<m_numentries,"kGUIListBoxObj: index too large");
+
+	/* default to global, allow override */
+	m_tableentries[index]->SetFontInfo(this);
+
+	m_tableentries[index]->SetString(entryname);
+	m_tableentries[index]->SetRowHeight(m_tableentries[index]->GetHeight()+4);
+	m_tableentries[index]->SetValue(index);
+	m_tableentries[index]->SetValue(entryval);
+	Dirty();
+}
+
+void kGUIListBoxObj::RenameEntry(const char *oldname,const char *newname)
 {
 	unsigned int i;
 	for(i=0;i<m_numentries;++i)
@@ -204,7 +204,7 @@ void kGUIListboxObj::RenameEntry(const char *oldname,const char *newname)
 	assert(false,"name not found error!");
 }
 
-void kGUIListboxObj::SetSelection(int s,bool add)
+void kGUIListBoxObj::SetSelection(int s,bool add)
 {
 	if(SetSelectionz(s,add)==false)
 	{
@@ -212,7 +212,7 @@ void kGUIListboxObj::SetSelection(int s,bool add)
 	}
 }
 
-bool kGUIListboxObj::SetSelectionz(int s,bool add)
+bool kGUIListBoxObj::SetSelectionz(int s,bool add)
 {
 	unsigned int i;
 
@@ -229,13 +229,13 @@ bool kGUIListboxObj::SetSelectionz(int s,bool add)
 	return(false);	/* not found! return without an error */
 }
 
-void kGUIListboxObj::SetSelection(const char *string,bool add)
+void kGUIListBoxObj::SetSelection(const char *string,bool add)
 {
 	if(SetSelectionz(string,add)==false)
 		passert(false,"Selection '%s' not in list!",string);
 }
 
-bool kGUIListboxObj::SetSelectionz(const char *string,bool add)
+bool kGUIListBoxObj::SetSelectionz(const char *string,bool add)
 {
 	unsigned int i;
 
@@ -252,13 +252,13 @@ bool kGUIListboxObj::SetSelectionz(const char *string,bool add)
 	return(false);
 }
 
-void kGUIListboxObj::SetSelectionString(const char *string,bool add)
+void kGUIListBoxObj::SetSelectionString(const char *string,bool add)
 {
 	if(SetSelectionStringz(string,add)==false)
 		passert(false,"Selection '%s' not in list!",string);
 }
 
-bool kGUIListboxObj::SetSelectionStringz(const char *string,bool add)
+bool kGUIListBoxObj::SetSelectionStringz(const char *string,bool add)
 {
 	unsigned int i;
 
@@ -277,9 +277,9 @@ bool kGUIListboxObj::SetSelectionStringz(const char *string,bool add)
 }
 
 
-kGUIString *kGUIListboxObj::GetSelectionStringObj(unsigned int entry)
+kGUIString *kGUIListBoxObj::GetSelectionStringObj(unsigned int entry)
 {
-	assert(entry<m_numentries,"kGUIListboxObj: index too large");
+	assert(entry<m_numentries,"kGUIListBoxObj: index too large");
 
 	if(m_tableentries[entry]->GetIsTextValue()==true)
 		return(m_tableentries[entry]->GetTextValue());
@@ -288,7 +288,7 @@ kGUIString *kGUIListboxObj::GetSelectionStringObj(unsigned int entry)
 }
 
 /* return the widest entry in screen pixels */
-int kGUIListboxObj::GetWidest(void)
+int kGUIListBoxObj::GetWidest(void)
 {
 	unsigned int i;
 	int w,widest;
@@ -308,7 +308,7 @@ int kGUIListboxObj::GetWidest(void)
 /* the listbox can have a single selectionor multipleitems selected */
 /* return number of selected lines and build array of indices */
 
-unsigned int kGUIListboxObj::GetSelections(Array<unsigned int>*list)
+unsigned int kGUIListBoxObj::GetSelections(Array<unsigned int>*list)
 {
 	unsigned int i;
 	unsigned int numsel;
@@ -326,7 +326,7 @@ unsigned int kGUIListboxObj::GetSelections(Array<unsigned int>*list)
 }
 
 /* what will the height be if I display 'numrows' lines */
-unsigned int kGUIListboxObj::CalcHeight(unsigned int numrows)
+unsigned int kGUIListBoxObj::CalcHeight(unsigned int numrows)
 {
 	unsigned int h;
 	unsigned int i;

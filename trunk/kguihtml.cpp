@@ -64,7 +64,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"acronym",		HTMLTAG_ACRONYM		,DISPLAY_INLINE},
 	{false,false,false,"address",		HTMLTAG_ADDRESS		,DISPLAY_BLOCK},
 	{false,false,false,"applet",		HTMLTAG_APPLET		,DISPLAY_BLOCK},
-	{true,false,false,"area",			HTMLTAG_AREA		,DISPLAY_INLINE},
+	{true,false,true,"area",			HTMLTAG_AREA		,DISPLAY_INLINE},
 	{false,false,false,"b",			HTMLTAG_B			,DISPLAY_INLINE},
 	{true,false,false,"base",			HTMLTAG_BASE		,DISPLAY_INLINE},
 	{false,false,false,"bdo",			HTMLTAG_BDO			,DISPLAY_INLINE},
@@ -121,7 +121,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,true,false,"ol",			HTMLTAG_OL			,DISPLAY_BLOCK},
 	{false,false,false,"optgroup",	HTMLTAG_OPTGROUP	,DISPLAY_INLINE},
 	{false,true,false,"option",		HTMLTAG_OPTION		,DISPLAY_INLINE},
-	{false,true,false,"p",			HTMLTAG_P			,DISPLAY_BLOCK},
+	{false,true,true,"p",			HTMLTAG_P			,DISPLAY_BLOCK},
 	{false,false,false,"param",		HTMLTAG_PARAM		,DISPLAY_INLINE},
 	{false,false,false,"pre",			HTMLTAG_PRE			,DISPLAY_INLINE},
 	{false,false,false,"q",			HTMLTAG_Q			,DISPLAY_INLINE},
@@ -3097,7 +3097,7 @@ bool kGUIHTMLRule::ValidateName(kGUIString *s)
 		while(index<l)
 		{
 			c=s->GetChar(index,&nb);
-			if(!( (c>='0' && c<='9') || (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='-' || c=='_' || c==':' || c=='.' || c>=0xa0 || c=='\\'))
+			if(!( (c>='0' && c<='9') || (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='-' || c=='_' || c==':' || c=='.' || c>=0xa0 || c=='\\' || c==' '))
 				return(false);
 			index+=nb;
 		}
@@ -3761,6 +3761,12 @@ bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s,bool fixcodes)
 			switch(c)
 			{
 			case ' ':
+				/* is this a gap after '\xx', if so then don't stop */
+				if(s->GetLen()>2)
+				{
+					if(s->GetChar(s->GetLen()-3)=='\\')
+						goto nobreak;
+				}
 			case '\n':
 			case '\r':
 			case '\t':
@@ -3801,6 +3807,7 @@ bool kGUIHTMLRule::ReadString(kGUIReadString *rs,kGUIString *s,bool fixcodes)
 			break;
 			}
 		}
+nobreak:;
 		s->Append(c);
 		rs->ReadChar();
 	}while(rs->AtEnd()==false);
@@ -4267,15 +4274,15 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 				res=false;
 			else
 			{
-				index=hop->m_numstylechildren-1;
+				index=hop->m_numstylechildren;
 				while(index)
 				{
+					--index;
 					sib=hop->m_stylechildren.GetEntry(index);
 					if(sib->GetID()==HTMLTAG_IMBEDTEXTGROUP)
 					{
 						if(!index)
 							break;
-						--index;
 					}
 					else
 					{
@@ -6793,6 +6800,8 @@ DEFAULTRULES_DEF defrules[]={
 	{"ul","margin-left: 2em"},
 	{"nobr","white-space: nowrap"},
 	{"wbr","white-space: normal"},
+	{"input[type=hidden]","display: none"},
+	{"option","display: none"},
 	{"pre","white-space: pre"}};
 
 /* add a default set of rules */
@@ -7181,7 +7190,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			{
 				if(!strstr(att->GetValue()->GetString()," "))
 				{
-					if(kGUIHTMLRule::ValidateName(att->GetValue()))
+					//if(kGUIHTMLRule::ValidateName(att->GetValue()))
 					{
 						cid.m_type=CID_CLASS;
 						if(ClassUseCase())
@@ -7191,10 +7200,10 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 						ExpandClassList(cid.m_id);
 						obj->m_cids.SetEntry(obj->m_numcids++,cid);
 					}
-					else
-					{
-						//fuck
-					}
+			//		else
+			//		{
+			//			//fuck
+			//		}
 				}
 				else
 				{
@@ -7224,7 +7233,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 		case HTMLATT_ID:
 			if(att->GetValue()->GetLen())
 			{
-				if(kGUIHTMLRule::ValidateName(att->GetValue()))
+				//if(kGUIHTMLRule::ValidateName(att->GetValue()))
 				{
 					cid.m_type=CID_ID;
 	//				cid.m_id=StringToIDcase(att->GetValue());
@@ -7242,10 +7251,10 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 							m_targetobj=obj;
 					}
 				}
-				else
-				{
-					/* error */
-				}
+			//	else
+			//	{
+			//		/* error */
+			//	}
 			}
 		break;
 		}
@@ -7636,14 +7645,14 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			case HTMLCONST_RADIO:
 				obj->SetSubID(HTMLSUBTAG_INPUTRADIO);
 				obj->m_obj.m_radioobj=new kGUIRadioObj();
-				obj->AddRenderObject(obj->m_obj.m_radioobj);
+				obj->AddObject(obj->m_obj.m_radioobj);
 				obj->m_obj.m_radioobj->SetEventHandler(obj,CALLBACKCLASSNAME(kGUIHTMLObj,RadioChanged));
 				obj->m_obj.m_radioobj->SetSelected(obj->FindAttrib(HTMLATT_CHECKED)?true:false);
 			break;
 			case HTMLCONST_SUBMIT:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONSUBMIT);
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_SUBMIT);
-				obj->AddRenderObject(obj->m_obj.m_buttontextobj);
+				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" Submit Query ");	/* default text for button */
 getbuttonval:;
 				att=obj->FindAttrib(HTMLATT_VALUE);
@@ -7660,21 +7669,21 @@ getbuttonval:;
 			case HTMLCONST_RESET:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONRESET);
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_RESET);
-				obj->AddRenderObject(obj->m_obj.m_buttontextobj);
+				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" Reset ");	/* default text for button */
 				goto getbuttonval;
 			break;
 			case HTMLCONST_BUTTON:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTON);
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_BUTTON);
-				obj->AddRenderObject(obj->m_obj.m_buttontextobj);
+				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" ");	/* default text for button */
 				goto getbuttonval;
 			break;
 			case HTMLCONST_CHECKBOX:
 				obj->SetSubID(HTMLSUBTAG_INPUTCHECKBOX);
 				obj->m_obj.m_tickobj=new kGUITickBoxObj();
-				obj->AddRenderObject(obj->m_obj.m_tickobj);
+				obj->AddObject(obj->m_obj.m_tickobj);
 				obj->m_obj.m_tickobj->SetSelected(obj->FindAttrib(HTMLATT_CHECKED)?true:false);
 			break;
 			case HTMLCONST_TEXT:
@@ -7683,7 +7692,7 @@ assumetext:;
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 				obj->m_obj.m_inputobj->SetEventHandler(this,CALLBACKNAME(CheckSubmit));
 
-				obj->AddRenderObject(obj->m_obj.m_inputobj);
+				obj->AddObject(obj->m_obj.m_inputobj);
 settextboxsize:;
 				att=obj->FindAttrib(HTMLATT_MAXLENGTH);
 				if(att)
@@ -7698,19 +7707,19 @@ settextboxsize:;
 			case HTMLCONST_FILE:
 				obj->SetSubID(HTMLSUBTAG_INPUTFILE);
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
-				obj->AddRenderObject(obj->m_obj.m_inputobj);
+				obj->AddObject(obj->m_obj.m_inputobj);
 				goto settextboxsize;
 			break;
 			case HTMLCONST_PASSWORD:
 				obj->SetSubID(HTMLSUBTAG_INPUTTEXTBOX);
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 				obj->m_obj.m_inputobj->SetPassword(true);	/* show chars as '*' */
-				obj->AddRenderObject(obj->m_obj.m_inputobj);
+				obj->AddObject(obj->m_obj.m_inputobj);
 			break;
 			case HTMLCONST_IMAGE:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONIMAGE);
 				obj->m_obj.m_buttonimageobj=new kGUIHTMLButtonImageObj(obj);
-				obj->AddRenderObject(obj->m_obj.m_buttonimageobj);
+				obj->AddObject(obj->m_obj.m_buttonimageobj);
 				att=obj->FindAttrib(HTMLATT_SRC);
 				if(att)
 				{
@@ -7729,27 +7738,14 @@ settextboxsize:;
 	break;
 	case HTMLTAG_SELECT:
 	{
-		unsigned int i,e;
-		int numshow=1;
-		int numentries;
-		kGUIHTMLObj *option;
+		unsigned int e;
+		unsigned int numshow=1;
+		unsigned int numentries;
 		kGUIString text;
 
 		/* count number of option tags */
 		numentries=0;
-		for(i=0;i<obj->m_numstylechildren;++i)
-		{
-			option=obj->m_stylechildren.GetEntry(i);
-			if(option->GetID()==HTMLTAG_OPTION)
-				++numentries;
-			else if(option->GetID()!=HTMLTAG_OPTGROUP)
-			{
-				kGUIString ts;
-
-				GetTagDesc(option,&ts);
-				m_errors.ASprintf("Tag inside <SELECT> is not <OPTION> or <OPTGROUP> '%s'!\n",ts.GetString());
-			}
-		}
+		PPCountOptions(obj,&numentries);
 
 		/* if size is 1 or undefined then it is a combo (popup) box */
 		/* if size is >1 then it is a listbox and we show 'that' many lines */
@@ -7770,83 +7766,26 @@ settextboxsize:;
 			obj->m_obj.m_comboboxobj=comboobj;
 			comboobj->SetPos(0,0);
 			comboobj->SetNumEntries(numentries);
+
 			e=0;
-			for(i=0;i<obj->m_numstylechildren;++i)
-			{
-				option=obj->m_stylechildren.GetEntry(i);
-				if(option->GetID()==HTMLTAG_OPTION)
-				{
-					/* set option text pointer to combo text entry so it can set the text style to the combo box */
-					option->m_obj.m_text=comboobj->GetEntryTextPtr(e);
-
-					/* get option text */
-					att=option->FindAttrib(HTMLATT_CONTENT);
-					if(att)
-						text.SetString(att->GetValue());
-					else
-						text.SetString("xxx");
-
-					/* get option text */
-					att=option->FindAttrib(HTMLATT_VALUE);
-
-					/* add entry to combobox */
-					comboobj->SetEntry(e,&text,att!=0?att->GetValue():&text);
-
-					/* select this one? */
-					att=option->FindAttrib(HTMLATT_SELECTED);
-					if(att)
-						comboobj->SetSelection(e);
-
-					++e;
-				}
-			}
-			obj->AddRenderObject(comboobj);
+			PPAddOptions(obj,comboobj,&e);
+			obj->AddObject(comboobj);
 		}
 		else
 		{
-			kGUIListboxObj *listobj;
+			kGUIListBoxObj *listobj;
 
 			/* if we are showing more than 1 row then we use a listbox */
 			obj->SetSubID(HTMLSUBTAG_INPUTLISTBOX);
-			listobj=new kGUIListboxObj();
+			listobj=new kGUIListBoxObj();
 			obj->m_obj.m_listboxobj=listobj;
 			listobj->SetPos(0,0);
 			listobj->SetAllowMultiple(obj->FindAttrib(HTMLATT_MULTIPLE)!=0);
 			listobj->SetNumEntries(numentries);
 
 			e=0;
-			for(i=0;i<obj->m_numstylechildren;++i)
-			{
-				option=obj->m_stylechildren.GetEntry(i);
-				if(option->GetID()==HTMLTAG_OPTION)
-				{
-					/* set option text pointer to combo text entry so it can set the text style to the combo box */
-					option->m_obj.m_text=listobj->GetEntryTextPtr(e);
-
-					/* get option text */
-					att=option->FindAttrib(HTMLATT_CONTENT);
-					if(att)
-						text.SetString(att->GetValue());
-					else
-						text.SetString("xxx");
-
-					/* get option text */
-					att=option->FindAttrib(HTMLATT_VALUE);
-
-					/* add entry to listbox */
-					listobj->SetEntry(e,&text,att!=0?att->GetValue():&text);
-
-					/* select this one? */
-					att=option->FindAttrib(HTMLATT_SELECTED);
-					if(att)
-					{
-						listobj->SelectRow(e);
-						listobj->GotoRow(e,false);		/* false=don't clear current selections */
-					}
-					++e;
-				}
-			}
-			obj->AddRenderObject(listobj);
+			PPAddOptions(obj,listobj,&e);
+			obj->AddObject(listobj);
 		}
 	}
 	break;
@@ -7931,6 +7870,150 @@ settextboxsize:;
 		PreProcess(tci,obj->m_stylechildren.GetEntry(i),inframe);
 
 	tci->Clip(oldtcilen);
+}
+
+void kGUIHTMLPageObj::PPCountOptions(kGUIHTMLObj *obj,unsigned int *numentries)
+{
+	unsigned int i;
+	kGUIHTMLObj *option;
+	kGUIString ts;
+
+	for(i=0;i<obj->m_numstylechildren;++i)
+	{
+		option=obj->m_stylechildren.GetEntry(i);
+		switch(option->GetID())
+		{
+		case HTMLTAG_OPTION:
+			numentries[0]=numentries[0]+1;
+		break;
+		case HTMLTAG_OPTGROUP:
+			numentries[0]=numentries[0]+1;
+			PPCountOptions(option,numentries);
+		break;
+		default:
+			GetTagDesc(option,&ts);
+			m_errors.ASprintf("Tag inside <SELECT> is not <OPTION> or <OPTGROUP> '%s'!\n",ts.GetString());
+		break;
+		}
+	}
+}
+
+/* preprocess, used for adding options and options inside of optgroups */
+void kGUIHTMLPageObj::PPAddOptions(kGUIHTMLObj *obj,kGUIComboBoxObj *combo,unsigned int *entry)
+{
+	kGUIString text;
+	kGUIHTMLAttrib *att;
+	unsigned int i;
+	kGUIHTMLObj *option;
+
+	for(i=0;i<obj->m_numstylechildren;++i)
+	{
+		option=obj->m_stylechildren.GetEntry(i);
+		switch(option->GetID())
+		{
+		case HTMLTAG_OPTION:
+			/* set option text pointer to combo text entry so it can set the text style to the combo box */
+			option->m_obj.m_text=combo->GetEntryTextPtr(entry[0]);
+
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_CONTENT);
+			if(att)
+				text.SetString(att->GetValue());
+			else
+				text.SetString("xxx");
+
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_VALUE);
+
+			/* add entry to combobox */
+			combo->SetEntry(entry[0],&text,att!=0?att->GetValue():&text);
+
+			/* select this one? */
+			att=option->FindAttrib(HTMLATT_SELECTED);
+			if(att)
+				combo->SetSelection(entry[0]);
+
+			entry[0]=entry[0]+1;
+		break;
+		case HTMLTAG_OPTGROUP:
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_LABEL);
+			if(att)
+				text.SetString(att->GetValue());
+			else
+				text.SetString("xxx");
+			/* add entry to combobox */
+			combo->SetEntry(entry[0],&text,&text);
+
+			//todo: set entry as not selectable!!!!!
+//			combo->SetEntryEnable(entry[0],false);
+			entry[0]=entry[0]+1;
+
+			if(option->GetID()==HTMLTAG_OPTGROUP)
+				PPAddOptions(option,combo,entry);
+		break;
+		}
+	}
+}
+
+/* preprocess, used for adding options and options inside of optgroups */
+void kGUIHTMLPageObj::PPAddOptions(kGUIHTMLObj *obj,kGUIListBoxObj *list,unsigned int *entry)
+{
+	kGUIString text;
+	kGUIHTMLAttrib *att;
+	unsigned int i;
+	kGUIHTMLObj *option;
+
+	for(i=0;i<obj->m_numstylechildren;++i)
+	{
+		option=obj->m_stylechildren.GetEntry(i);
+		switch(option->GetID())
+		{
+		case HTMLTAG_OPTION:
+			/* set option text pointer to combo text entry so it can set the text style to the combo box */
+			option->m_obj.m_text=list->GetEntryTextPtr(entry[0]);
+
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_CONTENT);
+			if(att)
+				text.SetString(att->GetValue());
+			else
+				text.SetString("xxx");
+
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_VALUE);
+
+			/* add entry to combobox */
+			list->SetEntry(entry[0],&text,att!=0?att->GetValue():&text);
+
+			/* select this one? */
+			att=option->FindAttrib(HTMLATT_SELECTED);
+			if(att)
+			{
+				list->SelectRow(entry[0]);
+				list->GotoRow(entry[0],false);		/* false=don't clear current selections */
+			}
+			entry[0]=entry[0]+1;
+		break;
+		case HTMLTAG_OPTGROUP:
+			/* get option text */
+			att=option->FindAttrib(HTMLATT_LABEL);
+			if(att)
+				text.SetString(att->GetValue());
+			else
+				text.SetString("xxx");
+			/* add entry to combobox */
+			list->SetEntry(entry[0],&text,&text);
+			//todo: set entry as not selectable!!!!!
+
+			list->SetEntryEnable(entry[0],false);
+			entry[0]=entry[0]+1;
+
+			if(option->GetID()==HTMLTAG_OPTGROUP)
+				PPAddOptions(option,list,entry);
+		break;
+		}
+	}
 }
 
 kGUIHTMLObj *kGUIHTMLPageObj::LocateLocalLink(kGUIString *name)
@@ -8185,15 +8268,19 @@ bool kGUIHTMLPageObj::TrimCR(kGUIString *s,bool *hasendreturn)
 		hasendreturn[0]=false;
 	s->Replace("\r\n","\n");
 	s->Replace("\r","\n");
-	if(!s->GetLen())
-		return(false);
 
-	/* remove leading return */
-	if(s->GetChar(0)=='\n')
-		s->Delete(0,1);
 	l=s->GetLen();
 	if(!l)
 		return(false);
+
+	/* remove leading return(s) */
+	while(s->GetChar(0)=='\n')
+	{
+		s->Delete(0,1);
+		--l;
+		if(!l)
+			return(false);
+	}
 
 	/* remove trailing return */
 	if(s->GetChar(l-1)=='\n')
@@ -9244,7 +9331,7 @@ void kGUIHTMLObj::SetID(int id)
 	break;
 	case HTMLTAG_TEXTAREA:
 		m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
-		AddRenderObject(m_obj.m_inputobj);
+		AddObject(m_obj.m_inputobj);
 	break;
 	case HTMLTAG_FRAME:
 	case HTMLTAG_IFRAME:
@@ -9319,9 +9406,9 @@ void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
 
 	m_width.Reset();
 	m_height.Reset();
-	m_left.Reset();
-	m_right.Reset();
-	m_top.Reset();
+	m_pattleft=0;
+	m_pattright=0;
+	m_patttop=0;
 	m_bottom.Reset();
 
 	m_textalign=ALIGN_UNDEFINED;
@@ -9351,6 +9438,8 @@ void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
 /* called on the min-max pass after applying css style to the object */
 void kGUIHTMLObj::PostStyle(kGUIStyleInfo *si)
 {
+	ApplyRelative();
+
 	/* check for styles to inherit */
 	if(m_styleparent)
 	{
@@ -9785,13 +9874,13 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyle
 			switch(id)
 			{
 			case HTMLATT_LEFT:
-				m_left.Set(m_page,att->GetValue());
+				m_pattleft=att;
 			break;
 			case HTMLATT_RIGHT:
-				m_right.Set(m_page,att->GetValue());
+				m_pattright=att;
 			break;
 			case HTMLATT_TOP:
-				m_top.Set(m_page,att->GetValue());
+				m_patttop=att;
 			break;
 			case HTMLATT_BOTTOM:
 				m_bottom.Set(m_page,att->GetValue());
@@ -10951,6 +11040,7 @@ void kGUIHTMLObj::CheckFixed(void)
 	int negmargintop;
 	int negmarginbottom;
 	kGUIHTMLObj *p=GetParentObj();
+	kGUIUnits u;
 
 	/* on the min/max pass the parent width is undefined so use 0 */
 	if(!p || (m_page->m_mode==MODE_MINMAX))
@@ -11027,43 +11117,44 @@ void kGUIHTMLObj::CheckFixed(void)
 	{
 		int xoff=0,yoff=0;
 
-		if(m_left.GetUnitType()!=UNITS_UNDEFINED)
+		if(m_pattleft)
 		{
-			if(m_left.GetUnitType()==UNITS_AUTO)
+			u.Set(m_page,m_pattleft->GetValue());
+			if(u.GetUnitType()!=UNITS_AUTO)
 			{
-				xoff=0;	/* what do I do? */
-			}
-			else
-			{
-				xoff=m_left.CalcUnitValue(pw,m_em);
-				if(m_right.GetUnitType()==UNITS_AUTO)
+				xoff=u.CalcUnitValue(pw,m_em);
+				if(m_pattright)
 				{
-					/* huh? */
-				}
-				else if(m_right.GetUnitType()!=UNITS_UNDEFINED)
-				{
-					int rx=pw-m_right.CalcUnitValue(pw,m_em);
-					ow=rx-xoff;
-					SetOutsideW(ow);
-					m_fixedw=true;
+					int rx;
+
+					u.Set(m_page,m_pattleft->GetValue());
+					if(u.GetUnitType()!=UNITS_AUTO)
+					{
+						rx=pw-u.CalcUnitValue(pw,m_em);
+
+						ow=rx-xoff;
+						SetOutsideW(ow);
+						m_fixedw=true;
+					}
 				}
 			}
 		}
 		else
 		{
-			if(m_right.GetUnitType()!=UNITS_UNDEFINED && m_right.GetUnitType()!=UNITS_AUTO)
-				xoff=pw-ow-m_right.CalcUnitValue(pw,m_em);
-			else
-				xoff=0;
+			if(m_pattright)
+			{
+				u.Set(m_page,m_pattright->GetValue());
+				if(u.GetUnitType()!=UNITS_AUTO)
+					xoff=pw-ow-u.CalcUnitValue(pw,m_em);
+			}
 		}
 
-		if(m_top.GetUnitType()==UNITS_AUTO)
+		if(m_patttop)
 		{
-			/* what to do here? */
-			yoff=0;
+			u.Set(m_page,m_patttop->GetValue());
+			if(u.GetUnitType()!=UNITS_AUTO)
+				yoff=u.CalcUnitValue(ph,m_em);
 		}
-		else if(m_top.GetUnitType()!=UNITS_UNDEFINED)
-			yoff=m_top.CalcUnitValue(ph,m_em);
 		else
 		{
 			if(m_bottom.GetUnitType()!=UNITS_UNDEFINED && m_bottom.GetUnitType()!=UNITS_AUTO)
@@ -11091,9 +11182,9 @@ void kGUIHTMLObj::CheckFixed(void)
 			}
 			else
 			{
-				if(negmarginleft<0 && m_right.GetUnitType()==UNITS_UNDEFINED)
+				if(negmarginleft<0 && m_pattright==0)
 					xoff+=negmarginleft;
-				if(negmarginright<0 && m_left.GetUnitType()==UNITS_UNDEFINED)
+				if(negmarginright<0 && m_pattleft==0)
 					xoff-=negmarginright;
 			}
 
@@ -11107,7 +11198,7 @@ void kGUIHTMLObj::CheckFixed(void)
 			{
 				if(negmargintop<0 && m_bottom.GetUnitType()==UNITS_UNDEFINED)
 					yoff+=negmargintop;
-				if(negmarginbottom<0 && m_top.GetUnitType()==UNITS_UNDEFINED)
+				if(negmarginbottom<0 && m_patttop==0)
 					yoff-=negmarginbottom;
 			}
 		}
@@ -12446,8 +12537,6 @@ void kGUIHTMLTableInfo::ExpandTable(kGUIHTMLObj *table,int em)
 	if(table->m_width.GetUnitType()!=UNITS_UNDEFINED && table->m_width.GetUnitType()!=UNITS_AUTO)
 	{
 		tw=table->m_width.CalcUnitValue(table->GetParentObj()->GetChildZoneW(),em);
-		if(m_box)
-			tw+=(table->m_box->GetBoxLeftWidth()+table->m_box->GetBoxRightWidth());
 		expand=true;
 	}
 	else
@@ -12457,6 +12546,8 @@ void kGUIHTMLTableInfo::ExpandTable(kGUIHTMLObj *table,int em)
 	}
 	tw-=m_cellpadding<<1;
 	tw-=(m_numcols+1)*m_cellspacingh;
+	if(m_box)
+		tw-=(table->m_box->GetBoxLeftWidth()+table->m_box->GetBoxRightWidth());
 
 	ExpandCols(0,m_numcols,tw,expand,true);
 
@@ -12896,21 +12987,8 @@ void kGUIHTMLObj::Position(bool placeme)
 			case DISPLAY_RUN_IN:
 			case DISPLAY_BLOCK:
 			case DISPLAY_LIST_ITEM:
-				if(m_float==FLOAT_NONE && m_left.GetUnitType()==UNITS_UNDEFINED && m_right.GetUnitType()==UNITS_UNDEFINED && m_width.GetUnitType()==UNITS_UNDEFINED)
-				{
-#if 0
-					if(rp->m_pos->m_leftw || rp->m_pos->m_rightw)
-					{
-						pw+=rp->m_pos->m_leftw+rp->m_pos->m_rightw;
-						if((int)GetBox()->GetBoxLeftMargin()<rp->m_pos->m_leftw)
-							GetBox()->SetBoxLeftMargin(rp->m_pos->m_leftw);
-						if((int)GetBox()->GetBoxRightMargin()<rp->m_pos->m_rightw)
-							GetBox()->SetBoxRightMargin(rp->m_pos->m_rightw);
-					}
-#endif
-
+				if(m_float==FLOAT_NONE && m_pattleft==0 && m_pattright==0 && m_width.GetUnitType()==UNITS_UNDEFINED)
 					SetOutsideW(pw);
-				}
 				else
 				{
 					SetInsideW(m_maxw);
@@ -13331,8 +13409,12 @@ typechanged:;
 			if(att)
 				inputobj->MoveZoneH((att->GetValue()->GetInt()*m_em+6));
 		}
+		m_minw=m_maxw=inputobj->GetZoneW();
+		m_maxy=inputobj->GetZoneH();
 
-		rp->PositionChild(this,inputobj,inputobj->GetZoneH(),0);
+		/* if we are not inline then the parent will be added so don't bother here */
+		if(m_display==DISPLAY_INLINE)
+			rp->PositionChild(this,inputobj,inputobj->GetZoneH(),0);
 	}
 	break;
 	case HTMLTAG_SELECT:
@@ -13340,7 +13422,7 @@ typechanged:;
 		{
 		case HTMLSUBTAG_INPUTLISTBOX:
 		{
-			kGUIListboxObj *listobj;
+			kGUIListBoxObj *listobj;
 			int childwidth,childheight;
 
 			listobj=m_obj.m_listboxobj;
@@ -13476,7 +13558,7 @@ typechanged:;
 	break;
 	case HTMLTAG_IMG:
 	{
-		int childwidth,childheight,imagewidth,imageheight;
+		unsigned int childwidth,childheight;
 		double wscale,hscale;
 		kGUIHTMLAttrib *att;
 		kGUIHTMLMap *map;
@@ -13504,50 +13586,8 @@ typechanged:;
 		if(m_page->m_mode==MODE_MINMAX)
 			m_obj.m_imageobj->SetLink(m_page->m_link);
 
-		imagewidth=m_obj.m_imageobj->GetImageWidth();
-		imageheight=m_obj.m_imageobj->GetImageHeight();
-
-		/* calc width/height of box and then width/height of image */
-		ClipMinMaxWidth(rp->GetInsideW());
-		ClipMinMaxHeight(rp->GetInsideW());
-		if(m_fixedw || m_relw || m_clipw)
-			childwidth=GetInsideW();
-		else
-		{
-			if(m_fixedh || m_relh || m_cliph)
-			{
-				if(imageheight)
-					childwidth=(int)(imagewidth*((double)GetInsideH()/(double)imageheight));
-				else
-				{
-					imagewidth=0;
-					childwidth=0;
-				}
-			}
-			else
-				childwidth=imagewidth;
-		}
-
-		if(imagewidth)
-			wscale=(double)childwidth/(double)imagewidth;
-		else
-			wscale=0.0f;
-
-		if(m_fixedh==false && m_relh==false || m_cliph)
-		{
-			/* example: image= 500x400, style="width=150px" */
-			if(m_fixedw==true || m_relw==true || m_clipw)
-				childheight=(int)(wscale*imageheight);
-			else
-				childheight=imageheight;
-		}
-		else
-			childheight=GetInsideH();
-
-		if(imageheight)
-			hscale=(double)childheight/(double)imageheight;
-		else
-			hscale=0.0f;
+		SizeContent(m_obj.m_imageobj->GetImageWidth(),m_obj.m_imageobj->GetImageHeight(),
+					&childwidth,&childheight,&wscale,&hscale);
 
 		m_minw=m_maxw=childwidth;
 		m_maxy=childheight;
@@ -13586,6 +13626,7 @@ typechanged:;
 	switch(m_id)
 	{
 	case HTMLTAG_BUTTON:
+		/* button can contain other stuff like tables etc. */
 		goto isbutton;
 	break;
 	case HTMLTAG_INPUT:
@@ -13600,12 +13641,6 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 
 			buttonobj=m_obj.m_buttontextobj;
 
-			if(m_fixedw==true || m_relw==true)
-				buttonobj->MoveZoneW(GetInsideW());
-
-			if(m_fixedh==true || m_relh==true)
-				buttonobj->MoveZoneH(GetInsideH());
-
 			if(m_page->m_mode==MODE_MINMAX)
 			{
 				if(m_page->m_fontweight>=700)
@@ -13618,56 +13653,44 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				buttonobj->SetFontSize(m_em);
 				buttonobj->SetColor(m_page->m_fontcolor.GetColor());
 			}
-			rp->PositionChild(this,buttonobj,buttonobj->GetZoneH(),0);
+
+			if(m_fixedw==true || m_relw==true)
+				buttonobj->MoveZoneW(GetInsideW());
+			else
+				SetInsideW(buttonobj->GetZoneW());
+
+			if(m_fixedh==true || m_relh==true)
+				buttonobj->MoveZoneH(GetInsideH());
+			else
+				SetInsideH(buttonobj->GetZoneH());
+
+			m_minw=m_maxw=GetInsideW();
+			m_maxy=GetInsideH();
+			/* if we are not inline then the parent will be added so don't bother here */
+			if(m_display==DISPLAY_INLINE)
+				rp->PositionChild(this,buttonobj,buttonobj->GetZoneH(),0);
 		}
 		break;
 		case HTMLSUBTAG_INPUTBUTTONIMAGE:
 		{
-			int width,height,imagewidth,imageheight;
-			double wscale,hscale;
+			unsigned int childwidth,childheight;
+			double hscale,wscale;
 
 			if(m_page->m_mode==MODE_MINMAX)
 				m_obj.m_buttonimageobj->SetLink(m_page->m_link);
 
-			imagewidth=m_obj.m_buttonimageobj->GetImageWidth();
-			imageheight=m_obj.m_buttonimageobj->GetImageHeight();
+			SizeContent(m_obj.m_buttonimageobj->GetImageWidth(),m_obj.m_buttonimageobj->GetImageHeight(),
+					&childwidth,&childheight,&wscale,&hscale);
 
-	//		kGUI::Trace("Image='%s'\n",m_obj.m_imageobj->GetURL()->GetString());
-
-			if(m_fixedw==false && m_relw==false)
-			{
-				width=imagewidth;
-				wscale=1.0f;
-				m_obj.m_buttonimageobj->MoveZoneW(width);
-			}
-			else
-			{
-				width=GetInsideW();
-				if(imagewidth)
-					wscale=(double)width/(double)imagewidth;
-				else
-					wscale=0.0f;
-			}
-
-			if(m_fixedh==false && m_relh==false)
-			{
-				height=imageheight;
-				hscale=1.0f;
-				m_obj.m_buttonimageobj->MoveZoneH(height);
-			}
-			else
-			{
-				height=GetInsideH();
-				if(imageheight)
-					hscale=(double)height/(double)imageheight;
-				else
-					hscale=0.0f;
-			}
-
+			m_minw=m_maxw=childwidth;
+			m_maxy=childheight;
+			m_obj.m_buttonimageobj->MoveZone(0,0,childwidth,childheight);
 			m_obj.m_buttonimageobj->SetScale(wscale,hscale);
 			m_obj.m_buttonimageobj->SetAnimate(true);
 
-			rp->PositionChild(this,m_obj.m_buttonimageobj,m_obj.m_buttonimageobj->GetZoneH(),0);
+			/* if we are not inline then the parent will be added so don't bother here */
+			if(m_display==DISPLAY_INLINE)
+				rp->PositionChild(this,m_obj.m_buttonimageobj,childheight,0);
 		}
 		break;
 		case HTMLSUBTAG_INPUTCHECKBOX:
@@ -13680,7 +13703,9 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				m_obj.m_tickobj->SetScale(true);
 				m_obj.m_tickobj->MoveSize(size,size);
 			}
-			rp->PositionChild(this,m_obj.m_tickobj,m_obj.m_tickobj->GetZoneH(),0);
+			/* if we are not inline then the parent will be added so don't bother here */
+			if(m_display==DISPLAY_INLINE)
+				rp->PositionChild(this,m_obj.m_tickobj,m_obj.m_tickobj->GetZoneH(),0);
 		break;
 		case HTMLSUBTAG_INPUTRADIO:
 			if(m_page->m_mode==MODE_MINMAX)
@@ -13692,7 +13717,13 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				m_obj.m_radioobj->SetScale(true);
 				m_obj.m_radioobj->MoveSize(size,size);
 			}
-			rp->PositionChild(this,m_obj.m_radioobj,m_obj.m_radioobj->GetZoneH(),0);
+
+			m_minw=m_maxw=m_obj.m_radioobj->GetZoneW();
+			m_maxy=m_obj.m_radioobj->GetZoneH();
+
+			/* if we are not inline then the parent will be added so don't bother here */
+			if(m_display==DISPLAY_INLINE)
+				rp->PositionChild(this,m_obj.m_radioobj,m_obj.m_radioobj->GetZoneH(),0);
 		break;
 		case HTMLSUBTAG_INPUTTEXTBOX:
 		case HTMLSUBTAG_INPUTFILE:
@@ -13725,7 +13756,13 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 				inputboxobj->MoveZoneW(w);
 				inputboxobj->MoveZoneH(inputboxobj->GetLineHeight()+6);
 			}
-			rp->PositionChild(this,inputboxobj,inputboxobj->GetZoneH(),0);
+
+			m_minw=m_maxw=inputboxobj->GetZoneW();
+			m_maxy=inputboxobj->GetZoneH();
+
+			/* if we are not inline then the parent will be added so don't bother here */
+			if(m_display==DISPLAY_INLINE)
+				rp->PositionChild(this,inputboxobj,inputboxobj->GetZoneH(),0);
 		}
 		break;
 		}
@@ -13950,6 +13987,62 @@ done:;
 
 	m_page->FreePos();
 	m_pos=0;
+}
+
+void kGUIHTMLObj::SizeContent(unsigned int contwidth,unsigned int contheight,unsigned int *pcw,unsigned int *pch,double *pwscale,double *phscale)
+{
+	unsigned int childwidth;
+	unsigned int childheight;
+	double hscale;
+	double wscale;
+	kGUIHTMLObj *rp=GetParentObj();
+
+	/* calc width/height of box and then width/height of image */
+	ClipMinMaxWidth(rp->GetInsideW());
+	ClipMinMaxHeight(rp->GetInsideW());
+	if(m_fixedw || m_relw || m_clipw)
+		childwidth=GetInsideW();
+	else
+	{
+		if(m_fixedh || m_relh || m_cliph)
+		{
+			if(contheight)
+				childwidth=(int)(contwidth*((double)GetInsideH()/(double)contheight));
+			else
+			{
+				contwidth=0;
+				childwidth=0;
+			}
+		}
+		else
+			childwidth=contwidth;
+	}
+
+	if(contwidth)
+		wscale=(double)childwidth/(double)contwidth;
+	else
+		wscale=0.0f;
+
+	if(m_fixedh==false && m_relh==false || m_cliph)
+	{
+		/* example: cont= 500x400, style="width=150px" */
+		if(m_fixedw==true || m_relw==true || m_clipw)
+			childheight=(int)(wscale*contheight);
+		else
+			childheight=contheight;
+	}
+	else
+		childheight=GetInsideH();
+
+	if(contheight)
+		hscale=(double)childheight/(double)contheight;
+	else
+		hscale=0.0f;
+
+	phscale[0]=hscale;
+	pwscale[0]=wscale;
+	pcw[0]=childwidth;
+	pch[0]=childheight;
 }
 
 /* a frame was just loaded, insert it into the tree and parse it */
@@ -15019,7 +15112,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 				case HTMLCONST_BOLD:		/* weight */
 				case HTMLCONST_BOLDER:		/* weight */
 				case HTMLCONST_LIGHTER:		/* weight */
-	isweight:		if(gotweight==false)
+					if(gotweight==false)
 					{
 						AddAttribute(HTMLATT_FONT_WEIGHT,owner,priority,word);
 						gotweight=true;
@@ -15044,7 +15137,7 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 				case HTMLCONST_XXLARGE:
 				case HTMLCONST_SMALLER:
 				case HTMLCONST_LARGER:
-					if(gotsize==false)
+issize:				if(gotsize==false)
 					{
 						AddAttribute(HTMLATT_FONT_SIZE,owner,priority,word);
 						gotsize=true;
@@ -15071,9 +15164,10 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 					switch(u.GetUnitType())
 					{
 					case UNITS_PIXELS:
-						goto isweight;
+						goto issize;
 					break;
 					case UNITS_POINTS:
+						goto issize;
 					break;
 					default:
 						/* what is this?? */
