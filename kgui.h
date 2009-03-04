@@ -2959,16 +2959,16 @@ private:
 	kGUIScroll m_scroll;	/* table pixel scroll values */
 };
 
-/*! @class kGUIListboxObj
+/*! @class kGUIListBoxObj
 	@brief this is listbox gui object. The listbox is just like a combobox except 
     that it is a fixed size and doesn't pop up. Also it can optionally allow
 	selection of multiple entries if desired.
 	@ingroup kGUIObjects */
-class kGUIListboxObj : public kGUITableObj, public kGUIFontInfo
+class kGUIListBoxObj : public kGUITableObj, public kGUIFontInfo
 {
 public:
-	kGUIListboxObj();
-	~kGUIListboxObj();
+	kGUIListBoxObj();
+	~kGUIListBoxObj();
 
 	void SetNumEntries(unsigned int n);
 	unsigned int GetNumEntries(void) {return m_numentries;}

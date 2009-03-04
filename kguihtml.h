@@ -1147,6 +1147,7 @@ public:
 	void SetParent(kGUIHTMLObj *parent) {m_styleparent=parent;}
 	void SetPage(kGUIHTMLPageObj *page) {m_page=page;}
 	void Position(bool placeme=true);
+	void SizeContent(unsigned int contwidth,unsigned int contheight,unsigned int *pcw,unsigned int *pch,double *pwscale,double *phscale);
 	void Contain(bool force=false);
 	void InsertFrame(void);
 	bool DetectObject(void);
@@ -1270,7 +1271,7 @@ private:
 		kGUITickBoxObj *m_tickobj;
 		kGUIComboBoxObj *m_comboboxobj;
 		kGUIRadioObj *m_radioobj;
-		kGUIListboxObj *m_listboxobj;
+		kGUIListBoxObj *m_listboxobj;
 		kGUIObj *m_singleobj;
 	}m_obj;
 
@@ -1296,11 +1297,16 @@ private:
 	kGUIHTMLAttrib *m_pattminheight;
 	kGUIHTMLAttrib *m_pattmaxheight;
 
+//	kGUIHTMLAttrib *m_pattwidth;
+//	kGUIHTMLAttrib *m_pattheight;
 	kGUIUnits m_width;
 	kGUIUnits m_height;
-	kGUIUnits m_left;
-	kGUIUnits m_right;
-	kGUIUnits m_top;
+
+	kGUIHTMLAttrib *m_pattleft;
+	kGUIHTMLAttrib *m_pattright;
+	kGUIHTMLAttrib *m_patttop;
+//	kGUIUnits m_right;
+//	kGUIUnits m_top;
 	kGUIUnits m_bottom;
 	kGUIUnits m_valignoffset;
 
@@ -1900,6 +1906,9 @@ public:
 	void PurgeRules(void);
 	void GetCorrectedSource(kGUIString *cs);
 	void PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe);
+	void PPCountOptions(kGUIHTMLObj *obj,unsigned int *numentries);
+	void PPAddOptions(kGUIHTMLObj *obj,kGUIComboBoxObj *combo,unsigned int *entry);
+	void PPAddOptions(kGUIHTMLObj *obj,kGUIListBoxObj *list,unsigned int *entry);
 
 	void SetMedia(kGUIString *media) {m_curmedia.SetString(media);}
 	kGUIString *GetURL(void) {return &m_url;}
