@@ -324,7 +324,7 @@ enum CodecID {
 
     CODEC_ID_PROBE= 0x19000, ///< codec_id is not known (like CODEC_ID_NONE) but lavf should attempt to identify it
 
-    CODEC_ID_MPEG2TS= 0x20000, /**< _FAKE_ codec to indicate a raw MPEG-2 TS
+    CODEC_ID_MPEG2TS= 0x20000 /**< _FAKE_ codec to indicate a raw MPEG-2 TS
                                 * stream (only used by libavformat) */
 };
 
@@ -418,7 +418,7 @@ enum Motion_Est_ID {
     ME_HEX,         ///< hexagon based search
     ME_UMH,         ///< uneven multi-hexagon search
     ME_ITER,        ///< iterative search
-    ME_TESA,        ///< transformed exhaustive search algorithm
+    ME_TESA        ///< transformed exhaustive search algorithm
 };
 
 enum AVDiscard{
@@ -429,7 +429,7 @@ enum AVDiscard{
     AVDISCARD_NONREF =  8, ///< discard all non reference
     AVDISCARD_BIDIR  = 16, ///< discard all bidirectional frames
     AVDISCARD_NONKEY = 32, ///< discard all frames except keyframes
-    AVDISCARD_ALL    = 48, ///< discard all
+    AVDISCARD_ALL    = 48 ///< discard all
 };
 
 typedef struct RcOverride{
@@ -2506,7 +2506,7 @@ enum AVSubtitleType {
      * Formatted text, the ass field must be set by the decoder and is
      * authoritative. pict and text fields may contain approximations.
      */
-    SUBTITLE_ASS,
+    SUBTITLE_ASS
 };
 
 typedef struct AVSubtitleRect {
