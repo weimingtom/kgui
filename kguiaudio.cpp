@@ -148,6 +148,7 @@ kGUIAudio::kGUIAudio()
 	m_buffers.Init(4,4);
 }
 
+#if defined (WIN32) || defined(MINGW)
 static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,DWORD dwParam1, DWORD dwParam2)
 {
 	kGUIAudio *a;
@@ -156,6 +157,7 @@ static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,DWORD
 	if(a->GetPlaying())
 		a->SetPlayDone();
 }
+#endif
 
 void kGUIAudio::Init(void)
 {
