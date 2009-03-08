@@ -82,7 +82,11 @@ ifeq ($(findstring Linux,$(TARGET_OS)),Linux)
 SYS=-DLINUX
 TARGET_OBJDIR=olinux
 CC=g++
-CCOPTS= -Wall -O3 -D_FILE_OFFSET_BITS=64
+ifeq ($(TARGET_SUFFIX),d)
+	CCOPTS= -Wall -Wextra -Wno-long-long -Wno-unused-parameter -g -ggdb -D_FILE_OFFSET_BITS=64
+else
+	CCOPTS= -Wall -Wextra -Wno-long-long -Wno-unused-parameter -O3 -D_FILE_OFFSET_BITS=64
+endif	
 LINK=g++
 MAKELIB=ar
 RANLIB=ranlib

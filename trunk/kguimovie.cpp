@@ -376,7 +376,7 @@ void kGUIMovie::SetOutputImage(kGUIImage *image)
 		m_local->m_img_convert_ctx=0;
 	}
 	m_local->m_img_convert_ctx = sws_getContext(
-			m_width, m_height, m_format, 
+			m_width, m_height, (PixelFormat)m_format, 
             m_outwidth, m_outheight, OUTFORMAT,
 			SWS_BICUBIC, NULL, NULL, NULL);
 }
