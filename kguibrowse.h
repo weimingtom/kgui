@@ -170,7 +170,7 @@ class kGUIBrowseIcon
 {
 public:
 	kGUIBrowseIcon() {m_valid=false;m_animateeventactive=false;}
-	~kGUIBrowseIcon() {if(m_animateeventactive)kGUI::DelEvent(this,CALLBACKNAME(Animate));}
+	virtual ~kGUIBrowseIcon() {if(m_animateeventactive)kGUI::DelEvent(this,CALLBACKNAME(Animate));}
 	bool GetIsValid(void) {return m_valid;}
 	bool SetIcon(DataHandle *dh);
 	void Draw(int x,int y) {m_icon.Draw(m_currentframe,x,y);}
