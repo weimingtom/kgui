@@ -4649,7 +4649,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			cid=ho->m_cids.GetArrayPtr();
 			for(i=0;(i<ho->m_numcids) && (found==false);++i)
 			{
-				if(cid->m_type==CID_CLASS && cid->m_id==sel->m_value)
+				if(cid->m_type==CID_CLASS && (int)cid->m_id==sel->m_value)
 					found=true;
 				++cid;
 			}
@@ -4669,7 +4669,7 @@ bool kGUIHTMLRule::Evaluate(int sindex,kGUIHTMLObj *ho)
 			cid=ho->m_cids.GetArrayPtr();
 			for(i=0;(i<ho->m_numcids) && (found==false);++i)
 			{
-				if(cid->m_type==CID_ID && cid->m_id==sel->m_value)
+				if(cid->m_type==CID_ID && (int)cid->m_id==sel->m_value)
 					found=true;
 				++cid;
 			}
@@ -14668,7 +14668,7 @@ void kGUIUnits::Set(kGUIHTMLPageObj *page,kGUIString *s)
 
 	if(s->GetChar(s->GetLen()-1)=='%')
 		m_units=UNITS_PERCENT;
-	else if(!strcmpi(s->GetString(),"auto"))
+	else if(!stricmp(s->GetString(),"auto"))
 		m_units=UNITS_AUTO;
 	else
 	{
