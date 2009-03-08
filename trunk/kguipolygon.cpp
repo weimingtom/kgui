@@ -54,11 +54,6 @@ from "Graphics Gems", Academic Press, 1990
 #include "kgui.h"
 #include <math.h>
 
-#if !defined(max)
-#define valmax(a, b)	((a) > (b) ? (a) : (b))
-#define valmin(a, b)	((a) < (b) ? (a) : (b))
-#endif
-
 static int n;			/* number of vertices */
 static kGUIPoint2 *pt;		/* vertices */
 
