@@ -815,7 +815,7 @@ void kGUIScrollBarObj::CalcBarPos(const kGUICorners *c,kGUICorners *sl)
 	if(m_fixed)
 	{
 		rawtotal=m_numabove+m_numbelow;
-		fixed=min(0,m_fixed-middle);
+		fixed=valmin(0,m_fixed-middle);
 	}
 	else
 		rawtotal=m_numabove+m_numshown+m_numbelow;
@@ -1079,7 +1079,7 @@ void kGUIScroll::Update(void)
 			move=move-180;
 		else
 		{
-			move=max(3,(int)(sin((move/2)*(3.141592654/180.0f))*0.35f*kGUI::GetET()));
+			move=valmax(3,(int)(sin((move/2)*(3.141592654/180.0f))*0.35f*kGUI::GetET()));
 			if(!move)
 				move=1;
 			else if(move>adelta)
@@ -1102,7 +1102,7 @@ void kGUIScroll::Update(void)
 			move=move-180;
 		else
 		{
-			move=max(3,(int)(sin((move/2)*(3.141592654/180.0f))*0.35f*kGUI::GetET()));
+			move=valmax(3,(int)(sin((move/2)*(3.141592654/180.0f))*0.35f*kGUI::GetET()));
 			if(!move)
 				move=1;
 			else if(move>adelta)

@@ -2674,7 +2674,7 @@ void kGUIHTMLPageObj::AddClassStyles(unsigned int baseowner,unsigned int priorit
 	kGUIString cstring;
 	unsigned int nb;
 	int ch;
-	int numnamespaces=0;
+//	int numnamespaces=0;
 //	kGUIReadString rs; //todo: change 
 
 	m_css.Append(string);
@@ -7382,7 +7382,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 							MakeURL(&m_url,&url,&m_refreshurl);
 
 							/* todo, add an option to disable this or ASK permission */
-							m_refreshdelay=(int)max(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
+							m_refreshdelay=(int)valmax(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
 							
 						}
 					}
@@ -7644,6 +7644,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			break;
 			case HTMLCONST_RADIO:
 				obj->SetSubID(HTMLSUBTAG_INPUTRADIO);
+				assert(obj->m_obj.m_radioobj==0,"Error!");
 				obj->m_obj.m_radioobj=new kGUIRadioObj();
 				obj->AddObject(obj->m_obj.m_radioobj);
 				obj->m_obj.m_radioobj->SetEventHandler(obj,CALLBACKCLASSNAME(kGUIHTMLObj,RadioChanged));
@@ -7651,6 +7652,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			break;
 			case HTMLCONST_SUBMIT:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONSUBMIT);
+				assert(obj->m_obj.m_buttontextobj==0,"Error!");
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_SUBMIT);
 				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" Submit Query ");	/* default text for button */
@@ -7668,6 +7670,7 @@ getbuttonval:;
 			break;
 			case HTMLCONST_RESET:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONRESET);
+				assert(obj->m_obj.m_buttontextobj==0,"Error!");
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_RESET);
 				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" Reset ");	/* default text for button */
@@ -7675,6 +7678,7 @@ getbuttonval:;
 			break;
 			case HTMLCONST_BUTTON:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTON);
+				assert(obj->m_obj.m_buttontextobj==0,"Error!");
 				obj->m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(obj,HTMLCONST_BUTTON);
 				obj->AddObject(obj->m_obj.m_buttontextobj);
 				obj->m_obj.m_buttontextobj->SetString(" ");	/* default text for button */
@@ -7682,6 +7686,7 @@ getbuttonval:;
 			break;
 			case HTMLCONST_CHECKBOX:
 				obj->SetSubID(HTMLSUBTAG_INPUTCHECKBOX);
+				assert(obj->m_obj.m_tickobj==0,"Error!");
 				obj->m_obj.m_tickobj=new kGUITickBoxObj();
 				obj->AddObject(obj->m_obj.m_tickobj);
 				obj->m_obj.m_tickobj->SetSelected(obj->FindAttrib(HTMLATT_CHECKED)?true:false);
@@ -7689,6 +7694,7 @@ getbuttonval:;
 			case HTMLCONST_TEXT:
 assumetext:;
 				obj->SetSubID(HTMLSUBTAG_INPUTTEXTBOX);
+				assert(obj->m_obj.m_inputobj==0,"Error!");
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 				obj->m_obj.m_inputobj->SetEventHandler(this,CALLBACKNAME(CheckSubmit));
 
@@ -7706,18 +7712,21 @@ settextboxsize:;
 			break;
 			case HTMLCONST_FILE:
 				obj->SetSubID(HTMLSUBTAG_INPUTFILE);
+				assert(obj->m_obj.m_inputobj==0,"Error!");
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 				obj->AddObject(obj->m_obj.m_inputobj);
 				goto settextboxsize;
 			break;
 			case HTMLCONST_PASSWORD:
 				obj->SetSubID(HTMLSUBTAG_INPUTTEXTBOX);
+				assert(obj->m_obj.m_inputobj==0,"Error!");
 				obj->m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 				obj->m_obj.m_inputobj->SetPassword(true);	/* show chars as '*' */
 				obj->AddObject(obj->m_obj.m_inputobj);
 			break;
 			case HTMLCONST_IMAGE:
 				obj->SetSubID(HTMLSUBTAG_INPUTBUTTONIMAGE);
+				assert(obj->m_obj.m_buttonimageobj==0,"Error!");
 				obj->m_obj.m_buttonimageobj=new kGUIHTMLButtonImageObj(obj);
 				obj->AddObject(obj->m_obj.m_buttonimageobj);
 				att=obj->FindAttrib(HTMLATT_SRC);
@@ -7763,6 +7772,7 @@ settextboxsize:;
 
 			comboobj=new kGUIComboBoxObj();
 
+			assert(obj->m_obj.m_comboboxobj==0,"Error!");
 			obj->m_obj.m_comboboxobj=comboobj;
 			comboobj->SetPos(0,0);
 			comboobj->SetNumEntries(numentries);
@@ -7778,6 +7788,8 @@ settextboxsize:;
 			/* if we are showing more than 1 row then we use a listbox */
 			obj->SetSubID(HTMLSUBTAG_INPUTLISTBOX);
 			listobj=new kGUIListBoxObj();
+
+			assert(obj->m_obj.m_listboxobj==0,"Error!");
 			obj->m_obj.m_listboxobj=listobj;
 			listobj->SetPos(0,0);
 			listobj->SetAllowMultiple(obj->FindAttrib(HTMLATT_MULTIPLE)!=0);
@@ -9258,6 +9270,7 @@ void kGUIHTMLObj::Init(void)
 	m_string=0;
 	m_renderparent=0;
 	m_objinit=false;
+	m_liprefix=0;
 	m_obj.m_textobj=0;
 	m_numstylechildren=0;
 	m_stylechildren.Init(16,16);
@@ -9298,38 +9311,46 @@ void kGUIHTMLObj::SetID(int id)
 	break;
 	case HTMLTAG_IMG:
 	case HTMLTAG_LIIMG:
+		assert(m_obj.m_imageobj==0,"Error!");
 		m_obj.m_imageobj=new kGUIOnlineImageObj();
 		m_obj.m_imageobj->SetPage(m_page);
 		m_obj.m_imageobj->MovePos(0,0);
 		AddObject(m_obj.m_imageobj);
 	break;
 	case HTMLTAG_BUTTON:
+		assert(m_obj.m_buttontextobj==0,"Error!");
 		m_obj.m_buttontextobj=new kGUIHTMLButtonTextObj(this,HTMLCONST_BUTTON);
 		AddRenderObject(m_obj.m_buttontextobj);
 	break;
 	case HTMLTAG_LISHAPE:
+		assert(m_obj.m_shapeobj==0,"Error!");
 		m_obj.m_shapeobj=new kGUIHTMLShapeObj();
 		m_obj.m_shapeobj->MovePos(0,0);
 		AddObject(m_obj.m_shapeobj);
 	break;
 	case HTMLTAG_FORM:
+		assert(m_obj.m_formobj==0,"Error!");
 		m_obj.m_formobj=new kGUIHTMLFormObj();
 		m_obj.m_formobj->SetPage(m_page);
 	break;
 	case HTMLTAG_IMBEDTEXTGROUP:
 		m_insert=true;
+		assert(m_obj.m_textgroup==0,"Error!");
 		m_obj.m_textgroup=new kGUIHTMLTextGroup(m_page);
 	break;
 	case HTMLTAG_IMBEDTEXT:
 		m_insert=true;
+		assert(m_obj.m_textobj==0,"Error!");
 		m_obj.m_textobj=new kGUIHTMLTextObj();
 		AddRenderObject(m_obj.m_textobj);
 	break;
 	case HTMLTAG_CONTENTGROUP:
 		m_insert=true;
+		assert(m_obj.m_contentgroup==0,"Error!");
 		m_obj.m_contentgroup=new kGUIHTMLContentGroup(m_page);
 	break;
 	case HTMLTAG_TEXTAREA:
+		assert(m_obj.m_inputobj==0,"Error!");
 		m_obj.m_inputobj=new kGUIHTMLInputBoxObj();
 		AddObject(m_obj.m_inputobj);
 	break;
@@ -9620,9 +9641,9 @@ void kGUIHTMLObj::ChangeDisplay(unsigned int olddisplay)
 	switch(olddisplay)
 	{
 	case DISPLAY_LIST_ITEM:
-		m_obj.m_liprefix->Purge();
-		delete m_obj.m_liprefix;
-		m_obj.m_liprefix=0;
+		m_liprefix->Purge();
+		delete m_liprefix;
+		m_liprefix=0;
 	break;
 	}
 
@@ -9640,7 +9661,8 @@ void kGUIHTMLObj::ChangeDisplay(unsigned int olddisplay)
 
 		/* calc list index */
 		prefix=new kGUIHTMLLIPrefix(m_page);
-		m_obj.m_liprefix=prefix;
+		assert(m_liprefix==0,"Error!");
+		m_liprefix=prefix;
 
 		/* loop through my styleparent and calc my index */
 		j=m_styleparent->GetNumStyleChildren();
@@ -9728,6 +9750,9 @@ void kGUIHTMLObj::Purge(void)
 {
 	unsigned int i;
 
+	if(m_display==DISPLAY_LIST_ITEM)
+		delete m_liprefix;
+
 	if(m_id==HTMLTAG_FORM && m_obj.m_formobj)
 	{
 		delete m_obj.m_formobj;
@@ -9745,8 +9770,6 @@ void kGUIHTMLObj::Purge(void)
 	}
 	else if(m_id==HTMLTAG_A)
 		delete m_obj.m_linkobj;
-	else if(m_id==HTMLTAG_LI)
-		delete m_obj.m_liprefix;
 
 	for(i=0;i<m_numstylechildren;++i)
 	{
@@ -9844,6 +9867,7 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyle
 	kGUIStringSplit ss;
 	unsigned int *applied=m_page->m_applied;
 	unsigned int appliedlevel=m_page->m_appliedlevel;
+	kGUIUnits unit;
 
 	for(i=0;i<slist->GetNumAttributes();++i)
 	{
@@ -10292,25 +10316,18 @@ void kGUIHTMLObj::SetAttributes(kGUIStyleObj *slist,unsigned int owner,kGUIStyle
 				m_page->m_textshadowr=att->GetValue()->GetInt();
 			break;
 			case HTMLATT_TEXT_SHADOW_X:
-			{
-				kGUIUnits unit;
-
 				m_page->PushStyle(sizeof(m_page->m_textshadowx),&m_page->m_textshadowx);
 				unit.Set(m_page,att->GetValue());
 				if(unit.GetUnitType()!=UNITS_UNDEFINED)
 					m_page->m_textshadowx=unit.CalcUnitValue((int)m_em,(int)m_em);
 				/* todo, else print error */
-			}
 			break;
 			case HTMLATT_TEXT_SHADOW_Y:
-			{
-				kGUIUnits unit;
 				m_page->PushStyle(sizeof(m_page->m_textshadowy),&m_page->m_textshadowy);
 				unit.Set(m_page,att->GetValue());
 				if(unit.GetUnitType()!=UNITS_UNDEFINED)
 					m_page->m_textshadowy=unit.CalcUnitValue((int)m_em,(int)m_em);
 				/* todo, else print error */
-			}
 			break;
 			case HTMLATT_TEXT_SHADOW_COLOR:
 				m_page->PushStyle(sizeof(m_page->m_textshadowcolor),&m_page->m_textshadowcolor);
@@ -10574,7 +10591,6 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			break;
 			case HTMLATT_OUTLINE_WIDTH:
 			{
-				kGUIUnits unit;
 				int wpix;
 
 				code=att->GetVID();
@@ -10675,8 +10691,6 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			break;
 			case HTMLATT_FONT_SIZE:
 			{
-				kGUIUnits fs;
-
 				m_page->PushStyle(sizeof(m_page->m_fontsize),&m_page->m_fontsize);
 
 				code=att->GetVID();
@@ -10705,18 +10719,18 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 					m_page->m_fontsize=xfontsize[6];
 				break;
 				case HTMLCONST_SMALLER:
-					m_page->m_fontsize=max(xfontsize[0],m_page->m_fontsize/1.2f);
+					m_page->m_fontsize=valmax(xfontsize[0],m_page->m_fontsize/1.2f);
 				break;
 				case HTMLCONST_LARGER:
-					m_page->m_fontsize=min(xfontsize[6],m_page->m_fontsize*1.2f);
+					m_page->m_fontsize=valmin(xfontsize[6],m_page->m_fontsize*1.2f);
 				break;
 				case HTMLCONST_INHERIT:
 				break;
 				default:
-					fs.Set(m_page,att->GetValue());
-					if(fs.GetUnitType()!=UNITS_UNDEFINED)
+					unit.Set(m_page,att->GetValue());
+					if(unit.GetUnitType()!=UNITS_UNDEFINED)
 					{
-						m_page->m_fontsize=fs.CalcUnitValue(m_page->m_fontsize,m_page->m_fontsize);
+						m_page->m_fontsize=unit.CalcUnitValue(m_page->m_fontsize,m_page->m_fontsize);
 
 						if(m_page->m_fontsize<1.0f)
 							m_page->m_fontsize=1.0f;
@@ -11344,7 +11358,7 @@ void kGUIHTMLObj::Clear(int c)
 		h=m_pos->m_righth;
 	break;
 	case CLEAR_ALL:
-		h=max(m_pos->m_righth,m_pos->m_lefth);
+		h=valmax(m_pos->m_righth,m_pos->m_lefth);
 	break;
 	default:
 		return;
@@ -11599,7 +11613,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 	if(obj->m_fixedpos)
 	{
 		rx=robj->GetZoneX()+ow;
-		by=max(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=valmax(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(rx>m_minw)
 			m_minw=rx;
 		if(rx>m_maxw)
@@ -11611,7 +11625,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 	else if(obj->m_abspos)
 	{
 		rx=robj->GetZoneX()+ow;
-		by=max(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=valmax(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(rx>m_minw)
 			m_minw=rx;
 		if(rx>m_maxw)
@@ -11637,16 +11651,16 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=min(m_pos->m_lefth,m_pos->m_righth);
+					down=valmin(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=max(m_pos->m_lefth,m_pos->m_righth);
+					down=valmax(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 		}
 
 		robj->MoveZoneX(m_pos->m_leftw);
 		robj->MoveZoneY(m_pos->m_cury);
-		by=max(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=valmax(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(by>m_maxy)
 			m_maxy=by;
 
@@ -11663,7 +11677,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 		if(m_pos->m_leftw)
 		{
-			m_pos->m_lefth=max(m_pos->m_lefth,oh);
+			m_pos->m_lefth=valmax(m_pos->m_lefth,oh);
 			if(!m_pos->m_lefth)
 				m_pos->m_leftw=0;
 		}
@@ -11684,16 +11698,16 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=min(m_pos->m_lefth,m_pos->m_righth);
+					down=valmin(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=max(m_pos->m_lefth,m_pos->m_righth);
+					down=valmax(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 		}
 
 		robj->MoveZoneX(pw-(m_pos->m_rightw+ow));
 		robj->MoveZoneY(m_pos->m_cury);
-		by=max(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=valmax(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(by>m_maxy)
 			m_maxy=by;
 
@@ -11710,7 +11724,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 		if(m_pos->m_rightw)
 		{
-			m_pos->m_righth=max(m_pos->m_righth,oh);
+			m_pos->m_righth=valmax(m_pos->m_righth,oh);
 			if(!m_pos->m_righth)
 				m_pos->m_rightw=0;
 			else if((m_pos->m_leftw+m_pos->m_rightw)>m_maxw)
@@ -11736,9 +11750,9 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=min(m_pos->m_lefth,m_pos->m_righth);
+					down=valmin(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=max(m_pos->m_lefth,m_pos->m_righth);
+					down=valmax(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 
@@ -11804,9 +11818,9 @@ dotext:;
 				if(!m_pos->m_leftw && !m_pos->m_rightw)
 					break;
 				if(m_pos->m_leftw && m_pos->m_rightw)
-					m_pos->m_lineasc=min(m_pos->m_lefth,m_pos->m_righth);
+					m_pos->m_lineasc=valmin(m_pos->m_lefth,m_pos->m_righth);
 				else
-					m_pos->m_lineasc=max(m_pos->m_lefth,m_pos->m_righth);
+					m_pos->m_lineasc=valmax(m_pos->m_lefth,m_pos->m_righth);
 				PositionBreak(true);
 			}
 		}
@@ -12095,7 +12109,7 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 						m_colwidthfixed.SetEntry(c,true);
 
 						/* set to max of fixed width or minimum width, whatever is greater! */
-						w=max(ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1),ccell->m_minw+(m_cellpadding<<1));
+						w=valmax(ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1),ccell->m_minw+(m_cellpadding<<1));
 
 						if(w>m_colmin.GetEntry(c))
 						{
@@ -12151,7 +12165,7 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 //					kGUI::Trace("Getting Cell Size[%d,%d,span=%d] width=%d\n",r,c,ccell->m_colspan,ccell->m_minw);
 
 					if(ccell->m_width.GetIsFixed())
-						w=max(ccell->m_minw,ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1));
+						w=valmax(ccell->m_minw,ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1));
 					else
 						w=ccell->m_minw;
 
@@ -12236,8 +12250,8 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 	{
 		int minsize=table->m_width.CalcUnitValue(0,em);
 
-		table->m_minw=max(table->m_minw,minsize);
-		table->m_maxw=max(table->m_maxw,minsize);
+		table->m_minw=valmax(table->m_minw,minsize);
+		table->m_maxw=valmax(table->m_maxw,minsize);
 	}
 }
 
@@ -13126,7 +13140,7 @@ dopass2:;
 		if(m_page->m_mode==MODE_MINMAX)
 		{
 			/* has the prefix mode, or URL changed since before? */
-			prefix=m_obj.m_liprefix;
+			prefix=m_liprefix;
 			if(m_display==DISPLAY_INLINE)
 				style=LISTSTYLE_NONE;
 			else
@@ -13322,7 +13336,7 @@ typechanged:;
 
 			w=textobj->GetWidth();
 			if(textobj->GetFixedWidth())
-				w=max(w,(int)(textobj->GetFixedWidth()*m_em));	/* used for LI prefix as it is right aligned and wider */
+				w=valmax(w,(int)(textobj->GetFixedWidth()*m_em));	/* used for LI prefix as it is right aligned and wider */
 
 			if(textobj->GetPlusSpace())
 				w+=(int)(0.33f*m_em)+(m_page->m_wordspacing.CalcUnitValue(0,m_em));
@@ -13330,7 +13344,7 @@ typechanged:;
 
 			h=textobj->GetLineHeight();
 			if(m_page->m_textdecoration&TEXTDECORATION_UNDERLINE)
-				h=max(h,(int)textobj->GetAscHeight()+4);
+				h=valmax(h,(int)textobj->GetAscHeight()+4);
 
 			textobj->MoveZoneH(h);
 		}
@@ -13850,7 +13864,7 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 		}
 	}
 
-	m_maxchildy=max(m_pos->m_cury,m_maxy);
+	m_maxchildy=valmax(m_pos->m_cury,m_maxy);
 	if(m_fixedh==false && m_relh==false)
 	{
 		SetInsideH(m_maxchildy);
@@ -14268,10 +14282,10 @@ void kGUIHTMLObj::Contain(bool force)
 					orx=olx+obj->GetZoneW();
 					oty=obj->GetZoneY();
 					oby=oty+obj->GetZoneH();
-					lx=min(lx,olx);
-					ty=min(ty,oty);
-					rx=max(rx,orx);
-					by=max(by,oby);
+					lx=valmin(lx,olx);
+					ty=valmin(ty,oty);
+					rx=valmax(rx,orx);
+					by=valmax(by,oby);
 				}
 			}
 			/* set my position and size to this */
@@ -14316,8 +14330,8 @@ void kGUIHTMLObj::Contain(bool force)
 				{
 					if(z->GetZoneRX()>GetZoneW() || z->GetZoneBY()>GetZoneH())
 					{
-						neww=max(neww,z->GetZoneRX());		
-						newh=max(newh,z->GetZoneBY());		
+						neww=valmax(neww,z->GetZoneRX());		
+						newh=valmax(newh,z->GetZoneBY());		
 						m_error=true;
 					}
 				}
@@ -14627,6 +14641,7 @@ void kGUIUnits::Reset(void)
 {
 	m_value.i=0;
 	m_vint=true;
+	m_vneg=false;
 	m_units=UNITS_UNDEFINED;
 }
 
@@ -14647,6 +14662,7 @@ void kGUIUnits::Set(kGUIHTMLPageObj *page,kGUIString *s)
 		m_units=c->m_units;
 		m_value.d=c->m_value.d;
 		m_vint=c->m_vint;
+		m_vneg=c->m_vneg;
 		return;
 	}
 
@@ -14689,11 +14705,13 @@ void kGUIUnits::Set(kGUIHTMLPageObj *page,kGUIString *s)
 	{
 		m_vint=false;
 		m_value.d=s->GetDouble();
+		m_vneg=m_value.d<0.0f;
 	}
 	else
 	{
 		m_vint=true;
 		m_value.i=s->GetInt();
+		m_vneg=m_value.i<0;
 	}
 	uc->Add(s->GetString(),this);
 }
@@ -14993,6 +15011,8 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 		owner=baseowner;
 
 	/* split group commands into their individual commands */
+	/* also check individual values for invalid values */
+
 	switch(attid)
 	{
 	case HTMLATT_COLOR:
@@ -15028,16 +15048,35 @@ void kGUIStyleObj::AddAndSplitAttribute(kGUIHTMLPageObj *page,unsigned int conte
 	case HTMLATT_RIGHT:
 	case HTMLATT_TOP:
 	case HTMLATT_BOTTOM:
-	case HTMLATT_MINWIDTH:
-	case HTMLATT_MAXWIDTH:
-	case HTMLATT_MINHEIGHT:
-	case HTMLATT_MAXHEIGHT:
 		/* syntax check before adding (so as to not replace a valid one with an invalid one) */
 		u.Set(page,value);
 		if(u.GetUnitType()==UNITS_UNDEFINED)
 			page->m_errors.ASprintf("Malformed units '%s' for ATTID=%d\n",value->GetString(),attid);
 		else
 			AddAttribute(attid,owner,priority,value);
+	break;
+	case HTMLATT_MINWIDTH:
+	case HTMLATT_MAXWIDTH:
+	case HTMLATT_MINHEIGHT:
+	case HTMLATT_MAXHEIGHT:
+		/* syntax check before adding (so as to not replace a valid one with an invalid one) */
+		/* auto or negative values are invalid */
+		u.Set(page,value);
+		switch(u.GetUnitType())
+		{
+		case UNITS_UNDEFINED:
+			page->m_errors.ASprintf("Malformed units '%s' for ATTID=%d\n",value->GetString(),attid);
+		break;
+		case UNITS_AUTO:
+			page->m_errors.ASprintf("Auto not valid for for ATTID=%d\n",attid);
+		break;
+		default:
+			if(u.GetIsNeg())
+				page->m_errors.ASprintf("Negative units not allowed '%s' for ATTID=%d\n",value->GetString(),attid);
+			else
+				AddAttribute(attid,owner,priority,value);
+		break;
+		}
 	break;
 	case HTMLATT_CONTENT:
 		/* content is a special case, it can only be applied to rules that either have */
@@ -17941,14 +17980,14 @@ kGUIColor kGUIHTMLBox::Light(kGUIColor c)
 
 	DrawColorToRGB(c,r,g,b);
 	r*=1.6875f;
-	r=min(r,255.0f);
-	r=max(r,178.0f);
+	r=valmin(r,255.0f);
+	r=valmax(r,178.0f);
 	g*=1.6875f;
-	g=min(g,255.0f);
-	g=max(g,178.0f);
+	g=valmin(g,255.0f);
+	g=valmax(g,178.0f);
 	b*=1.6875f;
-	b=min(b,255.0f);
-	b=max(b,178.0f);
+	b=valmin(b,255.0f);
+	b=valmax(b,178.0f);
 	return(DrawColor((int)r,(int)g,(int)b));
 }
 
@@ -18086,7 +18125,7 @@ void kGUIHTMLBox::Draw(kGUICorners *c)
 	else
 		bb=m_bottombw;
 
-	w=max(max(tb,bb),max(lb,rb));
+	w=valmax(valmax(tb,bb),valmax(lb,rb));
 	if(w)
 	{
 		unsigned int i;

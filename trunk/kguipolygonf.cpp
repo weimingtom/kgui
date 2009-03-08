@@ -146,9 +146,9 @@ void kGUI::DrawPoly(int nvert,kGUIFPoint2 *point,kGUIColor c,float alpha)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (max(m_clipcornersf.ty, pt[ind[0]].y));
+    y0 = (valmax(m_clipcornersf.ty, pt[ind[0]].y));
 										/* ymin of polygon */
-    y1 = (min(m_clipcornersf.by, pt[ind[n-1]].y));
+    y1 = (valmin(m_clipcornersf.by, pt[ind[n-1]].y));
 										/* ymax of polygon */
 	m_subpixcollectorf.SetColor(c,alpha);
 	m_subpixcollectorf.SetBounds(y0,y1);
@@ -190,7 +190,7 @@ void kGUI::DrawPoly(int nvert,kGUIFPoint2 *point,kGUIColor c,float alpha)
 		/* sort active edge list by active[j].x */
 		qsort(active, nact, sizeof active[0], compare_active);
 
-		rowheight=0.1f;	//min(pt[ind[k]].y-y,1.0f);
+		rowheight=0.1f;	//valmin(pt[ind[k]].y-y,1.0f);
 
 		/* draw horizontal segments for scanline y */
 		for (j=0; j<nact; j+=2)
@@ -283,7 +283,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIFPoint2 *point
 	/* make the number of endpoints vary depending on thickness */
 	if(ce&1)
 	{
-		numep[0]=min(MAXENDPOINTS,(int)(radius+1.0f));
+		numep[0]=valmin(MAXENDPOINTS,(int)(radius+1.0f));
 		/* end point step to cover 180 degrees */
 		estep[0]=PI/(numep[0]-1);
 	}
@@ -294,7 +294,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIFPoint2 *point
 	}
 	if(ce&2)
 	{
-		numep[1]=min(MAXENDPOINTS,(int)(radius+1.0f));
+		numep[1]=valmin(MAXENDPOINTS,(int)(radius+1.0f));
 		/* end point step to cover 180 degrees */
 		estep[1]=PI/(numep[1]-1);
 	}
@@ -349,7 +349,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIFPoint2 *point
 			len=(float)hypot(p1->y-p2->y,p1->x-p2->x);
 			h=(lastheading+(PI/2));
 			hdelta=Diff(heading,lastheading);
-			numcp=min(MAXENDPOINTS,abs((int)(hdelta*radius*0.35f))+3);			/* number of points inserted  for the curve curved points */
+			numcp=valmin(MAXENDPOINTS,abs((int)(hdelta*radius*0.35f))+3);			/* number of points inserted  for the curve curved points */
 			step=hdelta/(numcp-1);
 
 			/* is this an inside or outside angle? */
@@ -455,8 +455,8 @@ bool kGUI::DrawLine(float x1,float y1,float x2,float y2,kGUIColor c,float alpha)
 		x=x1;
 		do
 		{
-			size=min(length,1.0f);
-			m_subpixcollectorf.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
+			size=valmin(length,1.0f);
+			m_subpixcollectorf.AddRect(valmin(x,x+stepx),valmin(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;
@@ -480,8 +480,8 @@ bool kGUI::DrawLine(float x1,float y1,float x2,float y2,kGUIColor c,float alpha)
 		y=y1;
 		do
 		{
-			size=min(length,1.0f);
-			m_subpixcollectorf.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
+			size=valmin(length,1.0f);
+			m_subpixcollectorf.AddRect(valmin(x,x+stepx),valmin(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;

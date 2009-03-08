@@ -175,13 +175,13 @@ kGUIFileReq::kGUIFileReq(int type,const char *inname,const char *ext,void *codeo
 	m_controls.NextLine();
 
 	m_done.SetString(kGUI::GetString(KGUISTRING_DONE));
-	bw=max(m_done.GetWidth()+16,60);
+	bw=valmax(m_done.GetWidth()+16,60);
 	m_done.SetSize(bw,m_rowheight);
 	m_done.SetPos(m_controls.GetZoneW()-8-bw,0);
 	m_done.SetEventHandler(this,CALLBACKNAME(PressDone));
 
 	m_cancel.SetString(kGUI::GetString(KGUISTRING_CANCEL));
-	bw=max(m_cancel.GetWidth()+16,60);
+	bw=valmax(m_cancel.GetWidth()+16,60);
 	m_cancel.SetSize(bw,m_rowheight);
 	m_cancel.SetPos(m_done.GetZoneX()-8-bw,0);
 	m_cancel.SetEventHandler(this,CALLBACKNAME(PressCancel));

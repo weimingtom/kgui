@@ -1380,8 +1380,8 @@ void kGUITableObj::SelectRow(int line,bool add)
 		int start,end;
 
 		/* select all rows between us and the last selected row */
-		start=min(m_lastselectedrow,line);
-		end=max(m_lastselectedrow,line);
+		start=valmin(m_lastselectedrow,line);
+		end=valmax(m_lastselectedrow,line);
 		for(e=start;e<=end;++e)
 		{
 			rowobj=static_cast<kGUITableRowObj *>(GetChild(e));
@@ -1624,7 +1624,7 @@ abort:;
 			{
 				gobj=GetChild(y);
 				gobj->GetCorners(&rc);
-				c2.ty=max(rc.ty,rc.by-5);
+				c2.ty=valmax(rc.ty,rc.by-5);
 				c2.by=rc.by;
 				if(kGUI::MouseOver(&c2))
 				{

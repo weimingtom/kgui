@@ -58,7 +58,7 @@ void kGUITextObj::Control(unsigned int command,KGCONTROL_DEF *data)
 void kGUITextObj::Changed()
 {
 	/* only expand to fit, don't shrink */
-	SetSize(max((int)GetWidth()+(m_xoff<<1),GetZoneW()),max((int)GetLineHeight()+(m_yoff<<1),GetZoneH()));
+	SetSize(valmax((int)GetWidth()+(m_xoff<<1),GetZoneW()),valmax((int)GetLineHeight()+(m_yoff<<1),GetZoneH()));
 	Dirty();
 }
 

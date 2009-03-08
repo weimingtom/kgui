@@ -266,11 +266,11 @@ inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
 	sli=sub->limage;		/* save pointer to each raster line */
 
 	ph=sub->pixelheight;
-	yweight=min(1.0f-sub->yfrac,sub->pixelheight);
+	yweight=valmin(1.0f-sub->yfrac,sub->pixelheight);
 	do
 	{
 		pw=sub->pixelwidth;
-		xweight=min(1.0f-sub->xfrac,sub->pixelwidth);
+		xweight=valmin(1.0f-sub->xfrac,sub->pixelwidth);
 		li=sli;
 		do
 		{
@@ -342,11 +342,11 @@ inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
 				}
 			}
 			pw-=xweight;
-			xweight=min(1.0f,pw);
+			xweight=valmin(1.0f,pw);
 		}while(pw>0.001f);
 
 		ph-=yweight;
-		yweight=min(1.0f,ph);
+		yweight=valmin(1.0f,ph);
 		sli+=sub->rowadd;	
 	}while(ph>0.0001f);
 
@@ -582,6 +582,7 @@ bool kGUIImage::LoadGIFImage(bool justsize)
 	int totaldelay100=0;
 	int lastdelaytps=0;
 	int totaldelaytps,deltatps;
+	bool error=false;
 
 	int lastframe=-1;
 	bool transp=false;
@@ -627,7 +628,11 @@ bool kGUIImage::LoadGIFImage(bool justsize)
 
 	if (resolution&128)
 	{
-		assert(colors<=256,"Palette Overflow!");
+		if(colors>256)
+		{
+			error=true;
+			goto gifdone;
+		}
 		for (t=0; t<colors; t++)
 		{
 			gpalr[t]=dhgetc(this);
@@ -711,8 +716,11 @@ nextframe:;
 	if(fh>m_imageheight && !m_numframes)
 		m_imageheight=fh;
 
-	assert(fw<=m_imagewidth,"Error, too wide");
-	assert(fh<=m_imageheight,"Error, too tall");
+	if(fw>m_imagewidth || fh>m_imageheight)
+	{
+		error=true;
+		goto gifdone;
+	}
 
 	flags=dhgetc(this);
 #if TRACEGIF
@@ -830,7 +838,11 @@ nextframe:;
 	if (flags&128)
 	{
 		x=1<<((flags&7)+1);
-		assert(x<=256,"Palette Overflow!");
+		if(x>256)
+		{
+			error=true;
+			goto gifdone;
+		}
 #if TRACEGIF
 		kGUI::Trace("Loading palette #%d colors\n",x);
 #endif
@@ -866,7 +878,11 @@ nextframe:;
 
 	code_size=dhgetc(this);
 	start_table_size=(1<<code_size);
-	assert((unsigned int)start_table_size<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
+	if((unsigned int)start_table_size>=(sizeof(node)/sizeof(GifNode)))
+	{
+		error=true;
+		goto gifdone;
+	}
 	for (t=0; t<start_table_size; t++)
 	{
 		node[t].prev=-1;
@@ -985,7 +1001,11 @@ nextframe:;
 							goto endframe;
 					}
 				}
-				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
+				if((unsigned int)next_code>=(sizeof(node)/sizeof(GifNode)))
+				{
+					error=true;
+					goto gifdone;
+				}
 				node[next_code].color=temp_buffer[t-1];
 				node[next_code].prev=old_code;
 
@@ -1002,13 +1022,21 @@ nextframe:;
 				r=old_code;
 				while(1)
 				{
-					assert((unsigned int)t<sizeof(temp_buffer),"Gif Overflow");
+					if((unsigned int)t>=sizeof(temp_buffer))
+					{
+						error=true;
+						goto gifdone;
+					}
 					temp_buffer[t++]=node[r].color;
 					if (node[r].prev==-1)
 						break;
 					r=node[r].prev;
 				}
-				assert((unsigned int)next_code<(sizeof(node)/sizeof(GifNode)),"Gif Overflow");
+				if((unsigned int)next_code>=(sizeof(node)/sizeof(GifNode)))
+				{
+					error=true;
+					goto gifdone;
+				}
 				node[next_code].color=temp_buffer[t-1];
 				node[next_code].prev=old_code;
 
@@ -1089,7 +1117,7 @@ gifdone:;
 	if(giflines)
 		delete []giflines;
 	Close();
-	if(!m_numframes)
+	if(!m_numframes || error)
 		return(false);
 	else
 		return(true);
@@ -3579,13 +3607,13 @@ double kGUIImageObj::CalcScaleToFit(int w,int h)
 
 void kGUIImageObj::ShrinkToFit(void)
 {
-	double s=min(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
+	double s=valmin(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
 	SetScale(s,s);
 }
 
 void kGUIImageObj::ExpandToFit(void)
 {
-	double s=max(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
+	double s=valmax(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
 	SetScale(s,s);
 }
 
@@ -3616,7 +3644,7 @@ void kGUIImageObj::CenterImage(void)
 void kGUIImageObj::MoveRow(int move)
 {
 	int viewh=GetZoneH()-kGUI::GetSkin()->GetScrollbarHeight();
-	int maxh=(int)(max(0,GetScaledImageHeight()-viewh));
+	int maxh=(int)(valmax(0,GetScaledImageHeight()-viewh));
 
 	m_topoff+=move;
 	if(m_topoff<0)
@@ -3629,7 +3657,7 @@ void kGUIImageObj::MoveRow(int move)
 void kGUIImageObj::MoveCol(int move)
 {
 	int vieww=GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth();
-	int maxw=(int)(max(0,GetScaledImageWidth()-vieww));
+	int maxw=(int)(valmax(0,GetScaledImageWidth()-vieww));
 
 	m_leftoff+=move;
 	if(m_leftoff<0)

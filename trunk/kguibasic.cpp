@@ -1220,7 +1220,7 @@ int kGUIBasicVarObj::ReDim(kGUIBasicIndices *indices,kGUIBasicObj *newtype,bool 
 		ni=oldvar.GetNumIndices();
 		for(ii=0;ii<ni;++ii)
 		{
-			mini=min(oldvar.GetIndice(ii),GetIndice(ii));
+			mini=valmin(oldvar.GetIndice(ii),GetIndice(ii));
 			if(!mini)
 				goto nocopy;
 			minindices.AddIndice(mini);
@@ -4547,7 +4547,7 @@ int kGUIBasic::exp_vardelta(kGUIBasicVarObj *v1,kGUIBasicVarObj *v2)
 	case VARTYPE_STRING:
 	{
 		/* since strings may contain nulls use memcmp instead of strcmp */
-		int d=memcmp(v1->GetStringObj()->GetString(),v2->GetStringObj()->GetString(),max(v1->GetStringObj()->GetLen(),v2->GetStringObj()->GetLen()));
+		int d=memcmp(v1->GetStringObj()->GetString(),v2->GetStringObj()->GetString(),valmax(v1->GetStringObj()->GetLen(),v2->GetStringObj()->GetLen()));
 		if(d>1)
 			d=1;
 		else if(d<-1)

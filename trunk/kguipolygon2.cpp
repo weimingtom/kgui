@@ -147,9 +147,9 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (max(m_clipcornersd.ty, pt[ind[0]].y));
+    y0 = (valmax(m_clipcornersd.ty, pt[ind[0]].y));
 										/* ymin of polygon */
-    y1 = (min(m_clipcornersd.by, pt[ind[n-1]].y));
+    y1 = (valmin(m_clipcornersd.by, pt[ind[n-1]].y));
 										/* ymax of polygon */
 	m_subpixcollector.SetColor(c,alpha);
 	m_subpixcollector.SetBounds(y0,y1);
@@ -191,7 +191,7 @@ void kGUI::DrawPoly(int nvert,kGUIDPoint2 *point,kGUIColor c,double alpha)
 		/* sort active edge list by active[j].x */
 		qsort(active, nact, sizeof active[0], compare_active);
 
-		rowheight=0.1f;	//min(pt[ind[k]].y-y,1.0f);
+		rowheight=0.1f;	//valmin(pt[ind[k]].y-y,1.0f);
 
 		/* draw horizontal segments for scanline y */
 		for (j=0; j<nact; j+=2)
@@ -283,7 +283,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIDPoint2 *point
 	p2=point+1;
 
 	/* make the number of endpoints vary depending on thickness */
-	numep=min(MAXENDPOINTS,(int)(radius+1.0f));
+	numep=valmin(MAXENDPOINTS,(int)(radius+1.0f));
 	/* end point step to cover 180 degrees */
 	estep=PI/(numep-1);
 
@@ -336,7 +336,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIDPoint2 *point
 			len=hypot(p1->y-p2->y,p1->x-p2->x);
 			h=(lastheading+(PI/2));
 			hdelta=Diff(heading,lastheading);
-			numcp=min(MAXENDPOINTS,abs((int)(hdelta*radius*0.35f))+3);			/* number of points inserted  for the curve curved points */
+			numcp=valmin(MAXENDPOINTS,abs((int)(hdelta*radius*0.35f))+3);			/* number of points inserted  for the curve curved points */
 			step=hdelta/(numcp-1);
 
 			/* is this an inside or outside angle? */
@@ -443,8 +443,8 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 		x=x1;
 		do
 		{
-			size=min(length,1.0f);
-			m_subpixcollector.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
+			size=valmin(length,1.0f);
+			m_subpixcollector.AddRect(valmin(x,x+stepx),valmin(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;
@@ -468,8 +468,8 @@ bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double a
 		y=y1;
 		do
 		{
-			size=min(length,1.0f);
-			m_subpixcollector.AddRect(min(x,x+stepx),min(y,y+stepy),size,size,1.0f);
+			size=valmin(length,1.0f);
+			m_subpixcollector.AddRect(valmin(x,x+stepx),valmin(y,y+stepy),size,size,1.0f);
 			x+=stepx;
 			y+=stepy;
 			length-=1.0f;
