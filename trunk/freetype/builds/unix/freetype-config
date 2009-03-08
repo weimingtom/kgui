@@ -14,8 +14,8 @@ exec_prefix=${prefix}
 exec_prefix_set=no
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
-enable_shared=yes
-wl=-Wl,
+enable_shared=no
+wl=
 hardcode_libdir_flag_spec='-L$libdir'
 
 usage()
