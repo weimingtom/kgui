@@ -86,7 +86,7 @@ void kGUIMenuObj::Resize(void)
 		m_titlew.SetEntry(i,w);
 		w+=TITLEGAPX+TITLEGAPX;		/* left gap + right gap */
 		x+=w;
-		y=max(y,h);
+		y=valmax(y,h);
 	}
 	SetZone(0,0,x,y+TITLEGAPY+TITLEGAPY);
 }

@@ -148,17 +148,8 @@
 #define PI 3.141592653589793f
 #endif
 
-#ifndef min
-#define min(x,y) ((x)>(y)?(y):(x))
-#endif
-
-#ifndef max
-#define max(x,y) ((x)<(y)?(y):(x))
-#endif
-
 #define valmin(x,y) ((x)>(y)?(y):(x))
 #define valmax(x,y) ((x)<(y)?(y):(x))
-
 
 extern void fatalerror(const char *message);
 
@@ -429,7 +420,7 @@ template <class T>
 void Array<T>::SetEntry(unsigned int num,T entry)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+max(1,(m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+valmax(1,(m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::SetEntry Out of bounds on array!");
 	m_array[num]=entry;
@@ -469,7 +460,7 @@ void Array<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned int n
 	int movesize;
 	
 	while((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(valmax(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
@@ -508,7 +499,7 @@ template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+(valmax(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
@@ -587,7 +578,7 @@ template <class T>
 void SmallArray<T>::SetEntry(unsigned int num,T entry)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(max(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+(valmax(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
 	m_array[num]=entry;
@@ -627,7 +618,7 @@ void SmallArray<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned 
 	int movesize;
 	
 	while((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(max(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(valmax(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
@@ -1136,7 +1127,7 @@ public:
 	inline void SetFontID(int id) {m_fontid=id;FontChanged();}
 	/*! set the font size
 	    @param s font size in points */
-	inline void SetFontSize(int s) {m_size=min(s,MAXFONTSIZE);FontChanged();}
+	inline void SetFontSize(int s) {m_size=valmin(s,MAXFONTSIZE);FontChanged();}
 	/*! return the font size
 	    @return font size in points */
 	inline const int GetFontSize(void) {return m_size;}

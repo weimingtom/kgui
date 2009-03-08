@@ -238,7 +238,7 @@ class kGUIUnits
 public:
 	kGUIUnits() {m_units=UNITS_UNDEFINED;m_vint=true;m_value.i=0;}
 	void Set(class kGUIHTMLPageObj *page,kGUIString *s);
-	void CopyFrom(kGUIUnits *from) {m_units=from->m_units;m_vint=from->m_vint;m_value.i=from->m_value.i;}
+	void CopyFrom(kGUIUnits *from) {m_units=from->m_units;m_vint=from->m_vint;m_value.i=from->m_value.i;m_vneg=from->m_vneg;}
 	bool GetIsFixed(void) {return ((m_units==UNITS_PIXELS) || (m_units==UNITS_POINTS) || (m_units==UNITS_EM) || (m_units==UNITS_CM));}
 	void SetUnitType(int u) {m_units=u;}
 	int GetUnitType(void) {return m_units;}
@@ -248,11 +248,13 @@ public:
 	double GetUnitValueD(void) {return m_vint==true?(double)m_value.i:m_value.d;}
 	int CalcUnitValue(int scale100,int ems);
 	double CalcUnitValue(double scale100,double ems);
+	bool GetIsNeg(void) {return m_vneg;}
 	void Reset(void);
-	void Zero(void) {m_units=UNITS_PIXELS;m_vint=true;m_value.i=0;}
+	void Zero(void) {m_units=UNITS_PIXELS;m_vint=true;m_value.i=0;m_vneg=false;}
 private:
 	unsigned int m_units:4;
 	bool m_vint:1;
+	bool m_vneg:1;
 	union{
 		double d;
 		int i;
@@ -1252,11 +1254,15 @@ private:
 	unsigned int m_overflowx:2;
 	unsigned int m_overflowy:2;
 	unsigned int m_textoverflow:2;
+
+	//this was inside the union below but since it is based on display which can be
+	//changed it had to be made stand-alone
+	kGUIHTMLLIPrefix *m_liprefix;
+
 	union
 	{
 		kGUIHTMLTextGroup *m_textgroup;
 		kGUIHTMLContentGroup *m_contentgroup;
-		kGUIHTMLLIPrefix *m_liprefix;
 		kGUIHTMLShapeObj *m_shapeobj;
 		kGUIHTMLTextObj *m_textobj;
 		kGUIText *m_text;

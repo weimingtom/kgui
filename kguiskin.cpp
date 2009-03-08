@@ -348,7 +348,7 @@ void DefSkin::DrawBusy(kGUICorners *c)
 	for(x=c->lx;x<c->rx;x+=BUSYBLOCKWIDTH+BUSYBLOCKGAP)
 	{
 		/* draw the top header bar in between */
-		tm->DrawLineRect(0,x,c->ty,min(x+BUSYBLOCKWIDTH,c->rx),c->by,true);
+		tm->DrawLineRect(0,x,c->ty,valmin(x+BUSYBLOCKWIDTH,c->rx),c->by,true);
 	}
 }
 
