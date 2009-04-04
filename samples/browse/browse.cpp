@@ -159,6 +159,10 @@ Browse::Browse()
 
 	//tell browser that we changed it's size
 	m_browse->RePosition(false);
+
+	//load default pages from config if necessary
+	m_settings.LoadTabs(m_browse);
+
 	kGUI::ShowWindow();
 }
 
@@ -198,6 +202,8 @@ Browse::~Browse()
 	kGUIXML prefs;
 	kGUIXMLItem *xroot;
 	int wx,wy,ww,wh;
+
+	m_settings.SaveTabs(m_browse);
 
 	delete m_browse;
 

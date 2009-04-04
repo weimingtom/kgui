@@ -26,6 +26,9 @@
     @brief Fixdep is a stand alone console app that updates a generated dependency
 	file to use a sub directory for placing the object files */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <iostream>
 #include <sys/stat.h>
 

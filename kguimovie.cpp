@@ -148,12 +148,12 @@ int kGUIMovieLocal::kg_close(URLContext *h)
 
 int kGUIMovieLocal::kg_read_pause(URLContext *h, int pause)
 {
-	return(0);
+	return(-1);
 }
 
 int64_t kGUIMovieLocal::kg_read_seek(URLContext *h,int stream_index, int64_t timestamp, int flags)
 {
-	return(0);
+	return(-1);
 }
 
 

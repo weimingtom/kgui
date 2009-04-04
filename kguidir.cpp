@@ -99,9 +99,9 @@ void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIString
 	struct direct *direntry;
 	struct stat statbuf;
 #if _FILE_OFFSET_BITS==64
-	long long zzzz;
+	__off64_t zzzz;
 #else
-	long zzzz;
+	__off_t zzzz;
 #endif
 #else
 	intptr_t dir_handle;
