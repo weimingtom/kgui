@@ -37,7 +37,7 @@ public:
 	void SetString(const char *t);
 	void SetString(const char *t,unsigned int numchars);
 	void SetString16(const char *t);
-	inline void SetString(kGUIString *s) {SetString(s->GetString(),s->GetLen());SetEncoding(s->GetEncoding());}
+	inline void SetString(kGUIString *s) {if(!s){Clear();}else{SetString(s->GetString(),s->GetLen());SetEncoding(s->GetEncoding());}}
 	void SetFormattedInt(int value);	/* brackets for neg, and commas */
 	inline const char *GetString(void) {return m_string;}
 	unsigned int GetChar(unsigned int pos,unsigned int *numbytes);

@@ -94,6 +94,7 @@ public:
 class DownloadPageRecord
 {
 public:
+	unsigned int m_tabnum;
 	TabRecord *m_tabrecord;
 	DataHandle m_dh;
 	kGUIDownloadEntry m_dl;
@@ -121,10 +122,17 @@ private:
 	kGUIImage m_icon;
 };
 
+//save tabs when quitting?
+enum
+{
+SAVEMODE_NO,
+SAVEMODE_YES,
+SAVEMODE_ASK};
+
 class kGUIBrowseSettings : public kGUIHTMLSettings
 {
 public:
-	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("screen");m_printmedia.SetString("print");}
+	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("screen");m_printmedia.SetString("print");m_savemode=SAVEMODE_ASK;m_numtabs=0;m_tabs.Init(4,4);m_saveask=false;}
 	void SetVisitedCache(kGUIHTMLVisitedCache *visitedcache) {m_visitedcache=visitedcache;}
 	kGUIHTMLVisitedCache *GetVisitedCache(void) {return m_visitedcache;}
 	void SetItemCache(kGUIHTMLItemCache *itemcache) {m_itemcache=itemcache;}
@@ -132,6 +140,12 @@ public:
 
 	void SetVisitedDays(unsigned int vd) {m_visiteddays=vd;m_visitedcache->SetNumDays(vd);}
 	unsigned int GetVisitedDays(void) {return m_visiteddays;}
+
+	//mode for savetabs when quiting
+	void SetSaveMode(unsigned int cm) {m_savemode=cm;}
+	unsigned int GetSaveMode(void) {return m_savemode;}
+	void LoadTabs(class kGUIBrowseObj *b);
+	void SaveTabs(class kGUIBrowseObj *b);
 
 	void SetCacheMode(unsigned int cm) {m_cachemode=cm;m_itemcache->SetMode(cm);}
 	unsigned int GetCacheMode(void) {return m_cachemode;}
@@ -161,9 +175,13 @@ private:
 	unsigned int m_cachemode;
 	unsigned int m_cachesize;	/* in MB */
 	unsigned int m_numbookmarks;
+	unsigned int m_savemode;
 	kGUIString m_screenmedia;
 	kGUIString m_printmedia;
 	ClassArray<kGUIBookmark>m_bookmarks;
+	unsigned int m_numtabs;
+	bool m_saveask;
+	ClassArray<kGUIString>m_tabs;
 };
 
 class kGUIBrowseIcon
@@ -254,9 +272,8 @@ public:
 
 	HistoryRecord *GetCurHist(void) {return m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();}
 
-//these should be passed by settings??
-//	void SetItemCache(kGUIHTMLItemCache *c) {m_curscreenpage->SetItemCache(c);m_printpage.SetItemCache(c);}
-//	void SetVisitedCache(kGUIHTMLVisitedCache *v) {m_curscreenpage->SetVisitedCache(v);m_printpage.SetVisitedCache(v);}
+	unsigned int GetNumTabs(void) {return m_numtabs;}
+	void CopyTabURL(unsigned int n,kGUIString *url);
 
 	kGUIString *GetTitle(void) {return m_curscreenpage->GetTitle();}
 	void SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header);
@@ -282,6 +299,7 @@ public:
 	void ShowError(DownloadPageRecord *dle);
 	void Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password);
 
+	void NewTab(void);
 	void SettingsChanged(void) {m_settingschangedcallback.Call();}
 private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,UrlChanged,kGUIEvent);
@@ -298,10 +316,9 @@ private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,TabChanged,kGUIEvent);
 	CALLBACKGLUE(kGUIBrowseObj,Update);
 	void UpdateButtons(void);
-	void NewTab(void);
 	void CloseTab(void);
 	void InitTabRecord(TabRecord *tr);
-	void Goto(void);
+	void Goto(unsigned int tabnum);
 	void Load(void);
 	void StopLoad(void);
 	void SetIcon(kGUIHTMLPageObj *page,DataHandle *dh);

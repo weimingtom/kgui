@@ -290,7 +290,8 @@ void kGUIFileReq::CopyFilename(kGUIEvent *event)
 			obj=m_table.GetChild(0,row);
 			frr=static_cast<kGUIFileReqRow *>(obj);
 
-			if(frr->GetType()==TYPE_FILE)
+			//todo allow click to set if save mode just not move cursor
+			if(frr->GetType()==TYPE_FILE && m_type==FILEREQ_OPEN)
 				m_shortfn.SetString(frr->GetFilename());
 		}
 		else

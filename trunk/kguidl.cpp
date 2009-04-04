@@ -647,7 +647,10 @@ again:;
 
 		hoffset=0;
 		while(ExtractFromHeader("Set-Cookie: ",&cc,&hoffset))
-			jar->SetCookie(&cc,&servername,&url);
+		{
+			if(cc.GetLen())
+				jar->SetCookie(&cc,&servername,&url);
+		}
 	}
 
 	switch(m_returncode)

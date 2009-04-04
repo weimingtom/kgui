@@ -98,6 +98,10 @@ private:
 	kGUITextObj m_cachesizecaption2;
 	kGUIInputBoxObj m_cachesize;
 
+	/* settings for save tabs mode to use */
+	kGUITextObj m_savemodecaption;
+	kGUIComboBoxObj m_savemode;
+
 	/* draw options */
 
 	/* load images */
@@ -465,6 +469,16 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 
 	UpdateButtons();
 	kGUI::AddEvent(this,CALLBACKNAME(Update));
+}
+
+void kGUIBrowseObj::CopyTabURL(unsigned int n,kGUIString *url)
+{
+	HistoryRecord *p=m_tabrecords.GetEntryPtr(n)->GetCurHist();
+
+	if(p)
+		url->SetString(p->GetURL());
+	else
+		url->Clear();
 }
 
 void kGUIBrowseObj::InitTabRecord(TabRecord *tr)
@@ -926,7 +940,7 @@ void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *typ
 	if(source)
 	{
 		hist->Set(url->GetString(),0,0,source->GetString(),header?header->GetString():0);
-		Goto();
+		Goto(m_curtab);
 	}
 	else
 	{
@@ -934,7 +948,6 @@ void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *typ
 		hist->SetScrollY(0);
 		hist->SetType(type);
 		hist->SetHeader(header);
-		hist->SetType(type);
 		hist->SetReferer(url);
 
 		m_url.SetString(url);
@@ -976,14 +989,16 @@ void kGUIBrowseObj::UpdateButtons(void)
 	m_pagechangedcallback.Call();
 }
 
-void kGUIBrowseObj::Goto(void)
+void kGUIBrowseObj::Goto(unsigned int tabnum)
 {
-	HistoryRecord *hist=GetCurHist();
+	HistoryRecord *hist=m_tabrecords.GetEntryPtr(tabnum)->GetCurHist();
+	HTMLPageObj *page=m_tabrecords.GetEntryPtr(tabnum)->GetScreenPage();
 	const char *cp;
 	kGUIString llname;
 
 	//todo remove most of this stuff
-	m_url.SetString(hist->GetURL());
+	if(tabnum==m_curtab)
+		m_url.SetString(hist->GetURL());
 
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
 
@@ -992,20 +1007,20 @@ void kGUIBrowseObj::Goto(void)
 	if(cp)
 		llname.SetString(cp+1);
 
-	m_curscreenpage->SetTarget(&llname);
-	m_curscreenpage->SetMedia(GetSettings()->GetScreenMedia());
-	m_curscreenpage->SetSource(hist->GetURL(),hist->GetSource(),hist->GetType(),hist->GetHeader());
-	m_curscreenpage->LoadInput(hist->GetInput());			/* overwrite any form inputs with previous input */
-	m_debug.SetString(m_curscreenpage->GetDebug());
+	page->SetTarget(&llname);
+	page->SetMedia(GetSettings()->GetScreenMedia());
+	page->SetSource(hist->GetURL(),hist->GetSource(),hist->GetType(),hist->GetHeader());
+	page->LoadInput(hist->GetInput());			/* overwrite any form inputs with previous input */
+	m_debug.SetString(page->GetDebug());
 
 	/* only if window currently has vertical scrollbars */
 	/* is there a local link appended to the URL? */
-	if(llname.GetLen() && m_curscreenpage->GetHasVertScrollBars()==true)
+	if(llname.GetLen() && page->GetHasVertScrollBars()==true)
 	{
 		kGUIObj *topobj;
 		int currenty;
 
-		topobj=m_curscreenpage->LocateLocalLink(&llname);
+		topobj=page->LocateLocalLink(&llname);
 		if(topobj)
 		{
 			kGUICorners c1;
@@ -1013,23 +1028,25 @@ void kGUIBrowseObj::Goto(void)
 
 			/* scroll down to the top object */
 			topobj->GetCorners(&c2);
-			m_curscreenpage->GetCorners(&c1);
+			page->GetCorners(&c1);
 
-			currenty=m_curscreenpage->GetScrollY();
-			m_curscreenpage->SetScrollY(currenty+(c2.ty-c1.ty));
+			currenty=page->GetScrollY();
+			page->SetScrollY(currenty+(c2.ty-c1.ty));
 		}
 	}
 	else
-		m_curscreenpage->SetScrollY(hist->GetScrollY());
-	m_curscreenpage->Dirty();
+		page->SetScrollY(hist->GetScrollY());
+
+	if(tabnum==m_curtab)
+		page->Dirty();
 
 	/* save title of page so if user right clicks on go forward or goback buttons then ir shows title instead of URL */
-	if(m_curscreenpage->GetTitle()->GetLen())
+	if(page->GetTitle()->GetLen())
 	{
-		hist->SetTitle(m_curscreenpage->GetTitle());
+		hist->SetTitle(page->GetTitle());
 
 		/* set the tab title too */
-		m_tabs.SetTabName(m_tabs.GetCurrentTab(),hist->GetTitle());
+		m_tabs.SetTabName(tabnum,hist->GetTitle());
 	}
 	/* tell window to change title */
 	m_pagechangedcallback.Call();
@@ -1137,6 +1154,7 @@ void kGUIBrowseObj::Load(void)
 
 //	dle=m_dlpool.PoolGet();
 	dle=new DownloadPageRecord();
+	dle->m_tabnum=m_curtab;
 	dle->m_tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
 	if(!strcmpin(url.GetString(),"file://",7))
 	{
@@ -1242,7 +1260,7 @@ void kGUIBrowseObj::DoGotoMenu(kGUIEvent *event)
 			StopLoad();
 			m_tabrecords.GetEntryPtr(m_curtab)->m_histindex=sel+1;
 			UpdateButtons();
-			Goto();
+			Goto(m_curtab);
 		}
 	}
 }
@@ -1266,7 +1284,7 @@ void kGUIBrowseObj::GoForward(kGUIEvent *event)
 			StopLoad();
 			++tabrecord->m_histindex;
 			UpdateButtons();
-			Goto();
+			Goto(m_curtab);
 		}
 	}
 	break;
@@ -1290,7 +1308,7 @@ void kGUIBrowseObj::GoBack(kGUIEvent *event)
 			StopLoad();
 			--ctp->m_histindex;
 			UpdateButtons();
-			Goto();
+			Goto(m_curtab);
 		}
 	}
 	break;
@@ -1462,7 +1480,7 @@ void kGUIBrowseObj::PageLoaded(DownloadPageRecord *dle,int result)
 			hist->SetURL(dle->m_dl.GetRedirectURL());
 			m_url.SetString(dle->m_dl.GetRedirectURL());
 		}
-		Goto();
+		Goto(dle->m_tabnum);
 	}
 	else
 	{
@@ -1518,7 +1536,7 @@ void kGUIBrowseObj::ShowError(DownloadPageRecord *dle)
 		hist->GetHeader()->Clear();
 	}
 	//todo: hmmm, if this is not the current tab then defer layout till later
-	Goto();
+	Goto(dle->m_tabnum);
 }
 
 void kGUIBrowseObj::Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password)
@@ -1677,6 +1695,23 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.AddObject(&m_cachesizecaption2);
 	m_controls.NextLine();
 
+	m_savemodecaption.SetFontID(1);
+	m_savemodecaption.SetFontSize(VSFONTSIZE);
+	m_savemodecaption.SetString("Save Tabs when quitting:");
+
+	m_savemode.SetNumEntries(3);
+	m_savemode.SetFontSize(VSFONTSIZE);
+	/* todo, add to translated text file */
+	m_savemode.SetEntry(0,"No",SAVEMODE_NO);
+	m_savemode.SetEntry(1,"Yes",SAVEMODE_YES);
+	m_savemode.SetEntry(2,"Ask",SAVEMODE_ASK);
+	m_savemode.SetSize(m_savemode.GetWidest(),m_savemodecaption.GetLineHeight()+6);
+
+	m_controls.AddObject(&m_savemodecaption);
+	m_controls.AddObject(&m_savemode);
+	m_controls.NextLine();
+
+
 	m_loadimagescaption.SetFontID(1);
 	m_loadimagescaption.SetFontSize(VSFONTSIZE);
 	m_loadimagescaption.SetString("Load Images");
@@ -1829,6 +1864,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_visiteddays.SetInt(b->GetSettings()->GetVisitedDays());
 	m_cachemode.SetSelection(b->GetSettings()->GetCacheMode());
 	m_cachesize.SetInt(b->GetSettings()->GetCacheSize());
+	m_savemode.SetSelection(b->GetSettings()->GetSaveMode());
 	m_loadimages.SetSelected(b->GetSettings()->GetLoadImages());
 	m_usercss.SetString(b->GetSettings()->GetUserCSS());
 	m_usecss.SetSelected(b->GetSettings()->GetUseCSS());
@@ -1899,6 +1935,7 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 		m_b->GetSettings()->SetVisitedDays(m_visiteddays.GetInt());
 		m_b->GetSettings()->SetCacheMode(m_cachemode.GetSelection());
 		m_b->GetSettings()->SetCacheSize(m_cachesize.GetInt());
+		m_b->GetSettings()->SetSaveMode(m_savemode.GetSelection());
 		m_b->GetSettings()->SetLoadImages(m_loadimages.GetSelected());
 		m_b->GetSettings()->SetUserCSS(&m_usercss);
 		m_b->GetSettings()->SetUseCSS(m_usecss.GetSelected());
@@ -1990,6 +2027,7 @@ void kGUIBrowseSettings::UpdateBookmark(unsigned int index,kGUIString *title,kGU
 void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 {
 	kGUIXMLItem *group;
+	kGUIXMLItem *tabs;
 	kGUIXMLItem *bookmarks;
 	kGUIXMLItem *bookmark;
 	kGUIBookmark *be;
@@ -2013,6 +2051,21 @@ void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 	item=group->Locate("printmedia");
 	if(item)
 		SetPrintMedia(item->GetValue());
+
+	item=group->Locate("savemode");
+	if(item)
+		SetSaveMode(item->GetValue()->GetInt());
+
+	m_numtabs=0;
+	tabs=group->Locate("tabs");
+	if(tabs)
+	{
+		for(m_numtabs=0;m_numtabs<tabs->GetNumChildren();++m_numtabs)
+		{
+			item=tabs->GetChild(m_numtabs);
+			m_tabs.GetEntryPtr(m_numtabs)->SetString(item->GetValue());
+		}
+	}
 
 	kGUIHTMLSettings::Load(group);
 	if(m_itemcache)
@@ -2069,6 +2122,41 @@ void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 	}
 }
 
+/* load tabs into browser */
+void kGUIBrowseSettings::LoadTabs(kGUIBrowseObj *b)
+{
+	unsigned int i;
+	kGUIString *url;
+
+	for(i=0;i<m_numtabs;++i)
+	{
+		url=m_tabs.GetEntryPtr(i);
+		if(i)
+			b->NewTab();
+		b->SetSource(url,0,0,0);
+	}
+}
+
+/* save tabs if enabled */
+void kGUIBrowseSettings::SaveTabs(kGUIBrowseObj *b)
+{
+	if(m_savemode==SAVEMODE_YES || (m_savemode==SAVEMODE_ASK && m_saveask==true))
+	{
+		unsigned int i;
+		kGUIString url;
+
+		m_numtabs=b->GetNumTabs();
+		for(i=0;i<m_numtabs;++i)
+		{
+			b->CopyTabURL(i,&url);
+			if(url.GetLen())
+				m_tabs.GetEntryPtr(i)->SetString(&url);
+		}
+	}
+	else
+		m_numtabs=0;
+}
+
 /* save browse settings to the XML file */
 
 void kGUIBrowseSettings::Save(kGUIXMLItem *root)
@@ -2080,6 +2168,7 @@ void kGUIBrowseSettings::Save(kGUIXMLItem *root)
 	kGUIXMLItem *bookmark;
 	kGUIXMLItem *cookiegroup;
 	kGUICookieJar *jar;
+	kGUIXMLItem *tabs;
 
 	group=new kGUIXMLItem();
 	group->SetName("browsersettings");
@@ -2090,6 +2179,17 @@ void kGUIBrowseSettings::Save(kGUIXMLItem *root)
 	group->AddChild("cachesize",m_cachesize);
 	group->AddChild("screenmedia",&m_screenmedia);
 	group->AddChild("printmedia",&m_printmedia);
+	group->AddChild("savemode",m_savemode);
+
+	/* save tabs (if any have been added) */
+	if(m_numtabs)
+	{
+		tabs=new kGUIXMLItem();
+		tabs->SetName("tabs");
+		group->AddChild(tabs);
+		for(i=0;i<m_numtabs;++i)
+			tabs->AddChild("tab",m_tabs.GetEntryPtr(i));
+	}
 
 	kGUIHTMLSettings::Save(group);
 	

@@ -682,11 +682,11 @@ template <class T>
 class ClassPool
 {
 public:
-	ClassPool() {m_numblocks=0;m_numperblock=100;m_numavail=0;m_blocks.Init(16,-2);}
-	~ClassPool() {for(unsigned int i=0;i<m_numblocks;++i){delete []m_blocks.GetEntry(i);}}
-	void SetBlockSize(int n) {m_numperblock=n;m_available.Init(n,-2);}
-	T *PoolGet(void);
-	void PoolRelease(T *obj) {m_available.SetEntry(m_numavail,obj);m_numavail++;}
+	inline ClassPool() {m_numblocks=0;m_numperblock=100;m_numavail=0;m_blocks.Init(16,-2);}
+	inline ~ClassPool() {for(unsigned int i=0;i<m_numblocks;++i){delete []m_blocks.GetEntry(i);}}
+	inline void SetBlockSize(int n) {m_numperblock=n;m_available.Init(n,-2);}
+	inline T *PoolGet(void);
+	inline void PoolRelease(T *obj) {m_available.SetEntry(m_numavail,obj);m_numavail++;}
 private:
 	unsigned int m_numblocks;
 	unsigned int m_numperblock;
