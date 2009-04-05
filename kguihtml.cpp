@@ -201,6 +201,9 @@ POPLIST_DEF kGUIHTMLPageObj::m_poplist[]={
 
 
 bool kGUIHTMLPageObj::m_hashinit=false;
+unsigned int kGUIHTMLPageObj::m_totaltags;				/* number of tags ( default + user ) */
+Heap kGUIHTMLPageObj::m_tagheap;						/* heap list for user tags */
+Array<TAGLIST_DEF *>kGUIHTMLPageObj::m_tagptrs;			/* pointers to tags */
 Hash kGUIHTMLPageObj::m_taghash;		/* hash list for tags */
 Hash kGUIHTMLPageObj::m_atthash;		/* hash list for attributes */
 Hash kGUIHTMLPageObj::m_consthash;	/* hash list for constants */
@@ -1510,6 +1513,11 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	if(m_hashinit==false)
 	{
 		m_hashinit=true;
+
+		/* these are to keep track of user / non-standard tags */
+		m_totaltags=HTMLTAG_NUMTAGS;
+		m_tagheap.SetBlockSize(65536);
+		m_tagptrs.Init(HTMLTAG_NUMTAGS,64);
 		m_taghash.Init(16,sizeof(TAGLIST_DEF *));
 		m_atthash.Init(16,sizeof(ATTLIST_DEF *));
 		m_consthash.Init(16,sizeof(CONSTLIST_DEF *));
@@ -1523,6 +1531,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 		{
 			assert(tl->tokenid==i,"Error, tag order is not correct!");
 			m_taghash.Add(tl->name,&tl);
+			m_tagptrs.SetEntry(tl->tokenid,tl);
 			++tl;
 		}
 
@@ -3925,11 +3934,7 @@ void kGUIHTMLRule::GetString(kGUIString *s)
 		switch(sp->m_selector)
 		{
 		case CSSSELECTOR_TAG:
-		{
-			assert(sp->m_value<(int)(sizeof(kGUIHTMLPageObj::m_taglist)/sizeof(TAGLIST_DEF)),"TagID is off of end of list!");
-
-			s->Append(kGUIHTMLPageObj::m_taglist[sp->m_value].name);
-		}
+			s->Append(m_page->TagToString(sp->m_value));
 		break;
 		case CSSSELECTOR_ATTEXISTS:
 			s->ASprintf("[%s]",m_page->IDToString(sp->m_value)->GetString());
@@ -5064,12 +5069,12 @@ void kGUIHTMLPageObj::AddPossibleRules(void)
 			r->SetCurNumRefs(0);
 
 			/* count the number of tag matches */
-			for(j=0;j<HTMLTAG_NUMTAGS;++j)
+			for(j=0;j<m_numtags;++j)
 			{
-				if(m_curtagrefs[j]>0)
+				if(m_curtagrefs.GetEntry(j)>0)
 				{
-					n=m_tagrules[j].m_num;
-					rp=m_tagrules[j].m_rules.GetArrayPtr();
+					n=m_tagrules.GetEntryPtr(j)->m_num;
+					rp=m_tagrules.GetEntryPtr(j)->m_rules.GetArrayPtr();
 					for(k=0;k<n;++k)
 					{
 						if(*(rp++)==r)
@@ -5128,13 +5133,16 @@ void kGUIHTMLPageObj::AddPossibleRules(kGUIHTMLObj *o)
 	/* if this is the first instance of this tag in the style tree then */
 	/* increment the enable count for rules that reference this tag */
 
-	if(!m_curtagrefs[tag])
+	c=m_curtagrefs.GetEntry(tag);
+	if(!c)
 	{
 		/* this list is sorted by priority already so when we add entries */
 		/* into the possible list we need to insert them to keep the sorting */
 
-		n=m_tagrules[tag].m_num;
-		rp=m_tagrules[tag].m_rules.GetArrayPtr();
+		rulelist=m_tagrules.GetEntryPtr(tag);
+		n=rulelist->m_num;
+		rp=rulelist->m_rules.GetArrayPtr();
+
 		for(i=0;i<n;++i)
 		{
 			r=*(rp++);
@@ -5143,7 +5151,7 @@ void kGUIHTMLPageObj::AddPossibleRules(kGUIHTMLObj *o)
 				r->AddRef();
 		}
 	}
-	++m_curtagrefs[tag];
+	m_curtagrefs.SetEntry(tag,c+1);
 
 	/* cid is an array of class and id indexes associated with this tag */
 	for(ci=0;ci<o->m_numcids;++ci)
@@ -5207,18 +5215,21 @@ void kGUIHTMLPageObj::RemovePossibleRules(kGUIHTMLObj *o)
 	m_poppossrules=false;
 
 	/* was this the last reference to this tag? */
-	if(--m_curtagrefs[tag]==0)
+	c=m_curtagrefs.GetEntry(tag)-1;
+	if(!c)
 	{
 		/* remove all rules that are no longer possible since this tag will be popped */
 		/* from the style tree */
-		n=m_tagrules[tag].m_num;
-		rp=m_tagrules[tag].m_rules.GetArrayPtr();
+		rulelist=m_tagrules.GetEntryPtr(tag);
+		n=rulelist->m_num;
+		rp=rulelist->m_rules.GetArrayPtr();
 		for(i=0;i<n;++i)
 		{
 			r=*(rp++);
 			r->SubRef();
 		}
 	}
+	m_curtagrefs.SetEntry(tag,c);
 
 	/* was this the last reference to this class/id? */
 	for(ci=0;ci<o->m_numcids;++ci)
@@ -5992,8 +6003,8 @@ void kGUIHTMLPageObj::InitPosition(void)
 	/* be possible are added to the possible list */
 
 	/* optimize: change these to memfill? */
-	for(i=0;i<HTMLTAG_NUMTAGS;++i)
-		m_curtagrefs[i]=0;
+	for(i=0;i<m_numtags;++i)
+		m_curtagrefs.SetEntry(i,0);
 
 	for(i=0;i<m_numclasses;++i)
 		m_curclassrefs.SetEntry(i,0);
@@ -6628,6 +6639,11 @@ unsigned int kGUIHTMLPageObj::StringToIDcase(kGUIString *s)
 	return(m_nextstoid++);
 }
 
+const char *kGUIHTMLPageObj::TagToString(unsigned int num)
+{
+	assert(num<m_totaltags,"TagID is off of end of list!");
+	return(m_tagptrs.GetEntry(num)->name);
+}
 
 kGUIString *kGUIHTMLPageObj::IDToString(unsigned int num)
 {
@@ -6849,9 +6865,12 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	
 	PurgeRules();
 
-	/* clear the list back to zero */
-	for(i=0;i<HTMLTAG_NUMTAGS;++i)
-		m_tagrules[i].m_num=0;
+	m_tagrules.Init(m_totaltags,64);
+	m_curtagrefs.Init(m_totaltags,64);
+
+	m_numtags=0;
+	ExpandTagList(m_totaltags);
+
 	m_numclasses=0;
 	m_classrules.Init(512,64);
 	m_curclassrefs.Init(512,64);
@@ -7135,6 +7154,17 @@ void kGUIHTMLPageObj::Link(kGUIString *linkline)
 	}
 }
 
+void kGUIHTMLPageObj::ExpandTagList(unsigned int num)
+{
+	/* is the table getting bigger? */
+	while(num>=m_numtags)
+	{
+		m_curtagrefs.SetEntry(m_numtags,0);
+		m_tagrules.GetEntryPtr(m_numtags)->m_num=0;
+		++m_numtags;
+	}
+}
+
 void kGUIHTMLPageObj::ExpandClassList(unsigned int num)
 {
 	/* is the table getting bigger? */
@@ -7190,20 +7220,14 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			{
 				if(!strstr(att->GetValue()->GetString()," "))
 				{
-					//if(kGUIHTMLRule::ValidateName(att->GetValue()))
-					{
-						cid.m_type=CID_CLASS;
-						if(ClassUseCase())
-							cid.m_id=StringToIDcase(att->GetValue());
-						else
-							cid.m_id=StringToID(att->GetValue());
-						ExpandClassList(cid.m_id);
-						obj->m_cids.SetEntry(obj->m_numcids++,cid);
-					}
-			//		else
-			//		{
-			//			//fuck
-			//		}
+					//we don't validate the name here on purpose!!
+					cid.m_type=CID_CLASS;
+					if(ClassUseCase())
+						cid.m_id=StringToIDcase(att->GetValue());
+					else
+						cid.m_id=StringToID(att->GetValue());
+					ExpandClassList(cid.m_id);
+					obj->m_cids.SetEntry(obj->m_numcids++,cid);
 				}
 				else
 				{
@@ -7233,28 +7257,22 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 		case HTMLATT_ID:
 			if(att->GetValue()->GetLen())
 			{
-				//if(kGUIHTMLRule::ValidateName(att->GetValue()))
-				{
-					cid.m_type=CID_ID;
-	//				cid.m_id=StringToIDcase(att->GetValue());
-					cid.m_id=StringToID(att->GetValue());
-					ExpandIDList(cid.m_id);
-					obj->m_cids.SetEntry(obj->m_numcids++,cid);
+				//we don't validate the name here on purpose!!
+				cid.m_type=CID_ID;
+//				cid.m_id=StringToIDcase(att->GetValue());
+				cid.m_id=StringToID(att->GetValue());
+				ExpandIDList(cid.m_id);
+				obj->m_cids.SetEntry(obj->m_numcids++,cid);
 
-					/* add to list of local links */
-					AddLocalLink(att->GetValue(),obj);
+				/* add to list of local links */
+				AddLocalLink(att->GetValue(),obj);
 		
-					/* keep track of target object for css :target: rule pseudo selector */
-					if(m_target.GetLen())
-					{
-						if(!strcmp(att->GetValue()->GetString(),m_target.GetString()))
-							m_targetobj=obj;
-					}
+				/* keep track of target object for css :target: rule pseudo selector */
+				if(m_target.GetLen())
+				{
+					if(!strcmp(att->GetValue()->GetString(),m_target.GetString()))
+						m_targetobj=obj;
 				}
-			//	else
-			//	{
-			//		/* error */
-			//	}
 			}
 		break;
 		}
@@ -7690,6 +7708,8 @@ getbuttonval:;
 				obj->m_obj.m_tickobj=new kGUITickBoxObj();
 				obj->AddObject(obj->m_obj.m_tickobj);
 				obj->m_obj.m_tickobj->SetSelected(obj->FindAttrib(HTMLATT_CHECKED)?true:false);
+				/* trap changes so any css using checked will be updated */
+				obj->m_obj.m_tickobj->SetEventHandler(this,CALLBACKNAME(TickEvent));
 			break;
 			case HTMLCONST_TEXT:
 assumetext:;
@@ -8905,8 +8925,36 @@ abortclose:;
 			kGUIHTMLObj *newobj;
 			int line,col;
 
+			//if report user tags
 			CalcPlace(htmlstart,sfp,&line,&col);
 			m_errors.ASprintf("unknown tag, name = <%s> (line=%d,col=%d)\n",name.GetString(),line,col);
+
+#if 1
+			//add unknown tags to the tag list
+			TAGLIST_DEF *newtag;
+			char *tagname;
+
+			/* make a copy of the tag name string */
+			tagname=(char *)m_tagheap.Alloc(name.GetLen()+1);
+			memcpy(tagname,name.GetString(),name.GetLen()+1);
+			/* make a new tag record */
+			newtag=(TAGLIST_DEF *)m_tagheap.Alloc(sizeof(TAGLIST_DEF));
+
+			/* setup the new record and add the new tag record */
+			newtag->noclose=false;
+			newtag->endoptional=false;
+			newtag->endearlyok=false;
+			newtag->name=tagname;
+			newtag->tokenid=m_totaltags++;
+			newtag->defdisp=DISPLAY_INLINE;
+
+			/* add the tag to the hash table */
+			m_taghash.Add(tagname,&newtag);
+			/* add to pointer table for ID to string lookup */
+			m_tagptrs.SetEntry(newtag->tokenid,newtag);
+
+			ExpandTagList(m_totaltags);
+#endif
 
 			newobj=new kGUIHTMLObj(renderparent,this,&m_unknowntag);
 			newobj->SetOwnerURL(StringToIDcase(&m_url));
@@ -10622,7 +10670,7 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 			}
 			break;
 			case HTMLATT_OUTLINE_STYLE:
-				//fuck
+				//todo
 			break;
 			case HTMLATT_OUTLINE_COLOR:
 				m_page->GetColor(att->GetValue(),&m_outlinecolor);

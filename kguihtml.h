@@ -2051,6 +2051,7 @@ public:
 	unsigned int StringToID(kGUIString *s);
 	unsigned int StringToIDcase(kGUIString *s);
 	kGUIString *IDToString(unsigned int n);
+	const char *TagToString(unsigned int num);
 
 	kGUIString m_parseerrors;
 	kGUIString m_csserrors;
@@ -2058,6 +2059,7 @@ public:
 
 	bool ExtractFromHeader(kGUIString *header,const char *prefix,kGUIString *s,unsigned int *poffset=0);
 	void Link(kGUIString *linkline);
+	void ExpandTagList(unsigned int num);
 	void ExpandClassList(unsigned int num);
 	void ExpandIDList(unsigned int num);
 
@@ -2104,7 +2106,7 @@ public:
 
 	/* these 3 contain a list of rule pointers that reference the specificed tag/id or class */
 	/* this is used to make rules "possible" as tags/ids/classes are encountered in the heiarchy */
-	void AttachRuleToTag(unsigned int index,kGUIHTMLRule *rule) {m_tagrules[index].Add(rule);}
+	void AttachRuleToTag(unsigned int index,kGUIHTMLRule *rule) {m_tagrules.GetEntryPtr(index)->Add(rule);}
 	void AttachRuleToID(unsigned int index,kGUIHTMLRule *rule) {m_idrules.GetEntryPtr(index)->Add(rule);}
 	void AttachRuleToClass(unsigned int index,kGUIHTMLRule *rule) {m_classrules.GetEntryPtr(index)->Add(rule);}
 
@@ -2147,9 +2149,11 @@ private:
 	CALLBACKGLUEPTR(kGUIHTMLPageObj,ScrollMoveRow,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIHTMLPageObj,ScrollMoveCol,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIHTMLPageObj,ScrollEvent,kGUIEvent)
+	CALLBACKGLUEPTR(kGUIHTMLPageObj,TickEvent,kGUIEvent)
 	void ScrollMoveRow(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveRow(event->m_value[0].i);}
 	void ScrollMoveCol(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveCol(event->m_value[0].i);}
 	void ScrollEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_MOVED)Scrolled();}
+	void TickEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE) RePosition(false);}
 
 	CALLBACKGLUE(kGUIHTMLPageObj,Scrolled)
 	CALLBACKGLUE(kGUIHTMLPageObj,LoadListThread)
@@ -2215,7 +2219,10 @@ private:
 	void Scrolled(void);
 
 	static bool m_hashinit;
-	static Hash m_taghash;		/* hash list for tags */
+	static Hash m_taghash;				/* hash list for tags */
+	static Heap m_tagheap;				/* heap for user tags */
+	static unsigned int m_totaltags;		/* number of tags ( base + user ) */
+	static Array<TAGLIST_DEF *>m_tagptrs;			/* pointers to tags */
 	static Hash m_atthash;		/* hash list for attributes */
 	static Hash m_consthash;	/* hash list for constants */
 	static Hash m_pophash;		/* hash list for pop object */
@@ -2223,8 +2230,9 @@ private:
 	Hash m_rulehash;	/* hash list for page style rules */
 
 	/* array of rule pointers that reference the tags */
-	int m_curtagrefs[HTMLTAG_NUMTAGS];
-	kGUIHTMLRuleList m_tagrules[HTMLTAG_NUMTAGS];
+	unsigned int m_numtags;
+	Array<int> m_curtagrefs;
+	ClassArray<kGUIHTMLRuleList> m_tagrules;
 
 	/* array of encountered counts for each class id */
 	unsigned int m_numclasses;

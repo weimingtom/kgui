@@ -428,9 +428,16 @@ bool kGUIMovie::LoadNextFrame(void)
 				m_ptime=(int)(m_videoclock*TICKSPERSEC)-m_starttime;
 				//kGUI::Trace("ptime=%d\n",m_ptime);
 			}
-			avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame, &frameFinished, 
+			alen=avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame, &frameFinished, 
 			   packet.data, packet.size);
       
+			//did an error occur??
+			if(alen<0)
+			{
+				av_free_packet(&packet);
+				return(false);
+			}
+
 			// Did we get a video frame?
 			if(frameFinished)
 			{
@@ -443,6 +450,7 @@ bool kGUIMovie::LoadNextFrame(void)
 				/* if there was no pending frame to show then get the time for the next one now. */
 				if(again)
 					return(LoadNextFrame());
+				av_free_packet(&packet);
 				return(true);
 			}
 		}
