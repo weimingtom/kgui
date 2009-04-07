@@ -26,6 +26,9 @@
     @brief Bintoc is a stand alone console app that converts a binary data file to
 	a c file so it can be included directly into an application */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <iostream>
 #include <sys/stat.h>
 
