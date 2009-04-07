@@ -347,7 +347,7 @@ again:;
 		if(cp)
 		{
 			useport=atoi(cp+1);
-			servername.Clip(cp-servername.GetString());
+			servername.Clip((unsigned int)(cp-servername.GetString()));
 		}
 		else
 			useport=80;

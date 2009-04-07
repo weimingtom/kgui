@@ -53,8 +53,6 @@ from "Graphics Gems", Academic Press, 1990
 
 #include "kgui.h"
 
-#if 0
-
 static int n;			/* number of vertices */
 static kGUIDPoint2 *pt;		/* vertices */
 
@@ -392,7 +390,6 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIDPoint2 *point
 	op=m_dfatpoints.GetArrayPtr();
 	DrawPoly(numout,op,c,alpha);
 }
-#endif
 
 bool kGUI::DrawLine(double x1,double y1,double x2,double y2,kGUIColor c,double alpha)
 {

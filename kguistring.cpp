@@ -303,13 +303,13 @@ void kGUIString::SetString(const char *t,unsigned int numchars)
 
 	if(m_len==numchars)
 	{
-		if(!strncmp(m_string,t,numchars))
+		/* add one to make sure the null terminator is the same in both too */
+		if(!memcmp(m_string,t,numchars+1))
 			return;		/* same, don't trigger changed */
 	}
 
-	/* caution: may contain nulls */
+	/* caution: may contain nulls, so we will use memcpy instead of strncpy */
 	memcpy(m_string,t,numchars);
-//	strncpy(m_string,t,numchars);
 	m_string[numchars]=0;
 	m_len=numchars;
 	StringChanged();
