@@ -83,6 +83,7 @@ public:
 	AVCodec *m_pACodec;				/* audio codec */
 	AVFrame *m_pFrame; 
 	struct SwsContext *m_img_convert_ctx;
+	AVPacket m_packet;
 };
 
 int kGUIMovieLocal::kg_open(URLContext *h, const char *filename, int flags)
@@ -189,9 +190,16 @@ void kGUIMovie::PurgeGlobals(void)
 	m_initglobals=false;
 }
 
+union ptoi_def
+{
+	unsigned char *ucp;
+	unsigned int u32;
+};
+
 kGUIMovie::kGUIMovie()
 {
 	unsigned int alignoff;
+	ptoi_def ptoi;
 
 	m_local=new kGUIMovieLocal();
 	m_width=0;
@@ -214,7 +222,10 @@ kGUIMovie::kGUIMovie()
     m_abraw = new unsigned char[((AVCODEC_MAX_AUDIO_FRAME_SIZE+16)*3)/2];
 	/* align to 16 byte boundary */
 	m_abalign=m_abraw;
-	alignoff=((unsigned int)m_abalign)&15;
+
+	/* use a union to convert a pointer to a integer without warnings */
+	ptoi.ucp=m_abalign;
+	alignoff=(ptoi.u32)&15;
 	if(alignoff)
 		m_abalign+=(16-alignoff);
 }
@@ -247,6 +258,7 @@ void kGUIMovie::OpenMovie(void)
 	m_time=0;
 	m_ptime=0;
 	m_frameready=false;
+	m_local->m_packet.size=0;
 
 	/* filename is actually a pointer to a datahandle */
 	fn.Sprintf("kg:%d",(DataHandle *)this);
@@ -386,8 +398,7 @@ bool kGUIMovie::LoadNextFrame(void)
 	int frameFinished=0;
 	bool gotpts=false;
 	double frame_delay;
-	AVPacket packet;
-	bool again;
+	bool again,gotframe=false;
 	int alen;
 
 	assert(m_image!=0,"Output Image not defined!");
@@ -405,20 +416,32 @@ bool kGUIMovie::LoadNextFrame(void)
 		again=true;
 	}
 
-	while(av_read_frame(m_local->m_pFormatCtx, &packet)>=0)
+	do
 	{
-		// Is this a packet from the video stream?
-		if(packet.stream_index==m_videoStream)
+		if(m_local->m_packet.size==0)
 		{
+			if(av_read_frame(m_local->m_pFormatCtx, &m_local->m_packet)<0)
+				return(false);
+		}
+
+		// Is this a packet from the video stream?
+		if(m_local->m_packet.stream_index==m_videoStream)
+		{
+			/* if we already got a frame, then return now and process this packet */
+			/* first in the next update */
+
+			if(gotframe)
+				return(true);
+
 			// Decode video frame
 			if(gotpts==false)
 			{
 				gotpts=true;		//only grab the pts from the first video packet 
 			    /* update the video clock */
-				if(packet.pts && packet.pts!=(int)AV_NOPTS_VALUE)
-					m_videoclock=(double)packet.pts*m_vstreamtimebase;
-				else if(packet.dts && packet.dts!=(int)AV_NOPTS_VALUE)
-					m_videoclock=(double)packet.dts*m_vstreamtimebase;
+				if(m_local->m_packet.pts && m_local->m_packet.pts!=(int)AV_NOPTS_VALUE)
+					m_videoclock=(double)m_local->m_packet.pts*m_vstreamtimebase;
+				else if(m_local->m_packet.dts && m_local->m_packet.dts!=(int)AV_NOPTS_VALUE)
+					m_videoclock=(double)m_local->m_packet.dts*m_vstreamtimebase;
 
 				/* if we are repeating a frame, adjust clock accordingly */
 				frame_delay = m_vcodectimebase;
@@ -429,38 +452,38 @@ bool kGUIMovie::LoadNextFrame(void)
 				//kGUI::Trace("ptime=%d\n",m_ptime);
 			}
 			alen=avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame, &frameFinished, 
-			   packet.data, packet.size);
+			   m_local->m_packet.data, m_local->m_packet.size);
       
 			//did an error occur??
 			if(alen<0)
 			{
-				av_free_packet(&packet);
+				av_free_packet(&m_local->m_packet);
+				m_local->m_packet.size=0;
 				return(false);
 			}
 
 			// Did we get a video frame?
 			if(frameFinished)
 			{
-			    av_free_packet(&packet);
 				/* frame is loaded and ready to be presented when it is time */
 				m_frameready=true;
 
-				av_free_packet(&packet);
+				av_free_packet(&m_local->m_packet);
+				m_local->m_packet.size=0;
 				
 				/* if there was no pending frame to show then get the time for the next one now. */
 				if(again)
 					return(LoadNextFrame());
-				av_free_packet(&packet);
-				return(true);
+				gotframe=true;
 			}
 		}
-		else if((packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
+		else if((m_local->m_packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
         {
 			int len;
 			unsigned char *ptr;
 
-			ptr = packet.data;
-			len = packet.size;
+			ptr = m_local->m_packet.data;
+			len = m_local->m_packet.size;
 			while(len>0)
 			{
 				frameFinished=AVCODEC_MAX_AUDIO_FRAME_SIZE*sizeof(short);
@@ -468,7 +491,8 @@ bool kGUIMovie::LoadNextFrame(void)
 
 				if(alen<0)
 				{
-					av_free_packet(&packet);
+					av_free_packet(&m_local->m_packet);
+					m_local->m_packet.size=0;
 					return(false);	/* error */
 				}
 
@@ -483,11 +507,9 @@ bool kGUIMovie::LoadNextFrame(void)
 				}
 			}
 		}
-		av_free_packet(&packet);
-	}
-
-    // Free the packet that was allocated by av_read_frame
-//    av_free_packet(&packet);
+		av_free_packet(&m_local->m_packet);
+		m_local->m_packet.size=0;
+	}while(1);
 	return(false);
 }
 
