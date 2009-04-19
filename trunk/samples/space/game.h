@@ -43,6 +43,7 @@ public:
 class GameObject
 {
 public:
+	virtual ~GameObject() {}
 	void SetModel(GameModel *model);
 	virtual void Collide(GameObject *o)=0;
 	class GameBase *m_game;
@@ -60,6 +61,7 @@ public:
 class Rock : public GameObject
 {
 public:
+	virtual ~Rock() {}
 	void Collide(GameObject *o);
 	int m_size;
 	double m_headingspeed;
@@ -70,6 +72,7 @@ public:
 class Shot : public GameObject
 {
 public:
+	virtual ~Shot() {}
 	void Collide(GameObject *o);
 	int m_life;
 	class Ship *m_ship;	/* so we know who to assign the score to */
@@ -80,6 +83,7 @@ public:
 class Ufo : public GameObject
 {
 public:
+	virtual ~Ufo() {}
 	void Collide(GameObject *o);
 	double m_heading;
 	double m_curheading;
@@ -93,6 +97,7 @@ public:
 class Ship : public GameObject
 {
 public:
+	virtual ~Ship() {}
 	void Collide(GameObject *o);
 	int m_index;
 	unsigned int m_state;

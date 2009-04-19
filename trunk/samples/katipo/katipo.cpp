@@ -106,7 +106,7 @@ private:
 	kGUITableObj m_table;
 
 	bool m_scanning;
-	int m_scanrowindex;
+	unsigned int m_scanrowindex;
 	OutputTableRow *m_scanrow;
 	int m_scanstatus;
 	int m_scandelay;
@@ -186,7 +186,7 @@ Katipo::Katipo()
 	m_stopcaption.SetString("Stop");
 	/* calc length of longest one */
 	w=m_urlcaption.GetWidth();
-	w=max(w,m_stopcaption.GetWidth());
+	w=MAX(w,m_stopcaption.GetWidth());
 	w+=24;
 
 	h=m_urlcaption.GetLineHeight()+8;

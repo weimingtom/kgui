@@ -200,6 +200,9 @@ bool Game::IsPressed(unsigned int num,INPUTID inputid)
 		case GAMEINPUT_FIRE:
 			return(kGUI::GetKeyState('S'));
 		break;
+		case GAMEINPUT_PAUSE:
+			return(kGUI::GetKeyState('P'));
+		break;
 		}
 	}
 	else if(num==1)
@@ -217,6 +220,9 @@ bool Game::IsPressed(unsigned int num,INPUTID inputid)
 		break;
 		case GAMEINPUT_FIRE:
 			return(kGUI::GetKeyState('S'));
+		break;
+		case GAMEINPUT_PAUSE:
+			return(kGUI::GetKeyState('P'));
 		break;
 		}
 	}

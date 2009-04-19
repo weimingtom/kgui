@@ -77,7 +77,7 @@ public:
 	kGUIMovieObj();
 	~kGUIMovieObj();
 	void OpenMovie(void) {kGUIMovie::OpenMovie();m_moviecontrols.SetMovie(this);}
-	void SetMovieSize(int w,int h) {SetSize(valmin(kGUI::GetScreenWidth(),w),valmin(kGUI::GetScreenHeight(),h+m_moviecontrols.GetZoneH()));}
+	void SetMovieSize(int w,int h) {SetSize(MIN(kGUI::GetScreenWidth(),w),MIN(kGUI::GetScreenHeight(),h+m_moviecontrols.GetZoneH()));}
 	void Draw(void) {DrawC(0);}
 	bool UpdateInput(void) {return UpdateInputC(0);}
 

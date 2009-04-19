@@ -400,7 +400,7 @@ void DataHandle::Write(const void *buf,long numbytes)
 
 	/* make sure buffer is big enough */
 	if((m_writebufferlen+numbytes)>m_writebuffer.GetNumEntries())
-		m_writebuffer.Alloc(valmax(m_writebufferlen+numbytes,m_writebuffer.GetNumEntries()+65536));	
+		m_writebuffer.Alloc(MAX(m_writebufferlen+numbytes,m_writebuffer.GetNumEntries()+65536));	
 
 	/* use memcpy to fill in buffer */
 
@@ -604,10 +604,15 @@ unsigned long DataHandle::Read(kGUIString *s,unsigned long numbytes)
 	}
 	else
 	{
-		buffer=new char [numbytes];
+		/* change to malloc/free since they return null if out of memory */
+		buffer=(char *)malloc(numbytes);
+		if(!buffer)
+			return(0);
+		//buffer=new char [numbytes];
 		numread=Read(buffer,numbytes);
 		s->SetString(buffer,numread);
-		delete []buffer;
+		//delete []buffer;
+		free(buffer);
 	}
 	return(numread);
 }
@@ -895,7 +900,7 @@ void DataHandle::StreamRead(void *dest,unsigned long numbytes)
 		cb=LoadStreamBlock(index,&blockoffset,true);
 
 		/* num bytes that are available in this block */
-		numavail=valmin(m_streamblocksize-blockoffset,numbytes);
+		numavail=MIN(m_streamblocksize-blockoffset,numbytes);
 		memcpy(dp,cb->m_data+blockoffset,numavail);
 		/* subtract number of bytes copied and loop if necessary */
 		numbytes-=numavail;
@@ -918,7 +923,7 @@ void DataHandle::StreamRead(kGUIString *s,unsigned long numbytes)
 		cb=LoadStreamBlock(index,&blockoffset,true);
 
 		/* num bytes that are available in this block */
-		numavail=valmin(m_streamblocksize-blockoffset,numbytes);
+		numavail=MIN(m_streamblocksize-blockoffset,numbytes);
 
 		/* add this chunk to the string */
 		s->Append(cb->m_data+blockoffset,numavail);
@@ -947,7 +952,7 @@ char DataHandle::StreamCmp(const void *cmpstring,unsigned long numbytes,long off
 		cb=LoadStreamBlock(index,&blockoffset,false);
 
 		/* num bytes that are available in this block */
-		numavail=valmin(m_streamblocksize-blockoffset,numbytes);
+		numavail=MIN(m_streamblocksize-blockoffset,numbytes);
 	
 		/* compare the number of bytes available */
 		if(!cs)

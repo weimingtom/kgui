@@ -227,13 +227,13 @@ double kGUIReportImageObj::CalcScaleToFit(void)
 
 void kGUIReportImageObj::ShrinkToFit(void)
 {
-	double s=valmin(CalcScaleToFit(),1.0f);
+	double s=MIN(CalcScaleToFit(),1.0f);
 	SetScale(s,s);
 }
 
 void kGUIReportImageObj::ExpandToFit(void)
 {
-	double s=valmax(CalcScaleToFit(),1.0f);
+	double s=MAX(CalcScaleToFit(),1.0f);
 	SetScale(s,s);
 }
 
@@ -295,7 +295,7 @@ kGUIReportTextObj::kGUIReportTextObj()
 void kGUIReportTextObj::Changed(void)
 {
 	/* only expand to fit, don't shrink */
-	SetSize(valmax(GetWidth()+3+3,GetZoneW()),valmax((int)GetLineHeight()+3+3,GetZoneH()));
+	SetSize(MAX(GetWidth()+3+3,GetZoneW()),MAX((int)GetLineHeight()+3+3,GetZoneH()));
 }
 
 void kGUIReportTextObj::SetFrame(bool df)
@@ -861,7 +861,7 @@ void kGUIReport::Preview(void)
 	for(i=0;i<kGUI::GetNumPrinters();++i)
 		m_printerlist.SetEntry(i,kGUI::GetPrinterObj(i)->GetName(),i);
 	m_printerlist.SetSelection(m_pid);
-	i=valmin(350,m_printerlist.GetWidest());
+	i=MIN(350,m_printerlist.GetWidest());
 	m_printerlist.SetSize(i,20);
 	m_printerlist.SetEventHandler(this,CALLBACKNAME(Printer_Changed));
 	m_controls.AddObjects(1,&m_printerlist);
@@ -961,7 +961,7 @@ void kGUIReport::Preview(void)
 	m_previewwindow.ExpandToFit();
 	m_wh=m_previewwindow.GetZoneH();
 	/* center window on screen */
-	m_previewwindow.SetPos(valmax(0,((kGUI::GetScreenWidth())-m_ww)/2),valmax(0,((kGUI::GetScreenHeight())-m_wh)/2));
+	m_previewwindow.SetPos(MAX(0,((kGUI::GetScreenWidth())-m_ww)/2),MAX(0,((kGUI::GetScreenHeight())-m_wh)/2));
 	ChangeScale(0);
 	kGUI::ReDraw();
 	ChangePage(0);

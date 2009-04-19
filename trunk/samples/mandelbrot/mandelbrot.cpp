@@ -1008,12 +1008,12 @@ Save::Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,Palette *palette,i
 
 	/* calc length of longest one */
 	w=m_inputnamecaption.GetWidth();
-	w=max(w,m_inputwidthcaption.GetWidth());
-	w=max(w,m_inputheightcaption.GetWidth());
+	w=MAX(w,m_inputwidthcaption.GetWidth());
+	w=MAX(w,m_inputheightcaption.GetWidth());
 	if(m_movie)
 	{
-		w=max(w,m_inputtweencaption.GetWidth());
-		w=max(w,m_inputfpscaption.GetWidth());
+		w=MAX(w,m_inputtweencaption.GetWidth());
+		w=MAX(w,m_inputfpscaption.GetWidth());
 	}
 	w+=32;
 
@@ -1742,9 +1742,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 	case EVENT_AFTERUPDATE:
 		if((obj==&m_r) || (obj==&m_g) || (obj==&m_b))
 		{
-			r=min(255,max(0,m_r.GetInt()));
-			g=min(255,max(0,m_g.GetInt()));
-			b=min(255,max(0,m_b.GetInt()));
+			r=MIN(255,MAX(0,m_r.GetInt()));
+			g=MIN(255,MAX(0,m_g.GetInt()));
+			b=MIN(255,MAX(0,m_b.GetInt()));
 			c=DrawColor(r,g,b);
 			m_pal->m_colors.SetEntry(m_ecursor,c);
 			m_palgrid.Dirty();
@@ -1752,9 +1752,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 		}
 		else if((obj==&m_h) || (obj==&m_s) || (obj==&m_v))
 		{
-			h=min(255,max(0,m_h.GetInt()));
-			s=min(255,max(0,m_s.GetInt()));
-			v=min(255,max(0,m_v.GetInt()));
+			h=MIN(255,MAX(0,m_h.GetInt()));
+			s=MIN(255,MAX(0,m_s.GetInt()));
+			v=MIN(255,MAX(0,m_v.GetInt()));
 			kGUI::HSVToRGB(h/255.0f,s/255.0f,v/255.0f,&ur,&ug,&ub);
 
 			c=DrawColor(ur,ug,ub);
@@ -1773,9 +1773,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 			b=m_b.GetInt();
 			if(obj==&m_bscroll)
 				b+=event->m_value[0].i;
-			r=min(255,max(0,r));
-			g=min(255,max(0,g));
-			b=min(255,max(0,b));
+			r=MIN(255,MAX(0,r));
+			g=MIN(255,MAX(0,g));
+			b=MIN(255,MAX(0,b));
 			c=DrawColor(r,g,b);
 			m_pal->m_colors.SetEntry(m_ecursor,c);
 			m_palgrid.Dirty();
@@ -1792,9 +1792,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 			v=m_v.GetInt();
 			if(obj==&m_vscroll)
 				v+=event->m_value[0].i;
-			h=min(255,max(0,h));
-			s=min(255,max(0,s));
-			v=min(255,max(0,v));
+			h=MIN(255,MAX(0,h));
+			s=MIN(255,MAX(0,s));
+			v=MIN(255,MAX(0,v));
 
 			kGUI::HSVToRGB(h/255.0f,s/255.0f,v/255.0f,&ur,&ug,&ub);
 			c=DrawColor(ur,ug,ub);
@@ -1815,9 +1815,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 			b=m_b.GetInt();
 			if(obj==&m_b)
 				b+=event->m_value[0].i;
-			r=min(255,max(0,r));
-			g=min(255,max(0,g));
-			b=min(255,max(0,b));
+			r=MIN(255,MAX(0,r));
+			g=MIN(255,MAX(0,g));
+			b=MIN(255,MAX(0,b));
 			c=DrawColor(r,g,b);
 			m_pal->m_colors.SetEntry(m_ecursor,c);
 			m_palgrid.Dirty();
@@ -1834,9 +1834,9 @@ void PalEdit::WindowEvent(kGUIEvent *event)
 			v=m_v.GetInt();
 			if(obj==&m_v)
 				v+=event->m_value[0].i;
-			h=min(255,max(0,h));
-			s=min(255,max(0,s));
-			v=min(255,max(0,v));
+			h=MIN(255,MAX(0,h));
+			s=MIN(255,MAX(0,s));
+			v=MIN(255,MAX(0,v));
 			kGUI::HSVToRGB(h/255.0f,s/255.0f,v/255.0f,&ur,&ug,&ub);
 			c=DrawColor(ur,ug,ub);
 			m_pal->m_colors.SetEntry(m_ecursor,c);
@@ -1968,7 +1968,7 @@ void PalEdit::GetNumColors(kGUIString *s,int button)
 {
 	if(button==MSGBOX_OK && s->GetLen())
 	{
-		int nc=max(1,s->GetInt());
+		int nc=MAX(1,s->GetInt());
 	
 		if(m_adjust)
 			m_pal->Adjust(nc);

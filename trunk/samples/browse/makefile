@@ -39,7 +39,7 @@ clean:
 
 $(DEP): _brdata.cpp
 	@echo "Generating Dependencies"
-	-mkdir $(OBJDIR)
+	mkdir -p $(OBJDIR)
 	-$(CC) $(KGUILIB_INCLUDES) $(KGUILIBSSL_INCLUDES) -E -MM $(SYS) $(CFLAGS) $(SRC) >>$(DEP)
 	$(KGUILOC)$(OBJDIR)/fixdep$(EXE) $(DEP) $(OBJDIR)/
 	

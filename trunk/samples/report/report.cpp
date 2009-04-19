@@ -248,7 +248,7 @@ ReportSample::ReportSample()
 		m_printerlist.SetSelection(def);
 
 	/* combo box for selecting the printer to use */
-	i=min(350,m_printerlist.GetWidest());
+	i=MIN(350,m_printerlist.GetWidest());
 	m_printerlist.SetPos(10,10);
 	m_printerlist.SetSize(i,20);
 	background->AddObject(&m_printerlist);

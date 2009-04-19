@@ -42,7 +42,7 @@ kGUIBusy::kGUIBusy(int w)
 	kGUI::ReDraw();
 }
 
-void kGUIBusy::SetCur(int v)
+void kGUIBusy::SetCur(int v,bool redraw)
 {
 	double dw;
 	int w;
@@ -54,7 +54,8 @@ void kGUIBusy::SetCur(int v)
 	{
 		m_busyrect.SetSize(w<<3,16);
 		m_lastw=w;
-		kGUI::ReDraw();
+		if(redraw)
+			kGUI::ReDraw();
 	}
 }
 

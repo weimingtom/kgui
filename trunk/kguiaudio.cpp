@@ -58,13 +58,16 @@ kGUIAudioManager::kGUIAudioManager()
 	m_close=false;
 	m_numactive=0;
 	m_activelist.Init(16,16);
+#if USETHREAD
 	m_thread.Start(this,CALLBACKNAME(UpdateThread));
+#endif
 }
 
 void kGUIAudioManager::Init(void)
 {
 }
 
+#if USETHREAD
 void kGUIAudioManager::UpdateThread(void)
 {
 	while(m_close==false)
@@ -72,7 +75,7 @@ void kGUIAudioManager::UpdateThread(void)
 		unsigned int i;
 		kGUIAudio *a;
 
-		kGUI::Sleep(1);
+		//kGUI::Sleep(1);
 
 		m_mutex.Lock();
 		for(i=0;i<m_numactive;++i)
@@ -84,6 +87,7 @@ void kGUIAudioManager::UpdateThread(void)
 	}
 	m_thread.Close(false);
 }
+#endif
 
 kGUIAudioHandle kGUIAudioManager::Play(int rate,int channels,const unsigned char *sample,unsigned long samplesize,bool copy,bool loop)
 {
@@ -120,8 +124,10 @@ kGUIAudioManager::~kGUIAudioManager()
 	kGUIAudio *a;
 
 	m_close=true;
+#if USETHREAD
 	while(m_thread.GetActive())
 		kGUI::Sleep(1);
+#endif
 
 	m_mutex.Lock();
 	while(m_numactive)
@@ -149,13 +155,30 @@ kGUIAudio::kGUIAudio()
 }
 
 #if defined (WIN32) || defined(MINGW)
+
+union dtoa_def
+{
+	DWORD dw;
+	kGUIAudio *ap;
+};
+
 static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,DWORD dwParam1, DWORD dwParam2)
 {
 	kGUIAudio *a;
+	dtoa_def dtoa;
 
-	a =(kGUIAudio *)dwInstance;
+	/* use a union to change DWORD to a pointer to avoid compile errors */
+	dtoa.dw=dwInstance;
+	a=dtoa.ap;
+
 	if(a->GetPlaying())
+	{
 		a->SetPlayDone();
+#if UPDATETHREAD
+#else
+		a->Update();
+#endif
+	}
 }
 #endif
 

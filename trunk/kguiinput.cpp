@@ -323,7 +323,7 @@ bool kGUIInputBoxObj::MoveCursorRow(int delta)
 	if(newline<0)
 		newline=0;
 	else if(newline>=GetNumLines())
-		newline=valmax(0,GetNumLines()-1);
+		newline=MAX(0,GetNumLines()-1);
 	
 	/* already at top or bottom? */
 	if(newline==line)
@@ -939,8 +939,8 @@ exitcell:		m_leftoff=0;
 					kGUIString paste;
 					int start,end;
 
-					start=valmin(m_hstart,m_hcursor);
-					end=valmax(m_hstart,m_hcursor);
+					start=MIN(m_hstart,m_hcursor);
+					end=MAX(m_hstart,m_hcursor);
 					if(end>start)
 					{
 						paste.SetString(GetString()+start,end-start);
@@ -956,8 +956,8 @@ exitcell:		m_leftoff=0;
 					kGUIString paste;
 					int start,end;
 
-					start=valmin(m_hstart,m_hcursor);
-					end=valmax(m_hstart,m_hcursor);
+					start=MIN(m_hstart,m_hcursor);
+					end=MAX(m_hstart,m_hcursor);
 					if(end>start)
 					{
 						paste.SetString(GetString()+start,end-start);

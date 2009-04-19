@@ -15,7 +15,7 @@ class kGUISaveMovie
 {
 public:
 	kGUISaveMovie();
-	~kGUISaveMovie();
+	virtual ~kGUISaveMovie();
 	static const char *GetVersion(void);
 
 	void SaveMovie(int fps,int w,int h,const char *filename);

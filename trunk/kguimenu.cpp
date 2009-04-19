@@ -294,7 +294,7 @@ void kGUIMenuColObj::Activate(int x,int y)
 
 	text.SetFontInfo(&m_fontinfo);
 	h2=(((text.GetLineHeight())+4)*showentries);
-	m_poph=valmin(h,h2)+4;
+	m_poph=MIN(h,h2)+4;
 
 	/* if this will go off of the bottom of the screen */
 	/* then move it above instead */

@@ -2572,7 +2572,7 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 		m_table.AddRow(row);
 	}
 
-	m_table.SetSize(valmin(m_table.CalcTableWidth(),m_window.GetChildZoneW()),valmin(500,kGUI::GetScreenHeight()));
+	m_table.SetSize(MIN(m_table.CalcTableWidth(),m_window.GetChildZoneW()),MIN(500,kGUI::GetScreenHeight()));
 	m_controls.AddObject(&m_table);
 	UpdateButtons();
 
@@ -2722,7 +2722,7 @@ ViewCookieWindow::ViewCookieWindow(kGUIBrowseSettings *settings)
 		m_table.AddRow(row);
 	}
 
-	m_table.SetSize(valmin(m_table.CalcTableWidth(),m_window.GetChildZoneW()),valmin(500,kGUI::GetScreenHeight()));
+	m_table.SetSize(MIN(m_table.CalcTableWidth(),m_window.GetChildZoneW()),MIN(500,kGUI::GetScreenHeight()));
 	m_controls.AddObject(&m_table);
 	UpdateButtons();
 
