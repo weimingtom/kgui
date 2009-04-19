@@ -2384,7 +2384,7 @@ private:
 	bool m_iconlinked;
 
 	/*****************************************************************/
-
+	
 	int m_numloading;
 	int m_numskipped;
 

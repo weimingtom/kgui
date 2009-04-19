@@ -7400,7 +7400,7 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 							MakeURL(&m_url,&url,&m_refreshurl);
 
 							/* todo, add an option to disable this or ASK permission */
-							m_refreshdelay=(int)valmax(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
+							m_refreshdelay=(int)MAX(1,(atof(att->GetValue()->GetString())*TICKSPERSEC));
 							
 						}
 					}
@@ -8338,6 +8338,7 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 	kGUIStringSplit ss;
 	int nl;
 	const char *sfp;
+	int  nspos;
 	char q;
 	bool incomment;
 	TAGLIST_DEF **tagptr;
@@ -8754,9 +8755,14 @@ abortclose:;
 		}
 
 		sfp=fp;
+		nspos=0;	/* namespace seperator */
 		while(fp[0]!=0x0a && fp[0]!=0x0d && fp[0]!=' ' && fp[0]!=9 && fp[0]!='/' && fp[0]!='>')
+		{
+			/* save pointer to namespace seperator */
+			if(fp[0]==':')
+				nspos=(int)((fp+1)-sfp);
 			++fp;
-		name.SetString(sfp,(int)(fp-sfp));
+		}
 		nl=(int)(fp-sfp);
 		curtag.tagname=sfp;
 		curtag.tagnamelen=nl;
@@ -8767,12 +8773,26 @@ abortclose:;
 		curtag.optend=false;
 
 		SetNoCloseNeeded(false);
-		tagptr=(TAGLIST_DEF **)m_taghash.Find(name.GetString());
+		if(!nspos)
+		{
+			name.SetString(sfp,(int)(fp-sfp));
+			tagptr=(TAGLIST_DEF **)m_taghash.Find(name.GetString());
+		}
+		else
+		{
+			/* this name is actually a namespace:tag so we need to seperate them */
+
+			/* namespace alias string */
+			name.SetString(sfp,nspos-1);
+			/* todo: lookup namespace id */
+			name.SetString(sfp+nspos,(int)(fp-sfp)-nspos);
+			tagptr=(TAGLIST_DEF **)m_taghash.Find(name.GetString());
+		}
 		if(tagptr)
 		{
 			tag=*(tagptr);
 			curtag.optend=tag->endoptional;
-			m_debug.ASprintf("ok tag, name = <%s>\n",name.GetString());
+			//m_debug.ASprintf("ok tag, name = <%s>\n",name.GetString());
 
 			if(tag->noclose==true)
 				SetNoCloseNeeded(true);
@@ -10767,10 +10787,10 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 					m_page->m_fontsize=xfontsize[6];
 				break;
 				case HTMLCONST_SMALLER:
-					m_page->m_fontsize=valmax(xfontsize[0],m_page->m_fontsize/1.2f);
+					m_page->m_fontsize=MAX(xfontsize[0],m_page->m_fontsize/1.2f);
 				break;
 				case HTMLCONST_LARGER:
-					m_page->m_fontsize=valmin(xfontsize[6],m_page->m_fontsize*1.2f);
+					m_page->m_fontsize=MIN(xfontsize[6],m_page->m_fontsize*1.2f);
 				break;
 				case HTMLCONST_INHERIT:
 				break;
@@ -11406,7 +11426,7 @@ void kGUIHTMLObj::Clear(int c)
 		h=m_pos->m_righth;
 	break;
 	case CLEAR_ALL:
-		h=valmax(m_pos->m_righth,m_pos->m_lefth);
+		h=MAX(m_pos->m_righth,m_pos->m_lefth);
 	break;
 	default:
 		return;
@@ -11661,7 +11681,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 	if(obj->m_fixedpos)
 	{
 		rx=robj->GetZoneX()+ow;
-		by=valmax(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=MAX(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(rx>m_minw)
 			m_minw=rx;
 		if(rx>m_maxw)
@@ -11673,7 +11693,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 	else if(obj->m_abspos)
 	{
 		rx=robj->GetZoneX()+ow;
-		by=valmax(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=MAX(robj->GetZoneY()+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(rx>m_minw)
 			m_minw=rx;
 		if(rx>m_maxw)
@@ -11699,16 +11719,16 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=valmin(m_pos->m_lefth,m_pos->m_righth);
+					down=MIN(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=valmax(m_pos->m_lefth,m_pos->m_righth);
+					down=MAX(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 		}
 
 		robj->MoveZoneX(m_pos->m_leftw);
 		robj->MoveZoneY(m_pos->m_cury);
-		by=valmax(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=MAX(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(by>m_maxy)
 			m_maxy=by;
 
@@ -11725,7 +11745,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 		if(m_pos->m_leftw)
 		{
-			m_pos->m_lefth=valmax(m_pos->m_lefth,oh);
+			m_pos->m_lefth=MAX(m_pos->m_lefth,oh);
 			if(!m_pos->m_lefth)
 				m_pos->m_leftw=0;
 		}
@@ -11746,16 +11766,16 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=valmin(m_pos->m_lefth,m_pos->m_righth);
+					down=MIN(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=valmax(m_pos->m_lefth,m_pos->m_righth);
+					down=MAX(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 		}
 
 		robj->MoveZoneX(pw-(m_pos->m_rightw+ow));
 		robj->MoveZoneY(m_pos->m_cury);
-		by=valmax(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
+		by=MAX(m_pos->m_cury+oh,robj->GetZoneY()+obj->m_maxchildy);
 		if(by>m_maxy)
 			m_maxy=by;
 
@@ -11772,7 +11792,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 		if(m_pos->m_rightw)
 		{
-			m_pos->m_righth=valmax(m_pos->m_righth,oh);
+			m_pos->m_righth=MAX(m_pos->m_righth,oh);
 			if(!m_pos->m_righth)
 				m_pos->m_rightw=0;
 			else if((m_pos->m_leftw+m_pos->m_rightw)>m_maxw)
@@ -11798,9 +11818,9 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 
 				/* no room, move down */
 				if(m_pos->m_lefth && m_pos->m_righth)
-					down=valmin(m_pos->m_lefth,m_pos->m_righth);
+					down=MIN(m_pos->m_lefth,m_pos->m_righth);
 				else
-					down=valmax(m_pos->m_lefth,m_pos->m_righth);
+					down=MAX(m_pos->m_lefth,m_pos->m_righth);
 				PositionHardBreak(down);
 			}
 
@@ -11866,9 +11886,9 @@ dotext:;
 				if(!m_pos->m_leftw && !m_pos->m_rightw)
 					break;
 				if(m_pos->m_leftw && m_pos->m_rightw)
-					m_pos->m_lineasc=valmin(m_pos->m_lefth,m_pos->m_righth);
+					m_pos->m_lineasc=MIN(m_pos->m_lefth,m_pos->m_righth);
 				else
-					m_pos->m_lineasc=valmax(m_pos->m_lefth,m_pos->m_righth);
+					m_pos->m_lineasc=MAX(m_pos->m_lefth,m_pos->m_righth);
 				PositionBreak(true);
 			}
 		}
@@ -12157,7 +12177,7 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 						m_colwidthfixed.SetEntry(c,true);
 
 						/* set to max of fixed width or minimum width, whatever is greater! */
-						w=valmax(ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1),ccell->m_minw+(m_cellpadding<<1));
+						w=MAX(ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1),ccell->m_minw+(m_cellpadding<<1));
 
 						if(w>m_colmin.GetEntry(c))
 						{
@@ -12213,7 +12233,7 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 //					kGUI::Trace("Getting Cell Size[%d,%d,span=%d] width=%d\n",r,c,ccell->m_colspan,ccell->m_minw);
 
 					if(ccell->m_width.GetIsFixed())
-						w=valmax(ccell->m_minw,ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1));
+						w=MAX(ccell->m_minw,ccell->m_width.CalcUnitValue(0,em)+(m_cellpadding<<1));
 					else
 						w=ccell->m_minw;
 
@@ -12298,8 +12318,8 @@ void kGUIHTMLTableInfo::CalcMinMax(kGUIHTMLObj *table,int em)
 	{
 		int minsize=table->m_width.CalcUnitValue(0,em);
 
-		table->m_minw=valmax(table->m_minw,minsize);
-		table->m_maxw=valmax(table->m_maxw,minsize);
+		table->m_minw=MAX(table->m_minw,minsize);
+		table->m_maxw=MAX(table->m_maxw,minsize);
 	}
 }
 
@@ -13384,7 +13404,7 @@ typechanged:;
 
 			w=textobj->GetWidth();
 			if(textobj->GetFixedWidth())
-				w=valmax(w,(int)(textobj->GetFixedWidth()*m_em));	/* used for LI prefix as it is right aligned and wider */
+				w=MAX(w,(int)(textobj->GetFixedWidth()*m_em));	/* used for LI prefix as it is right aligned and wider */
 
 			if(textobj->GetPlusSpace())
 				w+=(int)(0.33f*m_em)+(m_page->m_wordspacing.CalcUnitValue(0,m_em));
@@ -13392,7 +13412,7 @@ typechanged:;
 
 			h=textobj->GetLineHeight();
 			if(m_page->m_textdecoration&TEXTDECORATION_UNDERLINE)
-				h=valmax(h,(int)textobj->GetAscHeight()+4);
+				h=MAX(h,(int)textobj->GetAscHeight()+4);
 
 			textobj->MoveZoneH(h);
 		}
@@ -13912,7 +13932,7 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 		}
 	}
 
-	m_maxchildy=valmax(m_pos->m_cury,m_maxy);
+	m_maxchildy=MAX(m_pos->m_cury,m_maxy);
 	if(m_fixedh==false && m_relh==false)
 	{
 		SetInsideH(m_maxchildy);
@@ -14330,10 +14350,10 @@ void kGUIHTMLObj::Contain(bool force)
 					orx=olx+obj->GetZoneW();
 					oty=obj->GetZoneY();
 					oby=oty+obj->GetZoneH();
-					lx=valmin(lx,olx);
-					ty=valmin(ty,oty);
-					rx=valmax(rx,orx);
-					by=valmax(by,oby);
+					lx=MIN(lx,olx);
+					ty=MIN(ty,oty);
+					rx=MAX(rx,orx);
+					by=MAX(by,oby);
 				}
 			}
 			/* set my position and size to this */
@@ -14378,8 +14398,8 @@ void kGUIHTMLObj::Contain(bool force)
 				{
 					if(z->GetZoneRX()>GetZoneW() || z->GetZoneBY()>GetZoneH())
 					{
-						neww=valmax(neww,z->GetZoneRX());		
-						newh=valmax(newh,z->GetZoneBY());		
+						neww=MAX(neww,z->GetZoneRX());		
+						newh=MAX(newh,z->GetZoneBY());		
 						m_error=true;
 					}
 				}
@@ -18028,14 +18048,14 @@ kGUIColor kGUIHTMLBox::Light(kGUIColor c)
 
 	DrawColorToRGB(c,r,g,b);
 	r*=1.6875f;
-	r=valmin(r,255.0f);
-	r=valmax(r,178.0f);
+	r=MIN(r,255.0f);
+	r=MAX(r,178.0f);
 	g*=1.6875f;
-	g=valmin(g,255.0f);
-	g=valmax(g,178.0f);
+	g=MIN(g,255.0f);
+	g=MAX(g,178.0f);
 	b*=1.6875f;
-	b=valmin(b,255.0f);
-	b=valmax(b,178.0f);
+	b=MIN(b,255.0f);
+	b=MAX(b,178.0f);
 	return(DrawColor((int)r,(int)g,(int)b));
 }
 
@@ -18173,7 +18193,7 @@ void kGUIHTMLBox::Draw(kGUICorners *c)
 	else
 		bb=m_bottombw;
 
-	w=valmax(valmax(tb,bb),valmax(lb,rb));
+	w=MAX(MAX(tb,bb),MAX(lb,rb));
 	if(w)
 	{
 		unsigned int i;

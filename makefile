@@ -2,7 +2,7 @@
 
 include makefile.in
 
-LIB_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp kgui.cpp kguibasic.cpp kguibrowse.cpp kguibsp.cpp kguicolors.cpp kguicsv.cpp \
+LIB_SRC=big.cpp datahandle.cpp hash.cpp heap.cpp vheap.cpp kgui.cpp kguibasic.cpp kguibrowse.cpp kguibsp.cpp kguicolors.cpp kguicsv.cpp \
 kguidb.cpp kguidir.cpp kguifont.cpp kguigrid.cpp kguihtml.cpp kguiimage.cpp kguilist.cpp kguiobj.cpp \
 kguipolygon.cpp kguiprot.cpp kguirandom.cpp kguireport.cpp kguireq.cpp kguistring.cpp kguiaudio.cpp \
 kguitsp.cpp kguixml.cpp kguithread.cpp kguidl.cpp kguiemail.cpp kguisubpixel.cpp kguitablexml.cpp \

@@ -36,10 +36,10 @@ void kGUISubPixelCollector::SetBounds(double y1,double y2)
 	SUBLINE_DEF *list;
 
 	m_chunkindex=0;
-	m_topy=(int)valmin(y1,y2);
+	m_topy=(int)MIN(y1,y2);
 	if(m_topy<kGUI::m_clipcorners.ty)
 		m_topy=kGUI::m_clipcorners.ty;
-	m_bottomy=(int)valmax(y1,y2)+1;
+	m_bottomy=(int)MAX(y1,y2)+1;
 	if(m_bottomy>=kGUI::m_clipcorners.by)
 		m_bottomy=kGUI::m_clipcorners.by-1;
 	list=m_lines.GetArrayPtr();
@@ -132,8 +132,8 @@ void kGUISubPixelCollector::AddChunk(int y,double lx,double rx,double weight)
 	}
 	else
 	{
-		line->leftx=valmin(lx,line->leftx);
-		line->rightx=valmax(rx,line->rightx);
+		line->leftx=MIN(lx,line->leftx);
+		line->rightx=MAX(rx,line->rightx);
 	}
 }
 

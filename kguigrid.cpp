@@ -319,46 +319,69 @@ void kGUIGridObj::ClipScrollY(void)
 bool kGUIGridObj::UpdateInput(void)
 {
 	kGUICorners c;
+	int dx,dy;
 
+	dx=0;
+	dy=0;
 	if(kGUI::GetMouseLeft()==true)
 	{
-		int dx,dy;
 
 		dx=kGUI::GetMouseDX();
 		dy=kGUI::GetMouseDY();
-		if(dx || dy)
-			Dirty();
-		if(dx)
-		{
-			m_scrollxfrac-=dx;
-			while(m_scrollxfrac<0)
-			{
-				m_scrollxfrac+=m_cellwidth;
-				--m_scrollx;
-			}
-			while(m_scrollxfrac>=m_cellwidth)
-			{
-				m_scrollxfrac-=m_cellwidth;
-				++m_scrollx;
-			}
-			ClipScrollX();
-		}
+	}
+	else
+	{
+		kGUI::SetKeyMask(false);
 
-		if(dy)
+		switch(kGUI::GetKey())
 		{
-			m_scrollyfrac-=dy;
-			while(m_scrollyfrac<0)
-			{
-				m_scrollyfrac+=m_cellheight;
-				--m_scrolly;
-			}
-			while(m_scrollyfrac>=m_cellheight)
-			{
-				m_scrollyfrac-=m_cellheight;
-				++m_scrolly;
-			}
-			ClipScrollY();
+		case GUIKEY_LEFT:
+			dx=GetZoneW()/10;
+		break;
+		case GUIKEY_RIGHT:
+			dx=-GetZoneW()/10;
+		break;
+		case GUIKEY_UP:
+			dy=GetZoneH()/10;
+		break;
+		case GUIKEY_DOWN:
+			dy=-GetZoneH()/10;
+		break;
 		}
+	}
+
+	if(dx || dy)
+		Dirty();
+	if(dx)
+	{
+		m_scrollxfrac-=dx;
+		while(m_scrollxfrac<0)
+		{
+			m_scrollxfrac+=m_cellwidth;
+			--m_scrollx;
+		}
+		while(m_scrollxfrac>=m_cellwidth)
+		{
+			m_scrollxfrac-=m_cellwidth;
+			++m_scrollx;
+		}
+		ClipScrollX();
+	}
+
+	if(dy)
+	{
+		m_scrollyfrac-=dy;
+		while(m_scrollyfrac<0)
+		{
+			m_scrollyfrac+=m_cellheight;
+			--m_scrolly;
+		}
+		while(m_scrollyfrac>=m_cellheight)
+		{
+			m_scrollyfrac-=m_cellheight;
+			++m_scrolly;
+		}
+		ClipScrollY();
 	}
 
 	/* call user code */

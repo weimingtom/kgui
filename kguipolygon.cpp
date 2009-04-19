@@ -155,9 +155,9 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (int)(valmax(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
+    y0 = (int)(MAX(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
 										/* ymin of polygon */
-    y1 = (int)(valmin(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
+    y1 = (int)(MIN(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
 										/* ymax of polygon */
 
     for (y=y0; y<=y1; y++)
@@ -261,9 +261,9 @@ void kGUI::DrawPoly(int nvert,kGUIPoint2 *point,kGUIColor c,double alpha)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (int)(valmax(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
+    y0 = (int)(MAX(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
 										/* ymin of polygon */
-    y1 = (int)(valmin(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
+    y1 = (int)(MIN(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
 										/* ymax of polygon */
 
     for (y=y0; y<=y1; y++)
@@ -368,9 +368,9 @@ bool kGUI::ReadPoly(int nvert,kGUIPoint2 *point,kGUIColor c)
 
     nact = 0;				/* start with empty active list */
     k = 0;				/* ind[k] is next vertex to process */
-    y0 = (int)(valmax(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
+    y0 = (int)(MAX(m_clipcorners.ty, xceil(pt[ind[0]].y-.5)));
 										/* ymin of polygon */
-    y1 = (int)(valmin(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
+    y1 = (int)(MIN(m_clipcorners.by, xfloor(pt[ind[n-1]].y-.5)));
 										/* ymax of polygon */
 
     for (y=y0; y<=y1; y++) {  /* step through scanlines */
@@ -506,7 +506,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,
 	p2=point+1;
 
 	/* make the number of endpoints vary depending on thickness */
-	numep=valmin(MAXENDPOINTS,(int)(radius+1.0f));
+	numep=MIN(MAXENDPOINTS,(int)(radius+1.0f));
 	/* end point step to cover 180 degrees */
 	estep=PI/(numep-1);
 
@@ -556,7 +556,7 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,
 				heading=atan2((double)p1->y-p2->y,(double)p1->x-p2->x);
 			h=(lastheading+(PI/2));
 			hdelta=Diff(heading,lastheading);
-			numcp=valmin(MAXENDPOINTS,(int)fabs(hdelta*radius)+3);			/* number of points inserted  for the curve curved points */
+			numcp=MIN(MAXENDPOINTS,(int)fabs(hdelta*radius)+3);			/* number of points inserted  for the curve curved points */
 			step=hdelta/(numcp-1);
 
 			/* is this an inside or outside angle? */

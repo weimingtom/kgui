@@ -283,11 +283,6 @@ bool kGUITableObj::DeleteRowz(kGUITableRowObj *obj,bool purge)
 			{
 				/* hmmm, this should NOT be called since events should only be trigerred */
 				/* for user generated actions not regular code based actions */
-#if 0
-				kGUIEvent e;
-				e.m_value[0].i=i;
-				CallEvent(EVENT_DELETEROW,&e);
-#endif
 				delete obj;
 			}
 			else
@@ -1380,8 +1375,8 @@ void kGUITableObj::SelectRow(int line,bool add)
 		int start,end;
 
 		/* select all rows between us and the last selected row */
-		start=valmin(m_lastselectedrow,line);
-		end=valmax(m_lastselectedrow,line);
+		start=MIN(m_lastselectedrow,line);
+		end=MAX(m_lastselectedrow,line);
 		for(e=start;e<=end;++e)
 		{
 			rowobj=static_cast<kGUITableRowObj *>(GetChild(e));
@@ -1624,7 +1619,7 @@ abort:;
 			{
 				gobj=GetChild(y);
 				gobj->GetCorners(&rc);
-				c2.ty=valmax(rc.ty,rc.by-5);
+				c2.ty=MAX(rc.ty,rc.by-5);
 				c2.by=rc.by;
 				if(kGUI::MouseOver(&c2))
 				{
@@ -2152,11 +2147,23 @@ void kGUITableObj::CallSelectedEvent(void)
 void kGUITableObj::DelSelRowsDone(int closebutton)
 {
 	unsigned int e;
+	unsigned int n;
 	kGUITableRowObj *rowobj;
 
 	if(closebutton==MSGBOX_YES)
 	{
 		kGUIEvent ev;
+
+		/* do a callback with the number of rows to be deleted */
+		n=0;
+		for(e=0;e<m_numrows;++e)
+		{
+			rowobj=static_cast<kGUITableRowObj *>(GetChild(e));
+			if(rowobj->GetSelected()==true)
+				++n;
+		}
+		ev.m_value[0].i=n;
+		CallEvent(EVENT_DELETEROWSTART,&ev);
 
 		for(e=m_numrows-1;(int)e>=0;--e)
 		{
@@ -2169,9 +2176,11 @@ void kGUITableObj::DelSelRowsDone(int closebutton)
 				if((m_cursorrow>=e) && m_cursorrow)
 					--m_cursorrow;
 				--m_numrows;
+				m_sizechanged=true;
+				m_positionsdirty=true;
 			}
 		}
-		m_sizechanged=true;
+		CallEvent(EVENT_DELETEROWEND,&ev);
 		Dirty();
 		ReCalcPositions();
 		CallAfterUpdate();

@@ -37,7 +37,7 @@ void kGUIString::Alloc(unsigned int l,bool preserve)
 {
 	unsigned int oldlen;
 
-	if(l<m_maxlen)
+	if(l<=m_maxlen)
 		return;		/* already big enough */
 
 	oldlen=m_maxlen;
@@ -359,7 +359,7 @@ void kGUIString::Insert(unsigned int index,const char *itext)
 	assert(index<=m_len,"Cannot insert past end of string");
 
 	if((m_len+ilen)>m_maxlen)		/* will it fit? */
-		Alloc(m_len+ilen+valmax(m_len>>2,32),true);	
+		Alloc(m_len+ilen+MAX(m_len>>2,32),true);	
 
 	m_len+=ilen;
 	memmove(m_string+index+ilen,m_string+index,((m_len+1)-ilen)-index);
@@ -420,7 +420,7 @@ void kGUIString::Append(const char *atext,unsigned int alen)
 {
 	assert(atext!=0,"Null string!");
 	if((m_len+alen)>m_maxlen)		/* will it fit? */
-		Alloc(m_len+alen+valmax(m_len>>2,32),true);	
+		Alloc(m_len+alen+MAX(m_len>>2,32),true);	
 
 	/* caution: may contain nulls */
 	memcpy(m_string+m_len,atext,alen);

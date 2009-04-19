@@ -879,10 +879,10 @@ void kGUI::ShrinkClip(int lx,int ty,int rx,int by)
 
 	assert(m_clipindex>0,"Stack Underflow error!");
 	c=&m_clipstack[m_clipindex-1];
-	c->lx=valmax(c->lx,lx);
-	c->ty=valmax(c->ty,ty);
-	c->rx=valmin(c->rx,rx);
-	c->by=valmin(c->by,by);
+	c->lx=MAX(c->lx,lx);
+	c->ty=MAX(c->ty,ty);
+	c->rx=MIN(c->rx,rx);
+	c->by=MIN(c->by,by);
 
 	SetClip();
 }
@@ -893,7 +893,7 @@ void kGUI::ShrinkClipLX(int lx)
 
 	assert(m_clipindex>0,"Stack Underflow error!");
 	c=&m_clipstack[m_clipindex-1];
-	c->lx=valmax(c->lx,lx);
+	c->lx=MAX(c->lx,lx);
 
 	SetClip();
 }
@@ -904,7 +904,7 @@ void kGUI::ShrinkClipRX(int rx)
 
 	assert(m_clipindex>0,"Stack Underflow error!");
 	c=&m_clipstack[m_clipindex-1];
-	c->rx=valmin(c->rx,rx);
+	c->rx=MIN(c->rx,rx);
 
 	SetClip();
 }
@@ -915,7 +915,7 @@ void kGUI::ShrinkClipTY(int ty)
 
 	assert(m_clipindex>0,"Stack Underflow error!");
 	c=&m_clipstack[m_clipindex-1];
-	c->ty=valmax(c->ty,ty);
+	c->ty=MAX(c->ty,ty);
 
 	SetClip();
 }
@@ -926,7 +926,7 @@ void kGUI::ShrinkClipBY(int by)
 
 	assert(m_clipindex>0,"Stack Underflow error!");
 	c=&m_clipstack[m_clipindex-1];
-	c->by=valmin(c->by,by);
+	c->by=MIN(c->by,by);
 
 	SetClip();
 }
@@ -1317,8 +1317,8 @@ void kGUI::Dirty(const kGUICorners *c)
 			{
 				newarea.lx=c->lx;
 				newarea.rx=dc->lx;
-				newarea.ty=valmax(c->ty,dc->ty);
-				newarea.by=valmin(c->by,dc->by);
+				newarea.ty=MAX(c->ty,dc->ty);
+				newarea.by=MIN(c->by,dc->by);
 				Dirty(&newarea);
 			}
 			/* is there a right middle area? */
@@ -1326,8 +1326,8 @@ void kGUI::Dirty(const kGUICorners *c)
 			{
 				newarea.lx=dc->rx;
 				newarea.rx=c->rx;
-				newarea.ty=valmax(c->ty,dc->ty);
-				newarea.by=valmin(c->by,dc->by);
+				newarea.ty=MAX(c->ty,dc->ty);
+				newarea.by=MIN(c->by,dc->by);
 				Dirty(&newarea);
 			}
 			return;
@@ -1349,8 +1349,8 @@ void kGUI::Dirty(const kGUICorners *c)
 			{
 				int newtop,newbottom;
 
-				newtop=valmin(c->ty,dc->ty);
-				newbottom=valmax(c->by,dc->by);
+				newtop=MIN(c->ty,dc->ty);
+				newbottom=MAX(c->by,dc->by);
 				dc->ty=newtop;
 				dc->by=newbottom;
 				return;
@@ -1363,8 +1363,8 @@ void kGUI::Dirty(const kGUICorners *c)
 			{
 				int newleft,newright;
 
-				newleft=valmin(c->lx,dc->lx);
-				newright=valmax(c->rx,dc->rx);
+				newleft=MIN(c->lx,dc->lx);
+				newright=MAX(c->rx,dc->rx);
 				dc->lx=newleft;
 				dc->rx=newright;
 				return;
@@ -2921,7 +2921,7 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 	y+=20+20;
 
 	m_ok.SetString(kGUI::GetString(KGUISTRING_OK));
-	bw=valmax(m_ok.GetWidth()+16,60);
+	bw=MAX(m_ok.GetWidth()+16,60);
 	m_ok.SetSize(bw,lh);
 	m_ok.SetPos(x,y);
 	m_ok.SetEventHandler(this,CALLBACKNAME(PressOK));
@@ -2929,7 +2929,7 @@ kGUIInputBoxReq::kGUIInputBoxReq(void *codeobj,void (*code)(void *,kGUIString *r
 	x+=60+20;
 
 	m_cancel.SetString(kGUI::GetString(KGUISTRING_CANCEL));
-	bw=valmax(m_cancel.GetWidth()+16,60);
+	bw=MAX(m_cancel.GetWidth()+16,60);
 	m_cancel.SetSize(bw,lh);
 	m_cancel.SetPos(x,y);
 	m_cancel.SetEventHandler(this,CALLBACKNAME(PressCancel));

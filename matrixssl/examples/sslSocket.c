@@ -381,7 +381,7 @@ int sslRead(sslConn_t *cp, char *buf, int len, int *status)
 	if (cp->inbuf.buf) {
 		if (cp->inbuf.start < cp->inbuf.end) {
 			remaining = (int)(cp->inbuf.end - cp->inbuf.start);
-			bytes = (int)min(len, remaining);
+			bytes = (int)MIN(len, remaining);
 			memcpy(buf, cp->inbuf.start, bytes);
 			cp->inbuf.start += bytes;
 			return bytes;
@@ -454,7 +454,7 @@ decodeMore:
 		was longer than len, but the decoded record isn't!
 */
 		rc = (int)(cp->inbuf.end - cp->inbuf.start);
-		rc = min(rc, len);
+		rc = MAX(rc, len);
 		memcpy(buf, cp->inbuf.start, rc);
 		cp->inbuf.start += rc;
 		return rc;

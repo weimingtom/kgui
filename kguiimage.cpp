@@ -266,11 +266,11 @@ inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
 	sli=sub->limage;		/* save pointer to each raster line */
 
 	ph=sub->pixelheight;
-	yweight=valmin(1.0f-sub->yfrac,sub->pixelheight);
+	yweight=MIN(1.0f-sub->yfrac,sub->pixelheight);
 	do
 	{
 		pw=sub->pixelwidth;
-		xweight=valmin(1.0f-sub->xfrac,sub->pixelwidth);
+		xweight=MIN(1.0f-sub->xfrac,sub->pixelwidth);
 		li=sli;
 		do
 		{
@@ -342,11 +342,11 @@ inline static void ReadSubPixel(SUBPIXEL_DEF *sub)
 				}
 			}
 			pw-=xweight;
-			xweight=valmin(1.0f,pw);
+			xweight=MIN(1.0f,pw);
 		}while(pw>0.001f);
 
 		ph-=yweight;
-		yweight=valmin(1.0f,ph);
+		yweight=MIN(1.0f,ph);
 		sli+=sub->rowadd;	
 	}while(ph>0.0001f);
 
@@ -3607,13 +3607,13 @@ double kGUIImageObj::CalcScaleToFit(int w,int h)
 
 void kGUIImageObj::ShrinkToFit(void)
 {
-	double s=valmin(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
+	double s=MIN(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
 	SetScale(s,s);
 }
 
 void kGUIImageObj::ExpandToFit(void)
 {
-	double s=valmax(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
+	double s=MAX(CalcScaleToFit(GetImageWidth(),GetImageHeight()),1.0f);
 	SetScale(s,s);
 }
 
@@ -3644,7 +3644,7 @@ void kGUIImageObj::CenterImage(void)
 void kGUIImageObj::MoveRow(int move)
 {
 	int viewh=GetZoneH()-kGUI::GetSkin()->GetScrollbarHeight();
-	int maxh=(int)(valmax(0,GetScaledImageHeight()-viewh));
+	int maxh=(int)(MAX(0,GetScaledImageHeight()-viewh));
 
 	m_topoff+=move;
 	if(m_topoff<0)
@@ -3657,7 +3657,7 @@ void kGUIImageObj::MoveRow(int move)
 void kGUIImageObj::MoveCol(int move)
 {
 	int vieww=GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth();
-	int maxw=(int)(valmax(0,GetScaledImageWidth()-vieww));
+	int maxw=(int)(MAX(0,GetScaledImageWidth()-vieww));
 
 	m_leftoff+=move;
 	if(m_leftoff<0)

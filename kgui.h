@@ -148,8 +148,20 @@
 #define PI 3.141592653589793f
 #endif
 
-#define valmin(x,y) ((x)>(y)?(y):(x))
-#define valmax(x,y) ((x)<(y)?(y):(x))
+#ifndef MIN
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
+//since min and max are not necessarily defined in all systems we will use MIN and MAX only and
+//if we accidentially try and use min or max we will get an error
+#undef min
+#undef max
+#define min minerror
+#define max maxerror
 
 extern void fatalerror(const char *message);
 
@@ -420,7 +432,7 @@ template <class T>
 void Array<T>::SetEntry(unsigned int num,T entry)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+valmax(1,(m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+MAX(1,(m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::SetEntry Out of bounds on array!");
 	m_array[num]=entry;
@@ -460,7 +472,7 @@ void Array<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned int n
 	int movesize;
 	
 	while((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(valmax(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(MAX(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"Array::InsertEntry(listsize,num,numentries) Out of bounds on array!");
@@ -499,7 +511,7 @@ template <class T>
 T *Array<T>::GetEntryPtr(unsigned int num)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(valmax(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+(MAX(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"Array::GetEntryPtr(num) Out of bounds on array!");
 	return(m_array+num);
@@ -578,7 +590,7 @@ template <class T>
 void SmallArray<T>::SetEntry(unsigned int num,T entry)
 {
 	while(num>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?num+m_growsize:num+(valmax(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?num+m_growsize:num+(MAX(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"SmallArray::SetEntry(num,entry) Out of bounds on array!");
 	m_array[num]=entry;
@@ -618,7 +630,7 @@ void SmallArray<T>::InsertEntry(unsigned int listsize,unsigned int num,unsigned 
 	int movesize;
 	
 	while((listsize+numentries)>=m_numentries && m_grow==true)
-		Alloc(m_growsize>0?listsize+m_growsize:listsize+(valmax(1,m_numentries>>-m_growsize)),true);
+		Alloc(m_growsize>0?listsize+m_growsize:listsize+(MAX(1,m_numentries>>-m_growsize)),true);
 
 	assert((num<m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
 	assert((listsize+numentries)<=(m_numentries),"SmallArray::InsertEntrt(listsize,num,numentries) Out of bounds on array!");
@@ -779,7 +791,13 @@ T *ClassArray<T>::GetEntryPtr(unsigned int num)
 	T *obj;
 
 	if(num>=m_pointers.GetNumEntries() && m_pointers.GetGrow()==true)
-		m_pointers.Alloc(num+m_pointers.GetGrowSize(),true);
+	{
+		/* <0 means double */
+		if(m_pointers.GetGrowSize()<0)
+			m_pointers.Alloc(m_pointers.GetNumEntries()<<1,true);
+		else
+			m_pointers.Alloc(num+m_pointers.GetGrowSize(),true);
+	}
 
 	obj=m_pointers.GetEntry(num);
 	if(!obj)
@@ -1127,7 +1145,7 @@ public:
 	inline void SetFontID(int id) {m_fontid=id;FontChanged();}
 	/*! set the font size
 	    @param s font size in points */
-	inline void SetFontSize(int s) {m_size=valmin(s,MAXFONTSIZE);FontChanged();}
+	inline void SetFontSize(int s) {m_size=MIN(s,MAXFONTSIZE);FontChanged();}
 	/*! return the font size
 	    @return font size in points */
 	inline const int GetFontSize(void) {return m_size;}
@@ -1363,7 +1381,9 @@ EVENT_SIZECHANGED,			/* object size was changed */
 
 /* events trigerred by tables */
 EVENT_ADDROW,
+EVENT_DELETEROWSTART,
 EVENT_DELETEROW,
+EVENT_DELETEROWEND,
 EVENT_ROW_LEFTCLICK,
 EVENT_ROW_LEFTDOUBLECLICK,
 EVENT_ROW_RIGHTCLICK,
@@ -4249,7 +4269,7 @@ public:
 	kGUIBusy(int w);
 	~kGUIBusy();
 	kGUIText *GetTitle(void) {return m_window.GetTitle();}
-	void SetCur(int v);
+	void SetCur(int v,bool redraw=true);
 	void SetMax(int v);
 private:
 	kGUIWindowObj m_window;

@@ -37,7 +37,7 @@ GameVector3 g_shotpoints[]={
 	{2.0f,2.0f,0.0f},
 	{0.0f,1.0f,0.0f}};
 
-GameModel g_shotmodel[]={sizeof(g_shotpoints)/sizeof(g_shotpoints[0]),g_shotpoints};
+GameModel g_shotmodel[]={{sizeof(g_shotpoints)/sizeof(g_shotpoints[0]),g_shotpoints}};
 
 GameVector3 g_shipthrust1[]={
 	{-5.0f,10.0f,0.0f},
