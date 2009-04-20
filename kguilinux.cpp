@@ -426,6 +426,110 @@ bool kGUISystemX::Init(void)
  }
 #endif
 
+static int ConvertKey(int inkey)
+{
+	int key;
+
+	key=0;	
+	switch(inkey)
+	{
+	case XK_Shift_L:			
+	case XK_Shift_R:			
+	case XK_Control_L:			
+	case XK_Control_R:			
+	case XK_Caps_Lock:			
+	case XK_Alt_L:			
+	case XK_Alt_R:
+	break;
+	case XK_Return:
+	case XK_KP_Enter:
+		key=GUIKEY_RETURN;
+	break;
+	case XK_KP_Space:
+		key=' ';
+	break;
+	case XK_Tab:
+		key=GUIKEY_TAB;
+	break;
+	case XK_Left:
+		key=GUIKEY_LEFT;
+	break;
+	case XK_Right:
+		key=GUIKEY_RIGHT;
+	break;
+	case XK_Up:
+		key=GUIKEY_UP;
+	break;
+	case XK_Down:
+		key=GUIKEY_DOWN;
+	break;
+	case XK_Prior:
+		key=GUIKEY_PGUP;
+	break;
+	case XK_Next:
+		key=GUIKEY_PGDOWN;
+	break;
+	case XK_End:
+		key=GUIKEY_END;
+	break;
+	case XK_Home:
+		key=GUIKEY_HOME;
+	break;
+	case XK_Insert:
+		key=GUIKEY_INSERT;
+	break;
+	case XK_Delete:
+		key=GUIKEY_DELETE;
+	break;
+	case XK_BackSpace:
+		key=GUIKEY_BACKSPACE;
+	break;
+	case XK_Escape:
+		key=GUIKEY_ESC;
+	break;
+	case XK_KP_0:
+		key='0';
+	break;
+	case XK_KP_1:
+		key='1';
+	break;
+	case XK_KP_2:
+		key='2';
+	break;
+	case XK_KP_3:
+		key='3';
+	break;
+	case XK_KP_4:
+		key='4';
+	break;
+	case XK_KP_5:
+		key='5';
+	break;
+	case XK_KP_6:
+		key='6';
+	break;
+	case XK_KP_7:
+		key='7';
+	break;
+	case XK_KP_8:
+		key='8';
+	break;
+	case XK_KP_9:
+		key='9';
+	break;
+	case XK_F1:
+		key=GUIKEY_F1;
+	break;
+	case XK_F2:
+		key=GUIKEY_F2;
+	break;
+	default:
+		key=inkey;
+	break;
+	}
+	return(key);
+}
+
 void kGUISystemX::Loop(void)
 {
 	fd_set in_fds;
@@ -807,6 +911,22 @@ checkmouseagain:		if(m_numoldwindowpositions)
 					/* if any delay pastes are pending then cancel them */
 					m_delaypaste=false;
 				}
+
+				key=ConvertKey(XLookupKeysym(ke,0));
+				if(key)
+					kGUI::SetKeyState(key,true);
+			}
+			break;
+			case KeyRelease:
+			{
+				XKeyEvent *ke;
+				int ks;
+				int key;
+
+				ke=&m_e.xkey;
+				key=ConvertKey(XLookupKeysym(ke,0));
+				if(key)
+					kGUI::SetKeyState(key,false);
 			}
 			break;
 			}
