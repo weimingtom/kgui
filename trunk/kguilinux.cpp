@@ -527,6 +527,9 @@ static int ConvertKey(int inkey)
 		key=inkey;
 	break;
 	}
+	/* convert a-z to upper case */
+	if(key>='a' && key<='z')
+		key^=('a'^'A');
 	return(key);
 }
 
@@ -920,7 +923,6 @@ checkmouseagain:		if(m_numoldwindowpositions)
 			case KeyRelease:
 			{
 				XKeyEvent *ke;
-				int ks;
 				int key;
 
 				ke=&m_e.xkey;
