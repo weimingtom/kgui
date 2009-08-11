@@ -275,6 +275,78 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIFPoint2 *point
 	if(nvert<2)
 		return;
 
+	{
+		float minx,maxx,miny,maxy;
+		CLIPOUT_DEF out1,out2;
+		int ir=(int)(radius+1);
+
+		/* check for totally off screen */
+		p1=point;
+		minx=maxx=p1->x;
+		miny=maxy=p1->y;
+		++p1;
+		for(i=1;i<nvert;++i)
+		{
+			if(p1->x<minx)
+				minx=p1->x;
+			if(p1->x>maxx)
+				maxx=p1->x;
+			if(p1->y<miny)
+				miny=p1->y;
+			if(p1->y>maxy)
+				maxy=p1->y;
+			++p1;
+		}
+		if(OffClip((int)minx-ir,(int)miny-ir,(int)maxx+ir,(int)maxy+ir)==true)
+			return;
+
+		/* check for off-screen points at beginning */
+		do{
+			/* get outcode for the first point */
+			p1=point;
+			out1=GetClipOutCodeR((int)p1->x,(int)p1->y,ir);
+			if(out1==CLIPOUT_ON)
+				break;
+			/* get outcode for the 2nd point */
+			p2=point+1;
+			out2=GetClipOutCodeR((int)p2->x,(int)p2->y,ir);
+			
+			if(out1&out2)
+			{
+				/* both points are off screen, so remove the first point */
+				ce&=~1;
+				++point;
+				--nvert;
+				if(nvert<2)
+					return;
+			}
+			else
+				break;
+		}while(1);
+
+		do{
+			/* get outcode for the last point */
+			p1=point+(nvert-1);
+			out1=GetClipOutCodeR((int)p1->x,(int)p1->y,ir);
+			if(out1==CLIPOUT_ON)
+				break;
+			/* get outcode for the 2nd to last point */
+			p2=point+(nvert-2);
+			out2=GetClipOutCodeR((int)p2->x,(int)p2->y,ir);
+			
+			if(out1&out2)
+			{
+				/* both points are off screen, so remove the last point */
+				ce&=~2;
+				--nvert;
+				if(nvert<2)
+					return;
+			}
+			else
+				break;
+		}while(1);
+	}
+
 	/* last point */
 	numinsidepoints=nvert-2;
 	p1=point;
@@ -413,33 +485,89 @@ bool kGUI::DrawLine(float x1,float y1,float x2,float y2,kGUIColor c,float alpha)
 	if(x1<=x2)
 	{
 		minx=x1;
-		maxx=x2;
+		maxx=x2+1;
 	}
 	else
 	{
-		maxx=x1;
+		maxx=x1+1;
 		minx=x2;
 	}
 	if(y1<=y2)
 	{
 		miny=y1;
-		maxy=y2;
+		maxy=y2+1;
 	}
 	else
 	{
-		maxy=y1;
+		maxy=y1+1;
 		miny=y2;
 	}
 	if(OffClip((int)minx,(int)miny,(int)maxx,(int)maxy)==true)
 		return(false);
+
+	/* if not totally onscreen then see if we can move the ends closer to the clip edges */
+	if(InsideClip((int)minx,(int)miny,(int)maxx,(int)maxy)==false)
+	{
+		/* in order to keep the fractional precision we move the ends if they can be moved and still off the same edge of the clip sides */
+		/* this way we keep our fractional positions that would get lost when hard clipping against an edge */
+		CLIPOUT_DEF origoutcode,newoutcode;
+		float dx,dy;
+		float tx,ty;
+
+		/* move the one endpoint first */
+		origoutcode=GetClipOutCode((int)x1,(int)y1);
+		if(origoutcode)
+		{
+			dx=(x2-x1)/2.0f;
+			dy=(y2-y1)/2.0f;
+			while(fabs(dx)>1.0f || fabs(dy)>1.0f)
+			{
+				tx=x1+dx;
+				ty=y1+dy;
+				newoutcode=GetClipOutCode((int)tx,(int)ty);
+				if(newoutcode&origoutcode)
+				{
+					x1=tx;
+					y1=ty;
+				}
+				dx/=2.0f;
+				dy/=2.0f;
+			}
+		}
+
+		/* move the other endpoint second */
+		origoutcode=GetClipOutCode((int)x2,(int)y2);
+		if(origoutcode)
+		{
+			dx=(x1-x2)/2.0f;
+			dy=(y1-y2)/2.0f;
+			while(fabs(dx)>1.0f || fabs(dy)>1.0f)
+			{
+				tx=x2+dx;
+				ty=y2+dy;
+				newoutcode=GetClipOutCode((int)tx,(int)ty);
+				if(newoutcode&origoutcode)
+				{
+					x2=tx;
+					y2=ty;
+				}
+				dx/=2.0f;
+				dy/=2.0f;
+			}
+		}
+	}
 
 	m_subpixcollectorf.SetBounds(y1,y2);
 	m_subpixcollectorf.SetColor(c,alpha);
 
 	dx=x2-x1;
 	dy=y2-y1;
-
-	if(fabs(dx)>fabs(dy))
+	
+	if(dx==0.0f && dy==0.0f)
+	{
+		m_subpixcollectorf.AddRect(x1,y1,1.0f,1.0f,1.0f);
+	}
+	else if(fabs(dx)>fabs(dy))
 	{
 		float x,stepx;
 		float stepy=dy/fabs(dx);

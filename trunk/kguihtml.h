@@ -1179,7 +1179,7 @@ public:
 	void SetVAlign(unsigned int a) {m_valign=a;}
 	unsigned int GetVAlign(void) {return m_valign;}
 	kGUIHTMLBox *GetBox(void);
-	void GenerateSource(kGUIString *cs,unsigned int depth);
+	void GenerateSource(kGUIString *cs,bool embed,unsigned int depth);
 	static kGUIHTMLFormObj *GetForm(kGUIHTMLObj *o);
 	bool GetHover(void) {return m_hover;}
 	void SetActive(bool a) {m_active=a;}
@@ -1911,6 +1911,7 @@ public:
 
 	void PurgeRules(void);
 	void GetCorrectedSource(kGUIString *cs);
+	void GetCorrectedSourceEmbed(kGUIString *cs);
 	void PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe);
 	void PPCountOptions(kGUIHTMLObj *obj,unsigned int *numentries);
 	void PPAddOptions(kGUIHTMLObj *obj,kGUIComboBoxObj *combo,unsigned int *entry);
@@ -2143,6 +2144,9 @@ public:
 	/* get root object to parse the DOM tree */
 	kGUIHTMLObj *GetRootObj(void) {return m_rootobject;}
 
+	unsigned int GetNumMaps(void) {return m_nummaps;}
+	kGUIHTMLMap *GetMap(unsigned int n) {return m_maps.GetEntryPtr(n);}
+
 private:
 	void RightClickEvent(kGUIEvent *event);
 
@@ -2205,6 +2209,7 @@ private:
 	kGUIMenuColObj m_popmenu;
 	void *m_clickobj;
 	int m_clicktag;
+	void *m_singleobj;
 	void SaveAs(kGUIFileReq *req,int closebutton);
 	void AskOverwrite(int closebutton);
 	void DoSaveAs(void);

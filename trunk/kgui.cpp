@@ -458,8 +458,7 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_dirtycorners[0].ty=0;
 	m_dirtycorners[0].rx=fullwidth;
 	m_dirtycorners[0].by=fullheight;
-
-	m_clipindex=0;
+	m_clipindex=1;
 	m_inputidle=true;
 	
 	m_numevents=0;
@@ -934,6 +933,8 @@ void kGUI::ShrinkClipBY(int by)
 void kGUI::ResetClip(void)
 {
 	int w,h;
+
+	assert(m_clipindex>0,"Should never be zero!");
 
 	w=m_currentsurface->GetWidth();
 	h=m_currentsurface->GetHeight();
@@ -1737,6 +1738,14 @@ void kGUI::DrawPixel(int x,int y,kGUIColor c)
 		*(sp)=c;
 }
 
+void kGUI::DrawBox(int x1,int y1,int x2,int y2,kGUIColor c)
+{
+	DrawLine(x1,y1,x2,y1,c);
+	DrawLine(x1,y2-2,x2,y2-1,c);
+	DrawLine(x1,y1,x1+1,y2,c);
+	DrawLine(x2-2,y1,x2-1,y2,c);
+}
+
 bool kGUI::DrawLine(int x1,int y1,int x2,int y2,kGUIColor c)
 {
 	int dx,dy,minx,maxx,miny,maxy;
@@ -1923,6 +1932,48 @@ bool kGUI::OffClip(int lx,int ty,int rx,int by)
 	if(by<=m_clipcorners.ty)
 		return(true);	/* off top */
 	return(false);
+}
+
+/* return true if whole area is inside the clip range */
+
+bool kGUI::InsideClip(int lx,int ty,int rx,int by)
+{
+	if(lx<m_clipcorners.lx || lx>m_clipcorners.rx)
+		return(false);	/* off */
+	if(rx<m_clipcorners.lx || rx>m_clipcorners.rx)
+		return(false);	/* off */
+	if(ty>m_clipcorners.by || ty<m_clipcorners.ty)
+		return(false);	/* off */
+	if(by>m_clipcorners.by || by<m_clipcorners.ty)
+		return(false);	/* off */
+	return(true);
+}
+
+CLIPOUT_DEF kGUI::GetClipOutCode(int x,int y)
+{
+	if(x>m_clipcorners.rx)
+		return(CLIPOUT_RIGHT);	/* off right */
+	if(x<m_clipcorners.lx)
+		return(CLIPOUT_LEFT);	/* off left */
+	if(y>m_clipcorners.by)
+		return(CLIPOUT_BOTTOM);	/* off bottom */
+	if(y<m_clipcorners.ty)
+		return(CLIPOUT_TOP);	/* off top */
+	return(CLIPOUT_ON);
+}
+
+/* use extra radius for edges */
+CLIPOUT_DEF kGUI::GetClipOutCodeR(int x,int y,int r)
+{
+	if(x>(m_clipcorners.rx+r))
+		return(CLIPOUT_RIGHT);	/* off right */
+	if(x<(m_clipcorners.lx-r))
+		return(CLIPOUT_LEFT);	/* off left */
+	if(y>(m_clipcorners.by+r))
+		return(CLIPOUT_BOTTOM);	/* off bottom */
+	if(y<(m_clipcorners.ty-r))
+		return(CLIPOUT_TOP);	/* off top */
+	return(CLIPOUT_ON);
 }
 
 kGUIFontInfo::kGUIFontInfo()

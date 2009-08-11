@@ -38,6 +38,7 @@ COMBOEDIT_NONE
 
 kGUIComboBoxObj::kGUIComboBoxObj()
 {
+	m_showiterators=false;	/* default to no iterators */
 	m_allowtyping=false;	/* default to only pulldown, no typing */
 	m_editmode=COMBOEDIT_NONE;
 	m_hint=0;
@@ -491,14 +492,55 @@ addkey:;
 		if(kGUI::GetMouseClickLeft()==true)
 		{
 click:;
-			/* decide if they clicked on the arrow or on the text area */
-			int cw=kGUI::GetSkin()->GetComboArrowWidth();
+			int bw;
+
+			/* have they clicked on an iterator?? */
+			if(m_showiterators)
+			{
+				bw=kGUI::GetSkin()->GetScrollHorizButtonWidths();
+
+				/* check for left iterator */
+				if(kGUI::GetMouseX()<(c.lx+bw))
+				{
+					if(m_locked==false)
+					{
+						if(m_selection>0)
+						{
+							--m_selection;
+							CallEvent(EVENT_AFTERUPDATE);
+							kGUI::CallAAParents(this);
+						}
+					}
+					/* yes they clicked on the left iterator */
+					return(true);
+				}
+				/* check for right iterator */
+				if(kGUI::GetMouseX()>(c.rx-bw))
+				{
+					/* yes they clicked on the right iterator */
+					if(m_locked==false)
+					{
+						if(m_selection!=(m_numentries-1))
+						{
+							++m_selection;
+							CallEvent(EVENT_AFTERUPDATE);
+							kGUI::CallAAParents(this);
+						}
+					}
+					return(true);
+				}
+
+				c.lx+=bw;
+				c.rx-=bw;
+			}
+
+			bw=kGUI::GetSkin()->GetComboArrowWidth();
 
 			SetCurrent();
 			CallEvent(EVENT_ENTER);
 			m_undoselection=m_selection;
 
-			if((kGUI::GetMouseX()<(c.rx-cw)) && (m_allowtyping==true))
+			if((kGUI::GetMouseX()<(c.rx-bw)) && (m_allowtyping==true))
 			{
 				m_editmode=COMBOEDIT_USERTYPE;
 				assert(m_typedstring==0,"Error typed string already allocated!");
@@ -603,7 +645,17 @@ void kGUIComboBoxObj::Draw(void)
 	/* is there anywhere to draw? */
 	if(kGUI::ValidClip())
 	{
+		if(m_showiterators)
+		{
+			int bw;
+
+			bw=kGUI::GetSkin()->GetScrollHorizButtonWidths();
+			kGUI::GetSkin()->DrawScrollHoriz(&c);
+			c.lx+=bw;
+			c.rx-=bw;
+		}
 		kGUI::DrawRectBevelIn(c.lx,c.ty,c.rx,c.by);
+
 		if(m_locked==true)
 			tc=DrawColor(172,168,153);
 		if(!ImCurrent())
@@ -663,6 +715,7 @@ kGUISharedComboboxObj::kGUISharedComboboxObj()
 
 kGUISharedComboEntries::kGUISharedComboEntries()
 {
+	m_showiterators=false;
 	m_allowtyping=false;		/* default to only pulldown, no typing */
 	m_hint=0;
 	m_colormode=false;
@@ -1083,14 +1136,55 @@ addkey:;
 	else if(m_locked==false && (kGUI::GetMouseClickLeft()==true))
 	{
 click:;
-		/* decide if they clicked on the arrow or on the text area */
-		int cw=kGUI::GetSkin()->GetComboArrowWidth();
+		int bw;
 
+		/* have they clicked on an iterator?? */
+		if(m_shared->GetShowIterators())
+		{
+			bw=kGUI::GetSkin()->GetScrollHorizButtonWidths();
+
+			/* check for left iterator */
+			if(kGUI::GetMouseX()<(c.lx+bw))
+			{
+				if(m_locked==false)
+				{
+					if(m_selection>0)
+					{
+						--m_selection;
+						CallEvent(EVENT_AFTERUPDATE);
+						kGUI::CallAAParents(this);
+					}
+				}
+				/* yes they clicked on the left iterator */
+				return(true);
+			}
+
+			/* check for right iterator */
+			if(kGUI::GetMouseX()>(c.rx-bw))
+			{
+				if(m_locked==false)
+				{
+					/* yes they clicked on the right iterator */
+					if(m_selection!=(m_shared->GetNumEntries()-1))
+					{
+						++m_selection;
+						CallEvent(EVENT_AFTERUPDATE);
+						kGUI::CallAAParents(this);
+					}
+				}
+				return(true);
+			}
+
+			c.lx+=bw;
+			c.rx-=bw;
+		}
+
+		bw=kGUI::GetSkin()->GetComboArrowWidth();
 		SetCurrent();
 		CallEvent(EVENT_ENTER);
 		m_undoselection=m_selection;
 
-		if((kGUI::GetMouseX()<(c.rx-cw)) && (m_shared->GetAllowTyping()==true))
+		if((kGUI::GetMouseX()<(c.rx-bw)) && (m_shared->GetAllowTyping()==true))
 		{
 			m_editmode=COMBOEDIT_USERTYPE;
 			assert(m_typedstring==0,"Error typed string already allocated!");
@@ -1194,6 +1288,15 @@ void kGUISharedComboboxObj::Draw(void)
 	/* is there anywhere to draw? */
 	if(kGUI::ValidClip())
 	{
+		if(m_shared->GetShowIterators())
+		{
+			int bw;
+
+			bw=kGUI::GetSkin()->GetScrollHorizButtonWidths();
+			kGUI::GetSkin()->DrawScrollHoriz(&c);
+			c.lx+=bw;
+			c.rx-=bw;
+		}
 		kGUI::DrawRectBevelIn(c.lx,c.ty,c.rx,c.by);
 		if(m_locked==true)
 			tc=DrawColor(172,168,153);

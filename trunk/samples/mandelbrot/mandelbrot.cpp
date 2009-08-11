@@ -294,8 +294,10 @@ MandelbrotSample *g_mbs=0;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
-	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
+//	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
+//	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
 	kGUI::SetDefFontSize(18);
 	kGUI::SetDefReportFontSize(18);
 	kGUIXMLCODES::Init();
@@ -705,8 +707,11 @@ void MandelbrotSample::DoSaveImage(kGUIFileReq *req,int pressed)
 {
 	if(pressed==MSGBOX_OK)
 	{
+		DataHandle outdh;
+
 		/* save current image */
-		m_image->SaveJPGImage(req->GetFilename(),100);
+		outdh.SetFilename(req->GetFilename());
+		m_image->SaveJPGImage(&outdh,100);
 	}
 }
 
@@ -1234,7 +1239,12 @@ void Save::Event(kGUIEvent *event)
 				v=m_keypoints[m_numkeypoints-1];
 
 				m_frame.Draw(false,v.m_x,v.m_y,v.m_z,m_numcores);
-				m_frame.GetImage()->SaveJPGImage(m_inputname.GetString(),100);
+				{
+					DataHandle outdh;
+
+					outdh.SetFilename(m_inputname.GetString());
+					m_frame.GetImage()->SaveJPGImage(&outdh,100);
+				}
 				Close();
 			}
 		}

@@ -33,8 +33,12 @@
 #define WM_MOUSEWHEEL                   0x020A
 
 /* these are in the users program */
+#ifdef COMMANDLINE
+int AppMain(int argc, char *argv[]);
+#else
 void AppInit(void);
 void AppClose(void);
+#endif
 
 class kGUIPrintJobWin : public kGUIPrintJob
 {
@@ -105,7 +109,6 @@ private:
 	int m_lasttickcount;
 	HWND m_hWnd;
 	WSADATA m_SockData;
-//	HACCEL m_hAccelTable;
 	HINSTANCE m_hInst;								// current instance
 	TCHAR m_szTitle[MAX_LOADSTRING];					// The title bar text
 	TCHAR m_szWindowClass[MAX_LOADSTRING];			// the main window class name
@@ -120,6 +123,22 @@ private:
 
 kGUISystemWin *g_sys;
 
+#ifdef COMMANDLINE
+int main(int argc, char *argv[])
+{
+	int rc;
+
+	g_sys=new kGUISystemWin();
+	kGUI::Init(g_sys,0,0,0,0,100);
+
+	rc=AppMain(argc,argv);
+
+	kGUI::Close();
+	delete g_sys;
+	return(rc);
+}
+
+#else
 //since this must be a static function callback, we just pass it along to the class event handler
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -637,6 +656,7 @@ void kGUISystemWin::Draw(HWND hWnd,int ulx,int urx,int uty,int uby)
 #endif
 	ReleaseDC(hWnd, hDC);
 }
+#endif
 
 /**************************************************************************/
 
@@ -1301,6 +1321,8 @@ void kGUIPrintJobWin::DrawImage(int lx,int rx,int ty,int by)
 		bmpi.bmiHeader.biYPelsPerMeter = 0;
 		bmpi.bmiHeader.biClrUsed = 0;
 		bmpi.bmiHeader.biClrImportant = 0;
+
+		//possible crash if by=height of surface, need to verify if by needs to be moved up 1 line???
 
 		StretchDIBits(m_pdc,
 			dlx,dty,			//upper left destination

@@ -62,6 +62,7 @@ public:
 	CALLBACKGLUE(kGUIDownloadEntry,Download)
 	bool ExtractFromHeader(const char *prefix,kGUIString *s,unsigned int *poffset=0);
 	void SetAllowCookies(bool a) {m_allowcookies=a;}
+	unsigned int GetReadBytes(void) {return m_readbytes;}
 private:
 	void Download(void);	/* calls donecallback when finished */
 	DataHandle *m_dh;
@@ -88,5 +89,6 @@ private:
 	kGUICallBackInt m_donecallback;
 	int m_status;
 	kGUIDownloadAuthenticateRealms *m_ah;
+	unsigned int m_readbytes;
 };
 #endif

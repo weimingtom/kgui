@@ -1457,6 +1457,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 
 	m_tcicache.Init(16,sizeof(kGUIHTMLRuleCache));
 
+	m_numtags=0;
 	m_numblinks=0;
 	m_blinkdelay=BLINKDELAY;
 	m_blinks.Init(32,4);
@@ -6955,6 +6956,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 	/* Parse returns false if this is NOT a html page, so it must be an image or */
 	/* movie or other special object */
 	m_singlemode=false;
+	m_singleobj=0;
 	if(Parse(renderparent,m_fp,m_len,&m_header,false)==false)
 	{
 		/* can this be an image? */
@@ -6972,6 +6974,7 @@ void kGUIHTMLPageObj::Parse(bool doprint)
 			image->SetSize(image->GetImageWidth(),image->GetImageHeight());
 			image->SetEventHandler(this,CALLBACKNAME(RightClickEvent));
 			image->SetAnimate(true);
+			m_singleobj=image;
 
 			newobj=new kGUIHTMLObj(renderparent,this,&m_singleobjtag);
 			newobj->SetOwnerURL(StringToIDcase(&m_url));
@@ -8077,13 +8080,44 @@ POPMENU_OPENLINKTAB
 
 void kGUIHTMLPageObj::RightClickEvent(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_RIGHTCLICK)
+	switch(event->GetEvent())
+	{
+	case EVENT_RIGHTCLICK:
 		RightClick(0,HTMLTAG_SINGLEOBJ);
+	break;
+	case EVENT_LEFTCLICK:
+		if(m_singleobj)
+		{
+			kGUIImageObj *image;
+
+			image=static_cast<kGUIImageObj *>(m_singleobj);
+
+			/* if too big to fit then shrink to fit available screen space */
+			if(image->GetZoneW()>GetZoneW() || image->GetZoneH()>GetZoneH())
+			{
+				image->SetSize(GetZoneW(),GetZoneH());
+				image->ScaleToFit();
+			}
+			else
+			{
+				/* put back to full size */
+				image->SetSize(image->GetImageWidth(),image->GetImageHeight());
+				image->SetScale(1.0f,1.0f);
+			}
+			/* make non-active */
+			if(image==kGUI::GetActiveObj())
+				kGUI::PopActiveObj();
+			SetScrollY(0);
+			RePosition(false);
+		}
+	break;
+	}
 }
 
 void kGUIHTMLPageObj::RightClick(void *obj,int tag)
 {
 	kGUIString name;
+	char *place;
 
 	m_clickobj=obj;
 	m_clicktag=tag;
@@ -8092,6 +8126,13 @@ void kGUIHTMLPageObj::RightClick(void *obj,int tag)
 	{
 	case HTMLTAG_SINGLEOBJ:
 		name.SetString(m_url.GetString()+m_urlroot.GetLen());
+		place=strstr(name.GetString(),"?");
+		if(place)
+		{
+			/* trim filename at the '?' */
+			name.Clip((unsigned int)(place-name.GetString()));
+		}
+
 		kGUI::MakeFilename(&m_savedir,&name,&m_savefn);
 
 		m_popmenu.SetNumEntries(1);
@@ -8491,7 +8532,7 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 			{
 				if(!q)
 				{
-					if(fp[0]=='\"' || fp[0]=='\'')
+					if(incomment==false && (fp[0]=='\"' || fp[0]=='\'') )
 						q=fp[0];
 					else if(incomment==false && fp[0]=='/' && fp[1]=='*')
 						incomment=true;
@@ -8507,7 +8548,10 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 				++fp;
 
 			if(++fp>=htmlend)
+			{
+				m_errors.ASprintf("reached end of page\n");
 				goto done;
+			}
 		}
 
 		if(sfp!=fp)
@@ -8711,44 +8755,58 @@ abortclose:;
 			bool isend=false;
 			const char *efp=0;
 
+			incomment=false;
 			fp+=3;
 			sfp=fp;
 
 			do
 			{
-				if(fp[0]=='-' && fp[1]=='-')
+				if(incomment==false)
 				{
-					isend=!isend;
-					efp=fp;
-					fp+=2;
+					if(fp[0]=='/' && fp[1]=='*')
+					{
+						incomment=true;
+						fp+=2;
+					}
+					else if(fp[0]=='-' && fp[1]=='-')
+					{
+						isend=!isend;
+						efp=fp;
+						fp+=2;
+					}
+					else
+						++fp;
+
+					if(fp>=htmlend)
+					{
+						m_errors.ASprintf("unclosed comment reached end of  page\n");
+						break;
+					}
+
+					if(isend==true &&  fp[0]=='>')
+					{
+						attvalue.SetString(sfp,(int)(efp-sfp));
+						++fp;
+						RemoveComments(&attvalue);
+						tagparent->AppendAttribute(HTMLATT_CONTENT,&attvalue);
+						break;
+					}
 				}
 				else
 				{
-					if(++fp>=htmlend)
-						break;
-				}
-				if(isend==true &&  fp[0]=='>')
-				{
-					attvalue.SetString(sfp,(int)(efp-sfp));
-					++fp;
-					RemoveComments(&attvalue);
-					if(tagparent->m_id==HTMLTAG_STYLE)
+					if(fp[0]=='*' && fp[1]=='/')
 					{
-						kGUIString media;
-						kGUIHTMLAttrib *att;
-
-						att=tagparent->FindAttrib(HTMLATT_MEDIA);
-						if(att)
-						{
-							media.SetString(att->GetValue());
-							media.Replace("\t"," ");
-						}
-						if(ValidMedia(&media))
-							AddClassStyles(OWNER_AUTHOR,GetStylePriority(),&m_url,&attvalue);
+						incomment=false;
+						fp+=2;
 					}
 					else
-						tagparent->AppendAttribute(HTMLATT_CONTENT,&attvalue);
-					break;
+						++fp;
+
+					if(fp>=htmlend)
+					{
+						m_errors.ASprintf("unclosed comment reached end of  page\n");
+						break;
+					}
 				}
 			}while(1);
 			continue;
@@ -8876,7 +8934,8 @@ abortclose:;
 					case HTMLTAG_TR:
 						if(tag->tokenid!=HTMLTAG_TD && tag->tokenid!=HTMLTAG_TH)
 						{
-							m_errors.ASprintf("tag '%s' not allowed inside <tr>\n",name.GetString());
+							m_errors.ASprintf("tag '%s' not allowed inside <tr>, inserting <TD>\n",name.GetString());
+							InsertTag("td");
 						}
 					break;
 					}
@@ -9127,6 +9186,15 @@ ignoretag:;
 							}
 						}
 					}
+					else
+					{
+						/* error: we found an equals with nothing before it */
+						if(fp[0]=='=')
+						{
+							skipeq=true;
+							m_errors.ASprintf("found an '=' with no attribute name\n");
+						}
+					}
 					if(skipeq)
 						++fp;
 
@@ -9195,15 +9263,24 @@ bool kGUIHTMLPageObj::AllWhite(kGUIString *s)
 void kGUIHTMLPageObj::GetCorrectedSource(kGUIString *cs)
 {
 	cs->Clear();
-	m_rootobject->GenerateSource(cs,0);
+	m_rootobject->GenerateSource(cs,false,0);
 }
 
-void kGUIHTMLObj::GenerateSource(kGUIString *cs,unsigned int depth)
+//embed css and images into the page
+void kGUIHTMLPageObj::GetCorrectedSourceEmbed(kGUIString *cs)
+{
+	cs->Clear();
+	m_rootobject->GenerateSource(cs,true,0);
+}
+
+void kGUIHTMLObj::GenerateSource(kGUIString *cs,bool embed,unsigned int depth)
 {
 	unsigned int i;
 	unsigned int j;
 	kGUIHTMLAttrib *att;
 	TAGLIST_DEF *t;
+	bool skip;
+	kGUIString content;
 
 	/* calc sizes of all children by traversing the style tree*/
 
@@ -9253,15 +9330,66 @@ void kGUIHTMLObj::GenerateSource(kGUIString *cs,unsigned int depth)
 					break;
 				++al;
 			}
-			cs->ASprintf(" %s=\"%s\"",al->name,att->GetValue()->GetString());
+			skip=false;
+			if(embed)
+			{
+				if((m_id==HTMLTAG_STYLE || m_id==HTMLTAG_SCRIPT) && al->attid==HTMLATT_CONTENT)
+				{
+					content.Append(att->GetValue());
+					skip=1;
+				}
+				else if(m_id==HTMLTAG_IMG && al->attid==HTMLATT_SRC)
+				{
+					unsigned int j;
+					unsigned int binarylen;
+					unsigned int base64len;
+					DataHandle *dh;
+					unsigned char c;
+					kGUIString bs;
+					Array<unsigned char>binaryimage;
+					Array<unsigned char>base64image;
+
+					//locate the image datahandle
+					dh=m_obj.m_imageobj->GetDataHandle();
+					binarylen=dh->GetLoadableSize();
+					if(binarylen)
+					{
+						/* fill the binary array */
+						dh->Open();
+						binaryimage.Init(binarylen,1);
+						for(j=0;j<binarylen;++j)
+						{
+							dh->Read(&c,(unsigned long)1L);
+							binaryimage.SetEntry(j,c);
+						}
+						dh->Close();
+
+						/* base64 encode the image directly */
+						base64len=kGUI::Base64Encode(binarylen,&binaryimage,&base64image);
+						bs.SetString((const char *)base64image.GetArrayPtr(),base64len);
+
+						cs->ASprintf(" %s=\"data:base64,%s\"",al->name,bs.GetString());
+						skip=true;
+					}
+				}
+				else if(m_id==HTMLTAG_IMG && al->attid==HTMLATT_SRC)
+				{
+					/* todo */
+				}
+			}
+			if(skip==false)
+				cs->ASprintf(" %s=\"%s\"",al->name,att->GetValue()->GetString());
 		}
 		if(t->noclose==true)
 			cs->Append("/");
 		cs->Append(">");
 	}
 
+	if(content.GetLen())
+		cs->ASprintf("%s",content.GetString());
+
 	for(i=0;i<m_numstylechildren;++i)
-		m_stylechildren.GetEntry(i)->GenerateSource(cs,depth+1);
+		m_stylechildren.GetEntry(i)->GenerateSource(cs,embed,depth+1);
 
 	if(t)
 	{
@@ -9434,6 +9562,7 @@ kGUIString *kGUIHTMLObj::GetURL(void)
 	switch(m_id)
 	{
 	case HTMLTAG_A:
+	case HTMLTAG_AREA:
 		if(m_obj.m_linkobj)
 			return(m_obj.m_linkobj->GetURL());
 	break;
@@ -11924,8 +12053,20 @@ dotext:;
 		m_pos->m_curx+=ow;
 		if((m_pos->m_curx+m_pos->m_leftw+m_pos->m_rightw)>m_maxw)
 			m_maxw=m_pos->m_curx+m_pos->m_leftw+m_pos->m_rightw;
-		if(ow>m_minw)
-			m_minw=ow;
+
+//		switch(m_page->m_whitespace)
+//		{
+//		case WHITESPACE_NORMAL:
+//		case WHITESPACE_NOWRAP:
+			if(ow>m_minw)
+				m_minw=ow;
+//		break;
+//		case WHITESPACE_PRE:
+//		case WHITESPACE_PREWRAP:
+//		case HTMLCONST_PRELINE:
+//			m_minw=m_maxw;
+//		break;
+//		}
 
 		if(isbox)
 			PositionBreak();
@@ -13903,16 +14044,20 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 			/* due to cells with rowspan>1 */
 			SetAllowOverlappingChildren(true);
 			/* calc number of rows and columns and min/max size of table*/
-			m_ti->m_box=m_box;
-			m_ti->m_cellspacingh=m_page->m_cellspacingh;
-			m_ti->m_cellspacingv=m_page->m_cellspacingv;
-			m_ti->m_cellpadding=m_page->m_cellpadding;
-			m_ti->CalcMinMax(this,(int)(m_page->m_fontsize*m_page->m_fontscale));
+			if(m_ti)
+			{
+				m_ti->m_box=m_box;
+				m_ti->m_cellspacingh=m_page->m_cellspacingh;
+				m_ti->m_cellspacingv=m_page->m_cellspacingv;
+				m_ti->m_cellpadding=m_page->m_cellpadding;
+				m_ti->CalcMinMax(this,(int)(m_page->m_fontsize*m_page->m_fontscale));
+			}
 		}
 		else
 		{
 			/* position all cells and set sizes */
-			m_ti->PositionCells(this);
+			if(m_ti)
+				m_ti->PositionCells(this);
 		}
 	break;
 	}
@@ -15728,8 +15873,8 @@ issize:				if(gotsize==false)
 		break;
 		case 3:
 			wt=ss.GetWord(0);
-			wr=ss.GetWord(1);
-			wl=wb=ss.GetWord(2);
+			wl=wr=ss.GetWord(1);
+			wb=ss.GetWord(2);
 		break;
 		case 4:
 			wt=ss.GetWord(0);
@@ -17457,10 +17602,12 @@ void kGUIOnlineImageObj::Draw(void)
 			{
 			case HTMLCONST_CIRC:
 			case HTMLCONST_CIRCLE:
+				kGUI::DrawCircleOutline(c.lx+a->GetPointX(0),c.ty+a->GetPointX(1),a->GetPointX(2),1,DrawColor(0,0,0),1.0f);
 				kGUI::DrawCircle(c.lx+a->GetPointX(0),c.ty+a->GetPointX(1),a->GetPointX(2),DrawColor(255,255,255),0.5f);
 			break;
 			case HTMLCONST_RECT:
 			case HTMLCONST_RECTANGLE:
+				kGUI::DrawBox(c.lx+a->GetPointX(0),c.ty+a->GetPointX(1),c.lx+a->GetPointX(2),c.ty+a->GetPointX(3),DrawColor(0,0,0));
 				kGUI::DrawRect(c.lx+a->GetPointX(0),c.ty+a->GetPointX(1),c.lx+a->GetPointX(2),c.ty+a->GetPointX(3),DrawColor(255,255,255),0.5f);
 			break;
 			case HTMLCONST_POLY:
@@ -17478,6 +17625,11 @@ void kGUIOnlineImageObj::Draw(void)
 					p->y+=c.ty;
 					++p;
 				}
+
+				p=a->GetArrayPtr();
+				for(j=0;j<(k-1);++j)
+					kGUI::DrawLine(p[j].x,p[j].y,p[j+1].x,p[j+1].y,DrawColor(0,0,0));
+				kGUI::DrawLine(p[0].x,p[0].y,p[k-1].x,p[k-1].y,DrawColor(0,0,0));
 
 				kGUI::DrawPoly(k,a->GetArrayPtr(),DrawColor(255,255,255),0.5f);
 

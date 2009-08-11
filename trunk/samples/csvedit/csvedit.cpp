@@ -119,8 +119,8 @@ CSVEditSample *g_csv;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui for regulsr */
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui for bold */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
 	kGUI::SetDefFontSize(15);
 	kGUI::SetDefReportFontSize(20);
 

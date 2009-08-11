@@ -30,6 +30,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
+#include FT_SYNTHESIS_H
 
 #define MAXQUICKSIZE 24
 
@@ -41,7 +42,7 @@ class kGUIFace
 	friend class kGUIText;
 public:
 	~kGUIFace();
-	int LoadFont(const char *filename);
+	int LoadFont(const char *filename,bool bold=false);
 	void Purge(void);
 	inline const FT_Face GetFace(void) {return m_ftface;}
 	inline FT_Face *GetFacePtr(void) {return &m_ftface;}
@@ -53,6 +54,7 @@ public:
 	unsigned char *m_memfile;
 	const char *GetName(void) {return m_name.GetString();}
 	void CalcHeight(unsigned int size);
+	bool GetBold(void) {return m_bold;}
 private:
 	FT_Face m_ftface;
 	kGUIString m_name;
@@ -61,6 +63,7 @@ private:
 	unsigned int m_quickwidths[MAXQUICKSIZE][MAXCCACHE];
 	int *m_quickcache[MAXQUICKSIZE][MAXCCACHE];
 	bool m_haskerning:1;
+	bool m_bold:1;
 };
 
 class kGUIFontFileInfo

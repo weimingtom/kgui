@@ -73,7 +73,8 @@ GammaSample *g_GammaSample;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
 	kGUI::SetDefFontSize(11);
 	kGUI::SetDefReportFontSize(11);
 

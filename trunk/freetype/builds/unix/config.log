@@ -45,6 +45,8 @@ PATH: /c/WINDOWS
 PATH: /c/WINDOWS/System32/Wbem
 PATH: /c/Program Files/Subversion/bin
 PATH: /c/Program Files/QuickTime/QTSystem/
+PATH: /c/Program Files/Raisonance/Ride/Bin
+PATH: /c/Program Files/Raisonance/Ride/arm-gcc/bin
 PATH: .
 
 

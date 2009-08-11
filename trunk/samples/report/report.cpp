@@ -216,7 +216,8 @@ ReportSample *g_eventsample;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui as bold*/
 	kGUI::SetDefFontSize(15);
 	kGUI::SetDefReportFontSize(20);
 

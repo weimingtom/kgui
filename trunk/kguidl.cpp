@@ -90,6 +90,7 @@ kGUIDownloadEntry::kGUIDownloadEntry()
 	m_status=DOWNLOAD_ERROR;
 	m_abort=false;
 	m_asyncactive=false;
+	m_readbytes=0;
 }
 
 kGUIDownloadEntry::~kGUIDownloadEntry()
@@ -286,6 +287,7 @@ void kGUIDownloadEntry::Download(void)
 	referer.SetString(&m_referer);
 	ifmod.SetString(&m_ifmod);
 
+	m_readbytes=0;
 	m_secure=false;
 	m_newurl.Clear();
 	m_header.Clear();
@@ -577,6 +579,7 @@ again:;
 
 	/* header string is the loaded header and data */
 	got.Clear();
+	m_readbytes=0;
 	do
 	{
 		if(mode==MODE_HTTPS)
@@ -600,6 +603,7 @@ again:;
 #endif
 		}
 		got.Append(filedata,b);
+		m_readbytes+=b;
 	}while(1);
 	//printf("got='%s'\n",got.GetString());
 

@@ -167,6 +167,7 @@ void kGUIReportAreaObj::Draw(int pagenum)
 	kGUIReportObj *robj;
 	kGUICorners c;
 	kGUIDrawSurface *surface=kGUI::GetCurrentSurface();
+	kGUICorners cc;
 
 	/* if draw offsets are in place, then shrink the right and bottom edges */
 	/* to stop from drawing off of the surface */
@@ -183,7 +184,18 @@ void kGUIReportAreaObj::Draw(int pagenum)
 		if(robj->GetEnabled()==true)
 		{
 			if((robj->GetPage()==0) || (robj->GetPage()==pagenum))
-				robj->Draw();
+			{
+				if(robj->GetClip(&cc))
+				{
+					kGUI::PushClip();
+					kGUI::ShrinkClip(&cc);
+					if(kGUI::ValidClip())
+						robj->Draw();
+					kGUI::PopClip();
+				}
+				else
+					robj->Draw();
+			}
 		}
 	}
 	kGUI::PopClip();

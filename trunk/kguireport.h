@@ -8,7 +8,7 @@
 class kGUIReportObj: public kGUIZone
 {
 public:
-	kGUIReportObj() {m_enabled=true;m_page=0;}
+	kGUIReportObj() {m_enabled=true;m_clip=false;m_page=0;}
 	virtual ~kGUIReportObj() {};
 	virtual void Draw(void)=0;
 	inline void SetEnabled(bool e) {m_enabled=e;}
@@ -18,11 +18,19 @@ public:
 	inline const char *GetName(void) {return m_name.GetString();}
 	inline void SetPage(int p) {m_page=p;}
 	inline int GetPage(void) {return m_page;}
+	inline bool GetClip(kGUICorners *cc) {if(m_clip){cc->lx=m_cliplx;cc->rx=m_cliprx;cc->ty=m_clipty;cc->by=m_clipby;}return m_clip;}
+	inline void ClearClip(void) {m_clip=false;}
+	inline void SetClip(int lx,int ty,int rx,int by) {m_clip=true;m_cliplx=lx;m_cliprx=rx;m_clipty=ty;m_clipby=by;}
 
 private:
 	bool m_enabled:1;
+	bool m_clip:1;
 	unsigned int m_page:16;
 	kGUIString m_name;
+	int m_cliplx;
+	int m_cliprx;
+	int m_clipty;
+	int m_clipby;
 };
 
 /*! this is the tickbox report object

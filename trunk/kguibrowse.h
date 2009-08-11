@@ -127,12 +127,12 @@ enum
 {
 SAVEMODE_NO,
 SAVEMODE_YES,
-SAVEMODE_ASK};
+SAVEMODE_YESMORE1};
 
 class kGUIBrowseSettings : public kGUIHTMLSettings
 {
 public:
-	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("screen");m_printmedia.SetString("print");m_savemode=SAVEMODE_ASK;m_numtabs=0;m_tabs.Init(4,4);m_saveask=false;}
+	kGUIBrowseSettings() {m_visitedcache=0;m_itemcache=0;m_visiteddays=30;m_cachemode=CACHEMODE_SAVE;m_cachesize=50;m_numbookmarks=0;m_bookmarks.Init(64,32);m_screenmedia.SetString("screen");m_printmedia.SetString("print");m_savemode=SAVEMODE_YESMORE1;m_numtabs=0;m_tabs.Init(4,4);}
 	void SetVisitedCache(kGUIHTMLVisitedCache *visitedcache) {m_visitedcache=visitedcache;}
 	kGUIHTMLVisitedCache *GetVisitedCache(void) {return m_visitedcache;}
 	void SetItemCache(kGUIHTMLItemCache *itemcache) {m_itemcache=itemcache;}
@@ -180,7 +180,6 @@ private:
 	kGUIString m_printmedia;
 	ClassArray<kGUIBookmark>m_bookmarks;
 	unsigned int m_numtabs;
-	bool m_saveask;
 	ClassArray<kGUIString>m_tabs;
 };
 
@@ -302,6 +301,13 @@ public:
 	void NewTab(void);
 	void SettingsChanged(void) {m_settingschangedcallback.Call();}
 private:
+	void SaveAs(kGUIFileReq *req,int closebutton);
+	void AskOverwrite(int closebutton);
+	void DoSaveAs(void);
+
+	CALLBACKGLUEPTRVAL(kGUIBrowseObj,SaveAs,kGUIFileReq,int)
+	CALLBACKGLUEVAL(kGUIBrowseObj,AskOverwrite,int)
+
 	CALLBACKGLUEPTR(kGUIBrowseObj,UrlChanged,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,SearchChanged,kGUIEvent);
 	CALLBACKGLUEPTR(kGUIBrowseObj,Refresh,kGUIEvent);
@@ -316,6 +322,7 @@ private:
 	CALLBACKGLUEPTR(kGUIBrowseObj,TabChanged,kGUIEvent);
 	CALLBACKGLUE(kGUIBrowseObj,Update);
 	void UpdateButtons(void);
+	void UpdateButtons2(void);
 	void CloseTab(void);
 	void InitTabRecord(TabRecord *tr);
 	void Goto(unsigned int tabnum);
@@ -396,7 +403,7 @@ private:
 
 	kGUIInputBoxObj m_debug;
 
-	unsigned int m_numdlactive;
+	volatile unsigned int m_numdlactive;
 	Array<DownloadPageRecord *>m_dlactive;
 
 	kGUIDownloadAuthenticateRealms m_ah;
@@ -409,6 +416,7 @@ private:
 	int m_pid;
 	bool m_iconvalid;
 	DataHandle m_icon;
+	kGUIString m_savefn;
 };
 
 /*! @internal @class AuthenticateWindow 
