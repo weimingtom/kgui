@@ -275,6 +275,78 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIDPoint2 *point
 	if(nvert<2)
 		return;
 
+	{
+		double minx,maxx,miny,maxy;
+		CLIPOUT_DEF out1,out2;
+		int ir=(int)(radius+1);
+
+		/* check for totally off screen */
+		p1=point;
+		minx=maxx=p1->x;
+		miny=maxy=p1->y;
+		++p1;
+		for(i=1;i<nvert;++i)
+		{
+			if(p1->x<minx)
+				minx=p1->x;
+			if(p1->x>maxx)
+				maxx=p1->x;
+			if(p1->y<miny)
+				miny=p1->y;
+			if(p1->y>maxy)
+				maxy=p1->y;
+			++p1;
+		}
+		if(OffClip((int)minx-ir,(int)miny-ir,(int)maxx+ir,(int)maxy+ir)==true)
+			return;
+
+		/* check for off-screen points at beginning */
+		do{
+			/* get outcode for the first point */
+			p1=point;
+			out1=GetClipOutCodeR((int)p1->x,(int)p1->y,ir);
+			if(out1==CLIPOUT_ON)
+				break;
+			/* get outcode for the 2nd point */
+			p2=point+1;
+			out2=GetClipOutCodeR((int)p2->x,(int)p2->y,ir);
+			
+			if(out1&out2)
+			{
+				/* both points are off screen, so remove the first point */
+				ce&=~1;
+				++point;
+				--nvert;
+				if(nvert<2)
+					return;
+			}
+			else
+				break;
+		}while(1);
+
+		do{
+			/* get outcode for the last point */
+			p1=point+(nvert-1);
+			out1=GetClipOutCodeR((int)p1->x,(int)p1->y,ir);
+			if(out1==CLIPOUT_ON)
+				break;
+			/* get outcode for the 2nd to last point */
+			p2=point+(nvert-2);
+			out2=GetClipOutCodeR((int)p2->x,(int)p2->y,ir);
+			
+			if(out1&out2)
+			{
+				/* both points are off screen, so remove the last point */
+				ce&=~2;
+				--nvert;
+				if(nvert<2)
+					return;
+			}
+			else
+				break;
+		}while(1);
+	}
+
 	/* last point */
 	numinsidepoints=nvert-2;
 	p1=point;

@@ -249,5 +249,5 @@ void kGUIMovieObj::CalcChildZone(void)
 
 	/* allocate output image area */
 	m_image.SetMemImageCopy(0,GUISHAPE_SURFACE,m_image.GetZoneW(),m_image.GetZoneH(),4,0);
-	SetOutputImage(&m_image);
+	SetOutputImage(&m_image,GetQuality());
 }

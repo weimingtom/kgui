@@ -72,6 +72,7 @@ public:
 	static int kg_close(URLContext *h);
     static int kg_read_pause(URLContext *h, int pause);
     static int64_t kg_read_seek(URLContext *h,int stream_index, int64_t timestamp, int flags);
+	static int kg_get_file_handle(URLContext *h);
 
 	static URLProtocol kg_protocol;
 
@@ -81,7 +82,7 @@ public:
 	AVCodecContext *m_pACodecCtx;	/* audio codec context or null if movie has no audio */
 	AVCodec *m_pVCodec;				/* video codec */
 	AVCodec *m_pACodec;				/* audio codec */
-	AVFrame *m_pFrame; 
+	AVFrame *m_pFrame[NUMBUFRAMES];
 	struct SwsContext *m_img_convert_ctx;
 	AVPacket m_packet;
 };
@@ -157,6 +158,10 @@ int64_t kGUIMovieLocal::kg_read_seek(URLContext *h,int stream_index, int64_t tim
 	return(-1);
 }
 
+int kGUIMovieLocal::kg_get_file_handle(URLContext *h)
+{
+	return(-1);
+}
 
 /* this is the list of functions to call when a filename using ffmpeg */
 /* starts with the prefix listed, IE: a file "kg:fred.mpg" will use these */
@@ -171,7 +176,8 @@ URLProtocol kGUIMovieLocal::kg_protocol = {
     kGUIMovieLocal::kg_close,
 	0,	/* next */
     kGUIMovieLocal::kg_read_pause,
-    kGUIMovieLocal::kg_read_seek
+    kGUIMovieLocal::kg_read_seek,
+	kGUIMovieLocal::kg_get_file_handle
 };
 
 bool kGUIMovie::m_initglobals=false;
@@ -198,23 +204,31 @@ union ptoi_def
 
 kGUIMovie::kGUIMovie()
 {
+	unsigned int i;
 	unsigned int alignoff;
 	ptoi_def ptoi;
 
 	m_local=new kGUIMovieLocal();
 	m_width=0;
 	m_height=0;
+	m_loop=false;
 
 	m_isvalid=false;
 	m_playing=false;
 	m_image=0;
+	m_quality=MOVIEQUALITY_LOW;
 	m_playaudio=true;
-	m_local->m_pFrame=0;
+
+	m_numframesready=0;
+	m_frameheadindex=0;
+	m_frametailindex=0;
+	for(i=0;i<NUMBUFRAMES;++i)
+		m_local->m_pFrame[i]=0;
+
 	m_local->m_img_convert_ctx=0;
 	m_local->m_pVCodecCtx=0;
 	m_local->m_pACodecCtx=0;
 	m_local->m_pFormatCtx=0;
-	m_frameready=0;
 	m_time=0;
 	m_ptime=0;
 	m_audiomanager.Init();
@@ -254,10 +268,13 @@ void kGUIMovie::OpenMovie(void)
 //	if(!strcmp("004.wmv",GetFilename()))
 //		kGUI::Trace("Loading bad movie?\n");
 
-	m_videoclock=0.0f;
+	m_rawtime=0;
 	m_time=0;
 	m_ptime=0;
-	m_frameready=false;
+
+	m_numframesready=0;
+	m_frameheadindex=0;
+	m_frametailindex=0;
 	m_local->m_packet.size=0;
 
 	/* filename is actually a pointer to a datahandle */
@@ -346,13 +363,14 @@ void kGUIMovie::OpenMovie(void)
 	}
 
 	// Allocate video frame
-	m_local->m_pFrame=avcodec_alloc_frame();
+	for(i=0;i<NUMBUFRAMES;++i)
+		m_local->m_pFrame[i]=avcodec_alloc_frame();
 
 	m_width=m_local->m_pVCodecCtx->width;
 	m_height=m_local->m_pVCodecCtx->height;
 	m_format=m_local->m_pVCodecCtx->pix_fmt;
 
-	if(m_local->m_pFormatCtx->start_time!=(int)AV_NOPTS_VALUE)
+	if(m_local->m_pFormatCtx->start_time!=(long long)AV_NOPTS_VALUE)
 		m_starttime=(int)(((double)m_local->m_pFormatCtx->start_time/1000000.0f)*TICKSPERSEC);
 	else
 		m_starttime=0;
@@ -362,7 +380,7 @@ void kGUIMovie::OpenMovie(void)
 
 	/* since the sourcec image size changed we need to re-do this! */
 	if(m_image)
-		SetOutputImage(m_image);
+		SetOutputImage(m_image,m_quality);
 }
 
 #if 1
@@ -373,8 +391,14 @@ void kGUIMovie::OpenMovie(void)
 #define OUTBPP 3
 #endif
 
-void kGUIMovie::SetOutputImage(kGUIImage *image)
+/* better quality = runs slower */
+void kGUIMovie::SetOutputImage(kGUIImage *image,unsigned int quality)
 {
+	unsigned int qtable[]={
+		SWS_POINT,SWS_FAST_BILINEAR,SWS_BILINEAR,SWS_BICUBLIN,SWS_BICUBIC,SWS_SPLINE,SWS_SINC};
+
+	assert(quality<(sizeof(qtable)/sizeof(unsigned int)),"Quality value out of range!\n");
+	m_quality=quality;
 	m_image=image;
 	if(!image)
 		return;
@@ -390,91 +414,78 @@ void kGUIMovie::SetOutputImage(kGUIImage *image)
 	m_local->m_img_convert_ctx = sws_getContext(
 			m_width, m_height, (PixelFormat)m_format, 
             m_outwidth, m_outheight, OUTFORMAT,
-			SWS_BICUBIC, NULL, NULL, NULL);
+			qtable[quality], NULL, NULL, NULL);
 }
 
-bool kGUIMovie::LoadNextFrame(void)
+void kGUIMovie::UpdateBuffers(bool fill)
 {
-	int frameFinished=0;
-	bool gotpts=false;
-	double frame_delay;
-	bool again,gotframe=false;
+	int frameFinished;
+//	double frame_delay;
 	int alen;
-
-	assert(m_image!=0,"Output Image not defined!");
-
-	if(m_frameready==true)
-	{
-		/* show last loaded frame */
-		ShowFrame();
-		again=false;
-	}
-	else
-	{
-		/* if no pending frame then clear the image to all black */
-		memset(m_image->GetImageDataPtr(0),0, m_outheight*m_outwidth*OUTBPP);
-		again=true;
-	}
 
 	do
 	{
+		if(fill==true)
+		{
+			if(m_numframesready==NUMBUFRAMES)
+				return;
+		}
+		else
+		{
+			if(m_numframesready)
+				return;
+		}
+
 		if(m_local->m_packet.size==0)
 		{
 			if(av_read_frame(m_local->m_pFormatCtx, &m_local->m_packet)<0)
-				return(false);
+				return;
 		}
 
 		// Is this a packet from the video stream?
 		if(m_local->m_packet.stream_index==m_videoStream)
 		{
-			/* if we already got a frame, then return now and process this packet */
-			/* first in the next update */
-
-			if(gotframe)
-				return(true);
-
 			// Decode video frame
-			if(gotpts==false)
-			{
-				gotpts=true;		//only grab the pts from the first video packet 
-			    /* update the video clock */
-				if(m_local->m_packet.pts && m_local->m_packet.pts!=(int)AV_NOPTS_VALUE)
-					m_videoclock=(double)m_local->m_packet.pts*m_vstreamtimebase;
-				else if(m_local->m_packet.dts && m_local->m_packet.dts!=(int)AV_NOPTS_VALUE)
-					m_videoclock=(double)m_local->m_packet.dts*m_vstreamtimebase;
-
-				/* if we are repeating a frame, adjust clock accordingly */
-				frame_delay = m_vcodectimebase;
-				if(m_local->m_pFrame->repeat_pict)
-					frame_delay += m_local->m_pFrame->repeat_pict * (frame_delay * 0.5);
-				m_videoclock += frame_delay;
-				m_ptime=(int)(m_videoclock*TICKSPERSEC)-m_starttime;
-				//kGUI::Trace("ptime=%d\n",m_ptime);
-			}
-			alen=avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame, &frameFinished, 
+			frameFinished=0;
+			alen=avcodec_decode_video(m_local->m_pVCodecCtx, m_local->m_pFrame[m_frameheadindex], &frameFinished, 
 			   m_local->m_packet.data, m_local->m_packet.size);
-      
+
 			//did an error occur??
 			if(alen<0)
 			{
 				av_free_packet(&m_local->m_packet);
 				m_local->m_packet.size=0;
-				return(false);
+				return;
 			}
 
-			// Did we get a video frame?
-			if(frameFinished)
+			if(frameFinished>0)
 			{
+				static const AVRational VIDEO_TIMEBASE = {1, TICKSPERSEC};
+				long long vc;
+
+			    /* update the video clock */
+				if(m_local->m_packet.pts && m_local->m_packet.pts!=(long long)AV_NOPTS_VALUE)
+					m_rawtime = m_local->m_packet.pts;
+				else if(m_local->m_packet.dts && m_local->m_packet.dts!=(long long)AV_NOPTS_VALUE)
+					m_rawtime=m_local->m_packet.dts;
+
+				vc = av_rescale_q(m_rawtime, m_local->m_pFormatCtx->streams[m_videoStream]->time_base, VIDEO_TIMEBASE);
+				m_rawtime+=m_local->m_packet.duration;
+
+				m_ptimes[m_frameheadindex]=(int)(vc-m_starttime);
+
 				/* frame is loaded and ready to be presented when it is time */
-				m_frameready=true;
+				if(++m_frameheadindex==NUMBUFRAMES)
+					m_frameheadindex=0;
+				++m_numframesready;
 
 				av_free_packet(&m_local->m_packet);
 				m_local->m_packet.size=0;
-				
-				/* if there was no pending frame to show then get the time for the next one now. */
-				if(again)
-					return(LoadNextFrame());
-				gotframe=true;
+			}
+			else
+			{
+				av_free_packet(&m_local->m_packet);
+				m_local->m_packet.size=0;
 			}
 		}
 		else if((m_local->m_packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
@@ -493,7 +504,7 @@ bool kGUIMovie::LoadNextFrame(void)
 				{
 					av_free_packet(&m_local->m_packet);
 					m_local->m_packet.size=0;
-					return(false);	/* error */
+					return;	/* error */
 				}
 
 				len-=alen;
@@ -503,45 +514,65 @@ bool kGUIMovie::LoadNextFrame(void)
 				if(frameFinished>=0)
 				{
 					/* play audio packet */
-					m_audio->Play(m_local->m_pACodecCtx->sample_rate,m_local->m_pACodecCtx->channels,(const unsigned char *)m_abalign,frameFinished,true);
+					m_audio->Play(m_local->m_pACodecCtx->sample_rate,m_local->m_pACodecCtx->channels,(const unsigned char *)m_abalign,frameFinished*2,true);
 				}
 			}
+			av_free_packet(&m_local->m_packet);
+			m_local->m_packet.size=0;
 		}
-		av_free_packet(&m_local->m_packet);
-		m_local->m_packet.size=0;
+		else
+		{
+			av_free_packet(&m_local->m_packet);
+			m_local->m_packet.size=0;
+		}
 	}while(1);
-	return(false);
 }
 
-void kGUIMovie::ShowFrame(void)
+bool kGUIMovie::ShowFrame(void)
 {
-	/* copy the frame to the image */ 
+	unsigned char *data[4];
+	int linesize[4];
+
+	if(m_numframesready==0)
 	{
-		unsigned char *data[4];
-		int linesize[4];
-
-		data[0]=m_image->GetImageDataPtr(0);
-		data[1]=data[0]+1;
-		data[2]=data[0]+2;
-		data[3]=data[0]+3;
-		linesize[0]=linesize[1]=linesize[2]=linesize[3]=m_image->GetImageWidth()*4;
-
-		//scale directly to the image buffer
-		sws_scale(m_local->m_img_convert_ctx, m_local->m_pFrame->data, 
-			m_local->m_pFrame->linesize, 0,m_height, 
-			data, linesize);
+		/* if no pending frame then clear the image to all black */
+		memset(m_image->GetImageDataPtr(0),0, m_outheight*m_outwidth*OUTBPP);
+		return(false);
 	}
-	m_frameready=false;
+
+	/* copy the frame to the image */ 
+	data[0]=m_image->GetImageDataPtr(0);
+	data[1]=data[0]+1;
+	data[2]=data[0]+2;
+	data[3]=data[0]+3;
+	linesize[0]=linesize[1]=linesize[2]=linesize[3]=m_image->GetImageWidth()*4;
+
+	//scale directly to the image buffer
+	sws_scale(m_local->m_img_convert_ctx, m_local->m_pFrame[m_frametailindex]->data, 
+			m_local->m_pFrame[m_frametailindex]->linesize, 0,m_height, 
+			data, linesize);
+
+	m_ptime=m_ptimes[m_frametailindex];
+	if(++m_frametailindex==NUMBUFRAMES)
+		m_frametailindex=0;
+	--m_numframesready;
 	m_image->ImageChanged();
+
+	return(true);
 }
 
 void kGUIMovie::Event(void)
 {
 	/* is event is triggered when a movie is playing */
 	m_time+=kGUI::GetET();
+
+	UpdateBuffers(true);
+
 	while(m_time>=m_ptime)
 	{
-		if(LoadNextFrame()==false)
+		assert(m_image!=0,"Output Image not defined!");
+
+		if(ShowFrame()==false)
 		{
 			if(m_loop==true)
 				Seek(0);	/* start again */
@@ -565,7 +596,11 @@ void kGUIMovie::SetPlaying(bool p)
 	m_done=false;
 	m_playing=p;
 	if(!m_playing)
+	{
 		kGUI::DelEvent(this,CALLBACKNAME(Event));
+		/* stop audio too */
+		m_audio->Stop();
+	}
 	else
 		kGUI::AddEvent(this,CALLBACKNAME(Event));
 }
@@ -578,6 +613,8 @@ void kGUIMovie::Seek(int place)
 	timestamp=(long long)(place*(1000000LL/TICKSPERSEC));
 	if(place<m_time)
 	{
+		m_audio->Stop();
+
 		//backwards just means go back to the last keyframe ( I think )
 		av_seek_frame(m_local->m_pFormatCtx,-1,timestamp, AVSEEK_FLAG_BACKWARD);
 
@@ -586,11 +623,17 @@ void kGUIMovie::Seek(int place)
 		if(m_local->m_pACodecCtx)
 			avcodec_flush_buffers(m_local->m_pACodecCtx);
 	
-		/* flush last frame if there was one */
+		/* flush any pending frames */
+		m_numframesready=0;
+		m_frameheadindex=0;
+		m_frametailindex=0;
+
 		m_done=false;
-		m_frameready=false;
 		m_time=place;
 		m_ptime=place;
+		m_rawtime=place;	/* not correct */
+
+		m_local->m_packet.size=0;
 
 		/* since no frame is ready it will get and display the frame and que up the next one too */
 		LoadNextFrame();
@@ -602,12 +645,12 @@ void kGUIMovie::Seek(int place)
 		if(LoadNextFrame()==false)
 			break;	/* end of movie, abort */
 	}
-//	m_ptime=place;
 	m_time=place;
 }
 
 void kGUIMovie::CloseMovie(void)
 {
+	unsigned int i;
 	m_isvalid=false;
 
 	SetPlaying(false);
@@ -627,10 +670,13 @@ void kGUIMovie::CloseMovie(void)
 	}
 
 	// Free the YUV frame
-	if(m_local->m_pFrame)
+	for(i=0;i<NUMBUFRAMES;++i)
 	{
-		av_free(m_local->m_pFrame);
-		m_local->m_pFrame=0;
+		if(m_local->m_pFrame[i])
+		{
+			av_free(m_local->m_pFrame[i]);
+			m_local->m_pFrame[i]=0;
+		}
 	}
 
 	if(m_local->m_img_convert_ctx)

@@ -163,6 +163,7 @@ void HistoryRecord::Set(const char *url,const char *post,const char *referer,con
 enum
 {
 MAINMENU_NEWTAB,
+MAINMENU_SAVEPAGE,
 MAINMENU_VIEWPAGESOURCE,
 MAINMENU_VIEWCORRECTEDPAGESOURCE,
 MAINMENU_VIEWPOSTDATA,
@@ -187,6 +188,7 @@ BOOKMARK_BOOKMARKS
 
 static const char *mainmenutxt[]={
 	"New Tab",
+	"Save Page As",
 	"View Page Source",
 	"View Corrected Page Source",
 	"View Post Data",
@@ -323,7 +325,6 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_menu.Init(MAINMENU_NUM,mainmenutxt);
 
 	m_bookmarksmenu.SetFontSize(16);
-//	m_bookmarksmenu.SetEventHandler(this,CALLBACKNAME(DoBookmarks));
 
 	m_gomenu.SetFontSize(14);
 	m_gomenu.SetEventHandler(this,CALLBACKNAME(DoGotoMenu));
@@ -334,11 +335,10 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_backcaption.SetString("Back");
 
 	m_back.SetPos(0,15);
-	m_back.SetHint("Zoom In on the map.");
+	m_back.SetHint("Go back to previous page.");	//todo add to translated text
 	m_back.SetImage(&m_backimage);
 	m_back.SetSize(m_backimage.GetImageWidth()+6,m_backimage.GetImageHeight()+6);
 	m_back.SetEventHandler(this,CALLBACKNAME(GoBack));
-//	m_back.SetRightClicked(this,CALLBACKNAME(GoBackMenu));
 	m_browsecontrols.AddObjects(2,&m_backcaption,&m_back);
 
 	m_forwardcaption.SetPos(0,0);
@@ -347,7 +347,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_forwardcaption.SetString("Forward");
 
 	m_forward.SetPos(0,15);
-	m_forward.SetHint("Zoom Out on the map.");
+	m_forward.SetHint("Go forward to next page.");	//todo add to translated text
 	m_forward.SetImage(&m_forwardimage);
 	m_forward.SetSize(m_forwardimage.GetImageWidth()+6,m_forwardimage.GetImageHeight()+6);
 	m_forward.SetEventHandler(this,CALLBACKNAME(GoForward));
@@ -565,6 +565,7 @@ void kGUIBrowseObj::NewTab(void)
 {
 	unsigned int i;
 	int curtab=m_tabs.GetCurrentTab();
+	const char *sdir;
 
 	/* save prev URL string, set new URL string */
 	m_tabrecords.GetEntryPtr(curtab)->m_urlstring.SetString(&m_url);
@@ -579,7 +580,11 @@ void kGUIBrowseObj::NewTab(void)
 	m_tabs.SetNumTabs(m_numtabs);
 	m_tabs.SetTabName(m_numtabs-1,"(Untitled)");
 
+	sdir=GetSaveDirectory();
 	m_curscreenpage=m_tabrecords.GetEntryPtr(m_numtabs-1)->GetScreenPage();
+
+	//set default save directory to the one from the previous current tab
+	m_curscreenpage->SetSaveDirectory(sdir);
 	InitTabRecord(m_tabrecords.GetEntryPtr(m_numtabs-1));
 
 	/* when we change the number of tabs, the tab code re-inits the child object in each tab */
@@ -665,6 +670,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		kGUIImageObj *icon;
 		HistoryRecord *hist=GetCurHist();
 
+		m_menu.SetEntryEnable(MAINMENU_SAVEPAGE,hist!=0);
 		m_menu.SetEntryEnable(MAINMENU_VIEWPAGESOURCE,hist!=0);
 		m_menu.SetEntryEnable(MAINMENU_VIEWCORRECTEDPAGESOURCE,hist!=0);
 		m_menu.SetEntryEnable(MAINMENU_VIEWPOSTDATA,hist!=0);
@@ -704,6 +710,42 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 		{
 		case MAINMENU_NEWTAB:
 			NewTab();
+		break;
+		case MAINMENU_SAVEPAGE:
+		{
+			HistoryRecord *hist=GetCurHist();
+			kGUIFileReq *req;
+			kGUIString base;
+			kGUIString root;
+			kGUIString name;
+			kGUIString savedir;
+			char *place;
+
+			assert(hist!=0,"Error, Menu should not have allowed this!");
+
+			/* isolate the name from the end of the URL */	
+			name.SetString(hist->GetURL());
+			place=strstr(name.GetString(),"?");
+			if(place)
+			{
+				/* trim filename at the '?' */
+				name.Clip((unsigned int)(place-name.GetString()));
+			}
+
+			kGUI::ExtractURL(&name,&base,&root);
+			if(root.GetLen())
+			{
+				if(root.GetLen()<name.GetLen())
+					name.Delete(0,root.GetLen());
+				else
+					name.SetString("page.html");
+			}
+
+			savedir.SetString(GetSaveDirectory());
+			kGUI::MakeFilename(&savedir,&name,&m_savefn);
+
+			req=new kGUIFileReq(FILEREQ_SAVE,m_savefn.GetString(),0,this,CALLBACKNAME(SaveAs));
+		}
 		break;
 		case MAINMENU_VIEWPAGESOURCE:
 		{
@@ -914,9 +956,73 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 	}
 }
 
+void kGUIBrowseObj::SaveAs(kGUIFileReq *req,int closebutton)
+{
+	if(closebutton==MSGBOX_OK)
+	{
+		m_savefn.SetString(req->GetFilename());
+		if(kGUI::FileExists(m_savefn.GetString())==true)
+		{
+			/* replace, are you sure? */
+			kGUIMsgBoxReq *box;
+			box=new kGUIMsgBoxReq(MSGBOX_YES|MSGBOX_NO,this,CALLBACKNAME(AskOverwrite),true,"File '%s' Exists, Overwrite?!",m_savefn.GetString());
+		}
+		else
+			DoSaveAs();
+	}
+}
+
+void kGUIBrowseObj::AskOverwrite(int closebutton)
+{
+	if(closebutton==MSGBOX_YES)
+		DoSaveAs();
+}
+
+void kGUIBrowseObj::DoSaveAs(void)
+{
+	DataHandle dh;
+	kGUIString correctedsource;
+
+	m_curscreenpage->GetCorrectedSourceEmbed(&correctedsource);
+
+	dh.SetFilename(m_savefn.GetString());
+	dh.OpenWrite("wb");
+	dh.Write(correctedsource.GetString(),correctedsource.GetLen());
+	dh.Close();
+}
+
 kGUIBrowseObj::~kGUIBrowseObj()
 {
-	/* todo: wait for all pending downloads to finish */
+	unsigned int i;
+	DownloadPageRecord *dle;
+
+	/* set abort flag for all remaining downloads */
+	for(i=0;i<m_numdlactive;++i)
+	{
+		dle=m_dlactive.GetEntry(i);
+		dle->m_dl.Abort();
+	}
+
+	/* wait for all remaining downloads to abort */
+	while(m_numdlactive)
+	{
+		i=0;
+		while(i<m_numdlactive)
+		{
+			dle=m_dlactive.GetEntry(i);
+
+			/* is this still active ? */
+			if(dle->m_dl.GetAsyncActive()==false)
+			{
+				delete dle;
+				m_dlactive.DeleteEntry(i,1);
+				--m_numdlactive;
+			}
+			else
+				++i;
+		}
+	}
+
 	kGUI::DelEvent(this,CALLBACKNAME(Update));
 }
 
@@ -988,6 +1094,25 @@ void kGUIBrowseObj::UpdateButtons(void)
 	}
 	m_pagechangedcallback.Call();
 }
+
+void kGUIBrowseObj::UpdateButtons2(void)
+{
+	TabRecord *tr=m_tabrecords.GetEntryPtr(m_curtab);
+
+	if(tr->m_curdl)
+	{
+		unsigned int kb;
+		kGUIString cnum;
+
+		kb=tr->m_curdl->m_dl.GetReadBytes()/1024;
+		if(kb)
+		{
+			cnum.SetFormattedInt(kb);
+			m_status.Sprintf("Loading %sK",cnum.GetString());
+		}
+	}
+}
+
 
 void kGUIBrowseObj::Goto(unsigned int tabnum)
 {
@@ -1082,7 +1207,6 @@ void kGUIBrowseObj::Click(kGUIHTMLClickInfo *info)
 	hist->SetURL(info->m_url);
 	hist->SetPost(info->m_post);
 	hist->SetReferer(info->m_referrer);
-//	hist->Set(m_url.GetString(),m_post.GetString(),m_referer.GetString(),0,0);
 	hist->SetScrollY(0);
 	hist->GetInput()->Reset();
 
@@ -1115,6 +1239,7 @@ void kGUIBrowseObj::Update(void)
 			--m_numdlactive;
 		}
 	}
+	UpdateButtons2();
 }
 
 void kGUIBrowseObj::StopLoad(void)
@@ -1128,6 +1253,7 @@ void kGUIBrowseObj::StopLoad(void)
 	{
 		tabrecord->m_curdl=0;
 		dle->m_tabrecord=0;
+		dle->m_dl.Abort();
 	}
 }
 
@@ -1146,7 +1272,6 @@ void kGUIBrowseObj::Load(void)
 	StopLoad();
 
 	/* is there a partial page offet? ie: "page.html#aaaaa" */ 
-//	url.SetString(&m_url);
 	url.SetString(hist->GetURL());
 	cp=strstr(url.GetString(),"#");
 	if(cp)
@@ -1703,8 +1828,8 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_savemode.SetFontSize(VSFONTSIZE);
 	/* todo, add to translated text file */
 	m_savemode.SetEntry(0,"No",SAVEMODE_NO);
-	m_savemode.SetEntry(1,"Yes",SAVEMODE_YES);
-	m_savemode.SetEntry(2,"Ask",SAVEMODE_ASK);
+	m_savemode.SetEntry(1,"Yes always",SAVEMODE_YES);
+	m_savemode.SetEntry(2,"Yes only if more than one",SAVEMODE_YESMORE1);
 	m_savemode.SetSize(m_savemode.GetWidest(),m_savemodecaption.GetLineHeight()+6);
 
 	m_controls.AddObject(&m_savemodecaption);
@@ -2140,7 +2265,7 @@ void kGUIBrowseSettings::LoadTabs(kGUIBrowseObj *b)
 /* save tabs if enabled */
 void kGUIBrowseSettings::SaveTabs(kGUIBrowseObj *b)
 {
-	if(m_savemode==SAVEMODE_YES || (m_savemode==SAVEMODE_ASK && m_saveask==true))
+	if(m_savemode==SAVEMODE_YES || (m_savemode==SAVEMODE_YESMORE1 && b->GetNumTabs()>1))
 	{
 		unsigned int i;
 		kGUIString url;

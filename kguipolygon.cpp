@@ -488,6 +488,7 @@ static double Cross(kGUIPoint2 *p1,kGUIPoint2 *p2,kGUIPoint2 *p3)
 
 void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,kGUIColor c,double radius,double alpha)
 {
+	//todo put fast point rejection code in, copy code from float version of function
 #if 1
 	unsigned int i,j,numep,numinsidepoints,numcp,pass;
 	unsigned int numout;

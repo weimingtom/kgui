@@ -88,8 +88,9 @@ Browse::Browse()
 	DataHandle::AddBig(bf);
 
 	/* browser assumed first font is regular, 2nd font is bold */
-	kGUI::LoadFont("arial.ttf");
-	kGUI::LoadFont("arialbd.ttf");
+	kGUI::LoadFont("arial.ttf",false);
+	kGUI::LoadFont("arial.ttf",true);
+//	kGUI::LoadFont("arialbd.ttf");
 
 	kGUI::SetDefFontSize(13);
 	kGUI::SetDefReportFontSize(13);
@@ -185,7 +186,9 @@ void Browse::PageChanged(void)
 void Browse::WindowEvent(kGUIEvent *event)
 {
 	/* track window re-size events */
-	if(event->GetEvent()==EVENT_SIZECHANGED)
+	switch(event->GetEvent())
+	{
+	case EVENT_SIZECHANGED:
 	{
 		kGUIWindowObj *bg;
 
@@ -194,6 +197,8 @@ void Browse::WindowEvent(kGUIEvent *event)
 		/* update the browse window size */
 		m_browse->SetSize(bg->GetChildZoneW(),bg->GetChildZoneH());
 		m_browse->RePosition(false);
+	}
+	break;
 	}
 }
 

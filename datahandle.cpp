@@ -590,6 +590,24 @@ void DataHandle::ReadHtmlString(kGUIString *s)
 	}
 }
 
+/* reads null terminated string */
+void DataHandle::Read(kGUIString *s)
+{
+	unsigned char c;
+	unsigned long nb;
+
+	s->Clear();
+
+	do{
+		nb=Read(&c,(unsigned long)1);
+		if(!nb)
+			return;
+		if(!c)
+			return;
+		s->Append(c);
+	}while(1);
+}
+
 unsigned long DataHandle::Read(kGUIString *s,unsigned long numbytes)
 {
 	unsigned long numread;

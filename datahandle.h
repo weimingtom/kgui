@@ -97,6 +97,7 @@ public:
 	bool GetOpen(void) {return (m_open || m_wopen);}
 	unsigned long Read(void *dest,unsigned long numbytes);			/* returns number of bytes read */
 	unsigned long Read(kGUIString *s,unsigned long numbytes);		/* returns number of bytes read */
+	void Read(kGUIString *s);										/* reads null terminated string */
 
 	/* these are there to stop the warnings */
 	unsigned long Read(void *dest,unsigned long long numbytes) {return(Read(dest,(unsigned long)numbytes));}

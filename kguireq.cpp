@@ -198,6 +198,9 @@ kGUIFileReq::kGUIFileReq(int type,const char *inname,const char *ext,void *codeo
 
 	PathChanged();
 
+	if(type==FILEREQ_SAVE)
+		m_shortfn.Activate();
+
 	/* save original window size so we can allow user to make bigger (not smaller) */
 	w=m_window.GetZoneW();
 	h=m_window.GetZoneH();

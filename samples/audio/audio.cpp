@@ -54,8 +54,10 @@ Audio *g_Audio;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
-	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
+//	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
+//	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
 	kGUI::SetDefFontSize(11);
 	kGUI::SetDefReportFontSize(11);
 

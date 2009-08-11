@@ -1158,8 +1158,6 @@ unsigned char buffer[65536];
 DataHandle *jdh;				/* pointer to current datahandle */
 } my_source_mgr;
 
-typedef my_source_mgr *my_src_ptr;
-
 METHODDEF(void) init_source (j_decompress_ptr cinfo)
 {
 	my_source_mgr *src = (my_source_mgr *) cinfo->src;
@@ -1301,7 +1299,44 @@ bool kGUIImage::LoadJPGImage(bool justsize)
  * and a compression quality factor are passed in.
  */
 
-bool kGUIImage::SaveJPGImage(const char *filename,int quality)
+/*************** output handler ******************/
+
+typedef struct {
+struct jpeg_destination_mgr pub;	/* public fields */
+unsigned char buffer[1024];
+DataHandle *jdh;					/* pointer to current datahandle */
+} my_destination_mgr;
+
+METHODDEF(void) init_destination (j_compress_ptr cinfo)
+{
+	my_destination_mgr *dest = (my_destination_mgr *) cinfo->dest;
+
+	dest->pub.next_output_byte=dest->buffer;
+	dest->pub.free_in_buffer=sizeof(dest->buffer);
+}
+
+METHODDEF(boolean) empty_output_buffer (j_compress_ptr cinfo)
+{
+	my_destination_mgr *dest = (my_destination_mgr *) cinfo->dest;
+
+	//write the output buffer to the datahandle
+	//ignore the number left and always write the whole buffer
+	dest->jdh->Write(dest->buffer,(unsigned long)(sizeof(dest->buffer)));
+
+	dest->pub.next_output_byte=dest->buffer;
+	dest->pub.free_in_buffer=sizeof(dest->buffer);
+	return (TRUE);
+}
+
+void term_destination (j_compress_ptr cinfo)
+{
+	my_destination_mgr *dest = (my_destination_mgr *) cinfo->dest;
+
+	//write the output buffer to the datahandle
+	dest->jdh->Write(dest->buffer,(unsigned long)(sizeof(dest->buffer)-dest->pub.free_in_buffer));
+}
+
+bool kGUIImage::SaveJPGImage(DataHandle *outdh,int quality)
 {
 	/* This struct contains the JPEG compression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -1320,7 +1355,6 @@ bool kGUIImage::SaveJPGImage(const char *filename,int quality)
    */
   struct jpeg_error_mgr jerr;
   /* More stuff */
-  FILE * outfile;		/* target file */
   JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
   int row_stride;		/* physical row width in image buffer */
   /* Step 1: allocate and initialize JPEG compression object */
@@ -1335,21 +1369,24 @@ bool kGUIImage::SaveJPGImage(const char *filename,int quality)
 	unsigned int x;
 	unsigned char a;
 	unsigned char *data=m_imagedata.GetEntry(0);
+	my_destination_mgr dest;
 
-  cinfo.err = jpeg_std_error(&jerr);
+	cinfo.err = jpeg_std_error(&jerr);
+
+	dest.jdh=outdh;		/* save global for memory system to use */
+	if(outdh->OpenWrite("wb")==false)
+		return(false);
+
   /* Now we can initialize the JPEG compression object. */
   jpeg_create_compress(&cinfo);
-  /* Step 2: specify data destination (eg, a file) */
-  /* Note: steps 2 and 3 can be done in either order. */
-  /* Here we use the library-supplied code to send compressed data to a
-   * stdio stream.  You can also write your own code to do something else.
-   * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
-   * requires it in order to write binary files.
-   */
-  if ((outfile = fopen(filename, "wb")) == NULL)
-	return(false);
- 
-  jpeg_stdio_dest(&cinfo, outfile);
+
+    cinfo.dest=(jpeg_destination_mgr *)&dest;
+
+	dest.pub.init_destination = init_destination;
+	dest.pub.empty_output_buffer = empty_output_buffer;
+	dest.pub.term_destination = term_destination;
+	dest.pub.free_in_buffer = 0;
+
   /* Step 3: set parameters for compression */
   /* First we supply a description of the input image.
    * Four fields of the cinfo struct must be filled in:
@@ -1402,13 +1439,12 @@ bool kGUIImage::SaveJPGImage(const char *filename,int quality)
   }
   /* Step 6: Finish compression */
   jpeg_finish_compress(&cinfo);
-  /* After finish_compress, we can close the output file. */
-  fclose(outfile);
   /* Step 7: release JPEG compression object */
   /* This is an important step since it will release a good deal of memory. */
   jpeg_destroy_compress(&cinfo);
   /* And we're done! */
   delete []linebuffer;
+  outdh->Close();
   return(true);
 }
 
@@ -2475,7 +2511,7 @@ bool kGUIImage::Draw(int frame,int x1,int y1)
 	if((y2<=y1) || (x2<=x1))	/* nothing to draw! */
 		return(false);
 
-	/* todo: iff offsets then clip against edges of draw surface */
+	/* todo: if offsets then clip against edges of draw surface */
 
 	sp=kGUI::GetSurfacePtr(x1,y1);
 	sw=kGUI::GetSurfaceWidth();
@@ -3749,6 +3785,7 @@ bool kGUIImageObj::UpdateInput(void)
 
 	if(this==kGUI::GetActiveObj())
 	{
+		CallEvent(EVENT_MOUSEOVER);
 		if(m_showscrollbars==true)
 		{
 			if(m_hscrollbar->IsActive()==true)

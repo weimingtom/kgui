@@ -151,12 +151,12 @@ void kGUI::CloseFontEngine(void)
 	FT_Done_FreeType(kGUIFont::m_library);
 }
 
-int kGUI::LoadFont(const char *filename)
+int kGUI::LoadFont(const char *filename,bool bold)
 {
 	kGUIFace *fslot;
 
 	fslot=kGUIFont::m_faces+kGUIFont::m_numfonts;
-	if(fslot->LoadFont(filename)<0)
+	if(fslot->LoadFont(filename,bold)<0)
 		return(-1);
 
 	/* success */
@@ -228,7 +228,7 @@ void kGUIFace::CalcHeight(unsigned int size)
 	m_pixbelow[size]=maxbelow;
 }
 
-int kGUIFace::LoadFont(const char *filename)
+int kGUIFace::LoadFont(const char *filename,bool bold)
 {
 	int size,glyph_index;
 	int advance;
@@ -236,6 +236,7 @@ int kGUIFace::LoadFont(const char *filename)
 	unsigned long fontfilesize;
 
 	m_haskerning=false;
+	m_bold=bold;
 	/* handle bigfile based fonts */
 	m_memfile=kGUI::LoadFile(filename,&fontfilesize);
 	assert(m_memfile!=0,"Couldn't find font!");
@@ -278,7 +279,14 @@ int kGUIFace::LoadFont(const char *filename)
 				if(glyph_index>0)
 				{
 					if(FT_Load_Glyph(m_ftface, glyph_index, FT_LOAD_DEFAULT)==0)
+					{
+						if(bold)
+						{
+							if(!FT_Render_Glyph( m_ftface->glyph, ft_render_mode_normal ))
+								FT_GlyphSlot_Embolden(m_ftface->glyph);
+						}
 						advance=m_ftface->glyph->advance.x >> 6;
+					}
 				}
 				m_quickwidths[size][c]=advance;
 			}
@@ -1194,6 +1202,7 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight,
 	unsigned int ch;	/* current character */
 	unsigned int nb;	/* number of bytes for current character */
 	int ry;
+	bool isbold;
 
 	size=GetFontSize();
 	if(!size)
@@ -1205,6 +1214,7 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight,
 		cachesize=false;
 
 	face=kGUIFont::GetFace(GetFontID());
+	isbold=face->GetBold();
 	ftface=face->GetFace();
 	font_height=face->GetPixHeight(size);
 	ry=y+rowheight-font_height;
@@ -1275,6 +1285,9 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight,
 					{
 						if(!FT_Render_Glyph( ftface->glyph, ft_render_mode_normal ))
 						{
+							if(isbold)
+								FT_GlyphSlot_Embolden(ftface->glyph);
+
 							/* cache this character? */
 							if( cachesize==true && (ch<MAXCCACHE))
 							{
@@ -1333,6 +1346,7 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight)
 	kGUIFace *face;
 	FT_Face ftface;
 	int ry;
+	bool isbold;
 
 	size=GetFontSize();
 	if(!size)
@@ -1340,6 +1354,7 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight)
 
 	fontid=GetFontID();
 	face=kGUIFont::GetFace(fontid);
+	isbold=face->GetBold();
 	ftface=face->GetFace();
 
 	usebg=GetUseRichInfo();
@@ -1495,6 +1510,9 @@ void kGUIText::DrawSection(int sstart,int slen,int sx,int x,int y,int rowheight)
 					{
 						if(!FT_Render_Glyph( ftface->glyph, ft_render_mode_normal ))
 						{
+							if(isbold)
+								FT_GlyphSlot_Embolden(ftface->glyph);
+
 							/* cache this character? */
 							if( cachesize==true && (ch<MAXCCACHE))
 							{

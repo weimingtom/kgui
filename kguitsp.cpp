@@ -140,7 +140,7 @@ enum CoordTypes {TWOD_COORDS, THREED_COORDS, NO_COORDS};
 
 typedef struct Candidate
 {
-    Node *To;           /* A pointer to the end node of the edge */
+    TSPNode *To;           /* A pointer to the end node of the edge */
     long Cost;          /* The cost (distance) of the edge */
     long Alpha;         /* Its alpha-value */
 } Candidate; 
@@ -151,7 +151,7 @@ typedef struct Candidate
 typedef struct Segment
 {
     int Reversed;               /* The reversal bit */
-    Node *First, *Last;         /* The first and last node in the segment */
+    TSPNode *First, *Last;         /* The first and last node in the segment */
     struct Segment *Pred, *Suc; /* The predecessor and successor in the two-way list of
                                    segments */ 
     long Rank;                  /* The ordinal number of the segment in the list */						
@@ -169,7 +169,7 @@ typedef struct Segment
    the queue. LastActive denotes the rear. 
 
    The queue is implemented as a circular list in which the Next field 
-   of each Node references the successor node. 
+   of each TSPNode references the successor node. 
 
    A node is member of the queue iff its Next != 0. The function has no 
    effect if the node is already in the queue. 
@@ -177,7 +177,7 @@ typedef struct Segment
    The function is called from the StoreTour function.
 */
 
-void kGUITSP::Activate(Node * t)
+void kGUITSP::Activate(TSPNode * t)
 {
     if (t->Next != 0)
         return;
@@ -209,7 +209,7 @@ void kGUITSP::Activate(Node * t)
 void kGUITSP::AdjustCandidateSet(void)
 {
     Candidate *NFrom, *NN, Temp;
-    Node *From = FirstNode, *To;
+    TSPNode *From = FirstNode, *To;
 
     /* Extend candidate sets */
     do {
@@ -265,7 +265,7 @@ void kGUITSP::AdjustCandidateSet(void)
 
 double kGUITSP::Ascent(void)
 {
-    Node *t;
+    TSPNode *t;
     double BestW, W, W0;
     long T, Period, P;
     int InitialPhase;
@@ -400,9 +400,9 @@ double kGUITSP::Ascent(void)
    The function is called from the LinKernighan function. 
 */
 
-Node *kGUITSP::Backtrack2OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Backtrack2OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3, *t4, *t;
+    TSPNode *t3, *t4, *t;
     Candidate *Nt2;
     long G1, G2, G;
 
@@ -456,9 +456,9 @@ Node *kGUITSP::Backtrack2OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    The function is called from the LinKernighan function.   
 */
 
-Node *kGUITSP::Backtrack3OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Backtrack3OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3, *t4, *t5, *t6, *t;
+    TSPNode *t3, *t4, *t5, *t6, *t;
     Candidate *Nt2, *Nt4;
     long G1, G2, G3, G4, G;
     int Case6, X4, X6;
@@ -560,10 +560,10 @@ Node *kGUITSP::Backtrack3OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    The function is called from the LinKernighan function.   
 */
 
-Node *kGUITSP::Backtrack4OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Backtrack4OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
     Candidate *Nt2, *Nt4, *Nt6;
-    Node *t3, *t4, *t5, *t6=0, *t7, *t8=0, *t;
+    TSPNode *t3, *t4, *t5, *t6=0, *t7, *t8=0, *t;
     long G1, G2, G3, G4, G5, G6, G;
     int Case6=0, Case8=0, X4, X6, X8;
 
@@ -766,9 +766,9 @@ Node *kGUITSP::Backtrack4OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    The function is called from the LinKernighan function. 
 */
 
-Node *kGUITSP::Backtrack5OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Backtrack5OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *t9=0, *t10=0, *t=0;
+    TSPNode *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *t9=0, *t10=0, *t=0;
     Candidate *Nt2, *Nt4, *Nt6, *Nt8;
     long G1, G2, G3, G4, G5, G6, G7, G8=0, G;
     int Case6=0, Case8=0, Case10=0, X4, X6, X8, X10, BTW275=0, BTW674=0, BTW571=0,
@@ -1308,9 +1308,9 @@ Node *kGUITSP::Backtrack5OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    The function is called from the LinKernighan function. 
 */
 
-Node *kGUITSP::Best2OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Best2OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3=0, *t4, *T3=0, *T4 = 0;
+    TSPNode *t3=0, *t4, *T3=0, *T4 = 0;
     Candidate *Nt2;
     long G1, G2, BestG2 = LONG_MIN;
 
@@ -1416,9 +1416,9 @@ Node *kGUITSP::Best2OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    A description of the cases is given after the code.   
 */
 
-Node *kGUITSP::Best3OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Best3OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3=0, *t4=0, *t5=0, *t6, *T3=0, *T4=0, *T5=0, *T6 = 0;
+    TSPNode *t3=0, *t4=0, *t5=0, *t6, *T3=0, *T4=0, *T5=0, *T6 = 0;
     Candidate *Nt2, *Nt4;
     long G1, G2, G3, G4, BestG4 = LONG_MIN;
     int Case6=0, BestCase6=0, X4, X6;
@@ -1579,10 +1579,10 @@ Node *kGUITSP::Best3OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    A description of the cases is given after the code.   
 */
 
-Node *kGUITSP::Best4OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Best4OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
     Candidate *Nt2=0, *Nt4=0, *Nt6=0;
-    Node *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *T3=0, *T4=0, *T5=0, *T6=0, *T7=0, *T8 = 0;
+    TSPNode *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *T3=0, *T4=0, *T5=0, *T6=0, *T7=0, *T8 = 0;
     long G1=0, G2=0, G3=0, G4=0, G5=0, G6=0, BestG6 = LONG_MIN;
     int Case6=0, Case8=0, BestCase8=0, X4=0, X6=0, X8=0;
 
@@ -1863,10 +1863,10 @@ Node *kGUITSP::Best4OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    A description of the cases is given after the code.   
 */
 
-Node *kGUITSP::Best5OptMove(Node * t1, Node * t2, long *G0, long *Gain)
+TSPNode *kGUITSP::Best5OptMove(TSPNode * t1, TSPNode * t2, long *G0, long *Gain)
 {
-    Node *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *t9=0, *t10=0;
-    Node *T3=0, *T4=0, *T5=0, *T6=0, *T7=0, *T8=0, *T9=0, *T10 = 0;
+    TSPNode *t3=0, *t4=0, *t5=0, *t6=0, *t7=0, *t8=0, *t9=0, *t10=0;
+    TSPNode *T3=0, *T4=0, *T5=0, *T6=0, *T7=0, *T8=0, *T9=0, *T10 = 0;
     Candidate *Nt2, *Nt4, *Nt6, *Nt8;
     long G1, G2, G3, G4, G5, G6, G7, G8, BestG8 = LONG_MIN;
     int Case6=0, Case8=0, Case10=0, BestCase10=0, X4=0, X6=0, X8=0, X10=0, BTW275=0, BTW674=0,
@@ -2549,7 +2549,7 @@ Node *kGUITSP::Best5OptMove(Node * t1, Node * t2, long *G0, long *Gain)
    BridgeGain, Make4OptMove and Make5OptMove.
 */
 
-int kGUITSP::Between(const Node * ta, const Node * tb, const Node * tc)
+int kGUITSP::Between(const TSPNode * ta, const TSPNode * tb, const TSPNode * tc)
 {
     long a, b = tb->Rank, c;
 
@@ -2578,7 +2578,7 @@ int kGUITSP::Between(const Node * ta, const Node * tb, const Node * tc)
    BridgeGain, Make4OptMove and Make5OptMove.
 */
 
-int kGUITSP::Between_SL(const Node * ta, const Node * tb, const Node * tc)
+int kGUITSP::Between_SL(const TSPNode * ta, const TSPNode * tb, const TSPNode * tc)
 {
     const Segment *Pa, *Pb, *Pc;
 
@@ -2632,11 +2632,11 @@ int kGUITSP::Between_SL(const Node * ta, const Node * tb, const Node * tc)
    function returns the gain achieved.	
 */
 
-long kGUITSP::BridgeGain(Node * s1, Node * s2, Node * s3, Node * s4,
-                Node * s5, Node * s6, Node * s7, Node * s8,
+long kGUITSP::BridgeGain(TSPNode * s1, TSPNode * s2, TSPNode * s3, TSPNode * s4,
+                TSPNode * s5, TSPNode * s6, TSPNode * s7, TSPNode * s8,
                 int Case6, long G)
 {
-    Node *t1, *t2, *t3, *t4, *t5, *t6, *t7, *t8, *u2=0, *u3=0;
+    TSPNode *t1, *t2, *t3, *t4, *t5, *t6, *t7, *t8, *u2=0, *u3=0;
     Candidate *Nt2, *Nt4, *Nt6;
     long G0, G1, G2, G3, G4, G5, G6, Gain, i;
     int X4;
@@ -2861,7 +2861,7 @@ long kGUITSP::BridgeGain(Node * s1, Node * s2, Node * s3, Node * s4,
 */
 
 
-long kGUITSP::C_EXPLICIT(Node * Na, Node * Nb)
+long kGUITSP::C_EXPLICIT(TSPNode * Na, TSPNode * Nb)
 {
     return Na->Id < Nb->Id ? Nb->C[Na->Id] : Na->C[Nb->Id];
 }
@@ -2885,9 +2885,9 @@ long kGUITSP::C_EXPLICIT(Node * Na, Node * Nb)
 	      
 */
 
-long kGUITSP::C_FUNCTION(Node * Na, Node * Nb)
+long kGUITSP::C_FUNCTION(TSPNode * Na, TSPNode * Nb)
 {
-    Node *Nc;
+    TSPNode *Nc;
     Candidate *Cand;
     long Index, i, j;
 
@@ -2908,13 +2908,13 @@ long kGUITSP::C_FUNCTION(Node * Na, Node * Nb)
     return (CacheVal[Index] = (this->*D)(Na, Nb));
 }
 
-long kGUITSP::D_EXPLICIT(Node * Na, Node * Nb)
+long kGUITSP::D_EXPLICIT(TSPNode * Na, TSPNode * Nb)
 {
     return (Na->Id <
             Nb->Id ? Nb->C[Na->Id] : Na->C[Nb->Id]) + Na->Pi + Nb->Pi;
 }
 
-long kGUITSP::D_FUNCTION(Node * Na, Node * Nb)
+long kGUITSP::D_FUNCTION(TSPNode * Na, TSPNode * Nb)
 {
     return (Fixed(Na, Nb) ? 0 : (this->*Distance)(Na, Nb) * Precision) + Na->Pi +
         Nb->Pi;
@@ -2922,14 +2922,14 @@ long kGUITSP::D_FUNCTION(Node * Na, Node * Nb)
 
 /* Functions for computing lower bounds for the distance functions */
 
-long kGUITSP::c_CEIL_2D(Node * Na, Node * Nb)
+long kGUITSP::c_CEIL_2D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(ceil(fabs(Na->X - Nb->X)));
 	long dy = (long)(ceil(fabs(Na->Y - Nb->Y)));
     return (long)((dx > dy ? dx : dy) * Precision + Na->Pi + Nb->Pi);
 }
 
-long kGUITSP::c_CEIL_3D(Node * Na, Node * Nb)
+long kGUITSP::c_CEIL_3D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(ceil(fabs(Na->X - Nb->X)));
 	long dy = (long)(ceil(fabs(Na->Y - Nb->Y)));
@@ -2941,14 +2941,14 @@ long kGUITSP::c_CEIL_3D(Node * Na, Node * Nb)
     return (long)(dx * Precision + Na->Pi + Nb->Pi);
 }
 
-long kGUITSP::c_EUC_2D(Node * Na, Node * Nb)
+long kGUITSP::c_EUC_2D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(fabs(Na->X - Nb->X) + 0.5);
 	long dy = (long)(fabs(Na->Y - Nb->Y) + 0.5);
     return (long)((dx > dy ? dx : dy) * Precision + Na->Pi + Nb->Pi);
 }
 
-long kGUITSP::c_EUC_3D(Node * Na, Node * Nb)
+long kGUITSP::c_EUC_3D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(fabs(Na->X - Nb->X) + 0.5);
 	long dy = (long)(fabs(Na->Y - Nb->Y) + 0.5);
@@ -2963,7 +2963,7 @@ long kGUITSP::c_EUC_3D(Node * Na, Node * Nb)
 //#define PI 3.141592
 #define RRR 6378.388
 
-long kGUITSP::c_GEO(Node * Na, Node * Nb)
+long kGUITSP::c_GEO(TSPNode * Na, TSPNode * Nb)
 {
     long da = (long)(Na->X);
 	long db = (long)(Nb->X);
@@ -2976,7 +2976,7 @@ long kGUITSP::c_GEO(Node * Na, Node * Nb)
 #undef M_PI
 #define M_PI 3.14159265358979323846264
 
-long kGUITSP::c_GEOM(Node * Na, Node * Nb)
+long kGUITSP::c_GEOM(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(6378388.0 * M_PI / 180.0 * fabs(Na->X - Nb->X) + 1.0);
     return (long)(dx * Precision + Na->Pi + Nb->Pi);
@@ -3009,7 +3009,7 @@ long kGUITSP::c_GEOM(Node * Na, Node * Nb)
 
 void kGUITSP::ChooseInitialTour(void)
 {
-    Node *N, *NextN, *FirstAlternative, *Last;
+    TSPNode *N, *NextN, *FirstAlternative, *Last;
     Candidate *NN;
     long i;
 
@@ -3116,9 +3116,9 @@ void kGUITSP::ChooseInitialTour(void)
    specified threshold (Max) is found.
 */
 
-void kGUITSP::Connect(Node * N1, const long Max, const int Sparse)
+void kGUITSP::Connect(TSPNode * N1, const long Max, const int Sparse)
 {
-    Node *N;
+    TSPNode *N;
     Candidate *NN1;
     long d;
 
@@ -3187,7 +3187,7 @@ void kGUITSP::CreateCandidateSet(void)
     double Cost;
     long i,Count;
 //	long j, Id, Alpha;
-    Node *Na, *Nb;
+    TSPNode *Na, *Nb;
     Candidate *NNa, *NNb;
 
     if (m_problemtype == HPP) {
@@ -3362,12 +3362,12 @@ End_CreateCandidateSet:
    The appropriate function is referenced by the function pointer Distance.
 */
 
-long kGUITSP::Distance_1(Node * Na, Node * Nb)
+long kGUITSP::Distance_1(TSPNode * Na, TSPNode * Nb)
 {
     return 1;
 }
 
-long kGUITSP::Distance_ATSP(Node * Na, Node * Nb)
+long kGUITSP::Distance_ATSP(TSPNode * Na, TSPNode * Nb)
 {
     long n = m_dimension / 2;
     if ((Na->Id <= n) == (Nb->Id <= n))
@@ -3377,36 +3377,36 @@ long kGUITSP::Distance_ATSP(Node * Na, Node * Nb)
     return Na->Id < Nb->Id ? Na->C[Nb->Id - n] : Nb->C[Na->Id - n];
 }
 
-long kGUITSP::Distance_ATT(Node * Na, Node * Nb)
+long kGUITSP::Distance_ATT(TSPNode * Na, TSPNode * Nb)
 {
     double xd = Na->X - Nb->X, yd = Na->Y - Nb->Y;
     return (long)(ceil(sqrt((xd * xd + yd * yd) / 10.0)));
 }
 
-long kGUITSP::Distance_CEIL_2D(Node * Na, Node * Nb)
+long kGUITSP::Distance_CEIL_2D(TSPNode * Na, TSPNode * Nb)
 {
     double xd = Na->X - Nb->X, yd = Na->Y - Nb->Y;
     return (long)(ceil(sqrt(xd * xd + yd * yd)));
 }
 
-long kGUITSP::Distance_CEIL_3D(Node * Na, Node * Nb)
+long kGUITSP::Distance_CEIL_3D(TSPNode * Na, TSPNode * Nb)
 {
     double xd = Na->X - Nb->X, yd = Na->Y - Nb->Y, zd = Na->Z - Nb->Z;
     return (long)(ceil(sqrt(xd * xd + yd * yd + zd * zd)));
 }
 
-long kGUITSP::Distance_EXPLICIT(Node * Na, Node * Nb)
+long kGUITSP::Distance_EXPLICIT(TSPNode * Na, TSPNode * Nb)
 {
     return (long)(Na->Id < Nb->Id ? Nb->C[Na->Id] : Na->C[Nb->Id]);
 }
 
-long kGUITSP::Distance_EUC_2D(Node * Na, Node * Nb)
+long kGUITSP::Distance_EUC_2D(TSPNode * Na, TSPNode * Nb)
 {
     double xd = Na->X - Nb->X, yd = Na->Y - Nb->Y;
     return (long)(sqrt(xd * xd + yd * yd) + 0.5);
 }
 
-long kGUITSP::Distance_EUC_3D(Node * Na, Node * Nb)
+long kGUITSP::Distance_EUC_3D(TSPNode * Na, TSPNode * Nb)
 {
     double xd = Na->X - Nb->X, yd = Na->Y - Nb->Y, zd = Na->Z - Nb->Z;
     return (long)(sqrt(xd * xd + yd * yd + zd * zd) + 0.5);
@@ -3415,7 +3415,7 @@ long kGUITSP::Distance_EUC_3D(Node * Na, Node * Nb)
 //#define PI 3.141592
 #define RRR 6378.388
 
-long kGUITSP::Distance_GEO(Node * Na, Node * Nb)
+long kGUITSP::Distance_GEO(TSPNode * Na, TSPNode * Nb)
 {
     long deg;
     double NaLatitude, NaLongitude, NbLatitude, NbLongitude, min, q1, q2,
@@ -3441,7 +3441,7 @@ long kGUITSP::Distance_GEO(Node * Na, Node * Nb)
 #undef M_PI
 #define M_PI 3.14159265358979323846264
 
-long kGUITSP::Distance_GEOM(Node * Na, Node * Nb)
+long kGUITSP::Distance_GEOM(TSPNode * Na, TSPNode * Nb)
 {
     double lati = M_PI * (Na->X / 180.0);
     double latj = M_PI * (Nb->X / 180.0);
@@ -3455,24 +3455,24 @@ long kGUITSP::Distance_GEOM(Node * Na, Node * Nb)
     return (long) (6378388.0 * atan2(sqrt(q1 * q1 + q2 * q2), q5) + 1.0);
 }
 
-long kGUITSP::Distance_MAN_2D(Node * Na, Node * Nb)
+long kGUITSP::Distance_MAN_2D(TSPNode * Na, TSPNode * Nb)
 {
     return (long)(fabs(Na->X - Nb->X) + fabs(Na->Y - Nb->Y) + 0.5);
 }
 
-long kGUITSP::Distance_MAN_3D(Node * Na, Node * Nb)
+long kGUITSP::Distance_MAN_3D(TSPNode * Na, TSPNode * Nb)
 {
     return (long)(fabs(Na->X - Nb->X) + fabs(Na->Y - Nb->Y) + fabs(Na->Z - Nb->Z) + 0.5);
 }
 
-long kGUITSP::Distance_MAX_2D(Node * Na, Node * Nb)
+long kGUITSP::Distance_MAX_2D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(fabs(Na->X - Nb->X) + 0.5);
 	long dy = (long)(fabs(Na->Y - Nb->Y) + 0.5);
     return (long)(dx > dy ? dx : dy);
 }
 
-long kGUITSP::Distance_MAX_3D(Node * Na, Node * Nb)
+long kGUITSP::Distance_MAX_3D(TSPNode * Na, TSPNode * Nb)
 {
     long dx = (long)(fabs(Na->X - Nb->X) + 0.5);
 	long dy = (long)(fabs(Na->Y - Nb->Y) + 0.5);
@@ -3512,7 +3512,7 @@ void eprintf(char *fmt, ...)
    is excludable.  
 */
 
-int kGUITSP::Excludable(const Node * ta, const Node * tb)
+int kGUITSP::Excludable(const TSPNode * ta, const TSPNode * tb)
 {
     if (ta == tb->OldPred)
         return !tb->OldPredExcluded;
@@ -3528,7 +3528,7 @@ int kGUITSP::Excludable(const Node * ta, const Node * tb)
    for each of the two end nodes.
 */
 
-void kGUITSP::Exclude(Node * ta, Node * tb)
+void kGUITSP::Exclude(TSPNode * ta, TSPNode * tb)
 {
     if (ta == tb->Pred || ta == tb->Suc)
         return;
@@ -3560,7 +3560,7 @@ void kGUITSP::Exclude(Node * ta, Node * tb)
 double kGUITSP::FindTour(void)
 {
     double Cost;
-    Node *t;
+    TSPNode *t;
 //    double LastTime = GetTime();
 
     t = FirstNode;
@@ -3601,7 +3601,7 @@ double kGUITSP::FindTour(void)
 
 /*
    The Flip function performs a 2-opt move. Edges (t1,t2) and (t3,t4) 
-   are exchanged with edges (t2,t3) and (t4,t1). Node t4 is one of 
+   are exchanged with edges (t2,t3) and (t4,t1). TSPNode t4 is one of 
    t3's two neighbors on the tour; which one is uniquely determined
    by the orientation of (t1,t2).
 
@@ -3626,9 +3626,9 @@ double kGUITSP::FindTour(void)
    Finally, the hash value corresponding to the tour is updated. 
 */
 
-void kGUITSP::Flip(Node * t1, Node * t2, Node * t3)
+void kGUITSP::Flip(TSPNode * t1, TSPNode * t2, TSPNode * t3)
 {
-    Node *s1, *s2, *t4;
+    TSPNode *s1, *s2, *t4;
     long R;
 
     if (t3 == t2->Pred || t3 == t2->Suc)
@@ -3679,7 +3679,7 @@ void kGUITSP::Flip(Node * t1, Node * t2, Node * t3)
 
 /*
    The Flip_SL function performs a 2-opt move. Edges (t1,t2) and (t3,t4) 
-   are exchanged with edges (t2,t3) and (t4,t1). Node t4 is one of 
+   are exchanged with edges (t2,t3) and (t4,t1). TSPNode t4 is one of 
    t3's two neighbors on the tour; which one is uniquely determined
    by the orientation of (t1,t2).
 
@@ -3713,13 +3713,13 @@ void kGUITSP::Flip(Node * t1, Node * t2, Node * t3)
    Finally, the hash value corresponding to the tour is updated.
 */
 
-//static void SplitSegment(Node * t1, Node * t2);
+//static void SplitSegment(TSPNode * t1, TSPNode * t2);
 
-void kGUITSP::Flip_SL(Node * t1, Node * t2, Node * t3)
+void kGUITSP::Flip_SL(TSPNode * t1, TSPNode * t2, TSPNode * t3)
 {
-    Node *t4, *a, *b, *c, *d;
+    TSPNode *t4, *a, *b, *c, *d;
     Segment *P1, *P2, *P3, *P4, *Q1, *Q2;
-    Node *s1, *s2;
+    TSPNode *s1, *s2;
     long i;
 
     if (t3 == t2->Pred || t3 == t2->Suc)
@@ -3925,10 +3925,10 @@ void kGUITSP::Flip_SL(Node * t1, Node * t2, Node * t3)
    J. Algorithms, 16, 432-479 (1995).
  */
 
-void kGUITSP::SplitSegment(Node * t1, Node * t2)
+void kGUITSP::SplitSegment(TSPNode * t1, TSPNode * t2)
 {
     Segment *P = t1->Parent, *Q;
-    Node *t, *u;
+    TSPNode *t, *u;
     long i, Count;
 
     if (t2->Rank < t1->Rank) {
@@ -4006,7 +4006,7 @@ void kGUITSP::SplitSegment(Node * t1, Node * t2)
    If the edge is forbidden, the function returns 1; otherwise 0.
 */
 
-int kGUITSP::Forbidden(const Node * ta, const Node * tb)
+int kGUITSP::Forbidden(const TSPNode * ta, const TSPNode * tb)
 {
     return m_problemtype == ATSP &&
         (ta->Id <= m_dimension / 2) == (tb->Id <= m_dimension / 2);
@@ -4019,7 +4019,7 @@ int kGUITSP::Forbidden(const Node * ta, const Node * tb)
 void kGUITSP::FreeStructures(void)
 {
     if (FirstNode) {
-        Node *N = FirstNode, *Next;
+        TSPNode *N = FirstNode, *Next;
         do {
             Next = N->Suc;
             free(N->CandidateSet);
@@ -4096,7 +4096,7 @@ void kGUITSP::FreeStructures(void)
 long kGUITSP::Gain23(void)
 {
     Candidate *Ns2, *Ns4, *Ns6;
-    Node *s1=0, *s2=0, *s3=0, *s4=0, *s5=0, *s6=0, *s7=0, *s8=0;
+    TSPNode *s1=0, *s2=0, *s3=0, *s4=0, *s5=0, *s6=0, *s7=0, *s8=0;
     long G0, G1, G2, G3, G4, G5, G6=0, Gain=0, Gain6=0, i=0;
     int X2, X4, X6, X8, Case6=0, Case8=0;
 
@@ -4403,7 +4403,7 @@ long kGUITSP::Gain23(void)
    The candidate edges of each node is kept in an array (CandidatSet) of
    structures. Each structure (Candidate) holds the following information:
 
-   Node *To     : points to the other end node of the edge
+   TSPNode *To     : points to the other end node of the edge
    long Alpha   : contains the alpha-value of the edge
    long Cost    : the cost (length) of the edge
 
@@ -4425,7 +4425,7 @@ static long Max(long a, long b)
 
 void kGUITSP::GenerateCandidates(const long MaxCandidates, const long MaxAlpha,  const int Symmetric)
 {
-    Node *From, *To;
+    TSPNode *From, *To;
     Candidate *NFrom, *NN, *NTo;
     long a, d, Count;
 
@@ -4655,7 +4655,7 @@ int HashSearch(HashTable * T, unsigned long Hash, double Cost)
 
 void kGUITSP::MakeHeap(const long Size)
 {
-    assert(Heap = (Node **) malloc((Size + 1) * sizeof(Node *)));
+    assert(Heap = (TSPNode **) malloc((Size + 1) * sizeof(TSPNode *)));
     HeapCount = 0;
 }
 
@@ -4667,7 +4667,7 @@ void kGUITSP::MakeHeap(const long Size)
    When calling SiftUp(N), node N must belong to the heap.              
 */
 
-void kGUITSP::SiftUp(Node * N)
+void kGUITSP::SiftUp(TSPNode * N)
 {
     long Loc = N->Loc, P = Loc / 2;
 
@@ -4687,9 +4687,9 @@ void kGUITSP::SiftUp(Node * N)
    is empty).
 */
 
-Node *kGUITSP::DeleteMin(void)
+TSPNode *kGUITSP::DeleteMin(void)
 {
-    Node *Remove, *Item;
+    TSPNode *Remove, *Item;
     long Ch, Loc;
 
     if (!HeapCount)
@@ -4721,7 +4721,7 @@ Node *kGUITSP::DeleteMin(void)
    When calling Insert(N), node N must belong to the heap.
 */
 
-void kGUITSP::Insert(Node *N)
+void kGUITSP::Insert(TSPNode *N)
 {
     long Ch, P;
 
@@ -4746,7 +4746,7 @@ void kGUITSP::Insert(Node *N)
 
 double kGUITSP::LinKernighan(void)
 {
-    Node *t1, *t2, *SUCt1;
+    TSPNode *t1, *t2, *SUCt1;
     long Gain, G0, i;
     double Cost;
     Candidate *Nt1;
@@ -4867,12 +4867,12 @@ double kGUITSP::LinKernighan(void)
 /*
     The Make2OptMove function makes a 2-opt move by calling the macro Swap1 
     (i.e., by calling either Flip of Flip_SL). Edges (t1,t2) and (t3,t4) 
-    are exchanged with edges (t2,t3) and (t4,t1). Node t4 is one of t3's two
+    are exchanged with edges (t2,t3) and (t4,t1). TSPNode t4 is one of t3's two
     neighbors on the tour; which one is uniquely determined by the orientation  
     of (t1,t2).
 */
 
-void kGUITSP::Make2OptMove(Node * t1, Node * t2, Node * t3, Node * t4)
+void kGUITSP::Make2OptMove(TSPNode * t1, TSPNode * t2, TSPNode * t3, TSPNode * t4)
 {
     Swap1(t1, t2, t3);
 }
@@ -4882,8 +4882,8 @@ void kGUITSP::Make2OptMove(Node * t1, Node * t2, Node * t3, Node * t4)
     Swap2 or Swap3.
 */
 
-void kGUITSP::Make3OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
-                  Node * t5, Node * t6, int Case)
+void kGUITSP::Make3OptMove(TSPNode * t1, TSPNode * t2, TSPNode * t3, TSPNode * t4,
+                  TSPNode * t5, TSPNode * t6, int Case)
 {
     switch (Case) {
     case 1:
@@ -4903,8 +4903,8 @@ void kGUITSP::Make3OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
     The Make4OptMove function makes a 4-opt move by calling the macro Swap3.
 */
 
-void kGUITSP::Make4OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
-                  Node * t5, Node * t6, Node * t7, Node * t8, int Case)
+void kGUITSP::Make4OptMove(TSPNode * t1, TSPNode * t2, TSPNode * t3, TSPNode * t4,
+                  TSPNode * t5, TSPNode * t6, TSPNode * t7, TSPNode * t8, int Case)
 {
     if (SUC(t1) != t2)
         Reversed ^= 1;
@@ -4948,9 +4948,9 @@ void kGUITSP::Make4OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
     Swap4 or Swap5.
 */
 
-void kGUITSP::Make5OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
-                  Node * t5, Node * t6, Node * t7, Node * t8,
-                  Node * t9, Node * t10, int Case)
+void kGUITSP::Make5OptMove(TSPNode * t1, TSPNode * t2, TSPNode * t3, TSPNode * t4,
+                  TSPNode * t5, TSPNode * t6, TSPNode * t7, TSPNode * t8,
+                  TSPNode * t9, TSPNode * t10, int Case)
 {
     if (SUC(t1) != t2)
         Reversed ^= 1;
@@ -5213,7 +5213,7 @@ void kGUITSP::Make5OptMove(Node * t1, Node * t2, Node * t3, Node * t4,
 
 double kGUITSP::Minimum1TreeCost(const int Sparse)
 {
-    Node *N, *N1=0;
+    TSPNode *N, *N1=0;
     double Sum = 0;
     long Max;
 
@@ -5285,7 +5285,7 @@ double kGUITSP::Minimum1TreeCost(const int Sparse)
 
 void kGUITSP::MinimumSpanningTree(const int Sparse)
 {
-    Node *Blue,                 /* Points to the last node included in the tree */
+    TSPNode *Blue,                 /* Points to the last node included in the tree */
     *NextBlue=0,                  /* Points to the provisional next node to be included */
     *N=0;
     Candidate *NBlue=0;
@@ -5382,7 +5382,7 @@ void kGUITSP::MinimumSpanningTree(const int Sparse)
 
 void kGUITSP::NormalizeNodeList(void)
 {
-    Node *t1, *t2;
+    TSPNode *t1, *t2;
 
     t1 = FirstNode;
     do {
@@ -5686,7 +5686,7 @@ char *ReadLine(FILE * InputFile)
    terminated by an appropriate end-of-section identifier.
 
    NODE_COORD_SECTION :
-   Node coordinates are given in this section. Each line is of the form
+   TSPNode coordinates are given in this section. Each line is of the form
    <integer> <real> <real>
    if NODE_COORD_TYPE is TWOD_COORDS, or
    <integer> <real> <real> <real>
@@ -5777,7 +5777,7 @@ static char *Copy(char *S)
 
 void kGUITSP::CreateNodes(void)
 {
-    Node *Prev=0, *N=0;
+    TSPNode *Prev=0, *N=0;
     long i;
 
 //    if (m_dimension <= 0)
@@ -5789,7 +5789,7 @@ void kGUITSP::CreateNodes(void)
       //  if (m_dimension > MaxMatrixDimension)
       //      eprintf("m_dimension too large in HPP problem");
     }
-    assert(NodeSet = (Node *) calloc(m_dimension + 1, sizeof(Node)));
+    assert(NodeSet = (TSPNode *) calloc(m_dimension + 1, sizeof(TSPNode)));
     for (i = 1; i <= m_dimension; i++, Prev = N) {
         N = &NodeSet[i];
         if (i == 1)
@@ -5834,7 +5834,7 @@ void kGUITSP::RecordBestTour(void)
 
 void kGUITSP::RecordBetterTour(void)
 {
-    Node *N;
+    TSPNode *N;
     long i, k;
 
     for (i = 1, N = FirstNode, k = 0; i <= m_dimension; i++, N = N->Suc) {
@@ -5862,9 +5862,9 @@ void kGUITSP::RecordBetterTour(void)
    The list must not be empty before the call. 
 */
 
-Node *kGUITSP::RemoveFirstActive(void)
+TSPNode *kGUITSP::RemoveFirstActive(void)
 {
-    Node *t = FirstActive;
+    TSPNode *t = FirstActive;
     if (FirstActive == LastActive)
         FirstActive = LastActive = 0;
     else
@@ -5886,7 +5886,7 @@ Node *kGUITSP::RemoveFirstActive(void)
 void kGUITSP::ResetCandidateSet(void)
 {
     Candidate *NFrom, Temp, *NN;
-    Node *From;
+    TSPNode *From;
 
     From = FirstNode;
     /* Loop for all nodes */
@@ -5922,7 +5922,7 @@ void kGUITSP::ResetCandidateSet(void)
 
 void kGUITSP::RestoreTour(void)
 {
-    Node *t1, *t2, *t3, *t4;
+    TSPNode *t1, *t2, *t3, *t4;
 
     /* Loop as long as the stack is not empty */
     while (Swaps > 0) {
@@ -5961,7 +5961,7 @@ void kGUITSP::RestoreTour(void)
 
 void kGUITSP::StoreTour(void)
 {
-    Node *t, *u;
+    TSPNode *t, *u;
     Candidate *Nt;
     int i;
 
@@ -6066,7 +6066,7 @@ void kGUITSP::AsyncCalc(void)
 
 void kGUITSP::Calc(void)
 {
-    Node *N;
+    TSPNode *N;
     long Id, i;
     long TrialSum, MinTrial, Successes, Run;
     double Cost, CostSum;	//, Time, TimeSum, MinTime;
@@ -6157,7 +6157,7 @@ void kGUITSP::Calc(void)
         MaxSwaps = m_dimension;
     if (CostMatrix == 0 && m_dimension <= MaxMatrixDimension && Distance != 0
 		&& Distance != &kGUITSP::Distance_1 && Distance != &kGUITSP::Distance_ATSP) {
-        Node *Ni, *Nj;
+        TSPNode *Ni, *Nj;
         assert(CostMatrix =
                (long *) calloc(m_dimension * (m_dimension - 1) / 2,
                                sizeof(long)));
@@ -6350,7 +6350,7 @@ void kGUITSP::Calc(void)
         if (Cost < Optimum || (Cost == Optimum && Successes == 1))
 		{
             if (Cost < Optimum) {
-                Node *N;
+                TSPNode *N;
                 N = FirstNode;
                 while ((N = N->OptimumSuc = N->Suc) != FirstNode);
 //                printf("New optimum = %f, Old optimum = %f\n", Cost,  Optimum);

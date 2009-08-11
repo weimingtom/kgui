@@ -836,6 +836,9 @@
 				RelativePath="..\..\..\src\base\ftstroke.c">
 			</File>
 			<File
+				RelativePath="..\..\..\src\base\ftsynth.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\base\ftsystem.c">
 				<FileConfiguration
 					Name="Release|Win32">

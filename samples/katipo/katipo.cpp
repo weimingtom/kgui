@@ -78,6 +78,7 @@ private:
 	CALLBACKGLUEPTR(Katipo,Event,kGUIEvent)
 	void StartScan(void);
 	void Scan(void);
+	void AddURL(kGUIString *url,kGUIString *referer);
 	void ScanHTML(kGUIHTMLObj *obj);
 	CALLBACKGLUE(Katipo,Scan)
 	void StopScan(void);
@@ -128,8 +129,10 @@ Katipo *g_Katipo;
 
 void AppInit(void)
 {
-	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
-	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
+//	kGUI::LoadFont("font.ttf");	/* use default font inside kgui */
+//	kGUI::LoadFont("fontb.ttf");	/* use default bold font */
 	kGUI::SetDefFontSize(20);
 	kGUI::SetDefReportFontSize(20);
 
@@ -375,6 +378,24 @@ void Katipo::Scan(void)
 				/* parse the DOM tree and collect local links */
 				ScanHTML(m_html.GetRootObj());
 
+				/* scan collected map areas too */
+				for(unsigned int m=0;m<m_html.GetNumMaps();++m)
+				{
+					kGUIHTMLMap *map;
+
+					map=m_html.GetMap(m);
+					for(unsigned int a=0;a<map->GetNumAreas();++a)
+					{
+						kGUIHTMLArea *area;
+						kGUIHTMLLinkObj *l;
+
+						area=map->GetArea(a);
+						l=area->GetLink();
+						if(l)
+							AddURL(l->GetURL(),l->GetReferrer());
+					}
+				}
+
 				d.Sprintf("OK - %d\n",m_scandl.GetReturnCode());
 				m_scanrow->SetStatus(d.GetString());
 			}
@@ -394,15 +415,12 @@ void Katipo::Scan(void)
 
 }
 
-
 void Katipo::ScanHTML(kGUIHTMLObj *obj)
 {
 	unsigned int i;
 	kGUIString *s;
 	kGUIString url;
 	kGUIString referer;
-	kGUIString base;
-	kGUIString root;
 
 	/* call children recursively */
 	for(i=0;i<obj->GetNumStyleChildren();++i)
@@ -420,47 +438,51 @@ void Katipo::ScanHTML(kGUIHTMLObj *obj)
 		s=obj->GetReferrer();
 		if(s)
 			referer.SetString(s);
+		if(url.GetLen())
+			AddURL(&url,&referer);
 	break;
 	case HTMLTAG_IMG:
 		/* handle images only if requested */
 	break;
 	}
+}
 
-	if(url.GetLen())
+void Katipo::AddURL(kGUIString *url,kGUIString *referer)
+{
+	int b;
+	int off;
+	StopTableRow *srow;
+	kGUIString base;
+	kGUIString root;
+
+	/* clip off #xxx from end of URL so www.web.com/page.html#aaa = www.web.com/page.html */
+	off=url->Str("#");
+	if(off>=0)
+		url->Clip(off);
+
+	/* make sure the domain matches */
+	kGUI::ExtractURL(url,&base,&root);
+
+	/* compare root against block list */
+	for(b=0;b<m_stoptable.GetNumRows();++b)
 	{
-		int b;
-		int off;
-		StopTableRow *srow;
+		srow=static_cast<StopTableRow *>(m_stoptable.GetChild(b));
+		if(!strncmp(url->GetString(),srow->GetURL()->GetString(),srow->GetURL()->GetLen()))
+			return;
+	}
 
-		/* clip off #xxx from end of URL so www.web.com/page.html#aaa = www.web.com/page.html */
-		off=url.Str("#");
-		if(off>=0)
-			url.Clip(off);
-
-		/* make sure the domain matches */
-		kGUI::ExtractURL(&url,&base,&root);
-
-		/* compare root against block list */
-		for(b=0;b<m_stoptable.GetNumRows();++b)
+	if(!strcmp(base.GetString(),m_base.GetString()))
+	{
+		if(m_scanhash.Find(url->GetString())==0)
 		{
-			srow=static_cast<StopTableRow *>(m_stoptable.GetChild(b));
-			if(!strncmp(url.GetString(),srow->GetURL()->GetString(),srow->GetURL()->GetLen()))
-				return;
-		}
+			OutputTableRow *row;
 
-		if(!strcmp(base.GetString(),m_base.GetString()))
-		{
-			if(m_scanhash.Find(url.GetString())==0)
-			{
-				OutputTableRow *row;
-
-				/* add to table */
-				m_scanhash.Add(url.GetString(),0);
-				row=new OutputTableRow();
-				row->SetURL(url.GetString());
-				row->SetReferer(referer.GetString());
-				m_table.AddRow(row);
-			}
+			/* add to table */
+			m_scanhash.Add(url->GetString(),0);
+			row=new OutputTableRow();
+			row->SetURL(url->GetString());
+			row->SetReferer(referer->GetString());
+			m_table.AddRow(row);
 		}
 	}
 }

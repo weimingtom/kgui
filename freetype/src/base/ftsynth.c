@@ -78,7 +78,6 @@
     FT_Error    error   = FT_Err_Ok;
     FT_Pos      xstr, ystr;
 
-
     /* some reasonable strength */
     xstr = FT_MulFix( face->units_per_EM,
                       face->size->metrics.y_scale ) / 42;

@@ -4,6 +4,18 @@
 #include "kgui.h"
 #include "kguiaudio.h"
 
+enum
+{
+MOVIEQUALITY_LOW,
+MOVIEQUALITY_LOW2,
+MOVIEQUALITY_LOW3,
+MOVIEQUALITY_MED,
+MOVIEQUALITY_MED2,
+MOVIEQUALITY_MED3,
+MOVIEQUALITY_HIGH};
+
+#define NUMBUFRAMES 16
+
 class kGUIMovie: public DataHandle
 {
 public:
@@ -14,16 +26,17 @@ public:
 	static void PurgeGlobals(void);
 	static const char *GetVersion(void);
 
-	void SetOutputImage(kGUIImage *image);
+	void SetOutputImage(kGUIImage *image,unsigned int quality=MOVIEQUALITY_MED);
 	void SetPlayAudio(bool pa) {m_playaudio=pa;}
 	void OpenMovie(void);
 	bool GetIsValid(void) {return m_isvalid;}
 	unsigned int GetMovieWidth(void) {return m_width;}
 	unsigned int GetMovieHeight(void) {return m_height;}
-	/* load the next frame from the movie and cache it */
-	bool LoadNextFrame(void);
+
+	/* load and buffer frames */
+	void UpdateBuffers(bool fill);
 	/* show the cached frame */
-	void ShowFrame(void);
+	bool ShowFrame(void);
 	void CloseMovie(void);
 
 	void SetPlaying(bool p);
@@ -34,18 +47,24 @@ public:
 	int GetDuration(void) {return m_duration;}
 	int GetTime(void) {return m_time;}
 	void Seek(int place);
+	unsigned int GetQuality(void) {return m_quality;}
+	bool LoadNextFrame(void) {UpdateBuffers(false);return ShowFrame();}
 private:
 	static bool m_initglobals;
 	CALLBACKGLUE(kGUIMovie,Event)
 	void Event(void);
 
 	kGUIImage *m_image;
+	unsigned int m_quality;
 	kGUIAudioManager m_audiomanager;
 	kGUIAudio *m_audio;
 
 	class kGUIMovieLocal *m_local;
 
-	bool m_frameready:1;
+	unsigned int m_numframesready;
+	unsigned int m_frameheadindex;
+	unsigned int m_frametailindex;
+
 	bool m_isvalid:1;
 	bool m_playing:1;
 	bool m_done:1;
@@ -53,6 +72,7 @@ private:
 	bool m_playaudio:1;
 	int m_time;			/* current tick time in TICKSPERSEC */
 	int m_ptime;		/* presentation time to show next frame in TICKSPERSEC */
+	int m_ptimes[NUMBUFRAMES];
 	unsigned int m_width,m_height;
 	unsigned int m_outwidth,m_outheight;
 	int m_format;
@@ -67,7 +87,7 @@ private:
 	int m_duration;
 	double m_vstreamtimebase;
 	double m_vcodectimebase;
-	double m_videoclock;
+	long long m_rawtime;
 };
 
 // a renderable movie object with attached controls
