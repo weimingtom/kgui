@@ -4051,7 +4051,7 @@ public:
 	static kGUISystem *GetSystem(void) {return m_sys;}
 
 	static void HideWindow(void) {m_sys->HideWindow();}
-	static void ShowWindow(void) {m_sys->ShowWindow();}
+	static void ShowWindow(void) {m_sys->ShowWindow();m_backgroundobj->SetSize(m_backgroundobj->GetZoneW(),m_backgroundobj->GetZoneH());}
 	/* force a screen redraw */
 	static void ReDraw(void) {m_allowdraw=true;m_sys->ReDraw();m_allowdraw=false;}
 	static void Copy(kGUIString *s) {m_sys->Copy(s);}
