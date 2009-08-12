@@ -96,7 +96,7 @@ void kGUIControlBoxObj::AllocSpace(int w,int h,int *x,int *y)
 	int n;
 	bool overlap;
 
-	passert((w+(m_bordergap<<1))<=m_maxwidth,"Object is too wide to fit (%d>%d)!\n",w,m_maxwidth);
+	passert((w+(m_bordergap<<1))<=m_maxwidth,"Object is too wide to fit (%d>%d)!\n",w+(m_bordergap<<1),m_maxwidth);
 
 	if(m_currentx)
 		m_currentx+=m_objectgap;

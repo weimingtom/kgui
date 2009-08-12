@@ -3131,8 +3131,8 @@ public:
 	void AddFixedObject(kGUIObj *obj);
 	void SetBorderGap(int g) {m_bordergap=g;DirtyandCalcChildZone();}
 	void SetObjectGap(int g) {m_objectgap=g;}
-	void SetMaxWidth(int mw) {m_maxwidth=mw;}
-	void SetMaxHeight(int mh) {m_maxheight=mh;}
+	void SetMaxWidth(int mw) {m_maxwidth=mw-(m_bordergap<<1);}
+	void SetMaxHeight(int mh) {m_maxheight=mh-(m_bordergap<<1);}
 	void SetBGColor(kGUIColor bgcol) {m_bgcolor=bgcol;Dirty();}
 	void SetDrawBG(bool d) {m_drawbg=d;Dirty();}
 	void SetDrawFrame(bool f) {m_drawframe=f;Dirty();}
