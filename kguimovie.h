@@ -14,8 +14,6 @@ MOVIEQUALITY_MED2,
 MOVIEQUALITY_MED3,
 MOVIEQUALITY_HIGH};
 
-#define NUMBUFRAMES 16
-
 class kGUIMovie: public DataHandle
 {
 public:
@@ -34,7 +32,7 @@ public:
 	unsigned int GetMovieHeight(void) {return m_height;}
 
 	/* load and buffer frames */
-	void UpdateBuffers(bool fill);
+	void UpdateBuffers(void);
 	/* show the cached frame */
 	bool ShowFrame(void);
 	void CloseMovie(void);
@@ -48,7 +46,8 @@ public:
 	int GetTime(void) {return m_time;}
 	void Seek(int place);
 	unsigned int GetQuality(void) {return m_quality;}
-	bool LoadNextFrame(void) {UpdateBuffers(false);return ShowFrame();}
+	bool LoadNextFrame(void) {bool rc;UpdateBuffers();rc=ShowFrame();m_time=m_ptime;return(rc);}
+	void ReStart(void) {Seek(0);}
 private:
 	static bool m_initglobals;
 	CALLBACKGLUE(kGUIMovie,Event)
@@ -62,8 +61,6 @@ private:
 	class kGUIMovieLocal *m_local;
 
 	unsigned int m_numframesready;
-	unsigned int m_frameheadindex;
-	unsigned int m_frametailindex;
 
 	bool m_isvalid:1;
 	bool m_playing:1;
@@ -72,7 +69,7 @@ private:
 	bool m_playaudio:1;
 	int m_time;			/* current tick time in TICKSPERSEC */
 	int m_ptime;		/* presentation time to show next frame in TICKSPERSEC */
-	int m_ptimes[NUMBUFRAMES];
+	int m_bufptime;
 	unsigned int m_width,m_height;
 	unsigned int m_outwidth,m_outheight;
 	int m_format;

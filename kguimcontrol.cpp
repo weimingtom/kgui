@@ -196,18 +196,28 @@ void kGUIMovieControlObj::Move(kGUIEvent *event)
 
 void kGUIMovieControlObj::PressPlayPause(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_PRESSED)
+	switch(event->GetEvent())
 	{
+	case EVENT_PRESSED:
 		if(m_movie->GetPlaying()==false)
 		{
 			if(m_movie->GetDone()==true)
-				m_movie->Seek(0);
+				m_movie->ReStart();
 			m_movie->SetPlayAudio(true);
 			m_movie->SetPlaying(true);
 		}
 		else
 			m_movie->SetPlaying(false);
 		UpdateButton();
+	break;
+	case EVENT_RIGHTCLICK:	/* show 1 frame */
+		if(m_movie->GetPlaying()==false)
+		{
+			if(m_movie->LoadNextFrame()==false)
+				m_movie->ReStart();
+		}
+		UpdateButton();
+	break;
 	}
 }
 
