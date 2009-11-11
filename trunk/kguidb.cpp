@@ -543,7 +543,7 @@ void kGUIDBRecord::LoadQ(kGUIDbQuery *q,const char **row)
 	}
 }
 
-void kGUIDBRecord::LoadGroup(const char *tablename,const char *keyname,const char *key)
+void kGUIDBRecord::LoadGroup(const char *tablename,const char *keyname,const char *key,const char *sort)
 {
 	kGUIDbQuery *q;
 
@@ -553,7 +553,12 @@ void kGUIDBRecord::LoadGroup(const char *tablename,const char *keyname,const cha
 
 	m_unique=false;
 	if(strlen(keyname) && key)
-		q=new kGUIDbQuery(m_db,"SELECT * from %s WHERE %s='%s'",tablename,keyname,key);
+	{
+		if(sort)
+			q=new kGUIDbQuery(m_db,"SELECT * from %s WHERE %s='%s' ORDER BY %s",tablename,keyname,key,sort);
+		else
+			q=new kGUIDbQuery(m_db,"SELECT * from %s WHERE %s='%s'",tablename,keyname,key);
+	}
 	else
 		q=new kGUIDbQuery(m_db,"SELECT * from %s",tablename);
 	LoadGroup(tablename,q);

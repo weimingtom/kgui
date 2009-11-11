@@ -316,6 +316,23 @@ void kGUIReportTextObj::SetFrame(bool df)
 	Changed();
 }
 
+void kGUIReportTextObj::ShrinkToFit(void)
+{
+	int fontsize;
+	int w=GetZoneW();
+	int h=GetZoneH();
+
+	fontsize=GetFontSize();
+	CalcLineList(w);
+	while( (((GetWidest())>w) || ((int)GetTotalHeight())>h) && (fontsize>1))
+	{
+		SetFontSize(--fontsize);
+		SetSize(w,h);
+		CalcLineList(w);
+	}
+
+}
+
 int kGUIReportTextObj::Height(int w)
 {
 	int totalheight;
@@ -371,7 +388,7 @@ void kGUIReportTextObj::Draw(void)
 	}
 }
 
-void kGUIReportTickboxObj::Draw(void)
+void kGUIReportTickBoxObj::Draw(void)
 {
 	kGUICorners c;
 

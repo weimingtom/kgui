@@ -26,6 +26,20 @@
 #include "kguicookies.h"
 #include "kguissl.h"
 
+#define ALLOWPACK
+
+#ifdef ALLOWPACK
+#include "zlib/zlib.h"
+
+enum
+{
+PACK_GZIP,
+PACK_DEFLATE,
+PACK_NONE};
+
+#endif
+
+
 /*! @file kguidl.cpp 
     @brief This is a download class for downloading pages and other assets from the      
  internet. It can be run synchronously or asynchronously in it's down thread.  
@@ -274,6 +288,10 @@ void kGUIDownloadEntry::Download(void)
 	kGUIString referer;
 	kGUIString ifmod;
 	kGUIString cc;
+#ifdef ALLOWPACK
+	int pack;
+	kGUIString enc;
+#endif
 	kGUIString authorization;
 	kGUICookieJar *jar=kGUI::GetCookieJar();
 	kGUISSL *ssl=0;
@@ -499,6 +517,9 @@ again:;
 	request.ASprintf("User-Agent: %s\r\n",prodname.GetString());
 	request.ASprintf("Host: %s\r\n",servername.GetString());
 	request.ASprintf("Referer: %s\r\n",referer.GetString());
+#ifdef ALLOWPACK
+	request.ASprintf("Accept-Encoding: gzip, deflate\r\n");
+#endif
 
 	/* do we have this in the expired cache ? */
 	if(ifmod.GetLen())
@@ -662,6 +683,7 @@ again:;
 	case 200:
 		ExtractFromHeader("Last-Modified: ",&m_lastmod);
 		ExtractFromHeader("Content-Type: ",&m_encoding);
+		ExtractFromHeader("Content-Encoding: ",&enc);
 		if(!ExtractFromHeader("Expires: ",&m_expiry))
 		{
 			int seconds;
@@ -678,13 +700,68 @@ again:;
 			now.AddSeconds(seconds);
 			now.ShortDateTime(&m_expiry);
 		}
+#ifdef ALLOWPACK
+		if(!strcmpi(enc.GetString(),"gzip"))
+			pack=PACK_GZIP;
+		else if(!strcmpi(enc.GetString(),"deflate"))
+			pack=PACK_DEFLATE;
+		else
+			pack=PACK_NONE;
 
-		if(m_dh->OpenWrite("wb",50*1024)==true)
+		if(pack==PACK_GZIP || pack==PACK_DEFLATE)
 		{
-			/* write data starting after the header */
-			m_dh->Write(got.GetString()+b,got.GetLen()-b);
-			if(m_dh->Close()==true)
-				m_status=DOWNLOAD_OK;
+		    z_stream d_stream; /* decompression stream */
+			kGUIString lens;
+			Array<unsigned char>unpacked;
+			unsigned int uplen=65536;
+
+			unpacked.Alloc(uplen);
+			/* decompress the data */
+			d_stream.zalloc = (alloc_func)0;
+		    d_stream.zfree = (free_func)0;
+		    d_stream.opaque = (voidpf)0;
+
+		    d_stream.next_in = (Bytef *)(got.GetString()+b);
+			d_stream.avail_in= got.GetLen()-b;
+			d_stream.next_out = unpacked.GetArrayPtr();
+			d_stream.avail_out= uplen;
+
+			if(pack==PACK_GZIP)
+				inflateInit2(&d_stream, 16+MAX_WBITS);	//data is 'gzip'
+			else
+				inflateInit(&d_stream);					//source is 'deflate'
+
+			do{
+				if(inflate(&d_stream, Z_NO_FLUSH)==Z_STREAM_END)
+					break;
+				/* make unpack buffer bigger */
+				unpacked.Alloc(uplen+65536);
+				d_stream.next_out = unpacked.GetArrayPtr()+uplen;
+				d_stream.avail_out= 65536;
+				uplen+=65536;
+			}while(1);
+		    inflateEnd(&d_stream);
+
+			uplen-=d_stream.avail_out;
+
+			if(m_dh->OpenWrite("wb",50*1024)==true)
+			{
+				/* write data starting after the header */
+				m_dh->Write(unpacked.GetArrayPtr(),uplen);
+				if(m_dh->Close()==true)
+					m_status=DOWNLOAD_OK;
+			}
+		}
+		else
+#endif
+		{
+			if(m_dh->OpenWrite("wb",50*1024)==true)
+			{
+				/* write data starting after the header */
+				m_dh->Write(got.GetString()+b,got.GetLen()-b);
+				if(m_dh->Close()==true)
+					m_status=DOWNLOAD_OK;
+			}
 		}
 		if(m_status!=DOWNLOAD_OK)
 		{

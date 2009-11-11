@@ -46,6 +46,7 @@ public:
 	unsigned int GoBack(unsigned int pos);
 	void SetChar(unsigned int pos,char c);
 	void Clip(unsigned int len);
+	void Clip(const char *s);
 	void Clean(const char *validchars);
 	/* get numeric values from string */
 	inline int GetInt(void) {return (atoi(m_string));}
@@ -56,7 +57,7 @@ public:
 	int Sprintf(const char *fmt,...);
 	int ASprintf(const char *fmt,...);
 	void AVSprintf(const char *fmt,va_list args);
-	inline void Clear(void) {Clip(0);}
+	inline void Clear(void) {Clip((unsigned int)0);}
 	inline unsigned int GetLen(void) {return m_len;}
 
 	inline void SetNull(void) {Clear();}
@@ -80,10 +81,8 @@ public:
 	bool RemoveQuotes(void);	/* remove quotes and return true if there was any */
 
 	/* string compare functions */
-	int Str(kGUIString *ss,unsigned int offset=0);
-	int IStr(kGUIString *ss,unsigned int offset=0);
-	int Str(const char *ss,unsigned int offset=0);
-	int IStr(const char *ss,unsigned int offset=0);
+	int Str(kGUIString *ss,bool matchcase=false,bool matchword=false,unsigned int offset=0);
+	int Str(const char *ss,bool matchcase=false,bool matchword=false,unsigned int offset=0);
 
 	/* encoding handling */
 	unsigned int GetEncoding(void) {return m_encoding;}

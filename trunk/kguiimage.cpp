@@ -1468,7 +1468,7 @@ bool kGUIImage::LoadPNGImage(bool justsize)
     png_uint_32 width, height;
     int bit_depth, color_type, interlace_type;
 	unsigned char *readptr;
-	DataHandle *pnghandle;
+	DataHandle *pnghandle=this;
 
 	/* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
@@ -1479,8 +1479,6 @@ bool kGUIImage::LoadPNGImage(bool justsize)
 
 	if(Open()==false)
 		return(false);
-
-	pnghandle=this;				/* save pointer to DataHandle for feeding data */
 
    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,NULL, NULL);
 
@@ -1830,6 +1828,81 @@ bool kGUIImage::LoadPNGImage(bool justsize)
    Close();
 
    /* LOADED! that's it */
+	return(true);
+}
+
+void write_function(png_structp write, png_bytep data, png_size_t length)
+ {
+	 DataHandle *pnghandle;
+
+	 pnghandle=(DataHandle *)png_get_io_ptr(write);
+	 pnghandle->Write(data,(long)length);
+}
+
+void write_flush(png_structp write)
+{
+}
+
+bool kGUIImage::SavePNGImage(DataHandle *outdh)
+{
+	unsigned int i;
+	png_structp png_ptr;
+    png_infop info_ptr;
+	DataHandle *pnghandle=outdh;
+	Array<png_bytep>rows;
+	unsigned char *p;
+
+	/* initialize stuff */
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	
+	if (!png_ptr)
+		return(false);
+
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+		return(false);
+
+	if(outdh->OpenWrite("wb")==false)
+		return(false);
+
+   /* Set error handling if you are using the setjmp/longjmp method (this is
+    * the normal method of doing things with libpng).  REQUIRED unless you
+    * set up your own error handlers in the png_create_read_struct() earlier.
+    */
+
+   if (setjmp(png_jmpbuf(png_ptr)))
+   {
+      /* Free all of the memory associated with the png_ptr and info_ptr */
+      png_destroy_write_struct(&png_ptr, &info_ptr);
+      outdh->Close();
+      /* If we get here, we had a problem writing the file */
+      return(false);
+   }
+
+	png_set_bgr(png_ptr);
+
+   /* Set up the input control if you are using standard C streams */
+	png_set_write_fn(png_ptr, (void *)pnghandle, write_function,write_flush);
+
+	/* write header */
+	png_set_IHDR(png_ptr, info_ptr, m_imagewidth, m_imageheight,
+		     8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+		     PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_write_info(png_ptr, info_ptr);
+
+	rows.Init(m_imageheight,0);
+	p=m_imagedata.GetEntry(0);
+	for(i=0;i<m_imageheight;++i)
+	{
+		rows.SetEntry(i,p);
+		p+=m_imagewidth*4;
+	}
+
+	png_write_image(png_ptr, rows.GetArrayPtr());
+	png_write_end(png_ptr, NULL);
+
+	outdh->Close();
 	return(true);
 }
 
@@ -3558,7 +3631,7 @@ kGUIImageObj::~kGUIImageObj()
 	if(m_animateeventactive)
 	{
 		m_animateeventactive=false;
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
 	}
 
 	/* these are allocated in pairs so we only need to check one for null */
@@ -3610,7 +3683,7 @@ void kGUIImageObj::Animate(void)
 	if( (kGUI::Overlap(&sc,&c)==false) || (GetNumFrames()<1) || m_animate==false)
 	{
 		m_animateeventactive=false;
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
 		return;
 	}
 
@@ -3842,7 +3915,7 @@ bool kGUIImageObj::UpdateInput(void)
 kGUIImageRefObj::~kGUIImageRefObj()
 {
 	if(m_animateeventactive)
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
 }
 
 bool kGUIImageRefObj::UpdateInput(void)
@@ -3875,7 +3948,7 @@ void kGUIImageRefObj::Animate(void)
 	if( (kGUI::Overlap(&sc,&c)==false) || (GetNumFrames()<2))
 	{
 		m_animateeventactive=false;
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
 		return;
 	}
 
@@ -3909,7 +3982,7 @@ void kGUIImageRefObj::Draw(void)
 			if(GetNumFrames()>1 && m_animate==true && m_animateeventactive==false)
 			{
 				m_animateeventactive=true;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
 			}
 
 			m_image->SetScale(GetScaleX(),GetScaleY());
@@ -3947,7 +4020,7 @@ void kGUIImageRefObj::TileDraw(void)
 			if(GetNumFrames()>1 && m_animate==true && m_animateeventactive==false)
 			{
 				m_animateeventactive=true;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
 			}
 
 			m_image->SetScale(GetScaleX(),GetScaleY());
@@ -3995,7 +4068,7 @@ void kGUIImageObj::Draw(void)
 			if(GetNumFrames()>1 && m_animate==true && m_animateeventactive==false)
 			{
 				m_animateeventactive=true;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
 			}
 
 			if(m_alpha==1.0f)
@@ -4050,7 +4123,7 @@ void kGUIImageObj::TileDraw(void)
 			if(GetNumFrames()>1 && m_animate==true && m_animateeventactive==false)
 			{
 				m_animateeventactive=true;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
 			}
 
 			if(kGUIImage::TileDraw(m_currentframe,c.lx-m_leftoff,c.ty-m_topoff,c.rx-m_leftoff,c.by-m_topoff)==false)

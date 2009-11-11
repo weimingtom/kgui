@@ -62,21 +62,40 @@ void kGUITextObj::Changed()
 	Dirty();
 }
 
+const unsigned int kGUIText::GetWidest(void)
+{
+	int i;
+	unsigned int maxw=0;
+	kGUIInputLineInfo *lbptr;
+
+	/* get widest */
+	if(m_llnum<2)
+		return(GetWidth());
+	else
+	{
+		for(i=0;i<m_llnum;++i)
+		{
+			lbptr=m_linelist.GetEntry(i);
+			maxw=MAX(lbptr->pixwidth,maxw);
+		}
+	}
+	return(maxw);
+}
+
 /* if the text is too wide, then shrink the font size until it fits */
 void kGUITextObj::ShrinktoFit(void)
 {
 	int fontsize;
 	int w=GetZoneW();
 	int h=GetZoneH();
-	int widestline;
 
 	fontsize=GetFontSize();
-	widestline=CalcLineList(w);
-	while( (((widestline+m_xoff+m_xoff)>w) || ((int)GetTotalHeight()+m_yoff+m_yoff)>h) && (fontsize>1))
+	CalcLineList(w);
+	while( ((((int)GetWidest()+m_xoff+m_xoff)>w) || ((int)GetTotalHeight()+m_yoff+m_yoff)>h) && (fontsize>1))
 	{
 		SetFontSize(--fontsize);
 		SetSize(w,h);
-		widestline=CalcLineList(w);
+		CalcLineList(w);
 	}
 }
 

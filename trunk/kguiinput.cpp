@@ -35,6 +35,8 @@
 /*********************************************************************************/
 
 #include "kgui.h"
+//used for Find/Replace requestor
+#include "kguireq.h"
 
 #define ILGAP 2
 #define IEDGE 4
@@ -55,6 +57,7 @@ kGUIInputBoxObj::kGUIInputBoxObj()
 	m_allowenter=false;
 	m_allowtab=false;
 	m_allowcursorexit=false;	
+	m_allowfind=true;
 	m_leaveselection=false;	
 	m_leavescroll=false;	
 	m_recalclines=true;
@@ -1054,6 +1057,11 @@ exitcell:		m_leftoff=0;
 				}
 			}
 			break;
+			case GUIKEY_FIND:
+			case GUIKEY_REPLACE:
+				if(m_allowfind)
+					kGUISearchReq::Open(this,this);
+			break;
 			default:
 				/* insert a letter into the string */
 keypressed:		if(m_locked==false)
@@ -1372,6 +1380,70 @@ void kGUIInputBoxObj::GetCursorRange(unsigned int *si,unsigned int *ei)
 	{
 		*(si)=m_hcursor;
 		*(ei)=m_hstart;
+	}
+}
+
+void kGUIInputBoxObj::StringSearch(kGUIString *from,bool matchcase,bool matchword)
+{
+	unsigned int c=m_hcursor+1;
+	bool wrap=false;
+	int newc;
+
+	if(c>=GetLen())
+	{
+		c=0;
+		wrap=true;
+	}
+
+	while(1)
+	{
+		newc=Str(from->GetString(),matchcase,matchword,c);
+		if(newc>=0)
+		{
+			m_hcursor=newc;
+			m_hstart=newc+from->GetLen();
+			m_hrange=true;
+			PutCursorOnScreen();
+			Dirty();
+			return;
+		}
+		if(wrap)
+			return;
+		c=0;
+		wrap=true;
+	}
+}
+
+void kGUIInputBoxObj::StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to)
+{
+	unsigned int c=m_hcursor;
+	bool wrap=false;
+	int newc;
+
+	if(c>=GetLen())
+	{
+		c=0;
+		wrap=true;
+	}
+
+	while(1)
+	{
+		newc=Str(from->GetString(),matchcase,matchword,c);
+		if(newc>=0)
+		{
+			Replace(from->GetString(),to->GetString(),newc,matchcase,1);
+
+			m_hcursor=newc;
+			m_hstart=newc+to->GetLen();
+			m_hrange=true;
+			PutCursorOnScreen();
+			Dirty();
+			return;
+		}
+		if(wrap)
+			return;
+		c=0;
+		wrap=true;
 	}
 }
 

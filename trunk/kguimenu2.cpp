@@ -50,7 +50,7 @@ kGUIMenuObj::~kGUIMenuObj()
 {
 	if(m_track==true)
 	{
-		kGUI::DelEvent(this,CALLBACKNAME(Track));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Track));
 		m_track=false;
 	}
 }
@@ -102,7 +102,7 @@ void kGUIMenuObj::Track(void)
 	over=kGUI::MouseOver(&c);
 	if(over==false && !m_depth)
 	{
-		kGUI::DelEvent(this,CALLBACKNAME(Track));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Track));
 		m_track=false;
 
 		m_colhover=-1;
@@ -129,7 +129,7 @@ bool kGUIMenuObj::UpdateInput(void)
 		if(m_track==false)
 		{
 			m_track=true;
-			kGUI::AddEvent(this,CALLBACKNAME(Track));
+			kGUI::AddUpdateTask(this,CALLBACKNAME(Track));
 		}
 		/* yes they have mouse over the tabs on the top */
 		/* which tab is the mouse over? (if any) */

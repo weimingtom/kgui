@@ -1357,10 +1357,15 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 	}
 done:;
 
-	while((c==10) || (c==13) || (c==' ') || (c==9))
+	if(m_dh.Eof()==false)
 	{
-		m_dh.StreamSkip(1);
-		c=m_dh.StreamPeekChar();
+		while((c==10) || (c==13) || (c==' ') || (c==9))
+		{
+			m_dh.StreamSkip(1);
+			if(m_dh.Eof())
+				break;
+			c=m_dh.StreamPeekChar();
+		}
 	}
 	/* this is a virtual function */
 	ChildLoaded(item,parent);

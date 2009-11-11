@@ -36,6 +36,8 @@
 #include "kguibrowse.h"
 #include "_text.h"
 
+#include <npapi.h>
+
 #define SMALLCAPTIONFONT 1
 #define SMALLCAPTIONFONTSIZE 9
 
@@ -287,6 +289,8 @@ HistoryRecord *TabRecord::NextPage(void)
 
 kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 {
+	kGUIString s;
+
 	m_numdlactive=0;
 	m_dlactive.Init(4,4);
 //	m_dlpool.SetBlockSize(8);
@@ -400,7 +404,8 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_urlcaption.SetFontID(SMALLCAPTIONFONT);
 	m_urlcaption.SetString("URL");
 
-	m_url.SetString("http://");
+	s.SetString("http://");
+	m_url.SetString(&s);
 	m_url.SetPos(0,15);
 	m_url.SetSize(750,22);
 	m_url.SetEventHandler(this,CALLBACKNAME(UrlChanged));
@@ -445,7 +450,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_linkcaption.SetString("Link");
 
 	m_linkurl.SetPos(0,15);
-	m_linkurl.SetSize(400,20);
+	m_linkurl.SetSize(m_browsecontrols.GetZoneW()-m_browsecontrols.GetCurrentX(),20);
 	m_browsecontrols.AddObjects(2,&m_linkcaption,&m_linkurl);
 
 	AddObject(&m_browsecontrols);
@@ -468,7 +473,7 @@ kGUIBrowseObj::kGUIBrowseObj(kGUIBrowseSettings *settings,int w,int h)
 	m_tabs.AddObject(m_curscreenpage);
 
 	UpdateButtons();
-	kGUI::AddEvent(this,CALLBACKNAME(Update));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(Update));
 }
 
 void kGUIBrowseObj::CopyTabURL(unsigned int n,kGUIString *url)
@@ -1023,7 +1028,7 @@ kGUIBrowseObj::~kGUIBrowseObj()
 		}
 	}
 
-	kGUI::DelEvent(this,CALLBACKNAME(Update));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(Update));
 }
 
 /* return pointer to next page buffer, if full, then scroll buffers back */
@@ -2381,6 +2386,126 @@ kGUIOffsetInputBoxObj::kGUIOffsetInputBoxObj()
 	m_animdelay=0;
 	m_animateeventactive=false;
 	m_iconvalid=false;
+	SetOffsets();
+}
+
+void kGUIOffsetInputBoxObj::SetString(kGUIString *s)
+{
+	/* extract out the domain */
+	kGUIInputBoxObj::SetString(s);
+
+	if(strncmp(s->GetString(),"http://",7)==0)
+		m_domain.SetString(s->GetString()+7);
+	else if(strncmp(s->GetString(),"https://",8)==0)
+		m_domain.SetString(s->GetString()+8);
+	else
+		m_domain.Clear();
+
+	m_domain.Clip("/");
+	m_domain.Clip("?");
+	m_domain.Clip(":");
+	SetOffsets();
+}
+
+void kGUIOffsetInputBoxObj::SetOffsets(void)
+{
+	unsigned int iw;
+	unsigned int dw;
+
+	dw=m_domain.GetWidth();
+	if(m_iconvalid)
+	{
+		if(dw)
+			m_iconx=2;
+		else
+			m_iconx=0;
+		iw=16+2;
+	}
+	else
+	{
+		m_iconx=0;
+		iw=0;
+	}
+	m_domainx=m_iconx+iw;
+	if(dw)
+		dw+=2;
+	
+	SetXOffset(m_domainx+dw);
+}
+
+bool kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
+{
+	unsigned int i;
+	kGUIImage full;
+	kGUIDrawSurface tempds;
+	kGUIDrawSurface *ds;
+	double scale,scale2;
+
+	m_iconvalid=false;
+	if(dh)
+	{
+		full.CopyHandle(dh);
+		full.LoadPixels();
+		if(full.IsValid())
+		{
+			tempds.Init(16,16);
+			/* draw thumbnail */
+			kGUI::PushClip();
+			ds=kGUI::GetCurrentSurface();
+			kGUI::SetCurrentSurface(&tempds);
+			kGUI::ResetClip();	/* set clip to full surface on stack */
+
+			scale=16/(double)full.GetImageWidth();
+			scale2=16/(double)full.GetImageHeight();
+			if(scale>scale2)
+				scale=scale2;
+			full.SetScale(scale,scale);
+
+			for(i=0;i<full.GetNumFrames();++i)
+			{
+				/* clear the window to white since the icon can have transparency */
+				tempds.Clear(DrawColor(255,255,255));
+				full.Draw(i,(16-(int)(scale*full.GetImageWidth()))>>1,(16-(int)(scale*full.GetImageHeight()))>>1);
+				m_icon.SetMemImageCopy(i,tempds.GetFormat(),tempds.GetWidth(),tempds.GetHeight(),tempds.GetBPP(),(unsigned char *)tempds.GetSurfacePtr(0,0));
+				m_icon.SetDelay(i,full.GetDelay(i));
+			}
+			kGUI::SetCurrentSurface(ds);
+			kGUI::PopClip();
+
+			m_currentframe=0;
+			m_iconvalid=true;
+
+			/* add animate event? */
+			if(m_icon.GetNumFrames()>1 && m_animateeventactive==false)
+			{
+				m_animateeventactive=true;
+				m_animdelay=0;
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
+			}
+		}
+	}
+	SetOffsets();
+	Dirty();
+	return(m_iconvalid);
+}
+
+void kGUIOffsetInputBoxObj::Animate(void)
+{
+	if( (m_icon.GetNumFrames()<1))
+	{
+		m_animateeventactive=false;
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
+		return;
+	}
+
+	m_animdelay+=kGUI::GetET();
+	if(m_animdelay>=m_icon.GetDelay(m_currentframe))
+	{
+		m_animdelay=0;
+		if(++m_currentframe>=m_icon.GetNumFrames())
+			m_currentframe=0;
+		Dirty();
+	}
 }
 
 void kGUIOffsetInputBoxObj::Draw(void)
@@ -2395,9 +2520,56 @@ void kGUIOffsetInputBoxObj::Draw(void)
 	if(kGUI::ValidClip())
 	{
 		kGUIInputBoxObj::Draw();
+
+		/* draw blue background */
+		if(GetXOffset())
+			kGUI::DrawRect(c.lx,c.ty,c.lx+GetXOffset(),c.by,DrawColor(91,153,223));
+
 		/* draw the icon */
 		if(m_iconvalid)
-			m_icon.Draw(m_currentframe,c.lx+2+1,c.ty+2+1);
+			m_icon.Draw(m_currentframe,c.lx+m_iconx,c.ty+2+1);
+
+		m_domain.Draw(c.lx+m_domainx,c.ty+5,0,0,DrawColor(255,255,255));
+	}
+	kGUI::PopClip();
+}
+
+void kGUIDomainTextObj::Draw(void)
+{
+	unsigned int dw;
+	kGUICorners c;
+
+	if(strcmp(m_last.GetString(),GetString()))
+	{
+		m_last.SetString(GetString());
+		/* changed */
+		if(strncmp(GetString(),"http://",7)==0)
+			m_domain.SetString(GetString()+7);
+		else if(strncmp(GetString(),"https://",8)==0)
+			m_domain.SetString(GetString()+8);
+		else
+			m_domain.Clear();
+
+		m_domain.Clip("/");
+		m_domain.Clip("?");
+		m_domain.Clip(":");
+	}
+
+	kGUI::PushClip();
+	GetCorners(&c);
+	kGUI::ShrinkClip(&c);
+	
+	/* is there anywhere to draw? */
+	if(kGUI::ValidClip())
+	{
+		dw=m_domain.GetWidth();
+		if(dw)
+		{
+			kGUI::DrawRect(c.lx,c.ty,c.lx+dw+4,c.by,DrawColor(91,153,223));
+			m_domain.Draw(c.lx+2,c.ty+5,0,0,DrawColor(255,255,255));
+			c.lx+=dw+4;
+		}
+		kGUIText::Draw(c.lx,c.ty+5,0,0);
 	}
 	kGUI::PopClip();
 }
@@ -2449,7 +2621,7 @@ bool kGUIBrowseIcon::SetIcon(DataHandle *dh)
 			{
 				m_animateeventactive=true;
 				m_animdelay=0;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Animate));
 			}
 		}
 	}
@@ -2461,7 +2633,7 @@ void kGUIBrowseIcon::Animate(void)
 	if( (m_icon.GetNumFrames()<1))
 	{
 		m_animateeventactive=false;
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));
 		return;
 	}
 
@@ -2475,83 +2647,6 @@ void kGUIBrowseIcon::Animate(void)
 	}
 }
 
-bool kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
-{
-	unsigned int i;
-	kGUIImage full;
-	kGUIDrawSurface tempds;
-	kGUIDrawSurface *ds;
-	double scale,scale2;
-
-	m_iconvalid=false;
-	if(dh)
-	{
-		full.CopyHandle(dh);
-		full.LoadPixels();
-		if(full.IsValid())
-		{
-			tempds.Init(16,16);
-			/* draw thumbnail */
-			kGUI::PushClip();
-			ds=kGUI::GetCurrentSurface();
-			kGUI::SetCurrentSurface(&tempds);
-			kGUI::ResetClip();	/* set clip to full surface on stack */
-
-			scale=16/(double)full.GetImageWidth();
-			scale2=16/(double)full.GetImageHeight();
-			if(scale>scale2)
-				scale=scale2;
-			full.SetScale(scale,scale);
-
-			for(i=0;i<full.GetNumFrames();++i)
-			{
-				/* clear the window to white since the icon can have transparency */
-				tempds.Clear(DrawColor(255,255,255));
-				full.Draw(i,(16-(int)(scale*full.GetImageWidth()))>>1,(16-(int)(scale*full.GetImageHeight()))>>1);
-				m_icon.SetMemImageCopy(i,tempds.GetFormat(),tempds.GetWidth(),tempds.GetHeight(),tempds.GetBPP(),(unsigned char *)tempds.GetSurfacePtr(0,0));
-				m_icon.SetDelay(i,full.GetDelay(i));
-			}
-			kGUI::SetCurrentSurface(ds);
-			kGUI::PopClip();
-
-			m_currentframe=0;
-			m_iconvalid=true;
-
-			/* add animate event? */
-			if(m_icon.GetNumFrames()>1 && m_animateeventactive==false)
-			{
-				m_animateeventactive=true;
-				m_animdelay=0;
-				kGUI::AddEvent(this,CALLBACKNAME(Animate));
-			}
-		}
-	}
-	if(m_iconvalid)
-		SetXOffset(16+2);
-	else
-		SetXOffset(0);
-	Dirty();
-	return(m_iconvalid);
-}
-
-void kGUIOffsetInputBoxObj::Animate(void)
-{
-	if( (m_icon.GetNumFrames()<1))
-	{
-		m_animateeventactive=false;
-		kGUI::DelEvent(this,CALLBACKNAME(Animate));
-		return;
-	}
-
-	m_animdelay+=kGUI::GetET();
-	if(m_animdelay>=m_icon.GetDelay(m_currentframe))
-	{
-		m_animdelay=0;
-		if(++m_currentframe>=m_icon.GetNumFrames())
-			m_currentframe=0;
-		Dirty();
-	}
-}
 
 /*****************************************************************************/
 
@@ -2665,16 +2760,6 @@ EditBookmarkWindow::EditBookmarkWindow(kGUIBrowseSettings *settings)
 	m_down.Contain();
 	m_down.SetEventHandler(this,CALLBACKNAME(Down));
 	m_controls.AddObject(&m_down);
-
-//	m_import.SetSize(100,30);
-//	m_import.SetString(gs(TXT_IMPORTBUTTON));
-//	m_import.SetEventHandler(this,CALLBACKNAME(Import));
-//	m_controls.AddObject(&m_import);
-
-//	m_export.SetSize(100,30);
-//	m_export.SetString(gs(TXT_EXPORTBUTTON));
-//	m_export.SetEventHandler(this,CALLBACKNAME(Export));
-//	m_controls.AddObject(&m_export);
 
 	m_controls.NextLine();
 

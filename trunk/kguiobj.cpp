@@ -33,6 +33,25 @@
 #include "kgui.h"
 #include <math.h>
 
+void kGUIObj::CallEvent(unsigned int event)
+{
+	kGUIEvent eobj;eobj.SetObj(this);
+
+	eobj.SetEvent(event);
+
+	kGUI::CallEventListeners(&eobj);
+	m_eventcallback.Call(&eobj);
+}
+
+void kGUIObj::CallEvent(unsigned int event,kGUIEvent *eobj)
+{
+	eobj->SetObj(this);
+	eobj->SetEvent(event);
+
+	kGUI::CallEventListeners(eobj);
+	m_eventcallback.Call(eobj);
+}
+
 /* if this object is currently the "active" object then unactive it */
 /* if it has a parent, then tell the parent that it is going bye bye! */
 
@@ -44,6 +63,8 @@ kGUIObj::~kGUIObj()
 		kGUI::PopActiveObj();
 	if(m_parent)
 		m_parent->DelObject(this);
+
+	CallEvent(EVENT_DESTROY);
 }
 
 /* this is a virtual function that is replaced for Container objects and can be */
@@ -733,6 +754,7 @@ bool kGUIContainerObj::UpdateInputC(int num)
 void kGUIContainerObj::DrawC(int num)
 {
 	int e,nc;
+	int cindex;	//debugging
 	kGUIObj *gobj;
 	kGUICorners c;
 
@@ -753,7 +775,9 @@ void kGUIContainerObj::DrawC(int num)
 		for(e=0;e<nc;++e)
 		{
 			gobj=GetChild(num,e);
+			cindex=kGUI::GetClipIndex();
 			gobj->Draw();
+			assert(cindex==kGUI::GetClipIndex(),"Error: Draw function left clip on stack!");
 		}
 	}
 	if(m_containchildren==true)
@@ -1043,7 +1067,7 @@ void kGUIRectObj::Draw(void)
 kGUIScroll::~kGUIScroll()
 {
 	if(m_attached==true)
-		kGUI::DelEvent(this,CALLBACKNAME(Update));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Update));
 }
 
 /* attach or detach the update event from the event list */
@@ -1056,9 +1080,9 @@ void kGUIScroll::Attach(void)
 		return;			/* already in correct state */
 
 	if(diff==true)
-		kGUI::AddEvent(this,CALLBACKNAME(Update));
+		kGUI::AddUpdateTask(this,CALLBACKNAME(Update));
 	else
-		kGUI::DelEvent(this,CALLBACKNAME(Update));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Update));
 	m_attached=diff;
 }
 

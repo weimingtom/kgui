@@ -852,6 +852,8 @@ StreamBlock *DataHandle::LoadStreamBlock(unsigned long long index,unsigned long 
 		return(m_currentstreamblock);
 	}
 
+	assert(index<m_filesize,"Trying to read past end!");
+
 	ds=m_datasections.GetEntryPtr((unsigned int)(index>>m_streamblockshift));
 	if(ds->m_streamblock)
 	{

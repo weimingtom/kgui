@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/o2"
 				Optimization="0"
-				AdditionalIncludeDirectories="jpeg;lpng128;zlib;freetype\include;matrixssl;mysql\include;wiffmpeg;ffmpeg;ffmpeg\libavutil;ffmpeg\libavcodec;ffmpeg\libavformat;ffmpeg\libswscale"
+				AdditionalIncludeDirectories="jpeg;lpng128;zlib;freetype\include;matrixssl;mysql\include;wiffmpeg;ffmpeg;ffmpeg\libavutil;ffmpeg\libavcodec;ffmpeg\libavformat;ffmpeg\libswscale;np"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;WINVER=0x500"
 				StringPooling="TRUE"
 				MinimalRebuild="TRUE"

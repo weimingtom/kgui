@@ -23,3 +23,11 @@ PRINTRANGE	Print Range	Imprimer Range	Druckbereich	Skriv ut Range	????	????
 COPIES	Copies	Copies	Kopien	Exemplar	??	???
 UP	Up	Up	Up	Up	Up	Up
 DOWN	Down	Down	Down	Down	Down	Down
+FIND	Find	Find	Find	Find	Find	Find
+REPLACE	Replace	Replace	Replace	Replace	Replace	Replace
+FINDTEXT	Find Text:	Find Text:	Find Text:	Find Text:	Find Text:	Find Text:
+REPLACETEXT	Replace Text:	Replace Text:	Replace Text:	Replace Text:	Replace Text:	Replace Text:
+FINDTITLE	Find Text	Find Text	Find Text	Find Text	Find Text	Find Text
+FINDREPLACETITLE	Find / Replace Text	Find / Replace Text	Find / Replace Text	Find / Replace Text	Find / Replace Text	Find / Replace Text
+MATCHCASE	Match Case	Match Case	Match Case	Match Case	Match Case	Match Case
+MATCHWORD	Match Word	Match Word	Match Word	Match Word	Match Word	Match Word

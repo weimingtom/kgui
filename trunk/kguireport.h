@@ -35,10 +35,10 @@ private:
 
 /*! this is the tickbox report object
     @ingroup kGUIReportObjects */
-class kGUIReportTickboxObj : public kGUIReportObj
+class kGUIReportTickBoxObj : public kGUIReportObj
 {
 public:
-	kGUIReportTickboxObj() {m_selected=false;m_scale=false;SetSize(13,13);};
+	kGUIReportTickBoxObj() {m_selected=false;m_scale=false;SetSize(13,13);};
 	void SetSelected(bool s) {m_selected=s;}
 	void SetScale(bool s) {m_scale=s;}	/* draw 13x13 or expand to fit */
 	void Draw(void);
@@ -110,6 +110,8 @@ public:
 	void SetBGShade(bool b) {m_shaded=b;}
 	void SetCurrency(bool c) {m_iscurrency=c;}
 	int GetWidth(void) {return (kGUIText::GetWidth()+6);}
+	void ShrinkToFit(void);
+	int GetTotalHeight(void) {return (kGUIText::GetTotalHeight());}
 	int Height(int width);
 	void Draw(void);
 	void SetFrame(bool df);

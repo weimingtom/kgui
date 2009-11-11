@@ -260,7 +260,7 @@ Katipo::Katipo()
 	m_html.SetSettings(&m_htmlsettings);
 
 	kGUI::ShowWindow();
-	kGUI::AddEvent(this,CALLBACKNAME(Scan));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(Scan));
 }
 
 void Katipo::Event(kGUIEvent *event)
@@ -565,7 +565,7 @@ void Katipo::Save(kGUIFileReq *req,int pressed)
 Katipo::~Katipo()
 {
 	StopScan();
-	kGUI::DelEvent(this,CALLBACKNAME(Scan));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(Scan));
 	m_stoptable.DeleteChildren();
 	m_table.DeleteChildren();
 //	delete m_browse;
