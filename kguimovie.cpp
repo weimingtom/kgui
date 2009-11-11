@@ -470,8 +470,8 @@ void kGUIMovie::UpdateBuffers(void)
 			}
 			else
 			{
-				av_free_packet(&m_local->m_packet);
-				m_local->m_packet.size=0;
+			//	av_free_packet(&m_local->m_packet);
+			//	m_local->m_packet.size=0;
 			}
 		}
 		else if((m_local->m_packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
@@ -587,56 +587,65 @@ void kGUIMovie::SetPlaying(bool p)
 	m_playing=p;
 	if(!m_playing)
 	{
-		kGUI::DelEvent(this,CALLBACKNAME(Event));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Event));
 		/* stop audio too */
 		m_audio->Stop();
 	}
 	else
-		kGUI::AddEvent(this,CALLBACKNAME(Event));
+		kGUI::AddUpdateTask(this,CALLBACKNAME(Event));
 }
 
 void kGUIMovie::Seek(int place)
 {
 	long long timestamp;
 
-	//Timestamp is in million per second and was in TICKSPERSEC
-	timestamp=(long long)(place*(1000000LL/TICKSPERSEC));
-	if(place<m_time)
+	if(place==0)
 	{
-		m_audio->Stop();
+		bool wasplaying=m_playing;
+		OpenMovie();
+		SetPlaying(wasplaying);
+	}
+	else
+	{
+		//Timestamp is in million per second and was in TICKSPERSEC
+		timestamp=(long long)(place*(1000000LL/TICKSPERSEC));
+		if(place<m_time)
+		{
+			m_audio->Stop();
 
-		//flush any accumulated data from packets since we did a seek
-		avcodec_flush_buffers(m_local->m_pVCodecCtx);
-		if(m_local->m_pACodecCtx)
-			avcodec_flush_buffers(m_local->m_pACodecCtx);
+			//flush any accumulated data from packets since we did a seek
+			avcodec_flush_buffers(m_local->m_pVCodecCtx);
+			if(m_local->m_pACodecCtx)
+				avcodec_flush_buffers(m_local->m_pACodecCtx);
 
-		//backwards just means go back to the last keyframe ( I think )
-		av_seek_frame(m_local->m_pFormatCtx,-1,timestamp, AVSEEK_FLAG_BACKWARD);
+			//backwards just means go back to the last keyframe ( I think )
+			av_seek_frame(m_local->m_pFormatCtx,-1,timestamp, AVSEEK_FLAG_BACKWARD);
 
-		/* flush any pending frames */
-		m_numframesready=0;
+			/* flush any pending frames */
+			m_numframesready=0;
 
-		m_done=false;
+			m_done=false;
+			m_time=place;
+			m_ptime=place;
+			m_rawtime=place;	/* not correct */
+
+			m_local->m_packet.size=0;
+
+			assert(m_image!=0,"Image needs to be set!\n");
+			memset(m_image->GetImageDataPtr(0),0, m_outheight*m_outwidth*OUTBPP);
+
+			/* since no frame is ready it will get and display the frame and que up the next one too */
+			LoadNextFrame();
+		}
+
+		/* since it seeked to the nearest keyframe lets go forward till place */
+		while(m_ptime<place)
+		{
+			if(LoadNextFrame()==false)
+				break;	/* end of movie, abort */
+		}
 		m_time=place;
-		m_ptime=place;
-		m_rawtime=place;	/* not correct */
-
-		m_local->m_packet.size=0;
-
-		assert(m_image!=0,"Image needs to be set!\n");
-		memset(m_image->GetImageDataPtr(0),0, m_outheight*m_outwidth*OUTBPP);
-
-		/* since no frame is ready it will get and display the frame and que up the next one too */
-		LoadNextFrame();
 	}
-
-	/* since it seeked to the nearest keyframe lets go forward till place */
-	while(m_ptime<place)
-	{
-		if(LoadNextFrame()==false)
-			break;	/* end of movie, abort */
-	}
-	m_time=place;
 }
 
 void kGUIMovie::CloseMovie(void)

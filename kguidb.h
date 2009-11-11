@@ -127,7 +127,7 @@ public:
 	bool Load(const char *tablename,const char *keyname,int key) {kGUIString ckey;ckey.Sprintf("%d",key);return Load(tablename,keyname,ckey.GetString());}
 	/* LoadGroup is used for loading a group of records */ 
 	void NewGroup(const char *tablename,const char *keyname=0);
-	void LoadGroup(const char *tablename,const char *keyname,const char *key=0);
+	void LoadGroup(const char *tablename,const char *keyname,const char *key=0,const char *sort=0);
 	void LoadGroup(const char *tablename,kGUIDbQuery *q);
 	bool CompareGroup(kGUIDbQuery *q);
 	void PurgeEntries(void);

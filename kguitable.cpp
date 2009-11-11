@@ -1584,7 +1584,22 @@ abort:;
 							}
 							else 
 							{
-								if(kGUI::GetMouseClickRight()==true)
+								if(kGUI::GetMouseClickLeft()==true)
+								{
+									kGUIEvent e;
+
+									m_cursorcol=col;
+									/* is col partially off of the right? */
+									if(m_cursorcol>m_lastfullcol)
+										MoveCol(1);
+									UpdateCurrentObj();
+									Dirty();
+									
+									e.m_value[0].i=col;
+									CallEvent(EVENT_COL_LEFTCLICK,&e);
+									return(true);
+								}
+								else if(kGUI::GetMouseClickRight()==true)
 								{
 									kGUIEvent e;
 
@@ -1804,14 +1819,13 @@ abort:;
 							{
 								MoveCol(col-m_cursorcol,true);
 								MoveRow(y-m_cursorrow);
+								CallEvent(EVENT_LEFTCLICK);
 								if(m_listmode==false && m_selectmode==false)
 									goto passdown;	/* pass input down to child */
 							}
 							else
-							{
-								//didn't really move but user still might want to know
-								CallEvent(EVENT_MOVED);
-							}
+								CallEvent(EVENT_LEFTCLICK);
+
 							if(m_listmode==true)
 							{
 								if(kGUI::GetMouseDoubleClickLeft()==true)

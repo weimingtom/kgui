@@ -1464,6 +1464,8 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 
 	m_fontscale=1;
 	m_refreshdelay=0;
+	m_delayreposition=false;
+	m_delayrepositiontime=0;
 	m_pid=0;
 	m_linkhover=0;
 	m_numloading=0;
@@ -1625,7 +1627,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_hoverlist[0].Init(256,32);
 	m_hoverlist[1].Init(256,32);
 
-	kGUI::AddEvent(this,CALLBACKNAME(TimerEvent));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(TimerEvent));
 }
 
 /* em is the font size NOT the pixel height of the font */
@@ -1753,9 +1755,8 @@ kGUIOnlineImage *kGUIHTMLPageObj::LocateImage(kGUIString *url,kGUIString *referr
 
 void kGUIHTMLPageObj::ImageLoaded(kGUIOnlineImage *image)
 {
-	m_reposition=true;
 	image->LoadPixels();
-	Dirty();
+	m_delayreposition=true;
 }
 
 kGUIOnlineLink *kGUIHTMLPageObj::LocateLink(kGUIString *url,kGUIString *referrer,unsigned int type,kGUIString *media)
@@ -5360,7 +5361,7 @@ kGUIHTMLPageObj::~kGUIHTMLPageObj()
 	kGUIOnlineImage *image;
 	kGUIOnlineLink *link;
 
-	kGUI::DelEvent(this,CALLBACKNAME(TimerEvent));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(TimerEvent));
 
 	/* shutdown Async thread */
 	m_shutdown=true;
@@ -5490,6 +5491,10 @@ void kGUIHTMLPageObj::Draw(void)
 		kGUI::Trace("DrawPage Trace - start\n");
 
 	kGUI::SetFastDraw(true);
+
+	//todo, keep track of last re-position time and only re-position every second so user input
+	//is not dramatically slowed by lots of loading pictures.....
+
 	if(m_reposition==true)
 	{
 		m_trace=false;
@@ -6117,6 +6122,9 @@ void kGUIHTMLPageObj::Position(void)
 	int width=GetZoneW()-kGUI::GetSkin()->GetScrollbarWidth();
 	int height=GetZoneH();
 
+	m_delayreposition=false;
+	m_delayrepositiontime=0;
+
 	kGUI::SetMouseCursor(MOUSECURSOR_BUSY);
 	do
 	{
@@ -6270,7 +6278,7 @@ void kGUIHTMLPageObj::UpdateScrollBars(void)
 	{
 		int below;
 
-		below=m_rootobject->GetZoneH()-m_pageh-m_scroll.GetDestY();
+		below=(m_rootobject->GetZoneH()-m_pageh)-m_scroll.GetDestY();
 		if(below<0)
 			below=0;
 		m_vscrollbar.SetValues(m_scroll.GetDestY(),m_pageh,below);
@@ -6296,6 +6304,15 @@ void kGUIHTMLPageObj::TimerEvent(void)
 			m_refreshdelay=0;
 			/* load the refresh url */
 			Click(&m_refreshurl,&m_url);
+		}
+	}
+
+	if(m_delayreposition)
+	{
+		if(++m_delayrepositiontime>=60)
+		{
+			m_reposition=true;
+			Dirty();
 		}
 	}
 
@@ -6358,6 +6375,13 @@ bool kGUIHTMLPageObj::UpdateInput(void)
 	case GUIKEY_PGUP:
 		kGUI::EatKey();
 		MoveRow(-400);
+	break;
+	case GUIKEY_FIND:
+		kGUI::EatKey();
+		kGUISearchReq::Open(this,this,false);
+	break;
+	case GUIKEY_REPLACE:
+		kGUI::EatKey();
 	break;
 	}
 
@@ -6505,6 +6529,11 @@ bool kGUIHTMLPageObj::UpdateInput(void)
 	if(m_isover==false && m_linkhover)
 		m_linkhover=0;
 	return(used);
+}
+
+void kGUIHTMLPageObj::StringSearch(kGUIString *from,bool matchcase,bool matchword)
+{
+	/* todo */
 }
 
 typedef struct
@@ -8814,7 +8843,7 @@ abortclose:;
 
 		sfp=fp;
 		nspos=0;	/* namespace seperator */
-		while(fp[0]!=0x0a && fp[0]!=0x0d && fp[0]!=' ' && fp[0]!=9 && fp[0]!='/' && fp[0]!='>')
+		while(fp[0]!=0x0a && fp[0]!=0x0d && fp[0]!=' ' && fp[0]!=9 && fp[0]!='/' && fp[0]!='<' && fp[0]!='>')
 		{
 			/* save pointer to namespace seperator */
 			if(fp[0]==':')
@@ -8822,6 +8851,20 @@ abortclose:;
 			++fp;
 		}
 		nl=(int)(fp-sfp);
+		if(!nl)
+		{
+			int line,col;
+
+			/* a single '<' was found with no valid text after it */
+			/* should have been '&lt;' */
+			CalcPlace(htmlstart,sfp,&line,&col);
+			m_errors.ASprintf("unencoded '<' found, should be '&lt;' (line=%d,col=%d)\n",line,col);
+			sfp=fp-1;
+			while(fp[0]!='<')
+				++fp;
+			goto gotblock;
+		}
+
 		curtag.tagname=sfp;
 		curtag.tagnamelen=nl;
 		curtag.renderparent=renderparent;
@@ -14568,17 +14611,6 @@ void kGUIHTMLObj::Contain(bool force)
 		}
 #endif
 	break;
-	}
-
-	/* this is probably a hack that can go away once some other bug is fixed */
-	if(m_page->m_mode==MODE_POSITION)
-	{
-		if(m_id==HTMLTAG_HTML || m_id==HTMLTAG_ROOT)
-		{
-			/* adjust for scroll values by subtracting page scroll offsets */
-		//	MoveZoneW(m_page->m_maxpagew-c.lx);
-			MoveZoneH(m_page->m_maxpageh-c.ty);
-		}
 	}
 }
 

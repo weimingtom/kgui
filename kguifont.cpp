@@ -690,6 +690,7 @@ kGUIText::~kGUIText()
 	}
 }
 
+
 /* calculate the number of lines and break positions */
 
 int kGUIText::CalcLineList(int w)

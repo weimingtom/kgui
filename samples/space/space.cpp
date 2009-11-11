@@ -373,7 +373,7 @@ Space::Space()
 //	m_game.Start();
 	m_game.StartTitle();
 	background->SetEventHandler(&m_game,CALLBACKCLASSNAME(Game,Event));
-	kGUI::AddEvent(&m_game,CALLBACKCLASSNAME(Game,Update));
+	kGUI::AddUpdateTask(&m_game,CALLBACKCLASSNAME(Game,Update));
 	background->AddObject(&m_game);
 
 	kGUI::ShowWindow();
@@ -381,5 +381,5 @@ Space::Space()
 
 Space::~Space()
 {
-	kGUI::DelEvent(&m_game,CALLBACKCLASSNAME(Game,Update));
+	kGUI::DelUpdateTask(&m_game,CALLBACKCLASSNAME(Game,Update));
 }

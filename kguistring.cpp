@@ -75,6 +75,25 @@ void kGUIString::Clip(unsigned int len)
 	}
 }
 
+void kGUIString::Clip(const char *s)
+{
+	const char *sp;
+	unsigned int newlen;
+
+	sp=strstr(m_string,s);
+	if(sp)
+	{
+		newlen=(unsigned int)(sp-m_string);
+		if(m_len>newlen)
+		{
+			m_len=newlen;
+			m_string[newlen]=0;
+			StringChanged();
+		}
+	}
+}
+
+
 /* expand encoded characters into possible 32 bit characters */
 unsigned int kGUIString::GetChar(unsigned int pos,unsigned int *numbytes)
 {
@@ -730,8 +749,6 @@ void kGUIString::AVSprintf(const char *fmt,va_list args)
 void kGUIString::AVSprintf(const char *fmt,va_list args)
 {
 	char c;
-//	unsigned int flags;
-//	int width;
 	char nstring[64];
 	char dstring[64];
 	char *np;
@@ -1017,44 +1034,61 @@ unsigned int kGUIString::GetEncoding(const char *s)
 }
 
 /* return character index */
-int kGUIString::Str(const char *ss,unsigned int offset)
+int kGUIString::Str(const char *ss,bool matchcase,bool matchword,unsigned int offset)
 {
 	const char *cp;
+	char c;
 
 	assert(offset<=m_len,"Searching off of end of string!");
-	cp=strstr(m_string+offset,ss);
+	while(1)
+	{
+		if(matchcase)
+			cp=strstr(m_string+offset,ss);
+		else
+			cp=strstri(m_string+offset,ss);
+
+		if(cp && matchword)
+		{
+			bool bad=false;
+			unsigned int eoffset;
+
+			offset=(unsigned int)(cp-m_string);
+			/* if not a "word" then check again after this position */
+			if(offset>0)
+			{
+				c=GetChar(offset-1);
+				if( (c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='0'))
+					bad=true;
+			}
+			if(bad==false)
+			{
+				eoffset=offset+(unsigned int)strlen(ss);
+				if(eoffset<GetLen())
+				{
+					c=GetChar(eoffset);
+					if( (c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='0'))
+						bad=true;
+				}
+			}
+			if(bad==false)
+				break;
+			offset+=(unsigned int)strlen(ss);
+			if(offset==GetLen())
+				return(-1);
+		}
+		else
+			break;
+	}
 	if(!cp)
 		return(-1);
 	return((int)(cp-m_string));
 }
 
-int kGUIString::IStr(const char *ss,unsigned int offset)
-{
-	const char *cp;
-
-	assert(offset<=m_len,"Searching off of end of string!");
-	cp=strstri(m_string+offset,ss);
-	if(!cp)
-		return(-1);
-	return((int)(cp-m_string));
-}
-
-int kGUIString::Str(kGUIString *ss,unsigned int offset)
+int kGUIString::Str(kGUIString *ss,bool matchcase,bool matchword,unsigned int offset)
 {
 	assert(offset<=m_len,"Searching off of end of string!");
 	if(GetEncoding()==ss->GetEncoding())
-		return(Str(ss->GetString(),offset));
-
-	/* different encoding, must match encoding first */
-	assert(false,"Todo!");
-	return(-1);
-}
-
-int kGUIString::IStr(kGUIString *ss,unsigned int offset)
-{
-	assert(offset<=m_len,"Searching off of end of string!");
-	if(GetEncoding()==ss->GetEncoding())
-		return(IStr(ss->GetString(),offset));
+		return(Str(ss->GetString(),matchcase,matchword,offset));
 
 	/* different encoding, must match encoding first */
 	assert(false,"Todo!");

@@ -26,6 +26,7 @@ private:
 	CALLBACKGLUE(kGUIFileReq,DoubleClick)
 	CALLBACKGLUEPTR(kGUIFileReq,CopyFilename,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIFileReq,WindowEvent,kGUIEvent)
+	CALLBACKGLUEPTRVAL(kGUIFileReq,DoNewFolder,kGUIString,int)
 	void GoBack(void);
 	void PressBack(kGUIEvent *event);
 	void PressCancel(kGUIEvent *event);
@@ -33,6 +34,7 @@ private:
 	void PressDone(kGUIEvent *event);
 	void PathChangedEvent(kGUIEvent *event);
 	void ShortFnEdited(kGUIEvent *event);
+	void DoNewFolder(kGUIString *name,int closebutton);
 
 	void Click(void);
 	void DoubleClick(void);
@@ -64,6 +66,7 @@ private:
 	int m_origheight;
 	int m_lastwidth;
 	int m_lastheight;
+	bool m_allowchange;
 };
 
 class kGUIDateGridObj : public kGUIObj
@@ -155,5 +158,37 @@ private:
 	kGUICallBackPtr<kGUIDate> m_donecallback;
 };
 
+/* search/replace request box, attaches to another kGUIObj */
+/* and communicates with the event handler */
+
+class kGUISearchReq
+{
+public:
+	static void Open(kGUIObj *obj,kGUISearchReplaceObj *srobj,bool allowreplace=true);
+private:
+	kGUISearchReq(kGUIObj *obj,kGUISearchReplaceObj *srobj,bool allowreplace);
+	~kGUISearchReq();
+	CALLBACKGLUEPTR(kGUISearchReq,ListenEvent,kGUIEvent)
+	void ListenEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(kGUISearchReq,Event,kGUIEvent)
+	void Event(kGUIEvent *event);
+
+	static kGUISearchReq *m_me;
+	kGUIObj *m_attach;
+	kGUISearchReplaceObj *m_srattach;
+	bool m_allowreplace;
+
+	kGUIWindowObj m_window;
+	kGUITextObj m_capfind;
+	kGUITextObj m_capreplace;
+	kGUIInputBoxObj m_inputfind;
+	kGUIInputBoxObj m_inputreplace;
+	kGUIButtonObj m_find;
+	kGUIButtonObj m_replace;
+	kGUITickBoxObj m_matchcase;
+	kGUITickBoxObj m_matchword;
+	kGUITextObj m_capmatchcase;
+	kGUITextObj m_capmatchword;
+};
 
 #endif

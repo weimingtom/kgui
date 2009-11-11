@@ -1894,7 +1894,7 @@ public:
 
 /*! HTML page object
     @ingroup kGUIHTMLObjects */
-class kGUIHTMLPageObj: public kGUIContainerObj
+class kGUIHTMLPageObj: public kGUIContainerObj, public kGUISearchReplaceObj
 {
 	friend class kGUIHTMLObj;
 public:
@@ -1908,6 +1908,10 @@ public:
 	void CalcChildZone(void);
 	void UpdateScrollBars(void);
 	void Preview(void);
+
+	/* these are for a searchable object */
+	void StringSearch(kGUIString *from,bool matchcase,bool matchword);
+	void StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to) {}
 
 	void PurgeRules(void);
 	void GetCorrectedSource(kGUIString *cs);
@@ -2384,7 +2388,9 @@ private:
 	unsigned int m_hoverlistsize[2];
 	Array<kGUIHTMLObj *>m_hoverlist[2];
 
-	bool m_reposition;	/* set then images are loaded and page needs to be re-positioned */
+	bool m_reposition;			/* set then css files are loaded, or hover changes and page needs to be re-positioned */
+	bool m_delayreposition;					/* set when images are loaded */
+	unsigned int m_delayrepositiontime;		/* delay to reduce repositions for image loads */
 
 	bool m_iconlinked;
 

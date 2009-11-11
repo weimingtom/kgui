@@ -114,9 +114,9 @@ void kGUIMovieControlObj::SetMovie(kGUIMovie *movie)
 		return;
 	m_eventactive=wantevent;
 	if(!wantevent)
-		kGUI::DelEvent(this,CALLBACKNAME(Event));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Event));
 	else
-		kGUI::AddEvent(this,CALLBACKNAME(Event));
+		kGUI::AddUpdateTask(this,CALLBACKNAME(Event));
 }
 
 void kGUIMovieControlObj::UpdateButton(void)

@@ -89,7 +89,7 @@ void kGUIFilenameRow::Draw(void)
 class kGUIFileReqRow : public kGUITableRowObj
 {
 public:
-	kGUIFileReqRow(int rowheight) {m_objectlist[0]=&m_filename;SetRowHeight(rowheight);}
+	kGUIFileReqRow(int rowheight) {m_filename.SetLocked(true);m_objectlist[0]=&m_filename;SetRowHeight(rowheight);}
 	int GetNumObjects(void) {return 1;}
 	kGUIObj **GetObjectList(void) {return m_objectlist;} 
 	kGUIObj *m_objectlist[1];
@@ -118,6 +118,12 @@ kGUIFileReq::kGUIFileReq(int type,const char *inname,const char *ext,void *codeo
 		in.SetString(inname);
 
 	kGUI::SplitFilename(&in,&m_path,&m_shortfn);
+
+	/* if a save filename is set then don't overwrite until user clicks */
+	if(m_shortfn.GetLen() && m_type==FILEREQ_SAVE)
+		m_allowchange=false;
+	else
+		m_allowchange=true;
 
 	if(ext)
 		m_ext.SetString(ext);
@@ -281,7 +287,12 @@ void kGUIFileReq::SetFilename(const char *fn)
 
 void kGUIFileReq::CopyFilename(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_MOVED)
+	switch(event->GetEvent())
+	{
+	case EVENT_LEFTCLICK:
+		m_allowchange=true;
+	break;
+	case EVENT_MOVED:
 	{
 		int row;
 		kGUIObj *obj;
@@ -293,12 +304,13 @@ void kGUIFileReq::CopyFilename(kGUIEvent *event)
 			obj=m_table.GetChild(0,row);
 			frr=static_cast<kGUIFileReqRow *>(obj);
 
-			//todo allow click to set if save mode just not move cursor
-			if(frr->GetType()==TYPE_FILE && m_type==FILEREQ_OPEN)
+			if(frr->GetType()==TYPE_FILE && m_allowchange)
 				m_shortfn.SetString(frr->GetFilename());
 		}
 		else
 			m_shortfn.Clear();
+	}
+	break;
 	}
 }
 
@@ -336,8 +348,9 @@ void kGUIFileReq::DoubleClick(void)
 /* the short filename has been manually edited, check for user moving directories */
 void kGUIFileReq::ShortFnEdited(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_AFTERUPDATE)
+	switch(event->GetEvent())
 	{
+	case EVENT_AFTERUPDATE:
 		if(!strcmp(m_shortfn.GetString(),".."))
 		{
 			m_shortfn.Clear();
@@ -362,6 +375,10 @@ void kGUIFileReq::ShortFnEdited(kGUIEvent *event)
 			if(strcmp(oldpath.GetString(),m_path.GetString()))
 				PathChanged();
 		}
+	break;
+	case EVENT_PRESSRETURN:
+		m_done.SetCurrent();
+	break;
 	}
 }
 
@@ -373,7 +390,7 @@ void kGUIFileReq::PathChangedEvent(kGUIEvent *event)
 
 void kGUIFileReq::PathChanged(void)
 {
-	int i;
+	unsigned int i;
 	kGUIDir dir;
 	kGUIFileReqRow *row;
 
@@ -447,10 +464,31 @@ void kGUIFileReq::PressNewFolder(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
-		kGUIMsgBoxReq *msg;
-
-		msg=new kGUIMsgBoxReq(MSGBOX_OK,false,"Todo!");
+		kGUIInputBoxReq *ib;
+		
+		ib=new kGUIInputBoxReq(this,CALLBACKNAME(DoNewFolder),"Name?");
 	}
+}
+
+void kGUIFileReq::DoNewFolder(kGUIString *name,int closebutton)
+{
+	kGUIString fullname;
+
+	if((closebutton!=MSGBOX_OK) || (!name->GetLen()))
+		return;
+
+	//generate full name "path/folder"
+	kGUI::MakeFilename(&m_path,name,&fullname);
+
+	if(kGUI::MakeDirectory(fullname.GetString())==false)
+	{
+		kGUIMsgBoxReq *emsg;
+
+		/* error trying to create folder */
+		emsg=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: Could not create folder.");
+	}
+	else
+		PathChanged();	/* reload to show newly created folder */
 }
 
 void kGUIFileReq::PressCancel(kGUIEvent *event)
@@ -476,3 +514,155 @@ void kGUIFileReq::PressDone(kGUIEvent *event)
 	}
 }
 
+/********************************************************/
+
+kGUISearchReq *kGUISearchReq::m_me=0;
+
+/* only 1 can exist at a time */
+void kGUISearchReq::Open(kGUIObj *obj,kGUISearchReplaceObj *srobj,bool allowreplace)
+{
+	if(m_me)
+		delete m_me;
+
+	m_me=new kGUISearchReq(obj,srobj,allowreplace);
+}
+
+kGUISearchReq::kGUISearchReq(kGUIObj *obj,kGUISearchReplaceObj *srobj,bool allowreplace)
+{
+	int y;
+	unsigned int cw,bw;
+	int lh=m_inputfind.GetLineHeight()+8;
+
+	m_attach=obj;
+	m_srattach=srobj;
+	m_allowreplace=allowreplace;
+
+	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
+	m_window.SetTitle(kGUI::GetString(allowreplace==true?KGUISTRING_FINDREPLACETITLE:KGUISTRING_FINDTITLE));
+
+	y=10;
+	m_capfind.SetFontID(1);	//bold
+	m_capfind.SetPos(0,y);
+	m_capfind.SetString(kGUI::GetString(KGUISTRING_FINDTEXT));
+	cw=m_capfind.GetWidth();
+	m_window.AddObject(&m_capfind);
+
+	m_inputfind.SetPos(cw,y);
+	m_inputfind.SetSize(300,lh);
+	m_inputfind.SetMaxLen(256);
+	m_inputfind.SetAllowFind(false);
+	m_inputfind.SetEventHandler(this,CALLBACKNAME(Event));
+	m_window.AddObject(&m_inputfind);
+
+	m_find.SetString(kGUI::GetString(KGUISTRING_FIND));
+	bw=MAX(m_find.GetWidth()+16,60);
+	m_find.SetSize(bw,lh);
+	m_find.SetPos(m_inputfind.GetZoneRX()+10,y);
+	m_find.SetEventHandler(this,CALLBACKNAME(Event));
+	m_window.AddObject(&m_find);
+	y+=lh;
+
+	if(m_allowreplace)
+	{
+		m_capreplace.SetFontID(1);	//bold
+		m_capreplace.SetPos(0,y);
+		m_capreplace.SetString(kGUI::GetString(KGUISTRING_REPLACETEXT));
+		cw=MAX(cw,m_capreplace.GetWidth())+10;
+		m_window.AddObject(&m_capreplace);
+	
+		m_inputreplace.SetPos(cw,y);
+		m_inputreplace.SetSize(300,lh);
+		m_inputreplace.SetMaxLen(256);
+		m_inputreplace.SetAllowFind(false);
+		m_inputreplace.SetEventHandler(this,CALLBACKNAME(Event));
+		m_window.AddObject(&m_inputreplace);
+	
+		m_replace.SetString(kGUI::GetString(KGUISTRING_REPLACE));
+		m_replace.SetSize(bw,lh);
+		m_replace.SetPos(m_find.GetZoneX(),y);
+		m_replace.SetEventHandler(this,CALLBACKNAME(Event));	
+		m_window.AddObject(&m_replace);
+
+		y+=lh;
+	}
+
+	m_matchcase.SetPos(10,y);
+	m_window.AddObject(&m_matchcase);
+	m_capmatchcase.SetFontID(1);	//bold
+	m_capmatchcase.SetPos(m_matchcase.GetZoneRX()+5,y);
+	m_capmatchcase.SetString(kGUI::GetString(KGUISTRING_MATCHCASE));
+	m_capmatchcase.SetEventHandler(this,CALLBACKNAME(Event));
+	m_window.AddObject(&m_capmatchcase);
+
+	y+=lh;
+
+	m_matchword.SetPos(10,y);
+	m_window.AddObject(&m_matchword);
+	m_capmatchword.SetFontID(1);	//bold
+	m_capmatchword.SetPos(m_matchword.GetZoneRX()+5,y);
+	m_capmatchword.SetString(kGUI::GetString(KGUISTRING_MATCHWORD));
+	m_capmatchword.SetEventHandler(this,CALLBACKNAME(Event));
+	m_window.AddObject(&m_capmatchword);
+
+	m_window.SetEventHandler(this,CALLBACKNAME(Event));
+	m_window.SetSize(10,10);
+	m_window.ExpandToFit();
+	m_window.Center();
+	kGUI::AddWindow(&m_window);
+
+	m_inputfind.Activate();
+	kGUI::AddEventListener(this,CALLBACKNAME(ListenEvent));
+}
+
+kGUISearchReq::~kGUISearchReq()
+{
+	m_window.Dirty();
+	kGUI::DelEventListener(this,CALLBACKNAME(ListenEvent));
+	m_me=0;
+}
+
+void kGUISearchReq::ListenEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_DESTROY:
+		if(event->GetObj()==m_attach)
+		{
+			delete this;
+			kGUI::ReDraw();		/* redraw with the window gone incase this callback takes a long time */
+		}
+	break;
+	}
+}
+
+void kGUISearchReq::Event(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_CLOSE:
+		if(event->GetObj()==&m_window)
+		{
+			kGUI::ReDraw();		/* redraw with the window gone incase this callback takes a long time */
+			delete this;
+		}
+	break;
+	case EVENT_PRESSRETURN:
+		if(event->GetObj()==&m_inputfind)
+			m_find.SetCurrent();
+		else if(event->GetObj()==&m_inputreplace)
+			m_replace.SetCurrent();
+	break;
+	case EVENT_LEFTCLICK:
+		if(event->GetObj()==&m_capmatchcase)
+			m_matchcase.SetSelected(!m_matchcase.GetSelected());
+		else if(event->GetObj()==&m_capmatchword)
+			m_matchword.SetSelected(!m_matchword.GetSelected());
+	break;
+	case EVENT_PRESSED:
+		if(event->GetObj()==&m_find)
+			m_srattach->StringSearch(&m_inputfind,m_matchcase.GetSelected(),m_matchword.GetSelected());
+		else if(event->GetObj()==&m_replace)
+			m_srattach->StringReplace(&m_inputfind,m_matchcase.GetSelected(),m_matchword.GetSelected(),&m_inputreplace);
+	break;
+	}
+}

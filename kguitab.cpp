@@ -97,7 +97,7 @@ kGUITabObj::~kGUITabObj()
 {
 	if(m_track==true)
 	{
-		kGUI::DelEvent(this,CALLBACKNAME(Track));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Track));
 		m_track=false;
 	}
 }
@@ -180,7 +180,7 @@ void kGUITabObj::Track(void)
 	over=kGUI::MouseOver(&c);
 	if(!over)
 	{
-		kGUI::DelEvent(this,CALLBACKNAME(Track));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(Track));
 		m_track=false;
 		DirtyTab(m_overtab);
 		m_overtab=-1;
@@ -232,15 +232,15 @@ bool kGUITabObj::UpdateInput(void)
 
 		/* is the mouse over the tab button area? */
 		over=kGUI::MouseOver(&c);
-		if(over && m_locked==false)
+		if(over)
 		{
 			/* if i'm not active then activate me */
 			/* I need to be active so I can track the mouse when it moves */
 			/* off of the tab area so I can unhilight the last tab under the cursor */
-			if(m_track==false)
+			if(m_track==false && m_locked==false)
 			{
 				m_track=true;
-				kGUI::AddEvent(this,CALLBACKNAME(Track));
+				kGUI::AddUpdateTask(this,CALLBACKNAME(Track));
 			}
 			/* yes they have mouse over the tabs on the top */
 			/* which tab is the mouse over? (if any) */
@@ -254,38 +254,48 @@ bool kGUITabObj::UpdateInput(void)
 
 				if(kGUI::MouseOver(&tc))
 				{
-					/* yes mouse is over this tab */
-					if(i!=m_overtab)
+					if(m_locked==false)
 					{
-						DirtyTab(m_overtab);
-						DirtyTab(i);
-						m_overtab=i;
-					}
-					/* check for clicking on the close button */
-					if(i==m_curtab && m_close && kGUI::GetMouseReleaseLeft()==true)
-					{
-						/* position of close button */
-						cb.lx=tc.rx-r-16;
-						cb.rx=cb.lx+14;
-						cb.ty=tc.ty+2;
-						cb.by=cb.ty+14;
-						if(kGUI::MouseOver(&cb))
+						/* yes mouse is over this tab */
+						if(i!=m_overtab)
 						{
-							kGUIEvent e;
+							DirtyTab(m_overtab);
+							DirtyTab(i);
+							m_overtab=i;
+						}
+						/* check for clicking on the close button */
+						if(i==m_curtab && m_close && kGUI::GetMouseReleaseLeft()==true)
+						{
+							/* position of close button */
+							cb.lx=tc.rx-r-16;
+							cb.rx=cb.lx+14;
+							cb.ty=tc.ty+2;
+							cb.by=cb.ty+14;
+							if(kGUI::MouseOver(&cb))
+							{
+								kGUIEvent e;
 
-							e.m_value[0].i=m_curtab;		/* tab being closed */
+								e.m_value[0].i=m_curtab;		/* tab being closed */
 
-							/* then call tabclicked closed callback, it is up to the app to actually handle */
-							Dirty();
-							CallEvent(EVENT_CLOSE,&e);
-							return(true);
+								/* then call tabclicked closed callback, it is up to the app to actually handle */
+								Dirty();
+								CallEvent(EVENT_CLOSE,&e);
+								return(true);
+							}
 						}
 					}
 
 					/* are they rightclicking on the tab? */
 					if(kGUI::GetMouseClickRight()==true)
 					{
-						if(m_overtab!=m_curtab)				/* set this to the current tab first */
+						if(m_locked)
+						{
+							kGUIEvent e;
+							e.m_value[0].i=i;
+
+							CallEvent(EVENT_TRYMOVED,&e);
+						}
+						else if(m_overtab!=m_curtab)	/* set this to the current tab first */
 						{
 							kGUIEvent e;
 
@@ -301,7 +311,14 @@ bool kGUITabObj::UpdateInput(void)
 					}
 					if(kGUI::GetMouseReleaseLeft()==true)
 					{
-						if(m_overtab!=m_curtab)
+						if(m_locked)
+						{
+							kGUIEvent e;
+							e.m_value[0].i=i;
+
+							CallEvent(EVENT_TRYMOVED,&e);
+						}
+						else if(m_overtab!=m_curtab)
 						{
 							kGUIEvent e;
 

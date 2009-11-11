@@ -306,9 +306,13 @@ void kGUIAudio::Update(void)
 				while(m_playdone>0)
 				{
 					ab=m_buffers.GetEntry(0);
+#if defined (WIN32) || defined(MINGW)
+					waveOutUnprepareHeader(m_hWaveOut, &ab->m_header, sizeof(WAVEHDR));
+#endif
 					m_manager->ReleaseBuffer(ab,false);
 					m_buffers.DeleteEntry(0,1);
 					--m_playbuffer;
+					assert(m_numbuffers!=0,"Underflow error!");
 					--m_numbuffers;
 					--m_playdone;
 				}

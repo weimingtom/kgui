@@ -462,7 +462,7 @@ MandelbrotSample::MandelbrotSample()
 	bg->AddObject(m_image);
 
 	kGUI::ShowWindow();
-	kGUI::AddEvent(this,CALLBACKNAME(TimerEvent));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(TimerEvent));
 	bg->SetEventHandler(this,CALLBACKNAME(Event));
 
 	m_tracknum=0;
@@ -741,7 +741,7 @@ MandelbrotSample::~MandelbrotSample()
 	/* make sure update thread is finished */
 	CancelUpdate();
 
-	kGUI::DelEvent(this,CALLBACKNAME(TimerEvent));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(TimerEvent));
 }
 
 void MandelbrotSample::CalcEdges(ldouble *xmin,ldouble *xmax,ldouble *ymin,ldouble *ymax)
@@ -1128,7 +1128,7 @@ Save::Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,Palette *palette,i
 	SetTop(true);
 	kGUI::AddWindow(this);
 	/* add busy event handler */
-	kGUI::AddEvent(this,CALLBACKNAME(BusyEvent));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(BusyEvent));
 }
 
 void Save::ReqDone(kGUIFileReq *req,int pressed)
@@ -1188,7 +1188,7 @@ void Save::Event(kGUIEvent *event)
 	switch(event->GetEvent())
 	{
 	case EVENT_CLOSE:
-		kGUI::DelEvent(this,CALLBACKNAME(BusyEvent));
+		kGUI::DelUpdateTask(this,CALLBACKNAME(BusyEvent));
 		if(m_movie)
 		{
 			m_frame.SetAbort(true);

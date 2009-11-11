@@ -92,9 +92,6 @@ bool kGUI::m_trace;
 /* this is the full screen size */
 int kGUI::m_fullscreenwidth;
 int kGUI::m_fullscreenheight;
-/* this is the screen size not counting the windows header and footer on the top/bottom and sides */
-//int kGUI::m_screenwidth;
-//int kGUI::m_screenheight;
 
 kGUIDelay kGUI::m_mouserightrelesetick;
 kGUIDelay kGUI::m_mouseleftrelesetick;
@@ -123,8 +120,12 @@ kGUIFCorners kGUI::m_clipcornersf;
 kGUIDCorners kGUI::m_clipcornersd;
 int kGUI::m_clipindex;
 kGUICorners kGUI::m_clipstack[MAXCLIPS];
-int kGUI::m_numevents;
-Array<kGUICallBack *>kGUI::m_events;
+
+unsigned int kGUI::m_numupdatetasks;
+Array<kGUICallBack *>kGUI::m_updatetasks;
+
+unsigned int kGUI::m_numeventlisteners;
+Array< kGUICallBackPtr<kGUIEvent> *>kGUI::m_eventlisteners;
 
 kGUIDelay kGUI::m_flash;
 int kGUI::m_et;
@@ -336,7 +337,7 @@ void kGUI::Close(void)
 	assert(m_inputcallback.IsValid()==false,"User Input callback should be disabled first!");
 
 	m_rootobj->Close();
-	m_numevents=0;	/* stop calling events */
+	m_numupdatetasks=0;	/* stop calling events */
 	delete m_backgroundobj;
 	delete m_rootobj;
 
@@ -461,10 +462,15 @@ bool kGUI::Init(kGUISystem *sys,int width,int height,int fullwidth,int fullheigh
 	m_clipindex=1;
 	m_inputidle=true;
 	
-	m_numevents=0;
-	m_events.Alloc(100);
-	m_events.SetGrowSize(25);
-	m_events.SetGrow(true);
+	m_numupdatetasks=0;
+	m_updatetasks.Alloc(100);
+	m_updatetasks.SetGrowSize(25);
+	m_updatetasks.SetGrow(true);
+
+	m_numeventlisteners=0;
+	m_eventlisteners.Alloc(25);
+	m_eventlisteners.SetGrowSize(25);
+	m_eventlisteners.SetGrow(true);
 
 	m_hinttick=0;
 	m_sethint=false;
@@ -1215,11 +1221,11 @@ used:;
 	SetKeyMask(false);
 
 	m_et=saveet;
-	for(i=0;i<m_numevents;++i)
+	for(unsigned int i=0;i<m_numupdatetasks;++i)
 	{
 		kGUICallBack *ev;
 
-		ev=m_events.GetEntry(i);
+		ev=m_updatetasks.GetEntry(i);
 		ev->Call();
 	}
 
@@ -1736,6 +1742,32 @@ void kGUI::DrawPixel(int x,int y,kGUIColor c)
 	sp=GetSurfacePtrC(x,y);
 	if(sp)
 		*(sp)=c;
+}
+
+void kGUI::DrawPixel(int x,int y,kGUIColor c,double alpha)
+{
+	kGUIColor *sp;
+	double balpha;
+	int dr,dg,db,br,bg,bb;
+	int newr,newg,newb;
+	int dra,dga,dba;
+
+	sp=GetSurfacePtrC(x,y);
+	if(sp)
+	{
+		DrawColorToRGB(sp[0],br,bg,bb);
+
+		balpha=1.0f-alpha;
+		DrawColorToRGB(c,dr,dg,db);
+		dra=(int)(dr*alpha);
+		dga=(int)(dg*alpha);
+		dba=(int)(db*alpha);
+
+		newr=dra+(int)(br*balpha);
+		newg=dga+(int)(bg*balpha);
+		newb=dba+(int)(bb*balpha);
+		*(sp)=DrawColor(newr,newg,newb);
+	}
 }
 
 void kGUI::DrawBox(int x1,int y1,int x2,int y2,kGUIColor c)
@@ -2418,32 +2450,73 @@ void kGUI::HSLToRGB(double h,double s,double l,unsigned char *pr,unsigned char *
 
 /***********************************************************************/
 
-void kGUI::AddEvent(void *codeobj,void (*code)(void *))
+void kGUI::AddUpdateTask(void *codeobj,void (*code)(void *))
 {
 	kGUICallBack *ev;
 
 	ev=new kGUICallBack();
 	ev->Set(codeobj,code);
-	m_events.SetEntry(m_numevents++,ev);
+	m_updatetasks.SetEntry(m_numupdatetasks++,ev);
 }
 
-void kGUI::DelEvent(void *codeobj,void (*code)(void *))
+void kGUI::DelUpdateTask(void *codeobj,void (*code)(void *))
 {
-	int i;
+	unsigned int i;
 	kGUICallBack *ev;
 
-	for(i=0;i<m_numevents;++i)
+	for(i=0;i<m_numupdatetasks;++i)
 	{
-		ev=m_events.GetEntry(i);
+		ev=m_updatetasks.GetEntry(i);
 		if(ev->Is(codeobj,code))
 		{
 			delete ev;
-			m_events.DeleteEntry(i);
-			--m_numevents;
+			m_updatetasks.DeleteEntry(i);
+			--m_numupdatetasks;
+			return;
+		}
+	}
+	assert(false,"task not in list error!");
+}
+
+void kGUI::AddEventListener(void *codeobj,void (*code)(void *,kGUIEvent *e))
+{
+	kGUICallBackPtr<kGUIEvent> *ev;
+
+	ev=new kGUICallBackPtr<kGUIEvent>();
+	ev->Set(codeobj,code);
+	m_eventlisteners.SetEntry(m_numeventlisteners++,ev);
+}
+
+void kGUI::DelEventListener(void *codeobj,void (*code)(void *,kGUIEvent *e))
+{
+	unsigned int i;
+	kGUICallBackPtr<kGUIEvent> *ev;
+
+	for(i=0;i<m_numeventlisteners;++i)
+	{
+		ev=m_eventlisteners.GetEntry(i);
+		if(ev->Is(codeobj,code))
+		{
+			delete ev;
+			m_eventlisteners.DeleteEntry(i);
+			--m_numeventlisteners;
 			return;
 		}
 	}
 	assert(false,"event not in list error!");
+}
+
+void kGUI::CallEventListeners(kGUIEvent *e)
+{
+	unsigned int i;
+	kGUICallBackPtr<kGUIEvent> *ev;
+
+	/* todo: we need to handle if DeleteEventListener is called while in this loop */
+	for(i=0;i<m_numeventlisteners;++i)
+	{
+		ev=m_eventlisteners.GetEntry(i);
+		ev->Call(e);
+	}
 }
 
 /* this is only to be used by external threads that need to access the gui */

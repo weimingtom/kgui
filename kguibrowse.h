@@ -187,7 +187,7 @@ class kGUIBrowseIcon
 {
 public:
 	kGUIBrowseIcon() {m_valid=false;m_animateeventactive=false;}
-	virtual ~kGUIBrowseIcon() {if(m_animateeventactive)kGUI::DelEvent(this,CALLBACKNAME(Animate));}
+	virtual ~kGUIBrowseIcon() {if(m_animateeventactive)kGUI::DelUpdateTask(this,CALLBACKNAME(Animate));}
 	bool GetIsValid(void) {return m_valid;}
 	bool SetIcon(DataHandle *dh);
 	void Draw(int x,int y) {m_icon.Draw(m_currentframe,x,y);}
@@ -210,17 +210,31 @@ public:
 	kGUIOffsetInputBoxObj();
 	void Draw(void);
 	bool SetIcon(DataHandle *dh);
+	void SetString(kGUIString *s);
 	CALLBACKGLUEPTR(kGUIOffsetInputBoxObj,SetIcon,DataHandle);
 private:
 	CALLBACKGLUE(kGUIOffsetInputBoxObj,Animate);
 	void Animate(void);
+	void SetOffsets();
 	unsigned int m_currentframe;
 	unsigned int m_animdelay;
 	bool m_animateeventactive:1;
 	bool m_iconvalid:1;
 	kGUIImage m_icon;
+	kGUIText m_domain;
+	unsigned int m_iconx;
+	unsigned int m_domainx;
 };
 
+/* used to draw the link under the cursor, hilights the domain in blue */
+class kGUIDomainTextObj : public kGUITextObj
+{
+public:
+	void Draw(void);
+private:
+	kGUIText m_last;
+	kGUIText m_domain;
+};
 
 /* we will make our own tab class since we want the tabs to have icons and close button on them */
 #define BROWSETABWIDTH 175
@@ -392,7 +406,7 @@ private:
 	kGUITextObj m_status;
 
 	kGUITextObj m_linkcaption;
-	kGUITextObj m_linkurl;
+	kGUIDomainTextObj m_linkurl;
 
 	//we made out own class so we can insert the color blind simulator
 	unsigned int m_curtab;
