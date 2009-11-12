@@ -319,12 +319,12 @@ void kGUIReportTextObj::SetFrame(bool df)
 void kGUIReportTextObj::ShrinkToFit(void)
 {
 	int fontsize;
-	int w=GetZoneW();
-	int h=GetZoneH();
+	unsigned int w=GetZoneW();
+	unsigned int h=GetZoneH();
 
 	fontsize=GetFontSize();
 	CalcLineList(w);
-	while( (((GetWidest())>w) || ((int)GetTotalHeight())>h) && (fontsize>1))
+	while( (((GetWidest())>w) || ((unsigned int)GetTotalHeight())>h) && (fontsize>1))
 	{
 		SetFontSize(--fontsize);
 		SetSize(w,h);

@@ -2011,6 +2011,7 @@ GUIINPUTTYPE_DOUBLE
 class kGUISearchReplaceObj
 {
 public:
+	virtual ~kGUISearchReplaceObj() {}
 	virtual void StringSearch(kGUIString *from,bool matchcase,bool matchword)=0;
 	virtual void StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to)=0;
 };
