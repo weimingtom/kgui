@@ -41,7 +41,7 @@ FIXDEP_OUT=$(OBJDIR)/fixdep$(EXE)
 
 DEP=makefile_$(OBJDIR).dep
 
-CFLAGS= -I"freetype/include" -I"jpeg" -I"lpng128" -I"zlib" -I"mysql/include" -I"ffmpeg" -I"ffmpeg/libswscale" -I"ffmpeg/libavformat" -I"ffmpeg/libavcodec" -I"ffmpeg/libavutil"
+CFLAGS= -I"np" -I"freetype/include" -I"jpeg" -I"lpng128" -I"zlib" -I"mysql/include" -I"ffmpeg" -I"ffmpeg/libswscale" -I"ffmpeg/libavformat" -I"ffmpeg/libavcodec" -I"ffmpeg/libavutil"
 
 $(OBJDIR)/%.o: %.cpp         # combined w/ next line will compile recently changed .cpp files
 	mkdir -p $(OBJDIR)
