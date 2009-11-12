@@ -701,9 +701,9 @@ again:;
 			now.ShortDateTime(&m_expiry);
 		}
 #ifdef ALLOWPACK
-		if(!strcmpi(enc.GetString(),"gzip"))
+		if(!stricmp(enc.GetString(),"gzip"))
 			pack=PACK_GZIP;
-		else if(!strcmpi(enc.GetString(),"deflate"))
+		else if(!stricmp(enc.GetString(),"deflate"))
 			pack=PACK_DEFLATE;
 		else
 			pack=PACK_NONE;
