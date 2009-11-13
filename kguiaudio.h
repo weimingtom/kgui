@@ -27,6 +27,10 @@
 
 #if defined (WIN32) || defined(MINGW)
 #include <mmsystem.h>
+#elif defined(LINUX)
+#include <alsa/asoundlib.h>
+#undef assert
+#define USETHREAD 1
 #endif
 
 class kGUIAudioManager;
@@ -58,19 +62,26 @@ private:
 class AudioBuffer
 {
 public:
-	AudioBuffer() {m_copy=false;m_buffer=0;m_len=0;}
+	AudioBuffer() {m_copy=false;m_buffer=0;m_len=0;m_playindex=0;}
 	void Set(unsigned int len,const unsigned char *buffer,bool copy);
 	void Append(unsigned int len,const unsigned char *buffer);
 	unsigned int GetLen(void) {return m_len;}
 	const unsigned char *GetBuffer(void) {return (m_copy==true?m_copybuffer.GetArrayPtr():m_buffer);}
+	unsigned int GetPlayIndex(void) {return m_playindex;}
+	void SetPlayIndex(unsigned int index) {m_playindex=index;}
+#if defined (WIN32) || defined(MINGW)
+	void Play(HWAVEOUT handle);
+	void Release(HWAVEOUT handle);
+#endif
+private:
 #if defined (WIN32) || defined(MINGW)
     WAVEHDR m_header;
 #endif
-private:
 	int m_len;
 	bool m_copy;
 	Array<unsigned char>m_copybuffer;
 	const unsigned char *m_buffer;
+	unsigned int m_playindex;
 };
 
 class kGUIAudio
@@ -98,11 +109,16 @@ public:
 
 	unsigned int GetChannels(void) {return m_channels;}
 	void SetChannels(unsigned int channels) {m_channels=channels;}
-
 private:
 #if defined (WIN32) || defined(MINGW)
 	HWAVEOUT m_hWaveOut;	/* device handle */
     WAVEFORMATEX m_wfx;		/* look this up in your documentation */
+#elif defined(LINUX)
+	snd_pcm_t *m_handle;
+	snd_pcm_hw_params_t *m_params;
+	snd_async_handler_t *m_callback;
+	int m_samplesize;
+	int m_lastavail,m_laststate;
 #endif
 	kGUIMutex m_mutex;
 	kGUIAudioManager *m_manager;

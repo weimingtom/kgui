@@ -49,6 +49,23 @@ void AudioBuffer::Append(unsigned int len,const unsigned char *buffer)
 	m_len=newlen;
 }
 
+#if defined (WIN32) || defined(MINGW)
+void AudioBuffer::Play(HWAVEOUT handle)
+{
+	ZeroMemory(&m_header, sizeof(m_header));
+	m_header.dwBufferLength = GetLen()/sizeof(short);
+	m_header.lpData = (LPSTR)GetBuffer();
+
+	waveOutPrepareHeader(handle, &m_header, sizeof(m_header));
+	waveOutWrite(handle, &m_header, sizeof(m_header));
+}
+
+void AudioBuffer::Release(HWAVEOUT handle)
+{
+	waveOutUnprepareHeader(handle, &m_header, sizeof(m_header));
+}
+#endif
+
 kGUIAudioManager::kGUIAudioManager()
 {
 	m_counter=0;
@@ -75,9 +92,11 @@ void kGUIAudioManager::UpdateThread(void)
 		unsigned int i;
 		kGUIAudio *a;
 
-		//kGUI::Sleep(1);
+		kGUI::Sleep(10);
 
 		m_mutex.Lock();
+//		kGUI::Trace("UpdateThread\n");
+
 		for(i=0;i<m_numactive;++i)
 		{
 			a=m_activelist.GetEntry(i);
@@ -148,6 +167,11 @@ kGUIAudio::kGUIAudio()
 	m_release=false;
 #if defined (WIN32) || defined(MINGW)
 	m_hWaveOut=0;
+#elif defined(LINUX)
+	m_handle=0;
+	m_params=0;
+	m_lastavail=0;
+	m_laststate=0;
 #endif
 	m_numbuffers=0;
 	m_playbuffer=0;
@@ -194,8 +218,7 @@ void kGUIAudio::Play(int rate,int channels,const unsigned char *sample,unsigned 
 
 //	kGUI::Trace("Play:Lock (%s)\n",m_mutex.GetIsLocked()==true?"locked":"unlocked");
 	
-	while(m_mutex.TryLock()==false)
-		kGUI::Sleep(1);
+	m_mutex.Lock();
 
 	if(m_playing==false)
 	{
@@ -210,7 +233,6 @@ void kGUIAudio::Play(int rate,int channels,const unsigned char *sample,unsigned 
 //	kGUI::Trace("Play:%08x, Adding Packet, rate=%d,channels=%d,size=%d\n",this,rate,channels,samplesize);
 
 	/* can we append this packet to the last pending packet? */
-#if 0
 	if(copy && m_numbuffers>m_playbuffer)
 	{
 		ab=m_buffers.GetEntry(m_numbuffers-1);
@@ -218,36 +240,21 @@ void kGUIAudio::Play(int rate,int channels,const unsigned char *sample,unsigned 
 	}
 	else
 	{
-#endif
 		/* buffer sample data */
 		ab=m_manager->GetBuffer();
 		m_buffers.SetEntry(m_numbuffers,ab);
 		ab->Set(samplesize,sample,copy);
 		++m_numbuffers;
-//	}
-
-#if 1
-	PlayBuffer();
-#else
-	if(m_playing==false)
-		PlayBuffer();
-	else if(m_playing==true && m_playidle==true)
-	{
-		m_playidle=false;
-		PlayBuffer();
 	}
-#endif
-	m_mutex.UnLock();
-//	kGUI::Trace("Play:UnLock\n");
 
-	//Update();
+	PlayBuffer();
+	m_mutex.UnLock();
 }
 
 void kGUIAudio::PlayBuffer(void)
 {
-#if defined (WIN32) || defined(MINGW)
 	AudioBuffer *ab;
-
+#if defined (WIN32) || defined(MINGW)
 	if(m_playing==false)
 	{
 		/*
@@ -282,71 +289,199 @@ void kGUIAudio::PlayBuffer(void)
 	ab=m_buffers.GetEntry(m_playbuffer);
 //	kGUI::Trace("Playing Buffer %08x #%d,len=%d\n",this,m_playbuffer,ab->GetLen());
 	++m_playbuffer;
+	ab->Play(m_hWaveOut);
+#elif defined(LINUX)
+	unsigned int playindex;
+	int ret;
+	unsigned int playsize;
 
-	ZeroMemory(&ab->m_header, sizeof(WAVEHDR));
-	ab->m_header.dwBufferLength = ab->GetLen()/sizeof(short);
-	ab->m_header.lpData = (LPSTR)ab->GetBuffer();
+	if(m_playing==false)
+	{
+		kGUI::Trace("Playing Buffer this=%08x, rate=%d, channels=%d\n",this,m_rate,m_channels);
 
-	waveOutPrepareHeader(m_hWaveOut, &ab->m_header, sizeof(WAVEHDR));
-	waveOutWrite(m_hWaveOut, &ab->m_header, sizeof(WAVEHDR));
+		if(snd_pcm_open (&m_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)<0)
+		{
+			kGUI::Trace("snd_pcm_open error\n");
+			return;
+		}
+
+		if (snd_pcm_hw_params_malloc (&m_params) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_malloc error\n");
+			return;
+		}
+				 
+		if (snd_pcm_hw_params_any (m_handle, m_params) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_any error\n");
+			return;
+		}
+
+		if (snd_pcm_hw_params_set_access (m_handle, m_params, SND_PCM_ACCESS_RW_INTERLEAVED) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_set_access error\n");
+			return;
+		}
+	
+		if (snd_pcm_hw_params_set_format (m_handle, m_params, SND_PCM_FORMAT_S16_LE) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_set_format error\n");
+			return;
+		}
+	
+		if (snd_pcm_hw_params_set_rate_near (m_handle, m_params, &m_rate, 0) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_set_rate_near error\n");
+			return;
+		}
+	
+		if (snd_pcm_hw_params_set_channels (m_handle, m_params, m_channels) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params_set_channels error\n");
+			return;
+		}
+	
+		if (snd_pcm_hw_params (m_handle, m_params) < 0)
+		{
+			kGUI::Trace("snd_pcm_hw_params error\n");
+			return;
+		}
+	
+		snd_pcm_hw_params_free (m_params);
+		m_params=0;
+		m_samplesize=sizeof(short)*m_channels;
+	}
+
+	//get maximum amount that we can play in bytes!
+	ab=m_buffers.GetEntry(m_playbuffer);
+	playindex=ab->GetPlayIndex();
+	playsize=ab->GetLen()-playindex;
+
+//	kGUI::Trace("Playing Buffer this=%08x, ab=%08x, #%d,offset=%d,len=%d of %d\n",this,ab,m_playbuffer,playindex,playsize,ab->GetLen());
+	
+	snd_pcm_prepare (m_handle);
+	ret=snd_pcm_writei (m_handle, ab->GetBuffer()+playindex, playsize/m_samplesize);
+	if(ret<0)
+	{
+		snd_pcm_recover(m_handle,ret,1);
+	}
+	else
+	{
+		playsize=ret*m_samplesize;
+//		kGUI::Trace("Playing Buffer actual playsize=%d\n",playsize);
+		if(m_playing==false)
+		{
+			m_playing=true;
+			snd_pcm_start(m_handle);
+		}
+		ab->SetPlayIndex(playindex+playsize);
+		if((playindex+playsize)==ab->GetLen())
+		{
+			/* finished with this buffer! */
+			ab->SetPlayIndex(0);
+			if(m_loop==false)
+			{
+				/* since we are not looping we can just free it up */
+				ab=m_buffers.GetEntry(0);
+				m_manager->ReleaseBuffer(ab,false);
+				m_buffers.DeleteEntry(0,1);
+				--m_numbuffers;
+			}
+			else
+			{
+				++m_playbuffer;	/* move on to next buffer */
+				if(m_playbuffer==m_numbuffers)
+					m_playbuffer=0;
+			}
+		}
+	}
 #endif
 }
 
 void kGUIAudio::Update(void)
 {
-	if(m_playing && m_playdone>0)
+	if(m_playing)
 	{
-		if(m_mutex.TryLock())
+#ifdef LINUX
+		m_mutex.Lock();
+//		kGUI::Trace("Update - Playbuffer=%d,NumBuffers=%d\n",m_playbuffer,m_numbuffers);
+		if(m_playbuffer<m_numbuffers)
 		{
-			/* release the play buffer if we are not looping */
-			if(m_loop==false)
-			{
-				AudioBuffer *ab;
+			/* try feeding more! */
+//			kGUI::Trace("Update - Calling PlayBuffer\n");
+			PlayBuffer();
+		}
+		else if(m_playbuffer==m_numbuffers && m_playdone==0)
+		{
+			//since we can't get any callback to tell us when this is done
+			//we will just check this way!
+			int avail,state;
 
-				while(m_playdone>0)
-				{
-					ab=m_buffers.GetEntry(0);
-#if defined (WIN32) || defined(MINGW)
-					waveOutUnprepareHeader(m_hWaveOut, &ab->m_header, sizeof(WAVEHDR));
-#endif
-					m_manager->ReleaseBuffer(ab,false);
-					m_buffers.DeleteEntry(0,1);
-					--m_playbuffer;
-					assert(m_numbuffers!=0,"Underflow error!");
-					--m_numbuffers;
-					--m_playdone;
-				}
-			}
-			else
-				m_playdone=0;
-			if(m_playbuffer<m_numbuffers)
+			avail=snd_pcm_avail_update(m_handle);
+		 	state=snd_pcm_state(m_handle);
+			if(avail!=m_lastavail || state!=m_laststate)
 			{
-				//kGUI::Trace("Done:PlayBuffer\n");
-				//PlayBuffer();
+//				kGUI::Trace("kGUIAudio::Update avail=%d,state=%d\n",avail,state);
+				m_lastavail=avail;
+				m_laststate=state;
 			}
-			else
+			if(state!=SND_PCM_STATE_RUNNING)
 			{
-				if(m_loop)
+				kGUI::Trace("kGUIAudio::Update not running detected\n");
+				if(m_loop==false)
 				{
-					/* back to the first buffer! */
-					m_playbuffer=0;
-
-					//todo: send all packets again?
-					PlayBuffer();
-					//kGUI::Trace("Done:PlayBuffer(loop)\n");
-				}
-				else
-				{
-//					kGUI::Trace("Done:Stop %08x\n",this);
 					if(m_release)
 						Stop(false);
 					else
 						m_playidle=true;
 				}
 			}
-			//kGUI::Trace("Done:PreUnlock\n");
-			m_mutex.UnLock();
 		}
+		m_mutex.UnLock();
+#elif defined (WIN32) || defined(MINGW)
+		if(m_playdone>0)
+		{
+			if(m_mutex.TryLock())
+			{
+				/* release the play buffer if we are not looping */
+				if(m_loop==false)
+				{
+					AudioBuffer *ab;
+
+					while(m_playdone>0)
+					{
+						ab=m_buffers.GetEntry(0);
+						ab->Release(m_hWaveOut);
+						m_manager->ReleaseBuffer(ab,false);
+						m_buffers.DeleteEntry(0,1);
+						--m_playbuffer;
+						assert(m_numbuffers!=0,"Underflow error!");
+						--m_numbuffers;
+						--m_playdone;
+					}
+				}
+				else
+					m_playdone=0;
+				if(m_playbuffer==m_numbuffers)
+				{
+					if(m_loop)
+					{
+						/* back to the first buffer! */
+						m_playbuffer=0;
+						PlayBuffer();
+					}
+					else
+					{
+						if(m_release)
+							Stop(false);
+						else
+							m_playidle=true;
+					}
+				}
+				m_mutex.UnLock();
+			}
+		}
+#endif
 	}
 }
 
@@ -363,6 +498,10 @@ void kGUIAudio::Stop(bool needmutex)
 #if defined (WIN32) || defined(MINGW)
 		waveOutReset(m_hWaveOut);
 		waveOutClose(m_hWaveOut);
+#elif defined(LINUX)
+		snd_pcm_drop (m_handle);
+		snd_pcm_close (m_handle);
+		m_handle=0;
 #endif
 		if(m_release)
 			m_manager->ReleaseAudio(this);
