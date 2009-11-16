@@ -2246,7 +2246,8 @@ void kGUIHTMLPageObj::MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out)
 	kGUIXMLCODES::Shrink(&temp,out);
 }
 
-void kGUIHTMLPageObj::Click(kGUIString *url,kGUIString *referrer)
+//if refresh=true then thi was initiated by a meta refresh tag and not a user clicking
+void kGUIHTMLPageObj::Click(kGUIString *url,kGUIString *referrer,bool refresh)
 {
 	kGUIHTMLClickInfo info;
 
@@ -2260,10 +2261,12 @@ void kGUIHTMLPageObj::Click(kGUIString *url,kGUIString *referrer)
 	if(m_visitedcache)
 		m_visitedcache->Add(url);
 
+	info.m_page=this;
 	info.m_newtab=false;
 	info.m_post=0;
 	info.m_url=url;
 	info.m_referrer=referrer;
+	info.m_refresh=refresh;
 	m_clickcallback.Call(&info);
 }
 
@@ -2276,10 +2279,12 @@ void kGUIHTMLPageObj::ClickNewTab(kGUIString *url,kGUIString *referrer)
 	if(m_visitedcache)
 		m_visitedcache->Add(url);
 
+	info.m_page=this;
 	info.m_newtab=true;
 	info.m_post=0;
 	info.m_url=url;
 	info.m_referrer=referrer;
+	info.m_refresh=false;
 	m_clickcallback.Call(&info);
 }
 
@@ -6303,7 +6308,7 @@ void kGUIHTMLPageObj::TimerEvent(void)
 		{
 			m_refreshdelay=0;
 			/* load the refresh url */
-			Click(&m_refreshurl,&m_url);
+			Click(&m_refreshurl,&m_url,true);
 		}
 	}
 
@@ -17429,6 +17434,7 @@ void kGUIHTMLFormObj::Submit(kGUIHTMLObj *button)
 		}
 	}
 
+	info.m_page=m_page;
 	info.m_newtab=false;
 	if(post.GetLen())
 		info.m_post=&post;
@@ -17436,7 +17442,7 @@ void kGUIHTMLFormObj::Submit(kGUIHTMLObj *button)
 		info.m_post=0;
 	info.m_url=&url;
 	info.m_referrer=GetReferrer();
-
+	info.m_refresh=false;
 	m_page->CallClickCallback(&info);
 }
 

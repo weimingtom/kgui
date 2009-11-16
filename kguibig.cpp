@@ -369,14 +369,16 @@ kGUI::SetSystem(&sysbig);
 	}
 	else
 	{
+		unsigned int df;
+
 		const char *name;
 		kGUIDir dir;
 
-printf("loading directory!\n");
+		printf("loading directory!\n");
 		dir.LoadDir(p2,true,true);
-		for(i=0;i<dir.GetNumFiles();++i)
+		for(df=0;df<dir.GetNumFiles();++df)
 		{
-			name=dir.GetFilename(i);
+			name=dir.GetFilename(df);
 			fdata.time=kGUI::SysFileTime(name);
 			AddHash.Add(name,&fdata);
 		}

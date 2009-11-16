@@ -642,6 +642,7 @@ void kGUISearchReq::Event(kGUIEvent *event)
 	case EVENT_CLOSE:
 		if(event->GetObj()==&m_window)
 		{
+			m_srattach->StringSearchReplaceClosed();
 			kGUI::ReDraw();		/* redraw with the window gone incase this callback takes a long time */
 			delete this;
 		}
