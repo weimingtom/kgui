@@ -2014,6 +2014,7 @@ public:
 	virtual ~kGUISearchReplaceObj() {}
 	virtual void StringSearch(kGUIString *from,bool matchcase,bool matchword)=0;
 	virtual void StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to)=0;
+	virtual void StringSearchReplaceClosed(void)=0;
 };
 
 /*! @class kGUIInputBoxObj
@@ -2030,6 +2031,7 @@ public:
 
 	void StringSearch(kGUIString *from,bool matchcase,bool matchword);
 	void StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to);
+	void StringSearchReplaceClosed(void) {m_forceshowselection=false;}
 
 	void Control(unsigned int command,KGCONTROL_DEF *data);
 	void Draw(void);
@@ -2120,6 +2122,7 @@ private:
 	bool m_wrap:1;
 	bool m_allowundo:1;
 	bool m_password:1;
+	bool m_forceshowselection:1;
 	unsigned int m_valuetype:2;
 	unsigned int m_inputtype:2;
 	bool m_showcommas:1;
@@ -3530,6 +3533,8 @@ public:
 
 	virtual int GetComboArrowWidth(void)=0;
 	virtual void DrawComboArrow(kGUICorners *c)=0;
+
+	virtual void DrawClose(int x,int y)=0;
 };
 
 typedef struct

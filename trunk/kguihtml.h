@@ -1886,10 +1886,12 @@ private:
 class kGUIHTMLClickInfo
 {
 public:
+	kGUIHTMLPageObj *m_page;	/* needed so we know which tab triggered the click ( refresh delayed clicks can happen after the user changed tabs ) */
 	kGUIString *m_url;
 	kGUIString *m_referrer;
 	kGUIString *m_post;
 	bool m_newtab;
+	bool m_refresh;
 };
 
 /*! HTML page object
@@ -1912,6 +1914,7 @@ public:
 	/* these are for a searchable object */
 	void StringSearch(kGUIString *from,bool matchcase,bool matchword);
 	void StringReplace(kGUIString *from,bool matchcase,bool matchword,kGUIString *to) {}
+	void StringSearchReplaceClosed(void) {}
 
 	void PurgeRules(void);
 	void GetCorrectedSource(kGUIString *cs);
@@ -2010,7 +2013,7 @@ public:
 	void RePosition(bool reparse) {if(reparse)Parse(false);m_reposition=true;Dirty();}
 
 	/* called when user has clicked on a link */
-	void Click(kGUIString *url,kGUIString *referrer);
+	void Click(kGUIString *url,kGUIString *referrer,bool refresh=false);
 	void ClickNewTab(kGUIString *url,kGUIString *referrer);
 
 	/* this is debug code */

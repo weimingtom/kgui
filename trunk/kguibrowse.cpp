@@ -255,6 +255,25 @@ void kGUIBrowseTabObj::DrawTab(int tabindex,kGUIText *text,int x,int y)
 	kGUI::PopClip();
 }
 
+#if 0
+void TabAlertObj::Draw(void)
+{
+	kGUICorners c;
+
+	kGUI::PushClip();
+	GetCorners(&c);
+	kGUI::ShrinkClip(&c);
+	
+	/* is there anywhere to draw? */
+	if(kGUI::ValidClip())
+	{
+		kGUI::DrawRect(c.lx,c.ty,c.rx,c.by,DrawColor(0,0,255));
+		m_text.Draw(c.lx+2,c.ty+2,0,0,DrawColor(255,255,255));
+		kGUI::GetSkin()->DrawClose(c.rx-16,c.ty);
+	}
+	kGUI::PopClip();
+}
+#endif
 
 TabRecord::TabRecord()
 {
@@ -264,7 +283,92 @@ TabRecord::TabRecord()
 	m_iconvalid=false;
 	m_reposition=false;
 	m_reparse=false;
+#if 0
+	m_numalerts=0;
+	m_alerts.Init(1,1);
+#endif
 }
+
+/* tab size has changed, resize all alerts and the page */
+void TabRecord::ReSize(int neww,int newh)
+{
+#if 0
+	unsigned int i;
+	TabAlertObj *a;
+	kGUIContainerObj *parent=m_screenpage.GetParent();
+
+	/* adjust widths of all alerts */
+	for(i=0;i<m_numalerts;++i)
+	{
+		a=m_alerts.GetEntryPtr(i);
+		a->SetZoneW(neww);
+	}
+#endif
+	m_screenpage.SetSize(neww,newh);
+}
+
+#if 0
+TabAlertObj *TabRecord::AddAlert(void)
+{
+	unsigned int i;
+	unsigned int h;
+	TabAlertObj *a;
+	TabAlertObj *newa;
+	kGUIContainerObj *parent=m_screenpage.GetParent();
+
+	newa=m_alerts.GetEntryPtr(m_numalerts);
+	newa->SetZoneW(parent->GetChildZoneW());
+	h=newa->GetZoneH();
+
+	/* move all previous alerts down */
+	for(i=0;i<m_numalerts;++i)
+	{
+		a=m_alerts.GetEntryPtr(i);
+		a->SetZoneY(a->GetZoneY()+h);
+	}
+	m_screenpage.SetZoneY(m_screenpage.GetZoneY()+h);
+	m_screenpage.SetZoneH(m_screenpage.GetZoneH()-h);
+
+	/* add new alert */
+	parent->AddObject(newa);
+	++m_numalerts;
+	return(newa);
+}
+
+/* remove this alert */
+void TabRecord::DelAlert(TabAlertObj *dela)
+{
+	unsigned int i;
+	int y;
+	unsigned int h;
+	TabAlertObj *a;
+	kGUIContainerObj *parent=m_screenpage.GetParent();
+
+	y=dela->GetZoneY();
+	h=dela->GetZoneH();
+	/* move all alerts below this up, move page up */
+	for(i=0;i<m_numalerts;++i)
+	{
+		a=m_alerts.GetEntryPtr(i);
+		if(a->GetZoneY()>y)
+			a->SetZoneY(a->GetZoneY()-h);
+	}
+	m_screenpage.SetZoneY(m_screenpage.GetZoneY()+h);
+	m_screenpage.SetZoneH(m_screenpage.GetZoneH()-h);
+
+	parent->DelObject(dela);
+	for(i=0;i<m_numalerts;++i)
+	{
+		a=m_alerts.GetEntryPtr(i);
+		if(a==dela)
+		{
+			m_alerts.DeleteEntry(i,false);
+			--m_numalerts;
+			break;
+		}
+	}
+}
+#endif
 
 HistoryRecord *TabRecord::NextPage(void)
 {
@@ -489,7 +593,7 @@ void kGUIBrowseObj::CopyTabURL(unsigned int n,kGUIString *url)
 void kGUIBrowseObj::InitTabRecord(TabRecord *tr)
 {
 	HTMLPageObj *hp;
-
+	
 	hp=tr->GetScreenPage();
 	hp->SetSettings(m_settings);
 	hp->SetItemCache(m_settings->GetItemCache());
@@ -519,7 +623,8 @@ void kGUIBrowseObj::RePosition(bool rp)
 		tabrecord=m_tabrecords.GetEntryPtr(i);
 		screenpage=&tabrecord->m_screenpage;
 
-		screenpage->SetSize(m_tabs.GetChildZoneW(),m_tabs.GetChildZoneH()-m_tabs.GetTabRowHeight());
+		tabrecord->ReSize(m_tabs.GetChildZoneW(),m_tabs.GetChildZoneH()-m_tabs.GetTabRowHeight());
+
 		/* resize the current page now, other pages will be resized when TabChanged is trigerred */
 		if(i==m_curtab)
 			screenpage->RePosition(rp);
@@ -571,10 +676,11 @@ void kGUIBrowseObj::NewTab(void)
 	unsigned int i;
 	int curtab=m_tabs.GetCurrentTab();
 	const char *sdir;
+	kGUIString c;
 
 	/* save prev URL string, set new URL string */
 	m_tabrecords.GetEntryPtr(curtab)->m_urlstring.SetString(&m_url);
-	m_url.Clear();
+	m_url.SetString(&c);
 	/* save prev icon, clear new ICON */
 	m_tabrecords.GetEntryPtr(curtab)->SetIcon(m_iconvalid,&m_icon);
 	m_iconvalid=false;
@@ -599,9 +705,8 @@ void kGUIBrowseObj::NewTab(void)
 		m_tabs.SetCurrentTab(i);
 		m_tabs.AddObject(m_tabrecords.GetEntryPtr(i)->GetScreenPage());
 	}
-	m_tabs.SetCurrentTab(m_numtabs-1);
 	m_curtab=m_numtabs-1;
-//	m_tabs.AddObject(m_curscreenpage);
+	m_tabs.SetCurrentTab(m_curtab);
 
 	/* update the forward/backward etc. buttons */
 	UpdateButtons();
@@ -614,7 +719,7 @@ void kGUIBrowseObj::CloseTab(void)
 	HistoryRecord *hr;
 
 	/* if this page already has a pending load then flag is as to be ignored */
-	StopLoad();
+	StopLoad(m_curtab);
 
 	/* delete this tabrecord entry */
 	tr=m_tabrecords.GetEntryPtr(m_curtab);
@@ -944,16 +1049,16 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			kGUIBookmark *bookmark;
 			HistoryRecord *hist;
 
-			SaveCurrent();
+			SaveCurrent(m_curtab);
 
 			bookmark=m_settings->GetBookmark(event->m_value[0].i-BOOKMARK_BOOKMARKS);
 
-			hist=NextPage();
+			hist=NextPage(m_curtab);
 			m_url.SetString(bookmark->GetURL());
 			hist->Set(bookmark->GetURL()->GetString(),0,0,0,0);
 			hist->SetScrollY(0);
 
-			Load();
+			Load(m_curtab);
 		}
 		break;
 		}
@@ -1033,18 +1138,19 @@ kGUIBrowseObj::~kGUIBrowseObj()
 
 /* return pointer to next page buffer, if full, then scroll buffers back */
 
-HistoryRecord *kGUIBrowseObj::NextPage(void)
+HistoryRecord *kGUIBrowseObj::NextPage(unsigned int tabnum)
 {
 	HistoryRecord *pi;
 
-	pi=m_tabrecords.GetEntryPtr(m_curtab)->NextPage();
-	UpdateButtons();
+	pi=m_tabrecords.GetEntryPtr(tabnum)->NextPage();
+	if(tabnum==m_curtab)
+		UpdateButtons();
 	return(pi);
 }
 
 void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header)
 {
-	HistoryRecord *hist=NextPage();
+	HistoryRecord *hist=NextPage(m_curtab);
 
 	hist->SetScrollY(0);
 
@@ -1063,14 +1169,14 @@ void kGUIBrowseObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *typ
 
 		m_url.SetString(url);
 
-		Load();
+		Load(m_curtab);
 	}
 }
 
 void kGUIBrowseObj::UpdateButtons(void)
 {
 	TabRecord *tr=m_tabrecords.GetEntryPtr(m_curtab);
-	HistoryRecord *hist=GetCurHist();
+	HistoryRecord *hist=tr->GetCurHist();
 
 	m_back.SetEnabled(tr->m_histindex>1);
 	m_refresh.SetEnabled(tr->m_histindex>0);
@@ -1184,15 +1290,15 @@ void kGUIBrowseObj::Goto(unsigned int tabnum)
 	kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
 }
 
-void kGUIBrowseObj::SaveCurrent(void)
+void kGUIBrowseObj::SaveCurrent(unsigned int tabnum)
 {
-	HistoryRecord *hist;
+	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(tabnum);
+	HistoryRecord *hist=tabrecord->GetCurHist();
 
 	/* save old scroll position and save user input on the page */
-	hist=m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();
 	if(hist)
 	{
-		hist->SetScrollY(m_curscreenpage->GetScrollY());
+		hist->SetScrollY(tabrecord->GetScreenPage()->GetScrollY());
 		if(hist->GetInput())
 			m_curscreenpage->SaveInput(hist->GetInput());
 	}
@@ -1200,22 +1306,46 @@ void kGUIBrowseObj::SaveCurrent(void)
 
 void kGUIBrowseObj::Click(kGUIHTMLClickInfo *info)
 {
+	unsigned int tabnum;
 	HistoryRecord *hist;
+	TabRecord *tabrecord;
 
-	SaveCurrent();
+	//this might not be on the currently viewed tab
+	for(tabnum=0;tabnum<m_numtabs;++tabnum)
+	{
+		tabrecord=m_tabrecords.GetEntryPtr(tabnum);
+		if(tabrecord->GetScreenPage()==info->m_page)
+			break;
+	}
+
+	SaveCurrent(tabnum);
+
+	/* check for automated click */
+	if(info->m_refresh)
+	{
+		/* if the user selected ask first then we need to put up an alert */
+		/* togo: AddAlert() */
+//		printf("Click was generated by a page refresh, not a human click!\n");
+//		return;
+	}
+
 	if(info->m_newtab)
+	{
 		NewTab();
+		tabnum=m_numtabs-1;
+	}
 
-	m_url.SetString(info->m_url);
+	if(tabnum==m_curtab)
+		m_url.SetString(info->m_url);
 
-	hist=NextPage();
+	hist=NextPage(tabnum);
 	hist->SetURL(info->m_url);
 	hist->SetPost(info->m_post);
 	hist->SetReferer(info->m_referrer);
 	hist->SetScrollY(0);
 	hist->GetInput()->Reset();
 
-	Load();
+	Load(tabnum);
 }
 
 void kGUIBrowseObj::Update(void)
@@ -1247,9 +1377,9 @@ void kGUIBrowseObj::Update(void)
 	UpdateButtons2();
 }
 
-void kGUIBrowseObj::StopLoad(void)
+void kGUIBrowseObj::StopLoad(unsigned int tabnum)
 {
-	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
+	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(tabnum);
 	DownloadPageRecord *dle;
 
 	/* if this page already has a pending load then flag is as to be ignored */
@@ -1262,19 +1392,22 @@ void kGUIBrowseObj::StopLoad(void)
 	}
 }
 
-void kGUIBrowseObj::Load(void)
+void kGUIBrowseObj::Load(unsigned int tabnum)
 {
 	kGUIString url;
 	const char *cp;
 	DownloadPageRecord *dle;
-	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
-	HistoryRecord *hist=GetCurHist();
+	TabRecord *tabrecord=m_tabrecords.GetEntryPtr(tabnum);
+	HistoryRecord *hist=tabrecord->GetCurHist();
 
-	m_iconvalid=false;
-	m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
+	if(tabnum==m_curtab)
+	{
+		m_iconvalid=false;
+		m_url.SetIcon(0);	/* hide old URL icon until new one can be loaded */
+	}
 
 	/* if this page already has a pending load then flag is as to be ignored */
-	StopLoad();
+	StopLoad(tabnum);
 
 	/* is there a partial page offet? ie: "page.html#aaaaa" */ 
 	url.SetString(hist->GetURL());
@@ -1284,8 +1417,7 @@ void kGUIBrowseObj::Load(void)
 
 //	dle=m_dlpool.PoolGet();
 	dle=new DownloadPageRecord();
-	dle->m_tabnum=m_curtab;
-	dle->m_tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
+	dle->m_tabrecord=m_tabrecords.GetEntryPtr(tabnum);
 	if(!strcmpin(url.GetString(),"file://",7))
 	{
 		int load;
@@ -1304,9 +1436,12 @@ void kGUIBrowseObj::Load(void)
 	}
 	else
 	{
-		m_curscreenpage->SetStatusLine(0);	/* stop page from overwriting */
-		m_status.SetString("Loading");
-		m_busyimage.SetAnimate(true);
+		if(tabnum==m_curtab)
+		{
+			m_curscreenpage->SetStatusLine(0);	/* stop page from overwriting */
+			m_status.SetString("Loading");
+			m_busyimage.SetAnimate(true);
+		}
 
 		/* save in the active list */
 		m_dlactive.SetEntry(m_numdlactive++,dle);
@@ -1386,8 +1521,7 @@ void kGUIBrowseObj::DoGotoMenu(kGUIEvent *event)
 
 		if(sel>=0)
 		{
-		/* todo: cancel any pending loads */
-			StopLoad();
+			StopLoad(m_curtab);
 			m_tabrecords.GetEntryPtr(m_curtab)->m_histindex=sel+1;
 			UpdateButtons();
 			Goto(m_curtab);
@@ -1405,13 +1539,14 @@ void kGUIBrowseObj::GoForward(kGUIEvent *event)
 	case EVENT_PRESSED:
 	{
 		TabRecord *tabrecord=m_tabrecords.GetEntryPtr(m_curtab);
-		SaveCurrent();
+
+		SaveCurrent(m_curtab);
 
 		/* todo: cancel any pending loads */
 
 		if(tabrecord->m_histindex<tabrecord->m_histend)
 		{
-			StopLoad();
+			StopLoad(m_curtab);
 			++tabrecord->m_histindex;
 			UpdateButtons();
 			Goto(m_curtab);
@@ -1431,11 +1566,11 @@ void kGUIBrowseObj::GoBack(kGUIEvent *event)
 	case EVENT_PRESSED:
 	{
 		TabRecord *ctp=m_tabrecords.GetEntryPtr(m_curtab);
-		SaveCurrent();
 
+		SaveCurrent(m_curtab);
 		if(ctp->m_histindex>1)
 		{
-			StopLoad();
+			StopLoad(m_curtab);
 			--ctp->m_histindex;
 			UpdateButtons();
 			Goto(m_curtab);
@@ -1483,8 +1618,8 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 		HistoryRecord *newhist;
 		const char *referer;
 
-		SaveCurrent();
-		newhist=NextPage();
+		SaveCurrent(m_curtab);
+		newhist=NextPage(m_curtab);
 
 		/* if URL does not have http prefix then insert it if not a local file on hd */
 		if(!strcmpin(m_url.GetString(),"file://",5))
@@ -1505,7 +1640,7 @@ void kGUIBrowseObj::UrlChanged(kGUIEvent *event)
 		newhist->Set(m_url.GetString(),0,referer,0,0);
 		newhist->SetScrollY(0);
 
-		Load();
+		Load(m_curtab);
 	}
 	break;
 	}
@@ -1525,8 +1660,8 @@ void kGUIBrowseObj::SearchChanged(kGUIEvent *event)
 		kGUIString searchurl;
 		kGUIString encsearch;
 
-		SaveCurrent();
-		newhist=NextPage();
+		SaveCurrent(m_curtab);
+		newhist=NextPage(m_curtab);
 
 		kGUIHTMLFormObj::Encode(&m_search,&encsearch);
 		searchurl.Sprintf("http://www.google.ca/search?hl=en&q=%s&btnG=Google+Search&meta=",encsearch.GetString());
@@ -1534,7 +1669,7 @@ void kGUIBrowseObj::SearchChanged(kGUIEvent *event)
 		newhist->Set(searchurl.GetString(),0,0,0,0);
 		newhist->SetScrollY(0);
 
-		Load();
+		Load(m_curtab);
 	}
 	break;
 	}
@@ -1551,12 +1686,19 @@ void kGUIBrowseObj::TabChanged(kGUIEvent *event)
 		int newtab=m_tabs.GetCurrentTab();
 		TabRecord *oldtabrecord;
 		TabRecord *newtabrecord;
+		bool iconvalid;
+		DataHandle idh;
 
 		oldtabrecord=m_tabrecords.GetEntryPtr(oldtab);
 		newtabrecord=m_tabrecords.GetEntryPtr(newtab);
 
 		/* this is not the actual page URL but the currently edited one */
 		oldtabrecord->m_urlstring.SetString(&m_url);
+		//oldtabrecord->SetIcon(m_iconvalid,&m_icon);
+
+		newtabrecord->GetIcon(&iconvalid,&idh);
+		m_iconvalid=iconvalid;
+		m_url.SetIcon(&idh);
 		m_url.SetString(&newtabrecord->m_urlstring);
 
 		//this is to be depreciated!
@@ -1610,7 +1752,7 @@ void kGUIBrowseObj::PageLoaded(DownloadPageRecord *dle,int result)
 			hist->SetURL(dle->m_dl.GetRedirectURL());
 			m_url.SetString(dle->m_dl.GetRedirectURL());
 		}
-		Goto(dle->m_tabnum);
+		Goto(GetTabNum(tabrecord));
 	}
 	else
 	{
@@ -1647,6 +1789,22 @@ void kGUIBrowseObj::PageLoaded(DownloadPageRecord *dle,int result)
 	delete dle;
 }
 
+unsigned int kGUIBrowseObj::GetTabNum(TabRecord *r)
+{
+	unsigned int i;
+	TabRecord *tabrecord;
+
+	//this might not be on the currently viewed tab
+	for(i=0;i<m_numtabs;++i)
+	{
+		tabrecord=m_tabrecords.GetEntryPtr(i);
+		if(r==tabrecord)
+			return(i);
+	}
+	assert(false,"TabRecord doesn't exist!\n");
+	return(0);
+}
+
 void kGUIBrowseObj::ShowError(DownloadPageRecord *dle)
 {
 	HistoryRecord *hist=dle->m_tabrecord->GetCurHist();
@@ -1665,8 +1823,7 @@ void kGUIBrowseObj::ShowError(DownloadPageRecord *dle)
 		hist->GetType()->SetString("text/html");
 		hist->GetHeader()->Clear();
 	}
-	//todo: hmmm, if this is not the current tab then defer layout till later
-	Goto(dle->m_tabnum);
+	Goto(GetTabNum(dle->m_tabrecord));
 }
 
 void kGUIBrowseObj::Authenticate(kGUIString *domrealm,kGUIString *name,kGUIString *password)
@@ -1697,14 +1854,14 @@ void kGUIBrowseObj::Authenticate(kGUIString *domrealm,kGUIString *name,kGUIStrin
 	/* add this to the authentication handler */
 	m_ah.Add(domrealm,&enc);
 
-	Load();
+	Load(m_curtab);
 }
 
 /* Reload Page */
 void kGUIBrowseObj::Refresh(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
-		Load();
+		Load(m_curtab);
 }
 
 /* Reload page and all art and linked files */
@@ -1713,7 +1870,7 @@ void kGUIBrowseObj::RefreshAll(kGUIEvent *event)
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
 		m_curscreenpage->FlushCurrentMedia();
-		Load();
+		Load(m_curtab);
 	}
 }
 

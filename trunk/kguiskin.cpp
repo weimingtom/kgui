@@ -423,6 +423,11 @@ void DefSkin::DrawTab(int x,int y,int w,bool current,bool over,bool close)
 		GetShape(current==true?SKIN_TABCLOSE:SKIN_TABCLOSE2)->Draw(0,x+tl->GetImageWidth()+w-16,y+2);
 }
 
+void DefSkin::DrawClose(int x,int y)
+{
+	GetShape(SKIN_TABCLOSE)->Draw(0,x,y);
+}
+
 int DefSkin::GetScrollbarWidth(void)
 {
 	return GetShape(SKIN_SCROLLBARVERTTOP)->GetImageWidth();

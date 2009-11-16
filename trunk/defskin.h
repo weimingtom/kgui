@@ -145,6 +145,9 @@ public:
 	/* allow user to override the default shapes */
 	void SetShape(int index,const char *fn) {m_skinshapes[index].SetFilename(fn);}
 	void SetColor(int index,kGUIColor c) {m_skincolors[index]=c;}
+
+	/* generic close button */
+	void DrawClose(int x,int y);
 private:
 	kGUIImage *GetShape(int index) {return m_skinshapes+index;}
 	kGUIColor GetColor(int index) {return m_skincolors[index];} 

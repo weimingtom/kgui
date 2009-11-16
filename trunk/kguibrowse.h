@@ -68,6 +68,24 @@ private:
 	Hash *m_input;
 };
 
+#if 0
+/* used to report info about a page, for example */
+/* page wants to set a cookie, allow or cancel */
+/* page wants to forward to a new url, allow or cancel */
+class TabAlertObj: public kGUIObj
+{
+public:
+	TabAlertObj() {SetZoneH(m_text.GetFontHeight()+4);}
+	~TabAlertObj() {}
+	void Refresh(kGUIString *newurl) {m_url.SetString(newurl);m_text.SetString(newurl);}
+	void Draw(void);
+	bool UpdateInput(void) {return false;}
+private:
+	kGUIText m_text;
+	kGUIString m_url;
+};
+#endif
+
 /* object needed for each tab */
 class TabRecord
 {
@@ -79,6 +97,11 @@ public:
 	HTMLPageObj *GetScreenPage(void) {return &m_screenpage;}
 	void SetIcon(bool valid,DataHandle *dh) {m_iconvalid=valid;m_icon.Copy(dh);}
 	void GetIcon(bool *valid,DataHandle *dh) {*(valid)=m_iconvalid;dh->Copy(&m_icon);}
+	void ReSize(int neww,int newh);
+#if 0
+	TabAlertObj *AddAlert(void);
+	void DelAlert(TabAlertObj *dela);
+#endif
 	int m_histindex;	
 	int m_histend;
 	HistoryRecord m_history[MAXPAGES];
@@ -89,12 +112,15 @@ public:
 	bool m_reparse:1;
 	DataHandle m_icon;
 	class DownloadPageRecord *m_curdl;	/* if not null then download page is active */
+#if 0
+	unsigned int m_numalerts;
+	ClassArray<TabAlertObj>m_alerts;
+#endif
 };
 
 class DownloadPageRecord
 {
 public:
-	unsigned int m_tabnum;
 	TabRecord *m_tabrecord;
 	DataHandle m_dh;
 	kGUIDownloadEntry m_dl;
@@ -283,6 +309,8 @@ public:
 	void SetSaveDirectory(const char *dir) {m_curscreenpage->SetSaveDirectory(dir);}
 	const char *GetSaveDirectory(void) {return m_curscreenpage->GetSaveDirectory();}
 
+	unsigned int GetTabNum(TabRecord *r);
+
 	HistoryRecord *GetCurHist(void) {return m_tabrecords.GetEntryPtr(m_curtab)->GetCurHist();}
 
 	unsigned int GetNumTabs(void) {return m_numtabs;}
@@ -290,7 +318,7 @@ public:
 
 	kGUIString *GetTitle(void) {return m_curscreenpage->GetTitle();}
 	void SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header);
-	HistoryRecord *NextPage(void);
+	HistoryRecord *NextPage(unsigned int tabnum);
 	void RePosition(bool rp);
 
 	void SetPageChangedCallback(void *codeobj,void (*code)(void *)) {m_pagechangedcallback.Set(codeobj,code);}
@@ -340,8 +368,8 @@ private:
 	void CloseTab(void);
 	void InitTabRecord(TabRecord *tr);
 	void Goto(unsigned int tabnum);
-	void Load(void);
-	void StopLoad(void);
+	void Load(unsigned int tabnum);
+	void StopLoad(unsigned int tabnum);
 	void SetIcon(kGUIHTMLPageObj *page,DataHandle *dh);
 	void DoMainMenu(kGUIEvent *event);
 	void DoGotoMenu(kGUIEvent *event);
@@ -356,7 +384,7 @@ private:
 	void Print(kGUIEvent *event);
 	void Refresh(kGUIEvent *event);
 	void RefreshAll(kGUIEvent *event);
-	void SaveCurrent(void);
+	void SaveCurrent(unsigned int tabnum);
 	void Click(kGUIHTMLClickInfo *info);
 	void Update(void);
 

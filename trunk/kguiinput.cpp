@@ -65,6 +65,7 @@ kGUIInputBoxObj::kGUIInputBoxObj()
 	m_usehs=false;
 	m_allowundo=false;					/* default to off so as to not take to much memory */
 	m_password=false;
+	m_forceshowselection=false;
 	m_hint=0;
 	m_maxw=0;							/* longest line in pixels */
 	m_valuetype=GUIINPUTTYPE_STRING;	/* default type is string */
@@ -1060,7 +1061,10 @@ exitcell:		m_leftoff=0;
 			case GUIKEY_FIND:
 			case GUIKEY_REPLACE:
 				if(m_allowfind)
+				{
 					kGUISearchReq::Open(this,this);
+					m_forceshowselection=true;
+				}
 			break;
 			default:
 				/* insert a letter into the string */
@@ -1165,9 +1169,11 @@ void kGUIInputBoxObj::Draw(void)
 	if((m_recalclines==true) || (m_ow!=GetZoneW()) || (m_oh!=GetZoneH()) )
 		CalcLines(true);
 
+//	m_forceshowselection
+
 	drawcursor=false;
 	imactive=(this==kGUI::GetActiveObj());
-	if(!imactive && m_leaveselection==false)
+	if(!imactive && m_leaveselection==false && m_forceshowselection==false)
 	{
 		if(ImCurrent())
 		{
