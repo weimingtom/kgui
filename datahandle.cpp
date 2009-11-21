@@ -39,43 +39,42 @@
 #include <sys\stat.h> 
 #endif
 
-int DataHandle::m_numbigfiles;
-Array<BigFile *>DataHandle::m_bigfiles;
+int DataHandle::m_numcontainerfiles;
+Array<ContainerFile *>DataHandle::m_containerfiles;
 
 void DataHandle::InitStatic(void)
 {
-	m_numbigfiles=0;
-	m_bigfiles.Alloc(16);
-	m_bigfiles.SetGrow(true);
+	m_numcontainerfiles=0;
+	m_containerfiles.Alloc(16);
+	m_containerfiles.SetGrow(true);
 }
 
 void DataHandle::PurgeStatic(void)
 {
 	int i;
-	BigFile *bf;
+	ContainerFile *cf;
 
-	for(i=0;i<m_numbigfiles;++i)
+	for(i=0;i<m_numcontainerfiles;++i)
 	{
-		bf=m_bigfiles.GetEntry(i);
-		delete bf;
+		cf=m_containerfiles.GetEntry(i);
+		delete cf;
 	}
-	m_numbigfiles=0;
+	m_numcontainerfiles=0;
 }
 
 
-void DataHandle::AddBig(BigFile *bf)
+void DataHandle::AddContainer(ContainerFile *cf)
 {
 	/* if the directory hasn't been loaded already then load it now */
-	if(bf->GetDirLoaded()==false)
-		bf->Load();
-	m_bigfiles.SetEntry(m_numbigfiles,bf);
-	++m_numbigfiles;
+	cf->LoadDirectory();
+	m_containerfiles.SetEntry(m_numcontainerfiles,cf);
+	++m_numcontainerfiles;
 }
 
-void DataHandle::RemoveBig(BigFile *bf)
+void DataHandle::RemoveContainer(ContainerFile *cf)
 {
-	m_bigfiles.Delete(bf);
-	--m_numbigfiles;
+	m_containerfiles.Delete(cf);
+	--m_numcontainerfiles;
 }
 
 DataHandle::DataHandle()
@@ -109,11 +108,11 @@ void DataHandle::SetEncryption(class kGUIProt *p)
 	m_prot=p;
 }
 
-void DataHandle::SetFilename(const char *fn)
+void DataHandle::SetFilename(const char *fn,ContainerFile *defcf)
 {
 	int i;
-	BigFile *bf;
-	BigFileEntry *bfe;
+	ContainerFile *cf;
+	ContainerEntry *cfe;
 	FILE *fp;
 
 	/* make sure file is closed */
@@ -121,14 +120,28 @@ void DataHandle::SetFilename(const char *fn)
 
 	m_ufn.SetString(fn);
 
-	/* does this file exist inside a bigfile already? */
-	for(i=0;i<m_numbigfiles;++i)
+	/* if we are passed an explicit container file then look in it first! */
+	if(defcf)
 	{
-		bf=m_bigfiles.GetEntry(i);
-		bfe=bf->Locate(fn);
-		if(bfe)
+		cfe=defcf->LocateEntry(fn);
+		if(cfe)
 		{
-			bf->CopyArea(this,bfe->m_offset,bfe->m_size,bfe->m_time);
+			defcf->CopyEntry(cfe,this);
+
+			HandleChanged();
+			return;
+		}
+	}
+
+	/* does this file exist inside a container file? */
+	for(i=0;i<m_numcontainerfiles;++i)
+	{
+		cf=m_containerfiles.GetEntry(i);
+		cfe=cf->LocateEntry(fn);
+		if(cfe)
+		{
+			cf->CopyEntry(cfe,this);
+
 			HandleChanged();
 			return;
 		}

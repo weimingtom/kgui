@@ -345,7 +345,7 @@ void AppInit(void)
 	g_bf->SetMemory(bin_data,sizeof(bin_data));
 #endif
 	g_bf->Load();
-	DataHandle::AddBig(g_bf);
+	DataHandle::AddContainer(g_bf);
 
 	g_Space=new Space();
 }

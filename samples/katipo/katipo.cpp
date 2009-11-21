@@ -500,7 +500,8 @@ void Katipo::Load(kGUIFileReq *req,int pressed)
 	if(pressed==MSGBOX_OK)
 	{
 		kGUIXML xml;
-		if(xml.Load(req->GetFilename())==true)
+		xml.SetFilename(req->GetFilename());
+		if(xml.Load()==true)
 		{
 			unsigned int i;
 			kGUIXMLItem *xroot;
@@ -558,7 +559,8 @@ void Katipo::Save(kGUIFileReq *req,int pressed)
 		}
 
 		/* save the xml file */
-		xml.Save(req->GetFilename());
+		xml.SetFilename(req->GetFilename());
+		xml.Save();
 	}
 }
 

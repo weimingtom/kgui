@@ -30,6 +30,7 @@
 #include "kgui.h"
 #include "kguicsv.h"
 
+
 #if defined(LINUX) || defined(MACINTOSH)
 #include <signal.h>
 #include <sys/types.h>
@@ -121,6 +122,7 @@ static void sigint_handler(int sig)  //static declaration
 }
 
 long MS_FileTime(const char *fn);
+
 
 int main(int argc, char* argv[])
 {

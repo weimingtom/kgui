@@ -2952,6 +2952,9 @@ bool kGUIImage::DrawAlpha(int frame,int x1,int y1,double alpha)
 	int oldr,oldg,oldb;
 	int newr,newg,newb;
 
+	if(alpha==1.0f)
+		return(Draw(frame,x1,y1));
+
 	if(LoadPixels()==false)
 		return(false);
 
@@ -3194,10 +3197,22 @@ bool kGUIImage::DrawAlpha(int frame,int x1,int y1,double alpha)
 						sub.limage=image;
 						sub.xfrac=xfrac;
 						ReadSubPixel<GUISHAPE_JPG>(&sub);
-						*(sp++)=DrawColor(sub.rgba[0],sub.rgba[1],sub.rgba[2]);
+						r=sub.rgba[0];
+						g=sub.rgba[1];
+						b=sub.rgba[2];
 					}
 					else
-						*(sp++)=DrawColor(image[0],image[1],image[2]);
+					{
+						r=image[0];
+						g=image[1];
+						b=image[2];
+					}
+					DrawColorToRGB(*(sp),oldr,oldg,oldb);
+					newr=((r*a)+(oldr*olda))>>8;
+					newg=((g*a)+(oldg*olda))>>8;
+					newb=((b*a)+(oldb*olda))>>8;
+					*(sp++)=DrawColor(newr,newg,newb);
+
 					xfrac+=m_stepx;
 					while(xfrac>=1.0f)
 					{
@@ -3231,10 +3246,18 @@ bool kGUIImage::DrawAlpha(int frame,int x1,int y1,double alpha)
 						sub.limage=image;
 						sub.xfrac=xfrac;
 						ReadSubPixel<GUISHAPE_SURFACE>(&sub);
-						*(sp++)=DrawColor(sub.rgba[0],sub.rgba[1],sub.rgba[2]);
+						r=sub.rgba[0];
+						g=sub.rgba[1];
+						b=sub.rgba[2];
 					}
 					else
-						*(sp++)=*((kGUIColor *)image);
+						DrawColorToRGB(*((kGUIColor *)image),r,g,b);
+
+					DrawColorToRGB(*(sp),oldr,oldg,oldb);
+					newr=((r*a)+(oldr*olda))>>8;
+					newg=((g*a)+(oldg*olda))>>8;
+					newb=((b*a)+(oldb*olda))>>8;
+					*(sp++)=DrawColor(newr,newg,newb);
 
 					xfrac+=m_stepx;
 					while(xfrac>=1.0f)

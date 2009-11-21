@@ -1,13 +1,13 @@
-# this is the makefile for sample_csvedit
+# this is the makefile for sample_hexedit
 
 KGUILOC=../../
 include $(KGUILOC)/makefile.in
 
-SRC=csvedit.cpp
+SRC=hexedit.cpp
 
 OBJ=$(SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
-PROGRAM=csvedit$(EXE)
+PROGRAM=hexedit$(EXE)
 
 DEP=makefile_$(OBJDIR).dep
 
@@ -21,8 +21,8 @@ ifeq ($(SYS),-DMINGW)
 
 RESOBJ=$(OBJDIR)/simpleres.o
 
-$(RESOBJ): csvedit.rc
-	windres csvedit.rc $(RESOBJ)
+$(RESOBJ): hexedit.rc
+	windres hexedit.rc $(RESOBJ)
 
 endif
 

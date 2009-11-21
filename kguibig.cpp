@@ -31,6 +31,27 @@
 #include "kgui.h"
 #include "kguiprot.h"
 
+typedef struct
+{
+	time_t time;
+	char root;
+}FDATA;
+
+bool optrecursive;
+bool optverify;
+bool optcompress;
+bool optdelete;
+bool optmissing;
+
+enum
+{
+SOURCE_FILE,
+SOURCE_DIR,
+SOURCE_BIG
+};
+
+bool g_userabort=false;
+
 #if defined(LINUX) || defined(MACINTOSH)
 #include <signal.h>
 #include <sys/types.h>
@@ -49,11 +70,20 @@
 #error
 #endif
 
-bool optrecursive;
-bool optverify;
-bool optcompress;
-bool optdelete;
-bool optmissing;
+#include "kguidir.cpp"
+
+#ifndef S_ISDIR
+#define S_ISDIR(x) (((x) & S_IFMT) == S_IFDIR)
+#endif
+
+bool MS_IsDir (const char *file)
+{
+    struct stat sb;
+
+    if (stat(file, &sb) < 0)
+		return (false);
+    return (S_ISDIR(sb.st_mode));
+}
 
 class kGUISystemBig : public kGUISystem
 {
@@ -76,7 +106,7 @@ public:
 	void Minimize(void) {}
 	void MoveWindowPos(int dx,int dy) {}
 	void AdjustMouse(int dx,int dy) {}
-	bool IsDir(const char *fn) {return false;}
+	bool IsDir(const char *fn) {return MS_IsDir(fn);}
 	bool NeedRotatedSurfaceForPrinting(void) {return false;}
 
 	unsigned int GetNumPrinters(void) {return 0;}
@@ -105,37 +135,9 @@ long FileSize(const char *filename)
 	return(fs);
 }
 
-#include "kguidir.cpp"
-
-typedef struct
-{
-	time_t time;
-	char root;
-}FDATA;
-
-#ifndef S_ISDIR
-#define S_ISDIR(x) (((x) & S_IFMT) == S_IFDIR)
-#endif
-
-bool MS_IsDir (const char *file)
-{
-    struct stat sb;
-
-    if (stat(file, &sb) < 0)
-		return (false);
-    return (S_ISDIR(sb.st_mode));
-}
 
 /**********************************************************************/
 
-enum
-{
-SOURCE_FILE,
-SOURCE_DIR,
-SOURCE_BIG
-};
-
-bool g_userabort=false;
 
 static void sigint_handler(int sig)  //static declaration
 {
@@ -147,6 +149,7 @@ static void sigint_handler(int sig)  //static declaration
 	break;
 	}
 }
+//Debug\kguibig _data.big big big/
 
 int main(int argc, char* argv[])
 {
@@ -175,9 +178,9 @@ int main(int argc, char* argv[])
 	bool usedestprot;
 	kGUIProt SourceProt;
 	bool usesourceprot;
-kGUISystemBig sysbig;
+	kGUISystemBig sysbig;
 
-kGUI::SetSystem(&sysbig);
+	kGUI::SetSystem(&sysbig);
 	signal(SIGINT, sigint_handler);
 	optcompress=false;
 	optrecursive=true;
@@ -188,7 +191,9 @@ kGUI::SetSystem(&sysbig);
 	usesourceprot=false;
 
 #if 0
-	p1=defp1;
+	p1="/source/kgui/_data.big";
+	p2="/source/kgui/big";
+	p3="/source/kgui/big/";
 	optverify=true;
 #endif
 
@@ -263,7 +268,6 @@ kGUI::SetSystem(&sysbig);
 		}
 	}
 
-
 	/* need at least 1 parm */
 	if(!p1)
 	{
@@ -296,17 +300,15 @@ kGUI::SetSystem(&sysbig);
 		{
 			unsigned long crc;
 			unsigned long vfsize;
-			HashEntry *she;
 			BigFileEntry *sfe;
 			unsigned char copybuf[65536];
 			DataHandle checkhandle;
 
 			/* verify or list */
-			nums=DestBigFile.GetNum();
-			she=DestBigFile.GetFirst();
+			nums=DestBigFile.GetNumEntries();
 			for(i=0;((i<nums) && (g_userabort==false));++i)
 			{
-				sfe=(BigFileEntry *)she->m_data;
+				sfe=(BigFileEntry *)DestBigFile.GetEntry(i);
 
 				if(optverify)
 				{
@@ -331,12 +333,10 @@ kGUI::SetSystem(&sysbig);
 					}
 					checkhandle.Close();
 					if(crc!=sfe->m_crc)
-						printf("CRC Error on file '%s' %06x<>%06x\n",she->m_string,(int)crc,sfe->m_crc); 
+						printf("CRC Error on file '%s' %06x<>%06x\n",sfe->GetName()->GetString(),(int)crc,sfe->m_crc); 
 				}
 				else	/* assume list if verify is not set */
-					printf("%s, len=%d,crc=%06x\n",she->m_string,sfe->m_size,sfe->m_crc);
-
-				she=she->GetNext();
+					printf("%s, len=%d,crc=%06x\n",sfe->GetName()->GetString(),sfe->m_size,sfe->m_crc);
 			}
 		}
 		return(0);
@@ -360,7 +360,7 @@ kGUI::SetSystem(&sysbig);
 			return(0);
 		}
 	}
-	else if(MS_IsDir(p2)==false)
+	else if(kGUI::IsDir(p2)==false)
 	{
 		fdata.time=kGUI::SysFileTime(p2);
 		//fdata.root=p3;
@@ -399,15 +399,13 @@ kGUI::SetSystem(&sysbig);
 
 	if(sourcetype==SOURCE_BIG)
 	{
-		HashEntry *she;
 		BigFileEntry *sfe;
 
-		nums=SourceBigFile.GetNum();
-		she=SourceBigFile.GetFirst();
+		nums=SourceBigFile.GetNumEntries();
 		for(i=0;((i<nums) && (g_userabort==false));++i)
 		{
-			sfe=(BigFileEntry *)she->m_data;
-			bfe=DestBigFile.Locate(she->m_string);
+			sfe=(BigFileEntry *)SourceBigFile.GetEntry(i);
+			bfe=DestBigFile.Locate(sfe->GetName()->GetString());
 			if(!bfe)
 			{
 //				printf("File '%s' not in destination set!\n",she->m_string);
@@ -433,7 +431,7 @@ kGUI::SetSystem(&sysbig);
 					}
 					else
 					{
-						printf("File '%s' %d,%d times are different!(%d)\n",she->m_string,sfe->m_time,bfe->m_time,deltatime);
+						printf("File '%s' %d,%d times are different!(%d)\n",sfe->GetName()->GetString(),sfe->m_time,bfe->m_time,deltatime);
 						++numupdated;
 						update=true;
 					}
@@ -448,9 +446,8 @@ kGUI::SetSystem(&sysbig);
 //				fseek(addhandle,sfe->m_offset,SEEK_SET);
 
 				/* add the file to the bigfile */
-				DestBigFile.AddFile(she->m_string,&addhandle,false);
+				DestBigFile.AddFile(sfe->GetName()->GetString(),&addhandle,false);
 			}
-			she=she->GetNext();
 		}
 		DestBigFile.UpdateDir();
 	}

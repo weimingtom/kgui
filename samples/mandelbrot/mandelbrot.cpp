@@ -420,7 +420,8 @@ MandelbrotSample::MandelbrotSample()
 	m_menu.SetPos(0,0);
 	bg->AddObject(&m_menu);
 
-	config=prefs.Load(CONFIGNAME);
+	prefs.SetFilename(CONFIGNAME);
+	config=prefs.Load();
 	if(config)
 	{
 		/* load previous settings */
@@ -736,7 +737,8 @@ MandelbrotSample::~MandelbrotSample()
 	prefs.SetEncoding(ENCODING_UTF8);
 	xroot=prefs.GetRootItem()->AddChild("mandelbrot");
 	m_palette.Save(xroot);
-	prefs.Save(CONFIGNAME);
+	prefs.SetFilename(CONFIGNAME);
+	prefs.Save();
 
 	/* make sure update thread is finished */
 	CancelUpdate();
@@ -1935,7 +1937,8 @@ void PalEdit::Load(kGUIFileReq *req,int pressed)
 	if(pressed==MSGBOX_OK)
 	{
 		kGUIXML xml;
-		if(xml.Load(req->GetFilename())==true)
+		xml.SetFilename(req->GetFilename());
+		if(xml.Load()==true)
 		{
 			kGUIXMLItem *xroot;
 
@@ -1970,7 +1973,8 @@ void PalEdit::Save(kGUIFileReq *req,int pressed)
 		m_pal->Save(xroot);
 
 		/* save the xml file */
-		xml.Save(req->GetFilename());
+		xml.SetFilename(req->GetFilename());
+		xml.Save();
 	}
 }
 

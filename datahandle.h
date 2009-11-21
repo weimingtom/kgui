@@ -25,6 +25,26 @@
 /*                                                                                */
 /**********************************************************************************/
 
+/* this is a virtual class for adding bigfiles and zipfiles to the load path */
+class ContainerEntry
+{
+public:
+	virtual kGUIString *GetName(void)=0;
+};
+
+//this is used as a common base class for BigFiles and Zipfiles
+class ContainerFile
+{
+public:
+	virtual ~ContainerFile() {}
+	virtual void LoadDirectory(void)=0;
+	virtual unsigned int GetNumEntries(void)=0;
+	virtual ContainerEntry *LocateEntry(const char *f)=0;
+	virtual ContainerEntry *GetEntry(unsigned int n)=0;
+	virtual void CopyEntry(ContainerEntry *cfe,class DataHandle *dest)=0;
+};
+
+
 /*! @file datahandle.h 
     @brief DataHandle class definitions. A DataHandle is the class that is used for
 	loading and or saving data. A datahandle can directly reference a file, or a chunk
@@ -67,8 +87,8 @@ public:
 	DataHandle();
 	virtual ~DataHandle();
 	
-	void SetFilename(const char *fn);
-	void SetFilename(kGUIString *fn) {SetFilename(fn->GetString());}
+	void SetFilename(const char *fn,ContainerFile *cf=0);
+	void SetFilename(kGUIString *fn,ContainerFile *cf=0) {SetFilename(fn->GetString(),cf);}
 	void SetMemory(void);	/* write first, then can read from */
 	void SetMemory(const void *memory,unsigned long filesize);
 
@@ -129,9 +149,9 @@ public:
 	static void InitStatic(void);
 	static void PurgeStatic(void);
 	/* add bigfile to global scan list */
-	static void AddBig(class BigFile *bf);
+	static void AddContainer(class ContainerFile *cf);
 	/* remove bigfile to global scan list */
-	static void RemoveBig(class BigFile *bf);
+	static void RemoveContainer(class ContainerFile *cf);
 
 	/* calc crc for file */
 	long CRC(void);
@@ -167,8 +187,8 @@ private:
 	unsigned long long m_writebufferlen;
 	Array<unsigned char>m_writebuffer;
 
-	static int m_numbigfiles;					/* number of registered bigfiles */
-	static Array<class BigFile *>m_bigfiles;	/* array of pointers to bigfiles */
+	static int m_numcontainerfiles;							/* number of registered containerfiles */
+	static Array<class ContainerFile *>m_containerfiles;	/* array of pointers to containerfiles */
 
 	/* new caching system */
 	bool m_readstream;					/* true=read Stream enabled */

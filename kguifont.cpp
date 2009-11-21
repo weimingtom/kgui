@@ -593,12 +593,13 @@ void kGUIText::InsertRichInfo(int index,int num)
 	StringChanged();
 }
 
-void kGUIText::DeleteRichInfo(int index,int num)
+void kGUIText::DeleteRichInfo(int index,int num,bool callchanged)
 {
 	assert(((index+num)<=m_richinfosize),"Cannot delete negative range");
 	m_richinfo.DeleteEntry(index,num);
 	m_richinfosize-=num;
-	StringChanged();
+	if(callchanged)
+		StringChanged();
 }
 
 void kGUIText::SetRichFontID(unsigned int si,unsigned int ei,unsigned int fontid)

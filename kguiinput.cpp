@@ -122,9 +122,9 @@ void kGUIInputBoxObj::DeleteSelection(void)
 		{
 			/*! @todo Handle mulitple Undo/Redo buffer */
 		}
-		Delete(m_hstart,m_hcursor-m_hstart);
 		if(GetUseRichInfo()==true)
-			DeleteRichInfo(m_hstart,m_hcursor-m_hstart);
+			DeleteRichInfo(m_hstart,m_hcursor-m_hstart,false);
+		Delete(m_hstart,m_hcursor-m_hstart);
 
 		m_hcursor=m_hstart;
 		PutCursorOnScreen();
@@ -135,9 +135,9 @@ void kGUIInputBoxObj::DeleteSelection(void)
 		{
 			/* todo: save in undo/redo buffer */
 		}
-		Delete(m_hcursor,m_hstart-m_hcursor);
 		if(GetUseRichInfo()==true)
-			DeleteRichInfo(m_hcursor,m_hstart-m_hcursor);
+			DeleteRichInfo(m_hcursor,m_hstart-m_hcursor,false);
+		Delete(m_hcursor,m_hstart-m_hcursor);
 	}
 
 	CalcLines(false);
@@ -900,10 +900,10 @@ exitcell:		m_leftoff=0;
 
 						}
 						/* handle multi-byte character sets */
+						if(GetUseRichInfo()==true)
+							DeleteRichInfo(m_hcursor,nb,false); 
 						Delete(m_hcursor,nb);
 
-						if(GetUseRichInfo()==true)
-							DeleteRichInfo(m_hcursor,nb); 
 						CalcLines(false);
 						Dirty();
 					}
@@ -926,9 +926,9 @@ exitcell:		m_leftoff=0;
 
 						}
 
-						Delete(m_hcursor-nb,nb);
 						if(GetUseRichInfo()==true)
-							DeleteRichInfo(m_hcursor-nb,nb);
+							DeleteRichInfo(m_hcursor-nb,nb,false);
+						Delete(m_hcursor-nb,nb);
 						Dirty();
 						CalcLines(false);
 						m_hcursor-=nb;
@@ -1043,7 +1043,7 @@ exitcell:		m_leftoff=0;
 									/* save in undo buffer */
 								}
 								if(GetUseRichInfo()==true)
-									DeleteRichInfo(m_maxlen,GetLen()-m_maxlen);
+									DeleteRichInfo(m_maxlen,GetLen()-m_maxlen,false);
 								Clip((unsigned int)m_maxlen);
 							}
 						}

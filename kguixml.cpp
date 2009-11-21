@@ -855,23 +855,21 @@ void kGUIXMLItem::Copy(kGUIXMLItem *copy)
 	}
 }
 
-/* todo: change from using fopen etc to using DataHandle */
-
-void kGUIXMLItem::Save(kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level)
+void kGUIXMLItem::Save(kGUIXML *top,kGUIString *ts,unsigned int level)
 {
 	unsigned int i,nc;
 	kGUIXMLItem *child;
 	bool open=true;
 
 	for(i=0;i<level;++i)
-		fprintf(fp,"  ");
+		top->Sprintf("  ");
 
 	if(m_name)
 	{
 		ts->SetEncoding(ENCODING_8BIT);
 		ts->SetString(m_name);
 		ts->ChangeEncoding(top->GetEncoding());
-		fprintf(fp,"<%s",ts->GetString());
+		top->Sprintf("<%s",ts->GetString());
 	}
 	else
 		open=false;
@@ -886,16 +884,16 @@ void kGUIXMLItem::Save(kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level)
 			ts->SetEncoding(ENCODING_8BIT);
 			ts->SetString(child->m_name);
 			ts->ChangeEncoding(top->GetEncoding());
-			fprintf(fp," %s=",ts->GetString());
+			top->Sprintf(" %s=",ts->GetString());
 
 			kGUIXMLCODES::Expand(&child->m_value,ts);
 
 			ts->ChangeEncoding(top->GetEncoding());
 			/* if string contains double quotes then use single quotes in string */
 			if(!strstr(ts->GetString(),"\""))
-				fprintf(fp,"\"%s\"",ts->GetString());
+				top->Sprintf("\"%s\"",ts->GetString());
 			else
-				fprintf(fp,"'%s'",ts->GetString());
+				top->Sprintf("'%s'",ts->GetString());
 		}
 	}
 	/* export all children */
@@ -908,20 +906,20 @@ void kGUIXMLItem::Save(kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level)
 			if(open)
 			{
 				open=false;
-				fprintf(fp,">\n");
+				top->Sprintf(">\n");
 			}
-			GetChild(i)->Save(top,ts,fp,level+1);
+			GetChild(i)->Save(top,ts,level+1);
 		}
 	}
 	if(open)
-		fprintf(fp,">");
+		top->Sprintf(">");
 
 	if(m_value.GetLen())
 	{
 		kGUIXMLCODES::Expand(&m_value,ts);
 
 		ts->ChangeEncoding(top->GetEncoding());
-		fprintf(fp,"%s",ts->GetString());
+		top->Sprintf("%s",ts->GetString());
 	}
 	if(m_name)
 	{
@@ -930,13 +928,13 @@ void kGUIXMLItem::Save(kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level)
 			if(nc)
 			{
 				for(i=0;i<level;++i)
-					fprintf(fp,"  ");
+					top->Sprintf("  ");
 			}
 
 			ts->SetEncoding(ENCODING_8BIT);
 			ts->SetString(m_name);
 			ts->ChangeEncoding(top->GetEncoding());
-			fprintf(fp,"</%s>\n",ts->GetString());
+			top->Sprintf("</%s>\n",ts->GetString());
 		}
 	}
 }
@@ -1004,7 +1002,7 @@ const char *kGUIXML::CacheName(const char *name)
 	return(n);
 }
 
-bool kGUIXML::Load(const char *filename)
+bool kGUIXML::Load(void)
 {
 	char *fd;
 	char *fdend;
@@ -1023,14 +1021,18 @@ bool kGUIXML::Load(const char *filename)
 		m_namecache->Init(8,0);
 	}
 
-	assert(m_namecache!=0,"Name Cache needs to be defined before loading an XML file");
 	tempstring.Alloc(65536);
 	delete m_root;
 	m_root=new kGUIXMLItem();
 
-	filedata=(char *)kGUI::LoadFile(filename,&m_filesize);
-	if(!filedata)
+	m_filesize=GetLoadableSize();
+	if(Open()==false)
 		return(false);
+
+	filedata=new char[m_filesize+1];	//extra byte to hold null terminator
+	Read(filedata,m_filesize);
+	filedata[m_filesize]=0;				//add the null
+	Close();
 
 	/* parse the file! */
 	fd=filedata;
@@ -1066,7 +1068,7 @@ bool kGUIXML::Load(const char *filename)
 
 	}
 
-	free((void *)filedata);
+	delete []filedata;
 
 	return(true);
 }
@@ -1077,34 +1079,28 @@ void kGUIXML::Update(char *cur)
 		m_loadcallback.Call((int)(cur-m_fd),m_filesize);
 }
 
-/* todo: change to use a datahandle instead of fopen */
-
-bool kGUIXML::Save(const char *filename)
+bool kGUIXML::Save(void)
 {
-	FILE *fp;
 	kGUIString tempstring;
 
-	fp=fopen(filename,"wb");
-	if(!fp)
-		return(false);	/* error opening file */
-	
+	if(OpenWrite("wb")==false)
+		return(false);
+
 	tempstring.Alloc(65536);
 
 	if(m_encoding==ENCODING_8BIT)
-		fprintf(fp,"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+		Sprintf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
 	else
-		fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		Sprintf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	
-	/* todo, convert all strings to encoding */
-	m_root->Save(this,&tempstring,fp,0);
-	fclose(fp);
-	return(true);
+	m_root->Save(this,&tempstring,0);
+	return(Close());
 }
 
 /*********************************************************************************/
 /* this is for loading really BIG xml files that are too large to fit in memory */
 
-bool kGUIXML::StreamLoad(const char *filename)
+bool kGUIXML::StreamLoad(void)
 {
 	kGUIXMLItem *xitem;
 	kGUIXMLItem *encoding;
@@ -1125,30 +1121,29 @@ bool kGUIXML::StreamLoad(const char *filename)
 	delete m_root;
 	m_root=new kGUIXMLItem();
 
-	m_dh.SetFilename(filename);
-	if(!m_dh.Open())
+	if(!Open())
 		return(false);
 
-	m_dh.InitReadStream(16,2);	/* use 2 64k buffers */ 
+	InitReadStream(16,2);	/* use 2 64k buffers */ 
 
 	m_fd=0;	/* only used for callback */
 
 	/* pull end back to last '>' character */
-	fs=m_dh.GetSize();
+	fs=GetSize();
 	do
 	{
-		m_dh.Seek(fs-1);
-		if(m_dh.StreamPeekChar()=='>')
+		Seek(fs-1);
+		if(StreamPeekChar()=='>')
 			break;
 		--fs;
 	}while(fs>1);
 
 	/* eat any leading spaces */
-	m_dh.Seek((unsigned long long)0);
-	while(m_dh.StreamPeekChar()==' ')
-		m_dh.Skip(1);
+	Seek((unsigned long long)0);
+	while(StreamPeekChar()==' ')
+		Skip(1);
 
-	while(m_dh.GetOffset()<fs)
+	while(GetOffset()<fs)
 	{
 		xitem=StreamLoad(m_root);
 
@@ -1168,7 +1163,7 @@ bool kGUIXML::StreamLoad(const char *filename)
 		}
 
 	}
-	m_dh.Close();
+	Close();
 	return(true);
 }
 
@@ -1180,23 +1175,23 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 	char q;
 	int sl;
 
-	Update((char *)m_dh.GetOffset());	/* call users callback if there is one */
+	Update((char *)GetOffset());	/* call users callback if there is one */
 
 	/* change to get from pool */
 	item=PoolGet();
 
 	item->SetEncoding(GetEncoding());
 	parent->AddChild(item);
-	assert(m_dh.StreamPeekChar()=='<',"Open bracket not found!");
-	m_dh.StreamSkip(1);				/* skip the '<' */
+	assert(StreamPeekChar()=='<',"Open bracket not found!");
+	StreamSkip(1);				/* skip the '<' */
 	item->m_parm=false;
 
 	nl=0;
-	c=m_dh.StreamPeekChar();
+	c=StreamPeekChar();
 	while(c!=0x0a && c!=0x0d && c!=' ' && c!=9 && c!='/' && c!='>')
 	{
-		m_dh.StreamSkip(1);
-		c=m_dh.StreamPeekChar();
+		StreamSkip(1);
+		c=StreamPeekChar();
 		++nl;
 	}
 
@@ -1204,27 +1199,27 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 	/* in each XMLItem class, instead they are cached (Using a hash table) and XMLItems */
 	/* just refer to the cached names */
 
-	m_dh.StreamSkip(-nl);		/* go back to beginning of string */
-	m_dh.Read(&m_tempstring,(unsigned long)nl);	/* read in the string */
+	StreamSkip(-nl);		/* go back to beginning of string */
+	Read(&m_tempstring,(unsigned long)nl);	/* read in the string */
 	item->m_name=CacheName(m_tempstring.GetString());
 
 	while(c==0x0a || c==0x0d)
 	{
-		m_dh.StreamSkip(1);
-		c=m_dh.StreamPeekChar();
+		StreamSkip(1);
+		c=StreamPeekChar();
 	}
 
 	if(c==' ' || c=='/')
 	{
 		if(c==' ')
 		{
-			m_dh.StreamSkip(1);
-			c=m_dh.StreamPeekChar();
+			StreamSkip(1);
+			c=StreamPeekChar();
 		}
-		if(!m_dh.StreamCmp("/>",2))
+		if(!StreamCmp("/>",2))
 		{
-			m_dh.StreamSkip(2);
-			c=m_dh.StreamPeekChar();
+			StreamSkip(2);
+			c=StreamPeekChar();
 			goto done;
 		}
 		/* this command has values in the header */
@@ -1238,86 +1233,86 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 			parm->m_parm=true;
 			while(c!='=')
 			{
-				m_dh.StreamSkip(1);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(1);
+				c=StreamPeekChar();
 				++sl;
 			}
 
-			m_dh.StreamSkip(-sl);		/* go back to beginning of string */
-			m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+			StreamSkip(-sl);		/* go back to beginning of string */
+			Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
 			m_tempstring.Trim();
 			parm->m_name=CacheName(m_tempstring.GetString());
 
-			m_dh.StreamSkip(1);			/* skip '=' */
-			c=m_dh.StreamPeekChar();
+			StreamSkip(1);			/* skip '=' */
+			c=StreamPeekChar();
 
 			while(c==' ')
 			{
-				m_dh.StreamSkip(1);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(1);
+				c=StreamPeekChar();
 			}
 
 			q=c;
 			assert((q=='\"' || q=='\''),"Quote not found!");
 
-			m_dh.StreamSkip(1);			/* skip the opening quote */
-			c=m_dh.StreamPeekChar();
+			StreamSkip(1);			/* skip the opening quote */
+			c=StreamPeekChar();
 
 			sl=0;
 			while(c!=q)
 			{
-				m_dh.StreamSkip(1);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(1);
+				c=StreamPeekChar();
 				++sl;
 			}
-			m_dh.StreamSkip(-sl);		/* go back to beginning of string */
-			m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+			StreamSkip(-sl);		/* go back to beginning of string */
+			Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
 			kGUIXMLCODES::Shrink(&m_tempstring,&parm->m_value);
 
-			m_dh.StreamSkip(1);			/* skip the close quote */
-			c=m_dh.StreamPeekChar();
+			StreamSkip(1);			/* skip the close quote */
+			c=StreamPeekChar();
 
 			item->AddChild(parm);
 
 			while(c==0x0a || c==0x0d || c==' ' || c==9)
 			{
-				m_dh.StreamSkip(1);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(1);
+				c=StreamPeekChar();
 			}
 
-			if(!m_dh.StreamCmp("?>",2) || !m_dh.StreamCmp("/>",2))
+			if(!StreamCmp("?>",2) || !StreamCmp("/>",2))
 			{
-				m_dh.StreamSkip(2);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(2);
+				c=StreamPeekChar();
 				goto done;
 			}
 		}
-		m_dh.StreamSkip(1);			/* skip '>' */		
-		c=m_dh.StreamPeekChar();
+		StreamSkip(1);			/* skip '>' */		
+		c=StreamPeekChar();
 		while( (c==10) || (c==13) || (c==' ') || (c==9) )
 		{
-			m_dh.StreamSkip(1);
-			c=m_dh.StreamPeekChar();
+			StreamSkip(1);
+			c=StreamPeekChar();
 		}
 	}
 	else
 	{
-		m_dh.StreamSkip(1);
-		c=m_dh.StreamPeekChar();
+		StreamSkip(1);
+		c=StreamPeekChar();
 	}
 
 	sl=0;
 	while(c!='<')
 	{
-		m_dh.StreamSkip(1);
-		c=m_dh.StreamPeekChar();
+		StreamSkip(1);
+		c=StreamPeekChar();
 		++sl;
 	}
 
 	if(sl)
 	{
-		m_dh.StreamSkip(-sl);		/* go back to beginning of string */
-		m_dh.Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+		StreamSkip(-sl);		/* go back to beginning of string */
+		Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
 		kGUIXMLCODES::Shrink(&m_tempstring,&item->m_value);
 	}
 
@@ -1325,30 +1320,30 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 	while(1)
 	{
 		/* check for comment here?? */
-		while(!m_dh.StreamCmp("<!--",4))
+		while(!StreamCmp("<!--",4))
 		{
-			m_dh.StreamSkip(4);		/* skip comment start */
+			StreamSkip(4);		/* skip comment start */
 
-			while(m_dh.StreamCmp("-->",3))
-				m_dh.StreamSkip(1);
+			while(StreamCmp("-->",3))
+				StreamSkip(1);
 
-			m_dh.StreamSkip(3);		/* skip comment end */
-			c=m_dh.StreamPeekChar();
+			StreamSkip(3);		/* skip comment end */
+			c=StreamPeekChar();
 
 			/* eat whitespace */
 			while(c==0x0a || c==0x0d || c==' ' || c==9 )
 			{
-				m_dh.StreamSkip(1);
-				c=m_dh.StreamPeekChar();
+				StreamSkip(1);
+				c=StreamPeekChar();
 			}
 		}
 
-		if(!m_dh.StreamCmp("</",2) && !m_dh.StreamCmp(">",1,nl+2))
+		if(!StreamCmp("</",2) && !StreamCmp(">",1,nl+2))
 		{
-			if(!m_dh.StreamCmp(item->m_name,nl,2))
+			if(!StreamCmp(item->m_name,nl,2))
 			{
-				m_dh.StreamSkip(nl+3);	/* skip </name> */
-				c=m_dh.StreamPeekChar();
+				StreamSkip(nl+3);	/* skip </name> */
+				c=StreamPeekChar();
 				break;
 			}
 		}
@@ -1357,14 +1352,14 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 	}
 done:;
 
-	if(m_dh.Eof()==false)
+	if(Eof()==false)
 	{
 		while((c==10) || (c==13) || (c==' ') || (c==9))
 		{
-			m_dh.StreamSkip(1);
-			if(m_dh.Eof())
+			StreamSkip(1);
+			if(Eof())
 				break;
-			c=m_dh.StreamPeekChar();
+			c=StreamPeekChar();
 		}
 	}
 	/* this is a virtual function */
