@@ -23,7 +23,6 @@
 /**********************************************************************************/
 
 #include "kgui.h"
-
 #include "zip.h"
 
 #include "zlib/contrib/minizip/zip.h"
@@ -145,7 +144,6 @@ uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
 #elif defined(LINUX) || defined(MACINTOSH)
 uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
 {
-	int ret=0;
 	struct tm *filedate;
 	time_t tm_t=0;
 	kGUIString name;
@@ -158,21 +156,20 @@ uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
 	if(name.GetChar(name.GetLen()-1)=='/')
 		name.Clip(name.GetLen()-1);
 
-	tm_t=kGUI::FileTime(name);
+	tm_t=kGUI::FileTime(name.GetString());
 	if(!tm_t)
 		tm_t=time(NULL);	//file is probably a memory based file so set time to now!
-	ret=1;
-  }
-  filedate = localtime(&tm_t);
 
-  tmzip->tm_sec  = filedate->tm_sec;
-  tmzip->tm_min  = filedate->tm_min;
-  tmzip->tm_hour = filedate->tm_hour;
-  tmzip->tm_mday = filedate->tm_mday;
-  tmzip->tm_mon  = filedate->tm_mon ;
-  tmzip->tm_year = filedate->tm_year;
+	filedate = localtime(&tm_t);
 
-  return ret;
+	tmzip->tm_sec  = filedate->tm_sec;
+	tmzip->tm_min  = filedate->tm_min;
+	tmzip->tm_hour = filedate->tm_hour;
+	tmzip->tm_mday = filedate->tm_mday;
+	tmzip->tm_mon  = filedate->tm_mon ;
+	tmzip->tm_year = filedate->tm_year;
+
+	return 1;
 }
 #else
 uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
