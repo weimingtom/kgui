@@ -145,30 +145,23 @@ uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
 #elif defined(LINUX) || defined(MACINTOSH)
 uLong filetime(const char *f, tm_zip *tmzip, uLong *dt)
 {
-  int ret=0;
-  struct stat s;        /* results of stat() */
-  struct tm* filedate;
-  time_t tm_t=0;
+	int ret=0;
+	struct tm *filedate;
+	time_t tm_t=0;
+	kGUIString name;
 
-  if (strcmp(f,"-")!=0)
-  {
-    char name[MAXFILENAME+1];
-    int len = strlen(f);
-    if (len > MAXFILENAME)
-      len = MAXFILENAME;
+	name.SetString(f);
+	if(!name.GetLen())
+		return(0);
 
-    strncpy(name, f,MAXFILENAME-1);
-    /* strncpy doesnt append the trailing NULL, of the string is too long. */
-    name[ MAXFILENAME ] = '\0';
+	/*remove trailing '/' if there was one */
+	if(name.GetChar(name.GetLen()-1)=='/')
+		name.Clip(name.GetLen()-1);
 
-    if (name[len - 1] == '/')
-      name[len - 1] = '\0';
-    /* not all systems allow stat'ing a file with / appended */
-    if (stat(name,&s)==0)
-    {
-      tm_t = s.st_mtime;
-      ret = 1;
-    }
+	tm_t=kGUI::FileTime(name);
+	if(!tm_t)
+		tm_t=time(NULL);	//file is probably a memory based file so set time to now!
+	ret=1;
   }
   filedate = localtime(&tm_t);
 
