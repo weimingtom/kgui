@@ -30,6 +30,7 @@
 class ZipFileEntry : public ContainerEntry
 {
 public:
+	~ZipFileEntry() {}
 	kGUIString *GetName(void) {return &m_name;}
 	kGUIString m_name;
 };

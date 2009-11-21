@@ -29,6 +29,7 @@
 class ContainerEntry
 {
 public:
+	virtual ~ContainerEntry() {}
 	virtual kGUIString *GetName(void)=0;
 };
 

@@ -80,6 +80,7 @@ typedef struct
 class BigFileEntry : public ContainerEntry
 {
 public:
+	~BigFileEntry() {}
 	kGUIString *GetName(void) {return &m_name;}
 	unsigned int m_dirblocknum;		/* directory block number where entry is stored, only valid in edit mode */
 	unsigned int m_diroffset;		/* offset into file where directory entry is */
