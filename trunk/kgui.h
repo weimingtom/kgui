@@ -1296,7 +1296,7 @@ public:
 	void SetRichBGColor(unsigned int si,unsigned int ei,kGUIColor color);
 
 	void InsertRichInfo(int index,int num);
-	void DeleteRichInfo(int index,int num);
+	void DeleteRichInfo(int index,int num,bool callchanged=true);
 	void SetRevRange(int start,int end) {m_rstart=start;m_rend=end;}
 
 	void SetLetterSpacing(int s) {m_letterspacing=s;}
@@ -1605,8 +1605,9 @@ public:
 	void StringChanged(void) {Changed();}
 	void FontChanged(void) {Changed();}
 	void SetOffsets(int xoff,int yoff) {m_xoff=xoff;m_yoff=yoff;Changed();}
+protected:
+	virtual void Changed(void);	//moved to protected so derived class can override and then call
 private:
-	void Changed(void);
 	unsigned int m_xoff:16;
 	unsigned int m_yoff:16;
 };
@@ -1676,7 +1677,7 @@ public:
 	bool TileDraw(int frame,int x1,int y1,int x2,int y2);
 	void DrawLineRect(int frame,int lx,int ty,int rx,int by,bool horiz);
 	void ScaleTo(int w,int h) {SetScale(m_imagewidth==0?1.0f:(double)w/(double)m_imagewidth,m_imageheight==0?1.0f:(double)h/(double)m_imageheight);}
-	void SetScale(double xscale,double yscale) {m_stepx=1.0f/xscale;m_stepy=1.0f/yscale;}
+	void SetScale(double xscale,double yscale) {assert(xscale>=0.0f && yscale>=0.0f,"Bad Scale");m_stepx=1.0f/xscale;m_stepy=1.0f/yscale;}
 	double GetScaleX(void) {return 1.0f/m_stepx;}
 	double GetScaleY(void) {return 1.0f/m_stepy;}
 	int GetImageHeight(void) {return m_imageheight;}
@@ -2090,6 +2091,8 @@ public:
 	void SetCursorRow(int line) {m_hcursor=0;MoveCursorRow(line);}
 
 	bool MoveCursorRow(int delta);
+protected:
+	virtual void Changed(void);	//moved to protected so derived class can override and then call
 private:
 	CALLBACKGLUEPTR(kGUIInputBoxObj,ScrollMoveRow,kGUIEvent)
 	CALLBACKGLUEPTR(kGUIInputBoxObj,ScrollMoveCol,kGUIEvent)
@@ -2097,7 +2100,6 @@ private:
 	void ScrollMoveRow(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveRow(event->m_value[0].i);}
 	void ScrollMoveCol(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MoveCol(event->m_value[0].i);}
 	void ScrollEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_MOVED)Dirty();}
-	void Changed(void);
 	void PutCursorOnScreen(void);
 	void MoveRow(int delta);
 	void MoveCol(int delta);
@@ -2849,12 +2851,12 @@ public:
 	void DeleteRow(kGUITableRowObj *obj,bool purge=true);
 	bool DeleteRowz(kGUITableRowObj *obj,bool purge=true);
 	void SetNumCols(unsigned int n);
-	void SetColWidth(int n,int w) {m_colwidths.SetEntry(n,w);m_sizechanged=true;m_positionsdirty=true;}
-	void SetColTitle(int n,kGUIString *s) {m_coltitles.GetEntryPtr(n)->SetString(s);m_positionsdirty=true;}
-	void SetColTitle(int n,const char *t) {m_coltitles.GetEntryPtr(n)->SetString(t);m_positionsdirty=true;}
-	void SetColHint(int n,const char *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
-	void SetColHint(int n,kGUIString *t) {m_colhints.GetEntryPtr(n)->SetString(t);}
-	kGUIText *GetColHeaderTextPtr(int n) {return m_coltitles.GetEntryPtr(n);}
+	void SetColWidth(unsigned int n,int w) {assert(n<m_numcols,"Out of Range");m_colwidths.SetEntry(n,w);m_sizechanged=true;m_positionsdirty=true;}
+	void SetColTitle(unsigned int n,kGUIString *s) {assert(n<m_numcols,"Out of Range");m_coltitles.GetEntryPtr(n)->SetString(s);m_positionsdirty=true;}
+	void SetColTitle(unsigned int n,const char *t) {assert(n<m_numcols,"Out of Range");m_coltitles.GetEntryPtr(n)->SetString(t);m_positionsdirty=true;}
+	void SetColHint(unsigned int n,const char *t) {assert(n<m_numcols,"Out of Range");m_colhints.GetEntryPtr(n)->SetString(t);}
+	void SetColHint(unsigned int n,kGUIString *t) {assert(n<m_numcols,"Out of Range");m_colhints.GetEntryPtr(n)->SetString(t);}
+	kGUIText *GetColHeaderTextPtr(unsigned int n) {assert(n<m_numcols,"Out of Range");return m_coltitles.GetEntryPtr(n);}
 	int GetNumCols(void) {return m_numcols;}
 	int GetNumRows(void) {return GetNumChildren();}
 	int GetColWidth(int n) {return m_colwidths.GetEntry(n);}
@@ -3443,7 +3445,7 @@ public:
 	void Purge(void);
 	void LoadDrives(void);
 	void LoadDir(const char *path,bool recursive,bool fullnames,const char *ext=0);
-	void LoadDir(BigFile *bf,const char *ext=0);
+	void LoadDir(ContainerFile *cf,const char *ext=0);
 	unsigned int GetNumFiles(void) {return m_numfiles;}
 	const char *GetFilename(int index) {return m_filenames.GetEntryPtr(index)->GetString();}
 	unsigned int GetNumDirs(void) {return m_numdirs;}

@@ -17,54 +17,6 @@
 
 #include "kguisys.cpp"
 
-#if 1
-
-#define loslib_c
-#define LUA_CORE
-
-#define fputs myfputs
-
-kGUIString debug;
-
-void myfputs(const char *c,FILE *f)
-{
-	debug.Append(c);
-}
-
-#include "lua\lua.c"
-#include "lua\lstate.c"
-#include "lua\lapi.c"
-#include "lua\lauxlib.c"
-#include "lua\linit.c"
-#include "lua\lgc.c"
-#include "lua\lmem.c"
-#include "lua\lfunc.c"
-#include "lua\ldo.c"
-#include "lua\lstring.c"
-#include "lua\llex.c"
-#include "lua\ltm.c"
-#include "lua\ltable.c"
-#include "lua\lobject.c"
-#include "lua\lvm.c"
-#include "lua\lzio.c"
-#include "lua\ldump.c"
-#include "lua\lundump.c"
-#include "lua\lparser.c"
-#include "lua\lcode.c"
-#include "lua\lopcodes.c"
-
-#include "lua\ldblib.c"
-#include "lua\lmathlib.c"
-#include "lua\lstrlib.c"
-#include "lua\loslib.c"
-#include "lua\liolib.c"
-#include "lua\ltablib.c"
-#include "lua\loadlib.c"
-#include "lua\lbaselib.c"
-#include "lua\ldebug.c"
-
-#endif
-
 class HexListObj : public kGUIObj
 {
 public:
@@ -126,24 +78,6 @@ void AppInit(void)
 	kGUI::SetDefReportFontSize(20);
 
 	g_hex=new HEXEditSample();
-
-	{
-   lua_State* luaVM = lua_open();
- 
-   if (NULL == luaVM)
-   {
-      printf("Error Initializing lua\n");
-      return;
-   }
-	luaL_openlibs(luaVM);
-
-   // Do stuff with lua code.
-   char* strLuaInput = "a = 1 + 1;\nprint( a);\n";
- 
-   luaL_dostring(luaVM, strLuaInput);
-    
-   lua_close( luaVM );
-	}
 }
 
 void AppClose(void)

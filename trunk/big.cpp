@@ -41,7 +41,9 @@ BigFile::BigFile()
 	m_dirblocks.Alloc(16);
 	m_dirblocks.SetGrow(true);
 	m_dirblocks.SetGrowSize(16);
-	m_hash.Init(16,sizeof(BigFileEntry));
+	m_hash.Init(16,sizeof(BigFileEntry *));
+	m_numentries=0;
+	m_entries.Init(1024,-1);
 }
 
 BigFile::~BigFile()
@@ -52,7 +54,13 @@ BigFile::~BigFile()
 
 BigFileEntry *BigFile::Locate(const char *fn)
 {
-	return((BigFileEntry *)m_hash.Find(fn));
+	BigFileEntry **pbfe;
+
+	pbfe=(BigFileEntry **)m_hash.Find(fn);
+	if(!pbfe)
+		return 0;
+
+	return(pbfe[0]);
 }
 
 void BigFile::FreeDirBlocks(void)
@@ -84,9 +92,10 @@ void BigFile::Load(bool edit)
 	UpdateDir();	/* if any pending changes then write them now */
 	FreeDirBlocks();
 
+	m_numentries=0;
 	m_dirloaded=true;
 	m_edit=edit;
-	m_hash.Init(16,sizeof(BigFileEntry));	/* re-init */
+	m_hash.Init(16,sizeof(BigFileEntry *));	/* re-init */
 	m_empty=false;
 	m_bad=false;
 
@@ -120,7 +129,7 @@ void BigFile::Load(bool edit)
 	{
 		char *dirblock;
 		unsigned long dirsize;
-		BigFileEntry bfe;
+		BigFileEntry *bfe;
 		BIGENTRY_DEF *be;
 
 		/* load a directory block */
@@ -161,13 +170,15 @@ void BigFile::Load(bool edit)
 				assert((be->nameoffset>=sizeof(BIGHEADER_DEF)) && (be->nameoffset<=m_lastheader.blocksize),"Name offset error!");
 				assert((be->dataoffset<=m_curend),"Data offset is past end of file!");
 
-				bfe.m_dirblocknum=m_numdirblocks-1;	/* only valid in edit mode */
-				bfe.m_diroffset=deoffset;
-				bfe.m_offset=be->dataoffset;
-				bfe.m_time=be->time;
-				bfe.m_crc=be->crc;
-				bfe.m_size=be->size;
-				assert(m_curend>=(bfe.m_offset+bfe.m_size),"Internal Error!");
+				bfe=m_entries.GetEntryPtr(m_numentries++);
+				bfe->m_name.SetString(dirblock+be->nameoffset);
+				bfe->m_dirblocknum=m_numdirblocks-1;	/* only valid in edit mode */
+				bfe->m_diroffset=deoffset;
+				bfe->m_offset=be->dataoffset;
+				bfe->m_time=be->time;
+				bfe->m_crc=be->crc;
+				bfe->m_size=be->size;
+				assert(m_curend>=(bfe->m_offset+bfe->m_size),"Internal Error!");
 
 				/* add this filename to the hash table */
 				m_hash.Add(dirblock+be->nameoffset,&bfe);
@@ -202,11 +213,10 @@ unsigned long BigFile::CrcBuffer(long startcrc,const unsigned char *buf,unsigned
 
 bool BigFile::CheckDuplicate(DataHandle *af)
 {
+	unsigned int e;
 	unsigned long crc;
 	unsigned long long fs;
-	int e,nums;
-	HashEntry *she;
-	BigFileEntry *sfe;
+	BigFileEntry *bfe;
 	unsigned char crcbuf[4096];
 
 	/* calc CRC on file */
@@ -228,14 +238,11 @@ bool BigFile::CheckDuplicate(DataHandle *af)
 	af->Close();
 	fs=af->GetSize();
 
-	nums=GetNum();
-	she=GetFirst();
-	for(e=0;e<nums;++e)
+	for(e=0;e<m_numentries;++e)
 	{
-		sfe=(BigFileEntry *)she->m_data;
-		if(sfe->m_crc==crc && sfe->m_size==fs)
+		bfe=m_entries.GetEntryPtr(e);
+		if(bfe->m_crc==crc && bfe->m_size==fs)
 			return(true);		/* duplicate!!! */
-		she=she->GetNext();
 	}
 	return(false);
 }
@@ -305,7 +312,7 @@ bool BigFile::AddFile(const char *fn,DataHandle *af,bool updatedir)
 	}
 
 	/* does this file already exist? */
-	bfe=(BigFileEntry *)m_hash.Find(fn);
+	bfe=Locate(fn);
 	if(bfe)
 	{
 		unsigned long woffset;
@@ -614,7 +621,7 @@ void BigFile::Delete(const char *fn)
 
 	assert(m_edit==true,"Error: file is not opened for edit, use Load(true)\n");
 
-	bfe=(BigFileEntry *)m_hash.Find(fn);
+	bfe=Locate(fn);
 
 	if(!bfe)
 		return;
@@ -629,3 +636,4 @@ void BigFile::Delete(const char *fn)
 
 	UpdateDir();	/* write to directory */
 }
+

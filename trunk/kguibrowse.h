@@ -236,30 +236,29 @@ public:
 	kGUIOffsetInputBoxObj();
 	void Draw(void);
 	bool SetIcon(DataHandle *dh);
-	void SetString(kGUIString *s);
 	CALLBACKGLUEPTR(kGUIOffsetInputBoxObj,SetIcon,DataHandle);
 private:
 	CALLBACKGLUE(kGUIOffsetInputBoxObj,Animate);
+	void Changed(void);
 	void Animate(void);
 	void SetOffsets();
 	unsigned int m_currentframe;
 	unsigned int m_animdelay;
 	bool m_animateeventactive:1;
 	bool m_iconvalid:1;
+	bool m_inchange:1;
 	kGUIImage m_icon;
-	kGUIText m_domain;
-	unsigned int m_iconx;
-	unsigned int m_domainx;
 };
 
 /* used to draw the link under the cursor, hilights the domain in blue */
 class kGUIDomainTextObj : public kGUITextObj
 {
 public:
+	kGUIDomainTextObj();
 	void Draw(void);
 private:
-	kGUIText m_last;
-	kGUIText m_domain;
+	void Changed(void);
+	bool m_inchange;
 };
 
 /* we will make our own tab class since we want the tabs to have icons and close button on them */

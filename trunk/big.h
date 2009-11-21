@@ -77,17 +77,17 @@ typedef struct
 	@brief Internal class used by the BigFile class. 
 	This is the individual file directory block within the bigfile 
     @ingroup BigFile */
-class BigFileEntry
+class BigFileEntry : public ContainerEntry
 {
 public:
-	/* name is stored by hash code as just after this structure */
-	inline const char *GetName(void) {return ((const char *)(this+1));}
+	kGUIString *GetName(void) {return &m_name;}
 	unsigned int m_dirblocknum;		/* directory block number where entry is stored, only valid in edit mode */
 	unsigned int m_diroffset;		/* offset into file where directory entry is */
 	unsigned int m_offset;			/* offset to data from beginning of file */
 	unsigned int m_size;			/* size of file */
 	unsigned int m_crc;				/* crc of file */
 	int m_time;						/* time */
+	kGUIString m_name;
 };
 
 /*! @class BigFile
@@ -95,11 +95,18 @@ public:
 	it uses the DataHandle class so the big file can be a disk based file,
 	or memory resident or inside another big file
     @ingroup BigFile */
-class BigFile : public DataHandle
+class BigFile : public DataHandle, public ContainerFile
 {
 public:
 	BigFile();
 	~BigFile();
+
+	/*! Returns the number of files inside the BigFile */
+	void LoadDirectory(void) {if(GetDirLoaded()==false)Load();}
+	unsigned int GetNumEntries(void) {return m_numentries;}
+	ContainerEntry *GetEntry(unsigned int n) {return (m_entries.GetEntryPtr(n));}
+	ContainerEntry *LocateEntry(const char *f) {return Locate(f);}
+	void CopyEntry(ContainerEntry *cfe,DataHandle *dest) {BigFileEntry *bfe=static_cast<BigFileEntry *>(cfe);CopyArea(dest,bfe->m_offset,bfe->m_size,bfe->m_time);}
 
 	/*! Load the directory for the Bigfile into the class.
 	    @param edit set to true if files will be added to the bigfile */
@@ -107,16 +114,16 @@ public:
 	/*! Free the directory blocks */
 	void FreeDirBlocks(void);
 
-	/*! Returns the number of files inside the BigFile */
-	inline int GetNum(void) {return m_hash.GetNum();}
+#if 0
 	/*! Returns a HashEntry class that references the first entry in the BigFile.
 	    Then follow the HashEntry linked list for each subsequent entry. */
 	inline HashEntry *GetFirst(void) {return ((HashEntry *)m_hash.GetFirst());}
+#endif
 
 	/*! If the attached bigfile is not valid then return true */
 	inline bool IsBad(void) {return(m_bad);}
 	/*! Locate the named file, return NULL if not found */
-	BigFileEntry *Locate(const char *fn);
+	BigFileEntry *Locate(const char *f);
 	/*! Add the named file to the BigFile
 	    @param fn filename
 		@param af handle to data
@@ -163,6 +170,10 @@ private:
 	unsigned int m_numdirblocks;
 	/*! array of directory block headers */
 	Array<DIRINFO_DEF> m_dirblocks;
+	/*! array of files */
+	unsigned int m_numentries;
+	ClassArray<BigFileEntry>m_entries;
 };
+
 
 #endif

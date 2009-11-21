@@ -85,7 +85,7 @@ Browse::Browse()
 	/* add bigfile to the list of system bigfiles */
 	bf=new BigFile();
 	bf->SetMemory(bin__brdata,sizeof(bin__brdata));
-	DataHandle::AddBig(bf);
+	DataHandle::AddContainer(bf);
 
 	/* browser assumed first font is regular, 2nd font is bold */
 	kGUI::LoadFont("arial.ttf",false);
@@ -126,7 +126,8 @@ Browse::Browse()
 	bg->AddObject(m_browse);
 
 	/* load settings, including browser settins */
-	if(prefs.Load("browse.xml")==true)
+	prefs.SetFilename("browse.xml");
+	if(prefs.Load()==true)
 	{
 		kGUIXMLItem *xroot;
 
@@ -227,7 +228,8 @@ Browse::~Browse()
 	m_settings.Save(xroot);
 
 	/* save the xml file */
-	prefs.Save("browse.xml");
+	prefs.SetFilename("browse.xml");
+	prefs.Save();
 
 	delete kGUI::GetCookieJar();
 #if USESSL

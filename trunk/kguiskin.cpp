@@ -51,7 +51,7 @@ DefSkin::DefSkin()
 {
 	m_bf.SetMemory(bin__data,sizeof(bin__data));
 	m_bf.Load();
-	DataHandle::AddBig(&m_bf);
+	DataHandle::AddContainer(&m_bf);
 
 	/* colors */
 	m_skincolors[SKINCOLOR_BACKGROUND]=DrawColor(206,233,236);
@@ -741,5 +741,5 @@ DefSkin::~DefSkin()
 		m_skinshapes[i].Purge();
 	}
 	/* remove bigfile from global list */
-	DataHandle::RemoveBig(&m_bf);
+	DataHandle::RemoveContainer(&m_bf);
 }

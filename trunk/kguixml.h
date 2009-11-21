@@ -13,7 +13,7 @@ public:
 	void SetEncoding(unsigned int e) {m_value.SetEncoding(e);};
 	char *Load(class kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *parent);
 	void Copy(kGUIXMLItem *copy);
-	void Save(class kGUIXML *top,kGUIString *ts,FILE *fp,unsigned int level);
+	void Save(class kGUIXML *top,kGUIString *ts,unsigned int level);
 	void AddChild(kGUIXMLItem *child) {m_children.SetEntry(m_numchildren,child);++m_numchildren;}
 	void CopyChild(kGUIXMLItem *copy) {kGUIXMLItem *child=new kGUIXMLItem();child->Copy(copy);m_children.SetEntry(m_numchildren,child);++m_numchildren;}
 	void DelChild(kGUIXMLItem *child,bool purge=true);
@@ -72,14 +72,14 @@ private:
 	static kGUIString *m_utflist;
 };
 
-class kGUIXML
+class kGUIXML : public DataHandle
 {
 public:
 	kGUIXML();
 	virtual ~kGUIXML();
-	bool Load(const char *filename);
-	bool StreamLoad(const char *filename);
-	bool Save(const char *filename);
+	bool Load(void);		/* uses attached datahandle, loads file into memory (faster than streamload, but requires more ram) */
+	bool StreamLoad(void);	/* uses attached datahandle, must support streamload */
+	bool Save(void);	/* saves to datahandle */
 	/* this is called after loading each object */
 	virtual void ChildLoaded(kGUIXMLItem *child,kGUIXMLItem *parent) {}
 
@@ -110,7 +110,6 @@ private:
 	bool m_namecachelocal;
 	Hash *m_namecache;
 
-	DataHandle m_dh;
 	kGUIString m_tempstring;
 #if 0
 	ClassPool<kGUIXMLItem>m_pool;

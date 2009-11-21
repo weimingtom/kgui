@@ -257,26 +257,53 @@ void kGUIDir::LoadDrives(void)
 #endif
 }
 
-/* scan entries from within a bigfile */
-void kGUIDir::LoadDir(BigFile *bf,const char *ext)
+/* scan entries from within a bigfile or zipfile */
+void kGUIDir::LoadDir(ContainerFile *cf,const char *ext)
 {
 	int i,num;
-	HashEntry *she;
-	BigFileEntry *sfe;
+	ContainerEntry *ce;
 	kGUIString *t;
+	kGUIString extstring;
+	kGUIStringSplit exts;
+	unsigned int e;
+	bool addme;
+	const char *eplace;
+	const char *fn;
+
+	if(ext)
+	{
+		extstring.SetString(ext);
+		exts.Split(&extstring,";");
+	}
 
 	m_numfiles=0;
 	m_numdirs=0;
 
-	num=bf->GetNum();
-	she=bf->GetFirst();
+	num=cf->GetNumEntries();
 	for(i=0;i<num;++i)
 	{
-		sfe=(BigFileEntry *)she->m_data;
+		ce=cf->GetEntry(i);
+		fn=ce->GetName()->GetString();
 
-		t=m_filenames.GetEntryPtr(m_numfiles++);
-		t->SetString(sfe->GetName());
-		she=she->GetNext();
+		/* check extension */
+		addme=true;
+		if(exts.GetNumWords())
+		{
+			addme=false;
+			for(e=0;e<exts.GetNumWords() && addme==false;++e)
+			{
+				eplace=strstri(fn,exts.GetWord(e)->GetString());
+				if(eplace)
+				{
+					if(strlen(eplace)==exts.GetWord(e)->GetLen())
+						addme=true;
+				}
+			}
+		}
+		if(addme)
+		{
+			t=m_filenames.GetEntryPtr(m_numfiles++);
+			t->SetString(fn);
+		}
 	}
 }
-

@@ -2543,51 +2543,59 @@ kGUIOffsetInputBoxObj::kGUIOffsetInputBoxObj()
 	m_animdelay=0;
 	m_animateeventactive=false;
 	m_iconvalid=false;
+	m_inchange=false;
+	SetUseRichInfo(true);
 	SetOffsets();
 }
 
-void kGUIOffsetInputBoxObj::SetString(kGUIString *s)
+static void HilightDomain(kGUIText *s)
 {
-	/* extract out the domain */
-	kGUIInputBoxObj::SetString(s);
+	unsigned int ds,de;
+	kGUIString domain;
 
 	if(strncmp(s->GetString(),"http://",7)==0)
-		m_domain.SetString(s->GetString()+7);
+	{
+		ds=7;
+		domain.SetString(s->GetString()+7);
+	}
 	else if(strncmp(s->GetString(),"https://",8)==0)
-		m_domain.SetString(s->GetString()+8);
+	{
+		ds=8;
+		domain.SetString(s->GetString()+8);
+	}
 	else
-		m_domain.Clear();
+	{
+		ds=0;
+		domain.SetString(s);
+	}
 
-	m_domain.Clip("/");
-	m_domain.Clip("?");
-	m_domain.Clip(":");
-	SetOffsets();
+	domain.Clip("/");
+	domain.Clip("?");
+	domain.Clip(":");
+	de=ds+domain.GetLen();
+
+	/* hilight the domain part of the url */
+	s->InitRichInfo();
+	if(de)
+		s->SetRichBGColor(ds,de,DrawColor(91,153,223));
+}
+
+void kGUIOffsetInputBoxObj::Changed(void)
+{
+	if(m_inchange)
+		return;
+	
+	m_inchange=true;
+	kGUIInputBoxObj::Changed();
+
+	HilightDomain(this);
+	m_inchange=false;
 }
 
 void kGUIOffsetInputBoxObj::SetOffsets(void)
 {
-	unsigned int iw;
-	unsigned int dw;
-
-	dw=m_domain.GetWidth();
 	if(m_iconvalid)
-	{
-		if(dw)
-			m_iconx=2;
-		else
-			m_iconx=0;
-		iw=16+2;
-	}
-	else
-	{
-		m_iconx=0;
-		iw=0;
-	}
-	m_domainx=m_iconx+iw;
-	if(dw)
-		dw+=2;
-	
-	SetXOffset(m_domainx+dw);
+		SetXOffset(m_iconvalid==true?16+2:0);
 }
 
 bool kGUIOffsetInputBoxObj::SetIcon(DataHandle *dh)
@@ -2678,39 +2686,34 @@ void kGUIOffsetInputBoxObj::Draw(void)
 	{
 		kGUIInputBoxObj::Draw();
 
-		/* draw blue background */
-		if(GetXOffset())
-			kGUI::DrawRect(c.lx,c.ty,c.lx+GetXOffset(),c.by,DrawColor(91,153,223));
-
 		/* draw the icon */
 		if(m_iconvalid)
-			m_icon.Draw(m_currentframe,c.lx+m_iconx,c.ty+2+1);
-
-		m_domain.Draw(c.lx+m_domainx,c.ty+5,0,0,DrawColor(255,255,255));
+			m_icon.Draw(m_currentframe,c.lx+2,c.ty+2+1);
 	}
 	kGUI::PopClip();
 }
 
+kGUIDomainTextObj::kGUIDomainTextObj()
+{
+	m_inchange=false;
+	SetUseRichInfo(true);
+	Changed();
+}
+
+void kGUIDomainTextObj::Changed(void)
+{
+	if(m_inchange)
+		return;
+	
+	m_inchange=true;
+	HilightDomain(this);
+	kGUITextObj::Changed();
+	m_inchange=false;
+}
+
 void kGUIDomainTextObj::Draw(void)
 {
-	unsigned int dw;
 	kGUICorners c;
-
-	if(strcmp(m_last.GetString(),GetString()))
-	{
-		m_last.SetString(GetString());
-		/* changed */
-		if(strncmp(GetString(),"http://",7)==0)
-			m_domain.SetString(GetString()+7);
-		else if(strncmp(GetString(),"https://",8)==0)
-			m_domain.SetString(GetString()+8);
-		else
-			m_domain.Clear();
-
-		m_domain.Clip("/");
-		m_domain.Clip("?");
-		m_domain.Clip(":");
-	}
 
 	kGUI::PushClip();
 	GetCorners(&c);
@@ -2718,16 +2721,7 @@ void kGUIDomainTextObj::Draw(void)
 	
 	/* is there anywhere to draw? */
 	if(kGUI::ValidClip())
-	{
-		dw=m_domain.GetWidth();
-		if(dw)
-		{
-			kGUI::DrawRect(c.lx,c.ty,c.lx+dw+4,c.by,DrawColor(91,153,223));
-			m_domain.Draw(c.lx+2,c.ty+5,0,0,DrawColor(255,255,255));
-			c.lx+=dw+4;
-		}
 		kGUIText::Draw(c.lx,c.ty+5,0,0);
-	}
 	kGUI::PopClip();
 }
 
