@@ -8151,7 +8151,7 @@ void kGUIHTMLPageObj::RightClickEvent(kGUIEvent *event)
 void kGUIHTMLPageObj::RightClick(void *obj,int tag)
 {
 	kGUIString name;
-	char *place;
+	const char *place;
 
 	m_clickobj=obj;
 	m_clicktag=tag;
