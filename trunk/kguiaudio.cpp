@@ -255,6 +255,8 @@ void kGUIAudio::PlayBuffer(void)
 {
 	AudioBuffer *ab;
 #if defined (WIN32) || defined(MINGW)
+	int wrc;
+
 	if(m_playing==false)
 	{
 		/*
@@ -279,10 +281,10 @@ void kGUIAudio::PlayBuffer(void)
 		* default wave device on the system (some people have 2 or
 		* more sound cards).
 		*/
-		if(waveOutOpen(&m_hWaveOut,WAVE_MAPPER,&m_wfx,(DWORD_PTR)waveOutProc,(DWORD_PTR)this,CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
-		{
-			assert(false, "unable to open WAVE_MAPPER device");
-		}
+		wrc=waveOutOpen(&m_hWaveOut,WAVE_MAPPER,&m_wfx,(DWORD_PTR)waveOutProc,(DWORD_PTR)this,CALLBACK_FUNCTION);
+		//assert(wrc==MMSYSERR_NOERROR, "unable to open WAVE_MAPPER device");
+		if(wrc!=MMSYSERR_NOERROR)
+			return;		//not sure how to handle this, maybe re-try in an update function??
 	}
 	m_playing=true;
 

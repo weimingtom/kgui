@@ -829,7 +829,7 @@ void kGUIBrowseObj::DoMainMenu(kGUIEvent *event)
 			kGUIString root;
 			kGUIString name;
 			kGUIString savedir;
-			char *place;
+			const char *place;
 
 			assert(hist!=0,"Error, Menu should not have allowed this!");
 
