@@ -41,8 +41,6 @@
 /* all items in the big directory are put into a 'big' file and then it is converted */
 /* to inline data that is included directly into _data.cpp */
 
-#include "_brdata.cpp"
-
 class Browse
 {
 public:
@@ -82,15 +80,9 @@ Browse::Browse()
 	kGUIXML prefs;
 	BigFile *bf;
 
-	/* add bigfile to the list of system bigfiles */
-	bf=new BigFile();
-	bf->SetMemory(bin__brdata,sizeof(bin__brdata));
-	DataHandle::AddContainer(bf);
-
 	/* browser assumed first font is regular, 2nd font is bold */
-	kGUI::LoadFont("arial.ttf",false);
-	kGUI::LoadFont("arial.ttf",true);
-//	kGUI::LoadFont("arialbd.ttf");
+	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
+	kGUI::LoadFont("font.ttf",true);	/* use default font inside kgui for bold */
 
 	kGUI::SetDefFontSize(13);
 	kGUI::SetDefReportFontSize(13);

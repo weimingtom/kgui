@@ -62,6 +62,7 @@ PACK_NONE};
 #if defined(MINGW)
 
 #include <winsock2.h>
+#include <io.h>
 #include <sys/utime.h>
 #include <time.h>
 //#include <sys/time.h>
@@ -611,20 +612,32 @@ again:;
 		}
 		else
 		{
+		    fd_set rfds;
+    		struct timeval tv;
+
+	        FD_ZERO(&rfds);
+	        FD_SET(sock, &rfds);
+	        tv.tv_sec = 0;
+	        tv.tv_usec = 10 * 1000;
+	        if(select(sock + 1, &rfds, NULL, NULL, &tv))
+			{
 #if defined(MINGW)
-			b=recv(sock,filedata,sizeof(filedata),0);
-			if(b<=0)
-				break;
+				b=recv(sock,filedata,sizeof(filedata),0);
 #elif defined(LINUX) || defined(MACINTOSH)
-			b=read(sock,filedata,sizeof(filedata));
-			if(b<=0)
-				break;
+				b=read(sock,filedata,sizeof(filedata));
 #else
 #error
 #endif
+				if(b<=0)
+					break;
+			}
+			else
+				b=0;
 		}
 		got.Append(filedata,b);
 		m_readbytes+=b;
+		if(m_abort)
+			goto done;
 	}while(1);
 	//printf("got='%s'\n",got.GetString());
 
