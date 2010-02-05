@@ -117,30 +117,54 @@ unsigned int kGUIString::GetChar(unsigned int pos,unsigned int *numbytes)
 			{
 				if(c<0xdf)
 				{
-					unsigned int c1=c&31;
-					unsigned int c2=(m_string[pos+1]&255)&63;
+					if((pos+1)>=m_len)
+					{
+						/* error, return '?'! */
+						c='?';
+					}
+					else
+					{
+						unsigned int c1=c&31;
+						unsigned int c2=(m_string[pos+1]&255)&63;
 
-					i=2;
-					c=(c1<<6)|c2;
+						i=2;
+						c=(c1<<6)|c2;
+					}
 				}
 				else if(c<0xef)
 				{
-					unsigned int c1=c&15;
-					unsigned int c2=(m_string[pos+1]&255)&63;
-					unsigned int c3=(m_string[pos+2]&255)&63;
+					if((pos+2)>=m_len)
+					{
+						/* error, return '?'! */
+						c='?';
+					}
+					else
+					{
+						unsigned int c1=c&15;
+						unsigned int c2=(m_string[pos+1]&255)&63;
+						unsigned int c3=(m_string[pos+2]&255)&63;
 
-					i=3;
-					c=(c1<<12)|(c2<<6)|c3;
+						i=3;
+						c=(c1<<12)|(c2<<6)|c3;
+					}
 				}
 				else if(c<0xff)
 				{
-					unsigned int c1=c&7;
-					unsigned int c2=(m_string[pos+1]&255)&63;
-					unsigned int c3=(m_string[pos+2]&255)&63;
-					unsigned int c4=(m_string[pos+3]&255)&63;
+					if((pos+3)>=m_len)
+					{
+						/* error, return '?'! */
+						c='?';
+					}
+					else
+					{
+						unsigned int c1=c&7;
+						unsigned int c2=(m_string[pos+1]&255)&63;
+						unsigned int c3=(m_string[pos+2]&255)&63;
+						unsigned int c4=(m_string[pos+3]&255)&63;
 
-					i=4;
-					c=(c1<<18)|(c2<<12)|(c3<<6)|c4;
+						i=4;
+						c=(c1<<18)|(c2<<12)|(c3<<6)|c4;
+					}
 				}
 			}
 		break;

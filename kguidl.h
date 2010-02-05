@@ -55,6 +55,7 @@ public:
 	bool GetSecure(void) {return m_secure;}
 	void WaitFinished(void);
 	/* this needs to be called before download */
+	void SetUserAgent(const char *s){m_useragent.SetString(s);}
 	void SetReferer(const char *s){m_referer.SetString(s);}
 	void SetReferer(kGUIString *s){m_referer.SetString(s);}
 	void SetRedirectURL(kGUIString *s) {if(s)m_newurl.SetString(s);else m_newurl.Clear();}
@@ -83,6 +84,7 @@ private:
 	kGUIString m_lastmod;
 	kGUIString m_ifmod;
 	kGUIString m_encoding;
+	kGUIString m_useragent;
 	bool m_secure:1;
 	unsigned int m_returncode;
 	kGUIString m_errorpage;

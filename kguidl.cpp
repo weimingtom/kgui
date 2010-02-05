@@ -106,6 +106,7 @@ kGUIDownloadEntry::kGUIDownloadEntry()
 	m_abort=false;
 	m_asyncactive=false;
 	m_readbytes=0;
+	//default user agent
 }
 
 kGUIDownloadEntry::~kGUIDownloadEntry()
@@ -281,7 +282,6 @@ void kGUIDownloadEntry::Download(void)
 	int useport=80;
 	const char *fullurl=m_url.GetString();
 	kGUIString servername;
-	kGUIString prodname;
 	kGUIString url;
 	bool ignorepost=false;
 	bool wasredirected=false;
@@ -315,15 +315,18 @@ void kGUIDownloadEntry::Download(void)
 	m_encoding.Clear();
 	m_errorpage.Clear();
 	m_returncode=0;			/* this will be the error if we can't get a connection at all */
+
+	if(m_useragent.GetLen()==0)
+		m_useragent.SetString("Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11");
+
 #if DLDEBUG
 	m_debugstate=5;
 	printf("m_debugstate=%d\n",m_debugstate);
 	fflush(stdout);
 #endif
-	prodname.Sprintf("Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11");
 #if defined(LINUX) || defined(MACINTOSH) || defined(MINGW)
 #elif defined(WIN32)
-	session=new CInternetSession(prodname.GetString(), 1 /*The context usually 1*/, /*your access type*/PRE_CONFIG_INTERNET_ACCESS);
+	session=new CInternetSession(m_useragent.GetString(), 1 /*The context usually 1*/, /*your access type*/PRE_CONFIG_INTERNET_ACCESS);
 #else
 #error
 #endif
@@ -515,7 +518,7 @@ again:;
 
 	request.Append(" HTTP/1.0\r\nAccept: */*\r\n");
 	/* add more header stuff here */
-	request.ASprintf("User-Agent: %s\r\n",prodname.GetString());
+	request.ASprintf("User-Agent: %s\r\n",m_useragent.GetString());
 	request.ASprintf("Host: %s\r\n",servername.GetString());
 	request.ASprintf("Referer: %s\r\n",referer.GetString());
 #ifdef ALLOWPACK
@@ -622,7 +625,6 @@ again:;
 	        if(select(sock + 1, &rfds, NULL, NULL, &tv))
 			{
 #if defined(MINGW)
-				b=recv(sock,filedata,sizeof(filedata),0);
 #elif defined(LINUX) || defined(MACINTOSH)
 				b=read(sock,filedata,sizeof(filedata));
 #else

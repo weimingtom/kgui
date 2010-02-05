@@ -564,6 +564,12 @@ private:
 #define BORDER_BOTTOM 8
 #define BORDER_ALL (BORDER_LEFT|BORDER_RIGHT|BORDER_TOP|BORDER_BOTTOM)
 
+/* border radius corners */
+#define BORDER_TOPLEFT 1
+#define BORDER_TOPRIGHT 2
+#define BORDER_BOTTOMLEFT 4
+#define BORDER_BOTTOMRIGHT 8
+
 #define MARGIN_LEFT 1
 #define MARGIN_RIGHT 2
 #define MARGIN_TOP 4
@@ -602,6 +608,7 @@ public:
 	void SetBorder(unsigned int w);
 	void SetBorderWidth(unsigned int bb,kGUIString *s,class kGUIHTMLObj *parent);
 	void SetBorderWidth(unsigned int bb,int wpix);
+	void SetBorderRadius(unsigned int bb,kGUIString *s,class kGUIHTMLObj *parent);
 	void SetBorderColor(unsigned int bb,kGUIString *s);
 	void SetBorderColor(unsigned int bb,kGUIHTMLColor *c);
 	void SetBorderColor(unsigned int bb,kGUIHTMLBox *box);
@@ -642,6 +649,9 @@ public:
 
 	void Draw(kGUICorners *c);	/* shrinks corners after drawing */
 private:
+	void DrawLine(unsigned int side,int index,int num,int x1,int y1,int x2,int y2,kGUIColor c,int style);
+	kGUIColor Dark(kGUIColor c);
+	kGUIColor Light(kGUIColor c);
 	kGUIHTMLPageObj *m_page;
 	unsigned int m_bw;
 	unsigned int m_topbw;
@@ -665,9 +675,15 @@ private:
 	unsigned int m_leftstyle:4;
 	unsigned int m_rightstyle:4;
 	unsigned int m_bottomstyle:4;
-	void DrawLine(unsigned int side,int index,int num,int x1,int y1,int x2,int y2,kGUIColor c,int style);
-	kGUIColor Dark(kGUIColor c);
-	kGUIColor Light(kGUIColor c);
+	/* border corner radii, horiz and vertical components */
+	unsigned int m_toplefthr;
+	unsigned int m_toprighthr;
+	unsigned int m_bottomlefthr;
+	unsigned int m_bottomrighthr;
+	unsigned int m_topleftvr;
+	unsigned int m_toprightvr;
+	unsigned int m_bottomleftvr;
+	unsigned int m_bottomrightvr;
 };
 
 /*! HTML margin
@@ -1293,6 +1309,11 @@ private:
 	kGUIHTMLAttrib *m_pattbordertop;
 	kGUIHTMLAttrib *m_pattborderbottom;
 
+	kGUIHTMLAttrib *m_pattborderradiustopleft;
+	kGUIHTMLAttrib *m_pattborderradiustopright;
+	kGUIHTMLAttrib *m_pattborderradiusbottomleft;
+	kGUIHTMLAttrib *m_pattborderradiusbottomright;
+
 	kGUIHTMLAttrib *m_pattpaddingleft;
 	kGUIHTMLAttrib *m_pattpaddingright;
 	kGUIHTMLAttrib *m_pattpaddingtop;
@@ -1428,6 +1449,10 @@ HTMLATT_BORDER_WIDTH_TOP,
 HTMLATT_BORDER_WIDTH_BOTTOM,
 HTMLATT_BORDER_WIDTH_LEFT,
 HTMLATT_BORDER_WIDTH_RIGHT,
+HTMLATT_BORDER_TOP_LEFT_RADIUS,
+HTMLATT_BORDER_TOP_RIGHT_RADIUS,
+HTMLATT_BORDER_BOTTOM_LEFT_RADIUS,
+HTMLATT_BORDER_BOTTOM_RIGHT_RADIUS,
 
 HTMLATT_HTML_BORDER,
 
@@ -1526,6 +1551,7 @@ HTMLATTGROUP_BORDER,
 HTMLATTGROUP_BORDER_STYLE,
 HTMLATTGROUP_BORDER_COLOR,
 HTMLATTGROUP_BORDER_WIDTH,
+HTMLATTGROUP_BORDER_RADIUS,
 HTMLATTGROUP_BORDER_TOP,
 HTMLATTGROUP_BORDER_BOTTOM,
 HTMLATTGROUP_BORDER_LEFT,
