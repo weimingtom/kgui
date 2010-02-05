@@ -300,6 +300,7 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist[]={
 	{"border-left",			HTMLATTGROUP_BORDER_LEFT	},
 	{"border-right",		HTMLATTGROUP_BORDER_RIGHT	},
 	{"border-top",			HTMLATTGROUP_BORDER_TOP		},
+	{"border-radius",		HTMLATTGROUP_BORDER_RADIUS	},
 
 	{"border-color-bottom",	HTMLATT_BORDER_COLOR_BOTTOM	},
 	{"border-bottom-color",	HTMLATT_BORDER_COLOR_BOTTOM	},
@@ -330,6 +331,11 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist[]={
 	{"border-left-width",	HTMLATT_BORDER_WIDTH_LEFT	},
 	{"border-right-width",	HTMLATT_BORDER_WIDTH_RIGHT	},
 	{"border-top-width",	HTMLATT_BORDER_WIDTH_TOP	},
+
+	{"border-top-left-radius",	HTMLATT_BORDER_TOP_LEFT_RADIUS	},
+	{"border-top-right-radius",	HTMLATT_BORDER_TOP_RIGHT_RADIUS	},
+	{"border-bottom-left-radius",	HTMLATT_BORDER_BOTTOM_LEFT_RADIUS	},
+	{"border-bottom-right-radius",	HTMLATT_BORDER_BOTTOM_RIGHT_RADIUS	},
 
 	{"border-spacing",	HTMLATTGROUP_BORDER_SPACING		},
 	{"border-collapse",	HTMLATT_BORDER_COLLAPSE	},
@@ -5870,6 +5876,8 @@ void kGUIHTMLObj::Draw(void)
 			mc.by=c.by-m_box->GetBoxPosBottomMargin();
 			//kGUI::ShrinkClip(&mc);
 
+			//todo: if box has any curved corners then we need to set per y line clipping on!!!!!
+
 			DrawBG(&mc,false,m_box->GetBoxLeftBorder(),m_box->GetBoxTopBorder(),m_box->GetBoxRightBorder(),m_box->GetBoxBottomBorder());
 		}
 		if(m_display==DISPLAY_TABLE_CELL)
@@ -5988,7 +5996,7 @@ void kGUIHTMLObj::Draw(void)
 	}
 
 #if 1
-	/* draw a box */
+	/* draw a debug box */
 	if( m_page->GetSettings()->GetDrawBoxes())
 	{
 		kGUICorners c2;
@@ -9690,6 +9698,11 @@ void kGUIHTMLObj::PreStyle(kGUIStyleInfo *si)
 	m_pattbordertop=0;
 	m_pattborderbottom=0;
 
+	m_pattborderradiustopleft=0;
+	m_pattborderradiustopright=0;
+	m_pattborderradiusbottomleft=0;
+	m_pattborderradiusbottomright=0;
+
 	m_pattpaddingleft=0;
 	m_pattpaddingright=0;
 	m_pattpaddingtop=0;
@@ -9860,6 +9873,15 @@ void kGUIHTMLObj::ApplyRelative(void)
 		GetBox()->SetBorderWidth(BORDER_TOP,m_pattbordertop->GetValue(),m_renderparent);
 	if(m_pattborderbottom)
 		GetBox()->SetBorderWidth(BORDER_BOTTOM,m_pattborderbottom->GetValue(),m_renderparent);
+
+	if(m_pattborderradiustopleft)
+		GetBox()->SetBorderRadius(BORDER_TOPLEFT,m_pattborderradiustopleft->GetValue(),m_renderparent);
+	if(m_pattborderradiustopright)
+		GetBox()->SetBorderRadius(BORDER_TOPRIGHT,m_pattborderradiustopright->GetValue(),m_renderparent);
+	if(m_pattborderradiusbottomleft)
+		GetBox()->SetBorderRadius(BORDER_BOTTOMLEFT,m_pattborderradiusbottomleft->GetValue(),m_renderparent);
+	if(m_pattborderradiusbottomright)
+		GetBox()->SetBorderRadius(BORDER_BOTTOMRIGHT,m_pattborderradiusbottomright->GetValue(),m_renderparent);
 
 	if(m_pattpaddingleft)
 		GetBox()->SetPaddingWidth(PADDING_LEFT,m_pattpaddingleft->GetValue(),m_renderparent);
@@ -10782,6 +10804,18 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 					GetBox()->SetBorderColor(BORDER_RIGHT,m_renderparent->GetBox());
 				else
 					GetBox()->SetBorderColor(BORDER_RIGHT,att->GetValue());
+			break;
+			case HTMLATT_BORDER_TOP_LEFT_RADIUS:
+				m_pattborderradiustopleft=att;
+			break;
+			case HTMLATT_BORDER_TOP_RIGHT_RADIUS:
+				m_pattborderradiustopright=att;
+			break;
+			case HTMLATT_BORDER_BOTTOM_LEFT_RADIUS:
+				m_pattborderradiusbottomleft=att;
+			break;
+			case HTMLATT_BORDER_BOTTOM_RIGHT_RADIUS:
+				m_pattborderradiusbottomright=att;
 			break;
 			case HTMLATT_MARGIN_LEFT:
 				m_pattmarginleft=att;
@@ -16263,6 +16297,9 @@ setborder:;
 			AddAttribute(HTMLATT_BORDER_WIDTH_BOTTOM,owner,priority,wb);
 		}
 	break;
+	case HTMLATTGROUP_BORDER_RADIUS:
+		/* todo: slit into 4 children and handle horiz and vertical values*/
+	break;
 	case HTMLATT_CELLSPACING:
 	{
 		kGUIString size;
@@ -17859,6 +17896,15 @@ void kGUIHTMLBox::Reset(void)
 	m_rightpw=0;
 	m_toppw=0;
 	m_bottompw=0;
+
+	m_toplefthr=0;	/* corner radii horiz and vert */
+	m_toprighthr=0;
+	m_bottomlefthr=0;
+	m_bottomrighthr=0;
+	m_topleftvr=0;
+	m_toprightvr=0;
+	m_bottomleftvr=0;
+	m_bottomrightvr=0;
 }
 
 /* false means that there is essentially no border info defined */
@@ -17991,6 +18037,79 @@ void kGUIHTMLBox::SetBorderWidth(unsigned int bb,kGUIString *s,kGUIHTMLObj *pare
 		m_topbw=wpix;
 	if(bb&BORDER_BOTTOM)
 		m_bottombw=wpix;
+}
+
+/* string can be hradius é vradius */
+
+void kGUIHTMLBox::SetBorderRadius(unsigned int bb,kGUIString *s,kGUIHTMLObj *parent)
+{
+	unsigned int code;
+	unsigned int wpix;
+	kGUIUnits u;
+
+	/* one or two values */
+
+	code=m_page->GetConstID(s->GetString());
+	switch(code)
+	{
+	case HTMLCONST_INHERIT:
+	{
+		kGUIHTMLBox *pbox=parent->GetBox();
+
+		if(bb&BORDER_TOPLEFT)
+		{
+			m_toplefthr=pbox->m_toplefthr;
+			m_topleftvr=pbox->m_topleftvr;
+		}
+		if(bb&BORDER_TOPRIGHT)
+		{
+			m_toprighthr=pbox->m_toprighthr;
+			m_toprightvr=pbox->m_toprightvr;
+		}
+		if(bb&BORDER_BOTTOMLEFT)
+		{
+			m_bottomlefthr=pbox->m_bottomlefthr;
+			m_bottomleftvr=pbox->m_bottomleftvr;
+		}
+		if(bb&BORDER_BOTTOMRIGHT)
+		{
+			m_bottomrighthr=pbox->m_bottomrighthr;
+			m_bottomrightvr=pbox->m_bottomrightvr;
+		}
+		return;
+	}
+	break;
+	case -1:
+		/* hradius uses width, vradius percent uses height */
+		u.Set(m_page,s);
+		wpix=u.CalcUnitValue(0,parent->GetEM());
+	break;
+	default:
+		m_page->m_errors.ASprintf("unknown border-radius '%s'\n",s->GetString());
+		return;
+	break;
+	}
+	/* for now we don't have seperate hr and vr */
+	if(bb&BORDER_TOPLEFT)
+	{
+		m_toplefthr=wpix;
+		m_topleftvr=wpix;
+	}
+	if(bb&BORDER_TOPRIGHT)
+	{
+		m_toprighthr=wpix;
+		m_toprightvr=wpix;
+	}
+	if(bb&BORDER_BOTTOMLEFT)
+	{
+		m_bottomlefthr=wpix;
+		m_bottomleftvr=wpix;
+	}
+	if(bb&BORDER_BOTTOMRIGHT)
+	{
+		m_bottomrighthr=wpix;
+		m_bottomrightvr=wpix;
+	}
 }
 
 void kGUIHTMLBox::SetMarginWidth(unsigned int mm,kGUIString *s,kGUIHTMLObj *parent)

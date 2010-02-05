@@ -164,6 +164,9 @@ public:
 	void SetItemCache(kGUIHTMLItemCache *itemcache) {m_itemcache=itemcache;}
 	kGUIHTMLItemCache *GetItemCache(void) {return m_itemcache;}
 
+	void SetUserAgent(kGUIString *u) {m_useragent.SetString(u);}
+	kGUIString *GetUserAgent(void) {return &m_useragent;}
+
 	void SetVisitedDays(unsigned int vd) {m_visiteddays=vd;m_visitedcache->SetNumDays(vd);}
 	unsigned int GetVisitedDays(void) {return m_visiteddays;}
 
@@ -202,6 +205,7 @@ private:
 	unsigned int m_cachesize;	/* in MB */
 	unsigned int m_numbookmarks;
 	unsigned int m_savemode;
+	kGUIString m_useragent;
 	kGUIString m_screenmedia;
 	kGUIString m_printmedia;
 	ClassArray<kGUIBookmark>m_bookmarks;

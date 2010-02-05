@@ -657,27 +657,30 @@ unsigned long DataHandle::Read(void *dest,unsigned long numbytes)
 	if((numbytes+m_offset)>m_filesize)
 		numbytes=(unsigned long)(m_filesize-m_offset);
 
-	switch(m_type)
+	if(numbytes)
 	{
-	case DATATYPE_FILE:
-		if(!m_prot)
+		switch(m_type)
 		{
-			if(m_readstream)
-				StreamRead(dest,numbytes);
+		case DATATYPE_FILE:
+			if(!m_prot)
+			{
+				if(m_readstream)
+					StreamRead(dest,numbytes);
+				else
+					fread(dest,1,numbytes,m_handle);
+			}
 			else
-				fread(dest,1,numbytes,m_handle);
+				memcpy(dest,m_memory+m_offset,numbytes);
+		break;
+		case DATATYPE_MEMORY:
+			if(m_memory)
+				memcpy(dest,m_memory+m_startoffset+m_offset,numbytes);
+			else
+				memcpy(dest,m_writebuffer.GetArrayPtr()+m_offset,numbytes);
+		break;
 		}
-		else
-			memcpy(dest,m_memory+m_offset,numbytes);
-	break;
-	case DATATYPE_MEMORY:
-		if(m_memory)
-			memcpy(dest,m_memory+m_startoffset+m_offset,numbytes);
-		else
-			memcpy(dest,m_writebuffer.GetArrayPtr()+m_offset,numbytes);
-	break;
+		m_offset+=numbytes;
 	}
-	m_offset+=numbytes;
 
 	return(numbytes);
 }

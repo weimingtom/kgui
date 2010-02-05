@@ -501,7 +501,8 @@ unsigned char dhgetc(DataHandle *dh)
 {
 	unsigned char c;
 
-	dh->Read(&c,(unsigned long)1);
+	if(!dh->Read(&c,(unsigned long)1))
+		return(0);	/* hit EOF, return null */
 	return(c);
 }
 
@@ -1018,6 +1019,11 @@ nextframe:;
 			}
 			else
 			{
+				if((old_code<0) || (old_code>=next_code))
+				{
+					error=true;
+					goto gifdone;
+				}
 				t=0;
 				r=old_code;
 				while(1)
@@ -1030,7 +1036,10 @@ nextframe:;
 					temp_buffer[t++]=node[r].color;
 					if (node[r].prev==-1)
 						break;
+					if(node[r].prev==0xcccccccc)
+						r=0;
 					r=node[r].prev;
+
 				}
 				if((unsigned int)next_code>=(sizeof(node)/sizeof(GifNode)))
 				{

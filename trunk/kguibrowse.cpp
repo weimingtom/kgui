@@ -94,6 +94,10 @@ private:
 	kGUITextObj m_visiteddayscaption2;
 	kGUIInputBoxObj m_visiteddays;
 
+	/* setting for useragent string */
+	kGUITextObj m_useragentcaption;
+	kGUIInputBoxObj m_useragent;
+
 	/* settings for download cache mode to use */
 	kGUIComboBoxObj m_cachemode;
 	kGUITextObj m_cachesizecaption;
@@ -1459,6 +1463,7 @@ void kGUIBrowseObj::Load(unsigned int tabnum)
 		}
 		dle->m_dh.SetMemory();
 		dle->m_dl.SetAuthHandler(&m_ah);
+		dle->m_dl.SetUserAgent(m_settings->GetUserAgent()->GetString());
 		dle->m_dl.AsyncDownLoad(&dle->m_dh,&url);
 		tabrecord->m_curdl=dle;
 	}
@@ -1965,6 +1970,16 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.AddObject(&m_cachemode);
 	m_controls.NextLine();
 
+	m_useragentcaption.SetFontID(1);
+	m_useragentcaption.SetFontSize(VSFONTSIZE);
+	m_useragentcaption.SetString("User Agent");
+
+	m_useragent.SetFontSize(VSFONTSIZE);
+	m_useragent.SetSize(m_controls.GetChildZoneW()-(m_controls.GetBorderGap()<<1),m_useragent.GetLineHeight()+6);
+	m_controls.AddObject(&m_useragentcaption);
+	m_controls.AddObject(&m_useragent);
+	m_controls.NextLine();
+
 	m_cachesizecaption.SetFontID(1);
 	m_cachesizecaption.SetFontSize(VSFONTSIZE);
 	m_cachesizecaption.SetString("Use up to");
@@ -2148,6 +2163,7 @@ ViewSettings::ViewSettings(kGUIBrowseObj *b,int w,int h)
 	m_controls.NextLine();
 
 	/* set values to current settings */
+	m_useragent.SetString(b->GetSettings()->GetUserAgent());
 	m_visiteddays.SetInt(b->GetSettings()->GetVisitedDays());
 	m_cachemode.SetSelection(b->GetSettings()->GetCacheMode());
 	m_cachesize.SetInt(b->GetSettings()->GetCacheSize());
@@ -2219,6 +2235,7 @@ void ViewSettings::WindowEvent(kGUIEvent *event)
 	{
 	case EVENT_CLOSE:
 		/* apply the settings back */
+		m_b->GetSettings()->SetUserAgent(&m_useragent);
 		m_b->GetSettings()->SetVisitedDays(m_visiteddays.GetInt());
 		m_b->GetSettings()->SetCacheMode(m_cachemode.GetSelection());
 		m_b->GetSettings()->SetCacheSize(m_cachesize.GetInt());
@@ -2326,6 +2343,10 @@ void kGUIBrowseSettings::Load(kGUIXMLItem *root)
 	group=root->Locate("browsersettings");
 	if(!group)
 		return;
+
+	item=group->Locate("useragent");
+	if(item)
+		SetUserAgent(item->GetValue());
 
 	SetVisitedDays(group->Locate("visiteddays")->GetValueInt());
 	SetCacheMode(group->Locate("cachemode")->GetValueInt());
@@ -2461,6 +2482,8 @@ void kGUIBrowseSettings::Save(kGUIXMLItem *root)
 	group->SetName("browsersettings");
 	root->AddChild(group);
 
+	if(m_useragent.GetLen())
+		group->AddChild("useragent",m_useragent.GetString());
 	group->AddChild("visiteddays",m_visiteddays);
 	group->AddChild("cachemode",m_cachemode);
 	group->AddChild("cachesize",m_cachesize);
