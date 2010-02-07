@@ -1036,10 +1036,7 @@ nextframe:;
 					temp_buffer[t++]=node[r].color;
 					if (node[r].prev==-1)
 						break;
-					if(node[r].prev==0xcccccccc)
-						r=0;
 					r=node[r].prev;
-
 				}
 				if((unsigned int)next_code>=(sizeof(node)/sizeof(GifNode)))
 				{

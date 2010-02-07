@@ -41,6 +41,18 @@
 #include "kgui.h"
 #include "kguithread.h"
 
+#ifdef MINGW
+//the wincon.h in MINGW is missing this function prototype!!!
+extern "C" {
+WINBASEAPI
+BOOL
+WINAPI
+AttachConsole(
+    IN DWORD dwProcessId
+    );
+}
+#endif
+
 void kGUIThread::Start(void *codeobj,void (*code)(void *))
 {
 	m_active=true;

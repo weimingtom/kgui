@@ -1886,6 +1886,7 @@ void kGUIBrowseObj::RefreshAll(kGUIEvent *event)
 ViewSource::ViewSource(int w,int h,kGUIString *title,kGUIString *source)
 {
 	m_source.SetFontSize(13);
+	m_source.SetAllowFind(true);
 	AddObject(&m_source);
 	
 	SetSize(w,h);

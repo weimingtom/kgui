@@ -514,6 +514,9 @@ LRESULT kGUISystemMINGW::Event(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 		case 3:	//'ctrl-c'
 			key=GUIKEY_COPY;
 		break;
+		case 6:	//'ctrl-f'
+			key=GUIKEY_FIND;
+		break;
 		case 22:	//'ctrl-v'
 			key=GUIKEY_PASTE;
 		break;

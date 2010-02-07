@@ -625,6 +625,7 @@ again:;
 	        if(select(sock + 1, &rfds, NULL, NULL, &tv))
 			{
 #if defined(MINGW)
+				b=recv(sock,filedata,sizeof(filedata),0);
 #elif defined(LINUX) || defined(MACINTOSH)
 				b=read(sock,filedata,sizeof(filedata));
 #else

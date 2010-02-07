@@ -578,6 +578,7 @@ kGUISearchReq::kGUISearchReq(kGUIObj *obj,kGUISearchReplaceObj *srobj,bool allow
 		m_window.AddObject(&m_inputreplace);
 	
 		m_replace.SetString(kGUI::GetString(KGUISTRING_REPLACE));
+		bw=MAX(m_replace.GetWidth()+16,60);
 		m_replace.SetSize(bw,lh);
 		m_replace.SetPos(m_find.GetZoneX(),y);
 		m_replace.SetEventHandler(this,CALLBACKNAME(Event));	

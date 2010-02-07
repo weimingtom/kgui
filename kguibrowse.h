@@ -429,7 +429,7 @@ private:
 	kGUIOffsetInputBoxObj m_url;
 
 	kGUITextObj m_searchcaption;
-	kGUIOffsetInputBoxObj m_search;
+	kGUIInputBoxObj m_search;
 
 	kGUIImageObj m_busyimage;
 

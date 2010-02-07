@@ -454,7 +454,8 @@ decodeMore:
 		was longer than len, but the decoded record isn't!
 */
 		rc = (int)(cp->inbuf.end - cp->inbuf.start);
-		rc = MAX(rc, len);
+		if(rc>len)
+			rc=len;
 		memcpy(buf, cp->inbuf.start, rc);
 		cp->inbuf.start += rc;
 		return rc;
