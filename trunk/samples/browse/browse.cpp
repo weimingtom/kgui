@@ -74,11 +74,13 @@ void AppClose(void)
 	delete g_Browse;
 }
 
+//this is a 'bigfile' generated from data items in the 'big' folder
+#include "_brdata.cpp"
+
 Browse::Browse()
 {
 	kGUIWindowObj *bg;
 	kGUIXML prefs;
-	BigFile *bf;
 
 	/* browser assumed first font is regular, 2nd font is bold */
 	kGUI::LoadFont("font.ttf",false);	/* use default font inside kgui for regulsr */
@@ -96,9 +98,15 @@ Browse::Browse()
 #if USESSL
 	/* Init SSL Handler */
 	/* NOTE: This SSL Handler is GPL'd not LGPL'ed */
+	{
+		BigFile bf;
 
-	bf->Extract("CAcertSrv.pem","CAcertSrv.pem");
-	kGUI::SetSSLManager(new kGUIMatrixSSLManager("CAcertSrv.pem"));
+		bf.SetMemory(bin__brdata,sizeof(bin__brdata));
+		bf.Load();
+
+		bf.Extract("CAcertSrv.pem","CAcertSrv.pem");
+		kGUI::SetSSLManager(new kGUIMatrixSSLManager("CAcertSrv.pem"));
+	}
 #endif
 
 	/* connect the caches to the settings */

@@ -361,6 +361,7 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist[]={
 	{"defer",			HTMLATT_DEFER			},
 	{"disabled",		HTMLATT_DISABLED		},
 	{"display",			HTMLATT_DISPLAY			},
+	{"empty-cells"	,	HTMLATT_EMPTY_CELLS		},
 	{"face",			HTMLATT_FACE			},
 	{"for",				HTMLATT_FOR			},
 	{"float",			HTMLATT_FLOAT			},
@@ -421,6 +422,7 @@ ATTLIST_DEF kGUIHTMLPageObj::m_attlist[]={
 	{"onsubmit",		HTMLATT_ONSUBMIT		},
 	{"onerror",			HTMLATT_ONERROR			},
 	{"onload",			HTMLATT_ONLOAD			},
+	{"onunload",		HTMLATT_ONUNLOAD		},
 	{"onmousedown",		HTMLATT_ONMOUSEDOWN		},
 	{"onmouseup",		HTMLATT_ONMOUSEUP		},
 	{"onmouseover",		HTMLATT_ONMOUSEOVER		},
@@ -5960,7 +5962,6 @@ void kGUIHTMLObj::Draw(void)
 	}
 	else if(m_display!=DISPLAY_TABLE_ROW)
 	{
-#if 1
 		int e,nc;
 		kGUIObj *gobj;
 		kGUICorners c;
@@ -5990,9 +5991,6 @@ void kGUIHTMLObj::Draw(void)
 		}
 
 		kGUI::PopClip();
-#else
-		DrawC(0);
-#endif
 	}
 
 #if 1
@@ -8566,6 +8564,8 @@ bool kGUIHTMLPageObj::Parse(kGUIHTMLObj *parent,const char *htmlstart,int htmlle
 
 		/* any inline stuff? */
 		sfp=fp;
+		if(fp==htmlend)
+			break;
 		q=0;
 		incomment=false;
 		while((fp[0]!='<') || (q!=0) || (incomment==true))
@@ -10868,6 +10868,9 @@ valignerr:				m_page->m_errors.ASprintf("Unknown tag parm '%s' for VALIGN\n",att
 				m_page->PushStyle(sizeof(m_page->m_cellspacingv),&m_page->m_cellspacingv);
 				m_page->m_cellspacingv=att->GetValue()->GetInt();
 			break;
+			case HTMLATT_EMPTY_CELLS:
+				/* todo */
+			break;
 			case HTMLATT_OUTLINE_WIDTH:
 			{
 				int wpix;
@@ -11957,7 +11960,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 		if(m_pos->m_leftw)
 		{
 			m_pos->m_lefth=MAX(m_pos->m_lefth,oh);
-			if(!m_pos->m_lefth)
+			if(m_page->m_mode==MODE_POSITION && !m_pos->m_lefth)
 				m_pos->m_leftw=0;
 		}
 		return;
@@ -12022,7 +12025,7 @@ void kGUIHTMLObj::PositionChild(kGUIHTMLObj *obj,kGUIObj *robj,int asc,int desc)
 				PositionBreak();
 
 			/* is there room for this?, if not, move down until there is */
-			while(m_pos->m_leftw || m_pos->m_rightw)
+			while((m_pos->m_leftw && m_pos->m_lefth) || (m_pos->m_rightw && m_pos->m_righth))
 			{
 				if(m_pos->m_leftw+ow+m_pos->m_rightw<=pw)
 					break;
@@ -13704,7 +13707,7 @@ typechanged:;
 		{
 			att=FindAttrib(HTMLATT_COLS);
 			if(att)
-				inputobj->MoveZoneW(att->GetValue()->GetInt()*m_em);
+				inputobj->MoveZoneW((int)(att->GetValue()->GetInt()*m_em*0.5f));
 		}
 		if(m_fixedh==true || m_relh==true)
 			inputobj->MoveZoneH(GetInsideH());
@@ -19985,7 +19988,8 @@ bool kGUIHTMLPageObj::UpdateInputC(int num)
 		if(objret==true)
 			return(objret);
 	}
-	return(false);	/* not used by and children */
+
+	return(false);	/* not used by any children */
 }
 
 /* call updateinput for all children in the specified group */
@@ -20014,5 +20018,34 @@ bool kGUIHTMLObj::UpdateInputC(int num)
 		if(objret==true)
 			return(objret);
 	}
+
+	/* special case handleing here */
+	switch(GetID())
+	{
+	case HTMLTAG_A:
+		if(m_obj.m_linkobj)
+		{
+			kGUICorners c;
+
+			GetCorners(&c);
+			if(kGUI::MouseOver(&c))
+			{
+				kGUI::SetTempMouseCursor(MOUSECURSOR_LINK);
+				m_obj.m_linkobj->SetOver();
+				if(kGUI::GetMouseReleaseLeft())
+				{
+					m_obj.m_linkobj->Click();
+					return(true);
+				}
+				else if(kGUI::GetMouseReleaseRight())
+				{
+					m_obj.m_linkobj->GetPage()->RightClick(m_obj.m_linkobj,HTMLTAG_LINK);
+					return(true);
+				}
+			}
+		}
+	break;
+	}
+
 	return(false);	/* not used by and children */
 }
