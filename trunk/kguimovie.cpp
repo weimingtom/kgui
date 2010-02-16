@@ -470,8 +470,8 @@ void kGUIMovie::UpdateBuffers(void)
 			}
 			else
 			{
-			//	av_free_packet(&m_local->m_packet);
-			//	m_local->m_packet.size=0;
+				av_free_packet(&m_local->m_packet);
+				m_local->m_packet.size=0;
 			}
 		}
 		else if((m_local->m_packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)
