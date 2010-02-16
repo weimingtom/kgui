@@ -726,7 +726,8 @@ again:;
 
 		if(pack==PACK_GZIP || pack==PACK_DEFLATE)
 		{
-		    z_stream d_stream; /* decompression stream */
+			bool unpacking=true;
+			z_stream d_stream; /* decompression stream */
 			kGUIString lens;
 			Array<unsigned char>unpacked;
 			unsigned int uplen=65536;
@@ -748,14 +749,28 @@ again:;
 				inflateInit(&d_stream);					//source is 'deflate'
 
 			do{
-				if(inflate(&d_stream, Z_NO_FLUSH)==Z_STREAM_END)
-					break;
-				/* make unpack buffer bigger */
-				unpacked.Alloc(uplen+65536);
-				d_stream.next_out = unpacked.GetArrayPtr()+uplen;
-				d_stream.avail_out= 65536;
-				uplen+=65536;
-			}while(1);
+				switch(inflate(&d_stream, Z_NO_FLUSH))
+				{
+				case Z_STREAM_ERROR:
+				case Z_NEED_DICT:
+	            case Z_DATA_ERROR:
+	            case Z_MEM_ERROR:
+					/* error unpacking data! */
+				    inflateEnd(&d_stream);
+					goto done;
+				break;
+				case Z_STREAM_END:
+					unpacking=false;
+				break;
+				default:
+					/* make unpack buffer bigger */
+					unpacked.Alloc(uplen+65536);
+					d_stream.next_out = unpacked.GetArrayPtr()+uplen;
+					d_stream.avail_out= 65536;
+					uplen+=65536;
+				break;
+				}
+			}while(unpacking);
 		    inflateEnd(&d_stream);
 
 			uplen-=d_stream.avail_out;
