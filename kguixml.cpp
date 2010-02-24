@@ -1046,6 +1046,10 @@ bool kGUIXML::Load(void)
 	while(fdend>fd && fdend[-1]!='>')
 		--fdend;
 
+	//is this a XML file?
+	if(fd[0]!='<')
+		return(false);	
+
 	while(fd<fdend)
 	{
 		xitem= new kGUIXMLItem();
