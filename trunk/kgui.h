@@ -104,6 +104,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <math.h>
+#include <pthread.h>
+typedef off_t __off_t;
 
 /* the mac has a DataHandle so rename ours to avoid a conflict */
 #define DataHandle kDataHandle
