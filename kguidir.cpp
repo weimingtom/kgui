@@ -93,16 +93,9 @@ void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIString
 	bool isdir;
 	char dirc[]={DIRCHAR};
 #if defined(LINUX) || defined(MACINTOSH)
-	int dir_handle;
-	int bufsize;
-	char buffer[8192];
-	struct direct *direntry;
+	DIR *dir_handle;
+	struct dirent *ep;
 	struct stat statbuf;
-#if _FILE_OFFSET_BITS==64
-	__off64_t zzzz;
-#else
-	__off_t zzzz;
-#endif
 #else
 	intptr_t dir_handle;
 	struct _finddata_t  dir_info;
@@ -116,12 +109,9 @@ void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIString
 		if(tempname[strlen(tempname)-1]==dirc[0])
 			tempname[strlen(tempname)-1]=0;
 	}
-	dir_handle=open(tempname,O_RDONLY);				/* open directory for reading */
-	if(dir_handle==-1)
+	dir_handle=opendir(tempname);				/* open directory for reading */
+	if(!dir_handle)
 		return;	/* cannot open dir */
-	direntry=(struct direct *)buffer;
-	fn=direntry->d_name;
-	bufsize=0;
 
 	// if path doesn't end in '/' then append '/'
 	if(tempname[strlen(tempname)-1]!=dirc[0])
@@ -143,14 +133,14 @@ void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIString
 	do
 	{
 #if defined(LINUX) || defined(MACINTOSH)
-		if(bufsize<=20)
-			bufsize+=getdirentries(dir_handle,buffer+bufsize,sizeof(buffer)-bufsize,&zzzz);
-		if(bufsize<=0)
+		ep=readdir(dir_handle);
+		if(!ep)
 			break;
+		fn=ep->d_name;
 #endif
 		if(fn[0]!='.')
 		{
-			strcpy(nameplace,fn);	/* put name after path/ */
+			strcpy(nameplace,fn);	/* put name after path/ ( in tempname) */
 
 			isdir=false;
 #if defined(LINUX) || defined(MACINTOSH)
@@ -209,15 +199,13 @@ void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIString
 			}
 		}
 #if defined(LINUX) || defined(MACINTOSH)
-		bufsize-=direntry->d_reclen;
-		memmove(buffer,buffer+direntry->d_reclen,bufsize);
 #else
 		if(_findnext(dir_handle, &dir_info)==-1)
 			break;
 #endif
 	}while(1);
 #if defined(LINUX) || defined(MACINTOSH)
-	close(dir_handle);
+	closedir(dir_handle);
 #else
 	_findclose(dir_handle);
 #endif
