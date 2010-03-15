@@ -22,15 +22,15 @@
 /*                                                                                */
 /**********************************************************************************/
 
+//rule::validate name add hashtable for valid/invalid names
+
 /*! @file kguihtml.cpp 
     @brief This is my attempt at a HTML renderer, yes it is all in one source-file. :-)   
     The parsing engine is very nice, and fast, if I do say so myself, the layout part on the  
     other hand needs a fair bit of re-work to get it compliant. */
 
-/*! @todo Some webpages refer to gzipped css file so we need to ungzip it before processing */
 /*! @todo Optimization: In the position pass there should be NO calls to FindAttrib, these should only be done on the minmax pass */
 /*! @todo Need to add handling of media queries http://www.w3.org/TR/css3-mediaqueries/ */
-
 
 #include "kgui.h"
 #include "kguixml.h"
@@ -90,7 +90,7 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"em",			HTMLTAG_EM			,DISPLAY_INLINE},
 	{false,false,false,"fieldset",	HTMLTAG_FIELDSET	,DISPLAY_INLINE},
 	{false,false,false,"font",		HTMLTAG_FONT		,DISPLAY_INLINE},
-	{false,false,false,"form",		HTMLTAG_FORM		,DISPLAY_INLINE},
+	{false,false,false,"form",		HTMLTAG_FORM		,DISPLAY_BLOCK},
 	{true,false,false,"frame",		HTMLTAG_FRAME		,DISPLAY_BLOCK},
 	{false,false,false,"frameset",	HTMLTAG_FRAMESET	,DISPLAY_BLOCK},
 	{false,false,false,"h1",			HTMLTAG_H1			,DISPLAY_BLOCK},
@@ -148,9 +148,10 @@ TAGLIST_DEF kGUIHTMLPageObj::m_taglist[]={
 	{false,false,false,"tt",			HTMLTAG_TT		,DISPLAY_BLOCK},
 	{false,false,false,"u",			HTMLTAG_U			,DISPLAY_INLINE},
 	{false,true,false,"ul",			HTMLTAG_UL			,DISPLAY_BLOCK},
-	{false,false,false,"var",			HTMLTAG_VAR			,DISPLAY_INLINE},
-	{false,false,false,"wbr",			HTMLTAG_WBR			,DISPLAY_INLINE},	/* not standard */
-	{true,false,false,"?xml",			HTMLTAG_XML			,DISPLAY_NONE},
+	{false,false,false,"var",		HTMLTAG_VAR			,DISPLAY_INLINE},
+	{false,false,false,"video",		HTMLTAG_VIDEO		,DISPLAY_BLOCK},
+	{false,false,false,"wbr",		HTMLTAG_WBR			,DISPLAY_INLINE},	/* not standard */
+	{true,false,false,"?xml",		HTMLTAG_XML			,DISPLAY_NONE},
 	{false,false,true,"?xml-stylesheet",		HTMLTAG_XMLSTYLESHEET	,DISPLAY_INLINE}};
 
 /* if the child is attempted to be put inside the parent then close the parent first */
@@ -1443,7 +1444,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_settings=0;	/* pointer to settings */
 	m_plugins=0;	/* pointer to plugins group */
 
-	/* if it find's strict in the header then this is enabled */
+	/* if it finds 'strict' in the header then this is enabled */
 	m_strict=true;
 
 	m_copytdc=false;
@@ -1463,6 +1464,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	/* debugging */
 	m_trace=false;
 
+	/* 'tag,class,id' cache */
 	m_tcicache.Init(16,sizeof(kGUIHTMLRuleCache));
 
 	m_numtags=0;
@@ -1480,7 +1482,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 	m_drawlinkunder=0;
 	m_status=0;
 	m_reposition=false;
-	SetNumGroups(1);	/* only 1 group */
+	SetNumGroups(1);	/* this render object only has 1 group of children */
 
 	m_rootobject=new kGUIHTMLObj();
 	m_rootobject->SetID(HTMLTAG_ROOT);
@@ -1535,8 +1537,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 		m_pophash.Init(16,0);				/* no storing necessary */
 		m_colorhash.Init(16,sizeof(kGUIColor));
 
-		/* add commands to the hashtable */
-
+		/* add tags to the tag hashtable */
 		tl=m_taglist;
 		for(i=0;i<sizeof(m_taglist)/sizeof(TAGLIST_DEF);++i)
 		{
@@ -1546,6 +1547,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 			++tl;
 		}
 
+		/* add attributes to the atrribute hashtable */
 		al=m_attlist;
 		for(i=0;i<sizeof(m_attlist)/sizeof(ATTLIST_DEF);++i)
 		{
@@ -1554,6 +1556,7 @@ kGUIHTMLPageObj::kGUIHTMLPageObj()
 			++al;
 		}
 
+		/* add constants to the constants hashtable */
 		cl=m_constlist;
 		for(i=0;i<sizeof(m_constlist)/sizeof(CONSTLIST_DEF);++i)
 		{
@@ -1672,7 +1675,6 @@ unsigned int kGUIHTMLPageObj::GetLH(void)
 	return m_pagelineheightpix;
 }
 
-
 int kGUIHTMLPageObj::GetConstID(const char *string)
 {
 	CONSTLIST_DEF **clptr;
@@ -1695,6 +1697,7 @@ void kGUIHTMLPageObj::InvalidateTCICache(void)
 	/* rebuild the owner rules list */
 	m_ownerrulesbuilt=false;
 
+	/* flag all entries as invalid */
 	n=m_tcicache.GetNum();
 	if(n)
 	{
@@ -1718,6 +1721,7 @@ void kGUIHTMLPageObj::PurgeTCICache(void)
 	/* rebuild the owner rules list */
 	m_ownerrulesbuilt=false;
 
+	/* delete all entries in the cache */
 	n=m_tcicache.GetNum();
 	if(n)
 	{
@@ -1729,7 +1733,7 @@ void kGUIHTMLPageObj::PurgeTCICache(void)
 			he=he->GetNext();
 		}
 
-		/* re-init the cache */
+		/* re-init the cache to empty */
 		m_tcicache.Reset();
 	}
 }
@@ -1778,12 +1782,13 @@ kGUIOnlineLink *kGUIHTMLPageObj::LocateLink(kGUIString *url,kGUIString *referrer
 	if(linkp)
 		return(*(linkp));
 
-	/* not found, is it cached on the drive? */
+	/* is there a item cache active? */
 	if(GetItemCache())
 	{
 		kGUIString fn;
 		kGUIString header;
 
+		/* not found, is it cached on the storage device, and not expired? */
 		if(GetItemCache()->Find(url,&fn,&header))
 		{
 			link=new kGUIOnlineLink(this);
@@ -1812,6 +1817,10 @@ kGUIOnlineLink *kGUIHTMLPageObj::LocateLink(kGUIString *url,kGUIString *referrer
 	link->SetURL(url,referrer,type);
 	return(link);
 }
+
+/* if we are inserting a priority value then we need to */
+/* increment all objects with a larger priority, if
+/* we are adding after the last one then we simply get the next priority */
 
 unsigned int kGUIHTMLPageObj::GetStylePriority(unsigned int after)
 {
@@ -1865,6 +1874,8 @@ void kGUIHTMLPageObj::LinkLoaded(kGUIOnlineLink *link)
 	}
 }
 
+/* compare the media type passed int against the m_curmedia member string */
+
 bool kGUIHTMLPageObj::ValidMedia(kGUIString *m)
 {
 	unsigned int i,num,j,jl;
@@ -1910,6 +1921,7 @@ bool kGUIHTMLPageObj::ValidMedia(kGUIString *m)
 void kGUIHTMLPageObj::AttachLink(kGUIOnlineLink *link)
 {
 	AddMedia(link->GetURL());
+
 	switch(link->GetType())
 	{
 	case LINKTYPE_CSS:
@@ -1954,19 +1966,25 @@ void kGUIHTMLPageObj::SetBaseURL(kGUIString *url)
 	kGUI::ExtractURL(url,&m_urlbase,&m_urlroot);
 }
 
+/* this is the main function for setting a page's contents */
+
 void kGUIHTMLPageObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *type,kGUIString *header)
 {
 	if(m_visitedcache)
 		m_visitedcache->Add(url);
+
 	SetURL(url);
-	m_type.SetString(type);	/* 'text/html', 'img/jpeg' etc */
+	m_type.SetString(type);			/* 'text/html', 'img/jpeg' etc */
 	m_header.SetString(header);
+
+	/* get pointer to page data and length of page */
 	m_fp=source->GetString();
 	m_len=source->GetLen();
 
 	Parse(false);
 	Position();
 
+	/* if no 'favicon' was defined in the page then try and load one at the default location */
 	if(m_iconlinked==false)
 	{
 		kGUIOnlineLink *oll;
@@ -1985,13 +2003,14 @@ void kGUIHTMLPageObj::SetSource(kGUIString *url,kGUIString *source,kGUIString *t
 	}
 }
 
-/* save all user input ( from form items ) to one string */
+/* save all user input ( from form items ) to the hash table specified */
 void kGUIHTMLPageObj::SaveInput(Hash *input)
 {
 	input->Init(8,0);
 	SaveInput(input,0,0,m_rootobject);
 }
 
+/* iterates recursively through the DOM tree, adding input items to the hash table */
 void kGUIHTMLPageObj::SaveInput(Hash *input,kGUIHTMLFormObj *form,int childnum,kGUIHTMLObj *obj)
 {
 	unsigned int i;
@@ -2118,6 +2137,7 @@ void kGUIHTMLPageObj::LoadInput(Hash *input)
 	LoadInput(input,0,0,m_rootobject);
 }
 
+/* iterates recursively through the DOM tree, restoring input itemvalues from the hash table */
 void kGUIHTMLPageObj::LoadInput(Hash *input,kGUIHTMLFormObj *form,int childnum,kGUIHTMLObj *obj)
 {
 	unsigned int i;
@@ -2254,21 +2274,24 @@ void kGUIHTMLPageObj::MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out)
 	kGUIXMLCODES::Shrink(&temp,out);
 }
 
-//if refresh=true then thi was initiated by a meta refresh tag and not a user clicking
+//if refresh=true then this was initiated by a meta refresh tag and not a user clicking
 void kGUIHTMLPageObj::Click(kGUIString *url,kGUIString *referrer,bool refresh)
 {
 	kGUIHTMLClickInfo info;
 
 	m_loadreset=true;
-	/* wait for load event to notice */
+
+	/* wait for load thread to notice */
 	while(m_loadreset)
 		kGUI::Sleep(1);
+
 	m_numloading-=m_numskipped;
 
 	/* do we have an attached visited url cache? */
 	if(m_visitedcache)
 		m_visitedcache->Add(url);
 
+	/* return click info to the browser object */
 	info.m_page=this;
 	info.m_newtab=false;
 	info.m_post=0;
@@ -2287,6 +2310,7 @@ void kGUIHTMLPageObj::ClickNewTab(kGUIString *url,kGUIString *referrer)
 	if(m_visitedcache)
 		m_visitedcache->Add(url);
 
+	/* return click info to the browser object */
 	info.m_page=this;
 	info.m_newtab=true;
 	info.m_post=0;
@@ -2368,7 +2392,6 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 	RCE_DEF *rcep;
 	unsigned int owner;
 	unsigned int olddisplay;
-//	unsigned int oldtextalign=m_textalign;
 	kGUIStyleInfo si;
 
 	ho->PreStyle(&si);
@@ -2386,8 +2409,6 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 		{
 			unsigned int i;
 			CID_DEF *cid;
-//			bool found=false;
-
 			kGUIString ts;
 			
 			ts.Sprintf("Apply Style Rules: <%s",ho->m_tag->name);
@@ -2663,10 +2684,6 @@ void kGUIHTMLPageObj::ApplyStyleRules(kGUIHTMLObj *ho,unsigned int pseudotype)
 				assert((numtrue+nummaybe)==j,"Alloc count error!");
 			}
 		}
-
-//		/* if this is a box object and is being floated then change it to an inline object */
-//		if((ho->m_float!=FLOAT_NONE) && (ho->m_display==DISPLAY_BLOCK))
-//			ho->m_display=DISPLAY_INLINE;
 
 		/* if text-decoration mode changed then grab text-color and use for text-decoration color */
 		if(m_copytdc)
@@ -3585,6 +3602,7 @@ comperr:;
 	return(true);
 }
 
+/* used for priority ordering */
 int kGUIHTMLRule::Compare(kGUIHTMLRule *r2)
 {
 	int delta;
@@ -3604,6 +3622,7 @@ int kGUIHTMLRule::Compare(kGUIHTMLRule *r2)
 	return(delta);
 }
 
+/* count the number of classes, ids and tags so we can sort the rules into priority order */
 void kGUIHTMLRule::CalcScore(void)
 {
 	unsigned int i,ni,nc;
@@ -5505,9 +5524,6 @@ void kGUIHTMLPageObj::Draw(void)
 
 	kGUI::SetFastDraw(true);
 
-	//todo, keep track of last re-position time and only re-position every second so user input
-	//is not dramatically slowed by lots of loading pictures.....
-
 	if(m_reposition==true)
 	{
 		m_trace=false;
@@ -5548,8 +5564,6 @@ void kGUIHTMLPageObj::Draw(void)
 	m_trace=false;
 	g_trace=false;
 }
-
-
 
 void kGUIHTMLObj::DrawBG(kGUICorners *c,bool fixed,int offlx,int offty,int offrx,int offby)
 {
@@ -5960,7 +5974,7 @@ void kGUIHTMLObj::Draw(void)
 			}
 		}
 	}
-	else if(m_display!=DISPLAY_TABLE_ROW)
+	else if(m_display!=DISPLAY_TABLE_ROW && m_hidechildren==false)
 	{
 		int e,nc;
 		kGUIObj *gobj;
@@ -7506,6 +7520,29 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 			}
 		}
 	break;
+	case HTMLTAG_VIDEO:
+	{
+		kGUIString url;
+		kGUIString media;
+
+		att=obj->FindAttrib(HTMLATT_SRC);
+		if(att)
+		{
+			MakeURL(IDToString(obj->GetOwnerURL()),att->GetValue(),&url);
+
+			media.SetString("video");
+			obj->m_obj.m_linked=LocateLink(&url,&m_url,LINKTYPE_UNKNOWN,&media);
+			if(obj->m_obj.m_linked->GetLoadPending()==false)
+				obj->m_hidechildren=obj->DetectObject();
+			else
+				obj->m_hidechildren=true;	/* hide children while still loading */
+		}
+		else
+		{
+			/*error, no URL for object*/
+		}
+	}
+	break;
 	case HTMLTAG_OBJECT:
 	{
 		kGUIString url;
@@ -7534,7 +7571,9 @@ void kGUIHTMLPageObj::PreProcess(kGUIString *tci,kGUIHTMLObj *obj,bool inframe)
 		{
 			obj->m_obj.m_linked=LocateLink(&url,&m_url,LINKTYPE_UNKNOWN,&media);
 			if(obj->m_obj.m_linked->GetLoadPending()==false)
-				obj->DetectObject();
+				obj->m_hidechildren=obj->DetectObject();
+			else
+				obj->m_hidechildren=true;	/* hide children while loading object */
 		}
 		else
 		{
@@ -9512,6 +9551,7 @@ void kGUIHTMLObj::Init(void)
 	m_active=false;
 	m_washover=false;
 	m_useshover=false;
+	m_hidechildren=false;
 	m_visible=VISIBLE_VISIBLE;
 	m_page=0;
 	m_tag=0;
@@ -13908,6 +13948,7 @@ typechanged:;
 			rp->PositionChild(this,m_obj.m_imageobj,childheight,0);
 	}
 	break;
+	case HTMLTAG_VIDEO:
 	case HTMLTAG_OBJECT:
 		/* it stays as an "object" until it is loaded and recognized */
 		/* once it is recognized then it is changed to the proper object type */
@@ -13922,7 +13963,12 @@ typechanged:;
 				{
 					m_objinit=true;
 					if(DetectObject()==true)
+					{
+						/* todo, recsale based on width / height */
+
 						goto typechanged;
+					}
+					m_hidechildren=false;	/* process and show children */
 				}
 			}
 		}
@@ -14113,8 +14159,11 @@ isbutton:	kGUIHTMLButtonTextObj *buttonobj;
 //	kGUI::Trace("Before Container size=%d,%d\n",GetZoneW(),GetZoneH());
 	/* calc sizes of all children by traversing the style tree*/
 
-	for(i=0;i<m_numstylechildren;++i)
-		m_stylechildren.GetEntry(i)->Position();
+	if(m_hidechildren==false)
+	{
+		for(i=0;i<m_numstylechildren;++i)
+			m_stylechildren.GetEntry(i)->Position();
+	}
 
 	/* if I have any unplaced children, then place them now */
 	if(m_pos->m_ponum)
@@ -14462,7 +14511,39 @@ bool kGUIHTMLObj::DetectObject(void)
 	/* not an image so delete it */
 	delete image;
 
-	/* todo: we need to check here for movies or flash etc */
+	/* we need to check here for movies or flash etc */
+	if(m_page->m_plugins)
+	{
+		unsigned int i;
+		for(i=0;(i<m_page->m_plugins->GetNumPlugins());++i)
+		{
+			kGUIHTMLPluginObj *po;
+			DataHandle *dh;
+
+			po=m_page->m_plugins->GetPlugin(i)->New();
+			dh=po->GetDH();
+			dh->SetMemory();
+			dh->OpenWrite("wb",s.GetLen());
+			dh->Write(s.GetString(),s.GetLen());
+			dh->Close();
+			if(po->Open()==true)
+			{
+				SetID(HTMLTAG_SINGLEOBJ);
+				m_tag=&m_page->m_singleobjtag;
+				m_obj.m_singleobj=po;
+				AddRenderObject(po);
+
+				/* get an object to add the right-click to */
+				//po->GetObj()->SetEventHandler(this,CALLBACKNAME(RightClickEvent));
+
+				//SetOwnerURL(StringToIDcase(&m_url));
+				return(true);
+			}
+			else
+				delete po;
+		}
+	}
+
 
 #if 0
 		/* is it plain text? */
@@ -18179,7 +18260,8 @@ void kGUIHTMLBox::SetUndefinedBorderColors(kGUIColor c)
 
 int kGUIHTMLBox::GetMarginAlign(void)
 {
-	switch(m_marginauto)
+	/* this returns horizontal alignment */
+	switch(m_marginauto&(MARGIN_LEFT|MARGIN_RIGHT))
 	{
 	case 0:
 		return(ALIGN_UNDEFINED);
@@ -18194,7 +18276,7 @@ int kGUIHTMLBox::GetMarginAlign(void)
 		return(ALIGN_CENTER);
 	break;
 	}
-	//huh??
+	//should never get here
 	return(ALIGN_UNDEFINED);
 }
 

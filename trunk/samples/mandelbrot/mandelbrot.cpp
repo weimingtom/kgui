@@ -23,8 +23,6 @@
 /* this includes the main loop for the selected OS, like Windows, Linux, Mac etc */
 #include "kguisys.cpp"
 
-/* todo: num colors and palette for saving movie */
-/* todo: custom width/height for save jpg */
 /* todo: translate to other languages */
 
 /* class for rendering a frame */
@@ -32,7 +30,7 @@
 #define MAXCORES 8
 typedef long double ldouble;
 
-class Palette
+class MandelbrotPalette
 {
 public:
 	unsigned int m_numcolors;
@@ -70,7 +68,7 @@ class PalEdit
 {
 public:
 	friend class PalGrid;
-	PalEdit(Palette *pal);
+	PalEdit(MandelbrotPalette *pal);
 private:
 	CALLBACKGLUEPTR(PalEdit,WindowEvent,kGUIEvent)
 	void WindowEvent(kGUIEvent *event);
@@ -83,7 +81,7 @@ private:
 	CALLBACKGLUEPTRVAL(PalEdit,Save,kGUIFileReq,int);
 
 	static kGUIColor m_defrgb[DEFCOLX*DEFCOLY];
-	Palette *m_pal;
+	MandelbrotPalette *m_pal;
 	kGUIWindowObj m_window;
 	kGUIScrollContainerObj m_scrollpalgrid;
 	PalGrid m_palgrid;
@@ -129,7 +127,7 @@ public:
 	MandelbrotFrame() {m_abort=false;m_w=0;m_h=0;m_fractal=FRACTAL_MANDELBROT;m_juliareal=-1.0f;m_juliaimag=0.0f;}
 	void Init(int w,int h);
 	void SetFractal(unsigned int f) {m_fractal=f;}
-	void SetPalette(Palette *palette) {m_palette=palette;}
+	void SetPalette(MandelbrotPalette *palette) {m_palette=palette;}
 	void Draw(bool clear,ldouble x,ldouble y,ldouble zoom,int numcores);
 	void SetAbort(bool abort) {m_abort=abort;}
 	kGUIImageObj *GetImage(void) {return &m_image;}
@@ -143,7 +141,7 @@ private:
 	int m_w;
 	int m_h;
 	unsigned int m_fractal;
-	Palette *m_palette;
+	MandelbrotPalette *m_palette;
 
 	bool m_abort;
 	kGUIDrawSurface m_surface;
@@ -161,7 +159,7 @@ private:
 class Save : public kGUIWindowObj, kGUISaveMovie
 {
 public:
-	Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,Palette *pal,int numcores);
+	Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,MandelbrotPalette *pal,int numcores);
 	~Save();
 private:
 	void Event(kGUIEvent *event);
@@ -216,7 +214,7 @@ private:
 	Array<kGUIVector3>m_points;
 
 	int m_numcolors;
-	Palette *m_palette;
+	MandelbrotPalette *m_palette;
 	int m_numcores;
 	bool m_movie;
 };
@@ -282,7 +280,7 @@ private:
 	ldouble m_x,m_y,m_zoom;
 	ldouble m_zoomscale;
 
-	Palette m_palette;
+	MandelbrotPalette m_palette;
 
 	int m_numcores;
 	/* save clicked points/zoom into a tracklog */
@@ -393,7 +391,7 @@ MandelbrotSample::MandelbrotSample()
 	m_editmenu.SetEntry(0,"Clear Track",MENU_CLEARTRACK);
 	m_editmenu.SetEntry(1,"Undo",MENU_UNDOTRACK);
 	m_editmenu.SetEntry(2,"Set Zoom",MENU_SETZOOM);
-	m_editmenu.SetEntry(3,"Edit Palette",MENU_EDITPALETTE);
+	m_editmenu.SetEntry(3,"Edit MandelbrotPalette",MENU_EDITPALETTE);
 	m_editmenu.SetEntry(4,"Set Fractal Mode",MENU_SETMODE);
 	m_editmenu.GetEntry(4)->SetSubMenu(&m_fractalmenu);
 	m_editmenu.SetEntry(5,"Set Julia Values",MENU_SETJULIAVALUES);
@@ -961,7 +959,7 @@ done:;
 
 /***************************************************************************/
 
-Save::Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,Palette *palette,int numcores)
+Save::Save(bool movie,int numkeypoints,kGUIVector3 *keypoints,MandelbrotPalette *palette,int numcores)
 {
 	unsigned int w,h,gap;
 	int bold=1;
@@ -1452,12 +1450,12 @@ Help::Help()
 	m_text.SetString("Click with the left mouse button to center image and zoom in\n"
 					 "Click with the right mouse button to center image and zoom out.\n"
 					 "\n"
-					 "Easy Palette Editing\n"
-					 "Select the Palette Editor from the File Menu\n"
-					 "Set the number of colors to 8 using Set Number of Colors from the Palette Editor Menu\n"
+					 "Easy MandelbrotPalette Editing\n"
+					 "Select the MandelbrotPalette Editor from the File Menu\n"
+					 "Set the number of colors to 8 using Set Number of Colors from the MandelbrotPalette Editor Menu\n"
 					 "Click on each color in the box and then a color from the quick color buttons\n"
-					 "Set the number of colors to 512 using the Adjust Number of Colors from the Palette Editor Menu\n"
-					 "Close the Palette Editor");
+					 "Set the number of colors to 512 using the Adjust Number of Colors from the MandelbrotPalette Editor Menu\n"
+					 "Close the MandelbrotPalette Editor");
 
 	m_text.CalcLineList(warea);
 	dh=m_text.CalcHeight(warea);
@@ -1542,7 +1540,7 @@ kGUIColor PalEdit::m_defrgb[DEFCOLX*DEFCOLY]={
 	DrawColor(192,192,192),
 	DrawColor(255,255,255)};
 
-PalEdit::PalEdit(Palette *pal)
+PalEdit::PalEdit(MandelbrotPalette *pal)
 {
 	int x,y;
 	int i,bx,by;
@@ -1571,8 +1569,8 @@ PalEdit::PalEdit(Palette *pal)
 	m_editmenu.SetEntry(0,"Set Number of Colors",PALMENU_SETNUMCOLORS);
 	m_editmenu.SetEntry(1,"Adjust Number of Colors",PALMENU_SETNUMCOLORS2);
 	m_editmenu.SetEntry(2,"Blend Range",PALMENU_BLENDRANGE);
-	m_editmenu.SetEntry(3,"Load Palette",PALMENU_LOAD);
-	m_editmenu.SetEntry(4,"Save Palette",PALMENU_SAVE);
+	m_editmenu.SetEntry(3,"Load MandelbrotPalette",PALMENU_LOAD);
+	m_editmenu.SetEntry(4,"Save MandelbrotPalette",PALMENU_SAVE);
 
 	x=m_scrollpalgrid.GetZoneRX();
 	m_menu.SetPos(x,m_palgrid.GetZoneY());
@@ -1709,7 +1707,7 @@ PalEdit::PalEdit(Palette *pal)
 		}
 	}
 
-	m_window.SetTitle("Palette Editor");
+	m_window.SetTitle("MandelbrotPalette Editor");
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_window.SetTop(true);
 	m_window.ExpandToFit();
@@ -1998,7 +1996,7 @@ void PalEdit::GetNumColors(kGUIString *s,int button)
 }
 
 /* expand or shrink palette to new size */
-void Palette::Adjust(int n)
+void MandelbrotPalette::Adjust(int n)
 {
 	int oldnum=m_numcolors;
 	int i,le,de;
@@ -2026,7 +2024,7 @@ void Palette::Adjust(int n)
 }
 
 /* interpolate colors between s and e */
-void Palette::Blend(int s, int e)
+void MandelbrotPalette::Blend(int s, int e)
 {
 	int i,num;
 
@@ -2054,7 +2052,7 @@ void Palette::Blend(int s, int e)
 }
 
 /* load palette from XML parent */
-void Palette::Load(kGUIXMLItem *root)
+void MandelbrotPalette::Load(kGUIXMLItem *root)
 {
 	unsigned int i;
 	kGUIXMLItem *xitem;
@@ -2075,7 +2073,7 @@ void Palette::Load(kGUIXMLItem *root)
 }
 
 /* save palette to XML parent */
-void Palette::Save(kGUIXMLItem *root)
+void MandelbrotPalette::Save(kGUIXMLItem *root)
 {
 	kGUIXMLItem *proot;
 	kGUIXMLItem *xitem;
@@ -2234,7 +2232,7 @@ void PalGrid::CheckScroll(void)
 void PalGrid::Draw(void)
 {
 	kGUICorners c;
-	Palette *p;
+	MandelbrotPalette *p;
 
 	GetCorners(&c);
 	kGUI::ShrinkClip(&c);
