@@ -338,7 +338,7 @@ const unsigned int kGUIText::CalcFitWidth(unsigned int sstart,unsigned int slen,
 			while(slen>0)
 			{
 				ch=GetChar(sstart,&nb);
-				assert(ch!=0,"reading past end of string!");
+				//assert(ch!=0,"reading past end of string!");
 				sstart+=nb;
 				slen-=nb;
 
@@ -452,7 +452,7 @@ void kGUIText::GetSubSize(int sstart,int slen,unsigned int *pixwidth,unsigned in
 			while(slen>0)
 			{
 				ch=GetChar(sstart,&nb);
-				assert(ch!=0,"reading past end of string!");
+				//assert(ch!=0,"reading past end of string!");
 				sstart+=nb;
 				slen-=nb;
 

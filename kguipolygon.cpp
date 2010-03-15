@@ -521,9 +521,9 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,
 	for(pass=0;pass<2;++pass)
 	{
 		/* build curved end for first point */
+		h=(heading-(PI/2));
 		if(ce&ceb)
 		{
-			h=(heading-(PI/2));
 			for(i=0;i<numep;++i)
 			{
 				if(!pass)
@@ -534,6 +534,24 @@ void kGUI::DrawFatPolyLine(unsigned int ce,unsigned int nvert,kGUIPoint2 *point,
 				++numout;
 				h+=estep;
 			}
+		}
+		else
+		{
+			if(!pass)
+			{
+				Proj(op,p1->x,p1->y,radius,h);
+				++op;
+				Proj(op,p1->x,p1->y,radius,h+PI);
+				++op;
+			}
+			else
+			{
+				Proj(op,p2->x,p2->y,radius,h);
+				++op;
+				Proj(op,p2->x,p2->y,radius,h+PI);
+				++op;
+			}
+			numout+=2;
 		}
 		ceb<<=1;
 

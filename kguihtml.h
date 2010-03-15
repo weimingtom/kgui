@@ -154,6 +154,7 @@ HTMLTAG_TT,
 HTMLTAG_U,
 HTMLTAG_UL,
 HTMLTAG_VAR,
+HTMLTAG_VIDEO,
 HTMLTAG_WBR,
 HTMLTAG_XML,
 HTMLTAG_XMLSTYLESHEET,
@@ -1263,6 +1264,7 @@ private:
 	bool m_abspos:1;
 	bool m_relpos:1;
 	bool m_skipbr:1;
+	bool m_hidechildren:1;	/* used for object / video tags to hide children if object is valid, but show if object is invalid */
 	unsigned int m_em:12;
 	unsigned int m_lh:12;
 	unsigned int m_display:5;
