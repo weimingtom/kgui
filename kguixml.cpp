@@ -718,10 +718,10 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 	/* in each XMLItem class, instead they are cached (Using a hash table) and XMLItems */
 	/* just refer to the cached names */
 
+	nl=(int)(fp-sfp);
+	assert(nl>0,"huh?");
 	ts->SetString(sfp,(int)(fp-sfp));
 	m_name=root->CacheName(ts->GetString());
-
-	nl=(int)(fp-sfp);
 
 	while(fp[0]==0x0a || fp[0]==0x0d)
 		++fp;
@@ -768,7 +768,12 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 			this->AddChild(parm);
 			while(fp[0]==0x0a || fp[0]==0x0d || fp[0]==' ' || fp[0]==9)
 				++fp;
-			if(fp[0]=='?' && fp[1]=='>')
+			if(fp[0]=='>' && m_name[0]=='!')
+			{
+				++fp;
+				goto done;
+			}
+			else if(fp[0]=='?' && fp[1]=='>')
 			{
 				fp+=2;
 				goto done;
@@ -796,6 +801,27 @@ char *kGUIXMLItem::Load(kGUIXML *root,kGUIString *ts,char *fp,kGUIXMLItem *paren
 		ts->SetString(sfp,(int)(fp-sfp));
 		kGUIXMLCODES::Shrink(ts,&m_value);
 	}
+	else
+	{
+		/* is this wrapped in a cdata block? */
+		if(fp[0]=='<' && fp[1]=='!' && fp[2]=='[' && fp[3]=='C' && fp[4]=='D' && fp[5]=='A' && fp[6]=='T' && fp[7]=='A' && fp[8]=='[')
+		{
+			/* skip start code */
+			fp+=9;
+			sfp=fp;
+			while(!(fp[0]==']' && fp[1]==']' && fp[2]=='>'))
+				++fp;
+
+			/* found end of cdata block */
+			ts->SetString(sfp,(int)(fp-sfp));
+			kGUIXMLCODES::Shrink(ts,&m_value);
+			/* skip end code */
+			fp+=3;
+		}
+	}
+
+
+
 	/* grab children until </name> is found */
 	while(1)
 	{
@@ -993,6 +1019,14 @@ const char *kGUIXML::CacheName(const char *name)
 {
 	const char *n;
 
+	/*  if not defined then we will */
+	if(!m_namecache)
+	{
+		m_namecachelocal=true;	/* tells us to free it upon exit */
+
+		m_namecache=new Hash();
+		m_namecache->Init(8,0);
+	}
 	n=m_namecache->FindName(name);
 	if(!n)
 	{
@@ -1220,7 +1254,13 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 			StreamSkip(1);
 			c=StreamPeekChar();
 		}
-		if(!StreamCmp("/>",2))
+		if(c=='>' && item->m_name[0]=='!')
+		{
+			StreamSkip(1);
+			c=StreamPeekChar();
+			goto done;
+		}
+		else if(!StreamCmp("/>",2))
 		{
 			StreamSkip(2);
 			c=StreamPeekChar();
@@ -1319,6 +1359,25 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 		Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
 		kGUIXMLCODES::Shrink(&m_tempstring,&item->m_value);
 	}
+	else
+	{
+		if(!StreamCmp("<![CDATA[",9))
+		{
+			StreamSkip(9);		/* skip cdata start */
+			sl=0;
+			while(StreamCmp("]]>",3))
+			{
+				StreamSkip(1);
+				++sl;
+			}
+			StreamSkip(-sl);						/* go back to beginning of string */
+			Read(&m_tempstring,(unsigned long)sl);	/* read in the string */
+			kGUIXMLCODES::Shrink(&m_tempstring,&item->m_value);
+			StreamSkip(3);							/* skip the end code */
+
+		}
+	}
+
 
 	/* grab children until </name> is found */
 	while(1)

@@ -395,6 +395,7 @@ public:
 	inline T GetEntry(unsigned int num);
 	inline T *GetEntryPtr(unsigned int num);
 	void Sort(unsigned int num,int (*code)(const void *o1,const void *o2));
+	void Sort(unsigned int start,unsigned int num,int (*code)(const void *o1,const void *o2));
 	inline T *GetArrayPtr(void) {return m_array;}
 private:
 	unsigned int m_numentries;
@@ -528,6 +529,13 @@ void Array<T>::Sort(unsigned int num,int (*code)(const void *o1,const void *o2))
 {
 	qsort(m_array,num,sizeof(T),code);
 }
+
+template <class T>
+void Array<T>::Sort(unsigned int start,unsigned int num,int (*code)(const void *o1,const void *o2))
+{
+	qsort(&m_array[start],num,sizeof(T),code);
+}
+
 
 /*! @class SmallArray
 	@brief An Array handling template class for structures and primitives (not for classes), used for holding a small number of items
