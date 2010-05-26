@@ -1824,9 +1824,11 @@ void kGUIBrowseObj::ShowError(DownloadPageRecord *dle)
 	else
 	{
 		/* put up an error page */
-		hist->GetSource()->Sprintf("<HTML><HEAD><TITLE>Error %d loading page '%s'</TITLE></HEAD><BODY><H1>Error %d loading page '%s'</H1><BR></BODY></HTML>",dle->m_dl.GetReturnCode(),dle->m_dl.GetURL()->GetString(),dle->m_dl.GetReturnCode(),dle->m_dl.GetURL()->GetString());
-		hist->GetType()->SetString("text/html");
-		hist->GetHeader()->Clear();
+		/* note UPPERCASE '%S' is a kGUIString not a null terminated character string */
+		hist->GetSource()->Sprintf("<HTML><HEAD><TITLE>Error %d loading page '%S'</TITLE></HEAD><BODY><H1>Error %d loading page '%S'</H1><BR></BODY></HTML>",dle->m_dl.GetReturnCode(),dle->m_dl.GetURL(),dle->m_dl.GetReturnCode(),dle->m_dl.GetURL());
+		hist->GetSource()->ChangeEncoding(ENCODING_UTF8);
+		hist->SetType("text/html");
+		hist->SetHeader("Content-Type: charset=UTF-8");
 	}
 	Goto(GetTabNum(dle->m_tabrecord));
 }

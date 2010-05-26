@@ -765,6 +765,7 @@ public:
 	inline T *GetEntryPtr(unsigned int num);
 	inline void DeleteEntry(unsigned int num,bool purge);
 	inline void Purge(void);
+	inline void Sort(unsigned int num,int (*code)(const void *o1,const void *o2)) {m_pointers.Sort(num,code);}
 private:
 	Array<T *>m_pointers;
 #if USEPOOL
@@ -3462,6 +3463,7 @@ public:
 	const char *GetDirname(int index) {return m_dirnames.GetEntryPtr(index)->GetString();}
 private:
 	void LoadDir2(const char *path,bool recursive,bool fullnames,kGUIStringSplit *exts);
+	static int Sort(const void *o1,const void *o2);
 	unsigned int m_numfiles;
 	ClassArray <kGUIString>m_filenames;
 	unsigned int m_numdirs;

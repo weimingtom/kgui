@@ -36,9 +36,11 @@ public:
 	void Set(const char *url,const char *post,const char *referer,const char *source,const char *header);
 	void SetSource(kGUIString *source) {m_source.SetString(source);}
 	void SetType(kGUIString *type) {m_type.SetString(type);}
+	void SetType(const char *type) {m_type.SetString(type);}
 	void SetTitle(kGUIString *title) {m_title.SetString(title);}
 	void SetURL(kGUIString *url) {m_url.SetString(url);}
 	void SetHeader(kGUIString *header) {m_header.SetString(header);}
+	void SetHeader(const char *header) {m_header.SetString(header);}
 	void SetPost(kGUIString *post) {post==0?m_post.Clear():m_post.SetString(post);}
 	void SetReferer(kGUIString *referer) {referer==0?m_referer.Clear():m_referer.SetString(referer);}
 	void SetSecure(bool s) {m_secure=s;}

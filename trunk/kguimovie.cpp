@@ -425,7 +425,7 @@ void kGUIMovie::UpdateBuffers(void)
 		if(m_numframesready)
 			return;
 
-		if(m_local->m_packet.size==0)
+	//	if(m_local->m_packet.size==0)
 		{
 			if(av_read_frame(m_local->m_pFormatCtx, &m_local->m_packet)<0)
 				return;
@@ -470,8 +470,9 @@ void kGUIMovie::UpdateBuffers(void)
 			}
 			else
 			{
-				av_free_packet(&m_local->m_packet);
-				m_local->m_packet.size=0;
+//is this right? only free the packet when we get  a frame finished?
+				//av_free_packet(&m_local->m_packet);
+				//m_local->m_packet.size=0;
 			}
 		}
 		else if((m_local->m_packet.stream_index==m_audioStream) && m_local->m_pACodecCtx && m_playaudio)

@@ -70,6 +70,14 @@ void kGUIDir::Purge(void)
 	m_numdirs=0;
 }
 
+int kGUIDir::Sort(const void *o1,const void *o2)
+{
+	kGUIString *s1=*((kGUIString **)o1);
+	kGUIString *s2=*((kGUIString **)o2);
+
+	return(stricmp(s1->GetString(),s2->GetString()));
+}
+
 void kGUIDir::LoadDir(const char *path,bool recursive,bool fullnames,const char *ext)
 {
 	int numexts;
@@ -83,6 +91,11 @@ void kGUIDir::LoadDir(const char *path,bool recursive,bool fullnames,const char 
 	}
 	Purge();
 	LoadDir2(path,recursive,fullnames,&exts);
+
+	if(m_numdirs>1)
+		m_dirnames.Sort(m_numdirs,Sort);
+	if(m_numfiles>1)
+		m_filenames.Sort(m_numfiles,Sort);
 }
 
 void kGUIDir::LoadDir2(const char *path,bool recursive,bool fullnames,kGUIStringSplit *exts)

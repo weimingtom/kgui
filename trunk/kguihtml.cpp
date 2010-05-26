@@ -2271,6 +2271,8 @@ void kGUIHTMLPageObj::MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out)
 		}
 	}
 	temp.Replace(" ","%20");
+	temp.Replace("\n","");
+	temp.Replace("\r","");
 	kGUIXMLCODES::Shrink(&temp,out);
 }
 
