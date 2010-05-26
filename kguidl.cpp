@@ -343,6 +343,11 @@ void kGUIDownloadEntry::Download(void)
 again:;
 	wasredirected=false;
 	wasblocked=false;
+	
+	/* copy URL encoding */
+	servername.SetEncoding(m_url.GetEncoding());
+	url.SetEncoding(m_url.GetEncoding());
+
 	if(strncmp(fullurl,"http://",7)==0)
 	{
 		mode=MODE_HTTP;

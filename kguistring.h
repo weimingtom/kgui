@@ -72,7 +72,7 @@ public:
 	void Append(int c) {Append((unsigned int)c);}
 	void Append(const char *atext);
 	void Append(const char *atext,unsigned int alen);
-	inline void Append(kGUIString *a) {Append(a->GetString(),a->GetLen());}
+	inline void Append(kGUIString *a) {if(a->GetEncoding()!=GetEncoding()){ChangeEncoding(a->GetEncoding());}Append(a->GetString(),a->GetLen());}
 	int Replace(const char *from,const char *to,unsigned int start=0,int casemode=0,int maxchanges=-1);
 	void Trim(int what=TRIM_ALL);
 	void TTZ(void);
