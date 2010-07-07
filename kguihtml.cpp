@@ -1819,7 +1819,7 @@ kGUIOnlineLink *kGUIHTMLPageObj::LocateLink(kGUIString *url,kGUIString *referrer
 }
 
 /* if we are inserting a priority value then we need to */
-/* increment all objects with a larger priority, if
+/* increment all objects with a larger priority, if */
 /* we are adding after the last one then we simply get the next priority */
 
 unsigned int kGUIHTMLPageObj::GetStylePriority(unsigned int after)

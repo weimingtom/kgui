@@ -1080,6 +1080,21 @@ bool kGUIXML::Load(void)
 	while(fdend>fd && fdend[-1]!='>')
 		--fdend;
 
+	/* check for BOM (byte order marker / encoding) */
+	{
+		int bomsize=0;
+		unsigned int ee;
+
+		ee=kGUIString::CheckBOM(4,(unsigned char *)fd,&bomsize);
+		if(bomsize)
+		{
+			fd+=bomsize;	/* skip ahead past BOM */
+			SetEncoding(ee);
+			tempstring.SetEncoding(ee);
+			gotencoding=true;
+		}
+	}
+
 	//is this a XML file?
 	if(fd[0]!='<')
 		return(false);	
@@ -1406,7 +1421,8 @@ kGUIXMLItem *kGUIXML::StreamLoad(kGUIXMLItem *parent)
 			if(!StreamCmp(item->m_name,nl,2))
 			{
 				StreamSkip(nl+3);	/* skip </name> */
-				c=StreamPeekChar();
+				if(Eof()==false)
+					c=StreamPeekChar();
 				break;
 			}
 		}
