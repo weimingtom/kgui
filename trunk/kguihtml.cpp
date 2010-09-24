@@ -1963,7 +1963,20 @@ void kGUIHTMLPageObj::SetURL(kGUIString *url)
 
 void kGUIHTMLPageObj::SetBaseURL(kGUIString *url)
 {
-	kGUI::ExtractURL(url,&m_urlbase,&m_urlroot);
+	kGUIString temp;
+
+	temp.SetString(url);
+
+	/* if no http or https prefix then insert it */
+	if(strnicmp(temp.GetString(),"http",4))
+	{
+		if(strnicmp(m_url.GetString(),"https",5)==0)
+			temp.Insert(0,"https://");
+		else
+			temp.Insert(0,"http://");
+	}
+
+	kGUI::ExtractURL(&temp,&m_urlbase,&m_urlroot);
 }
 
 /* this is the main function for setting a page's contents */
@@ -2270,6 +2283,7 @@ void kGUIHTMLPageObj::MakeURL(kGUIString *parent,kGUIString *in,kGUIString *out)
 			kGUI::MakeURL(&base,&root,in,&temp);
 		}
 	}
+
 	temp.Replace(" ","%20");
 	temp.Replace("\n","");
 	temp.Replace("\r","");
