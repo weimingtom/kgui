@@ -278,7 +278,7 @@ void kGUIMenuColObj::Activate(int x,int y)
 	/* calculate position of popup selector table */
 	m_popx=x;
 	m_poptable->SetPopRowHeaders(m_drawpoprow);	
-	m_popw=GetWidest()+m_iconwidth+4;
+	m_popw=MIN(GetWidest()+m_iconwidth+4,kGUI::GetScreenWidth());
 	m_popy=y;
 	showentries=m_numentries;
 	if(showentries>MAXSHOWMENUCOL)
