@@ -105,7 +105,7 @@ KGUILIBDB_LIBS =-lmysqlclient -lmysqld
 
 KGUILIBMOVIE_INCLUDES =
 KGUILIBMOVIE_LIBPATHS = -L$(KGUILOC)ffmpeg/libavformat -L$(KGUILOC)ffmpeg/libavcodec -L$(KGUILOC)ffmpeg/libavutil -L$(KGUILOC)ffmpeg/libswscale
-KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil
+KGUILIBMOVIE_LIBS =-lavformat -lavcodec -lswscale -lavutil -lasound
 
 KGUILIBSSL_INCLUDES = -I"$(KGUILOC)matrixssl/"
 KGUILIBSSL_LIBPATHS = -L$(KGUILOC)matrixssl/src/

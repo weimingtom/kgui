@@ -14400,7 +14400,7 @@ void kGUIHTMLObj::SizeContent(unsigned int contwidth,unsigned int contheight,uns
 	else
 		wscale=0.0f;
 
-	if(m_fixedh==false && m_relh==false || m_cliph)
+	if((m_fixedh==false) && (m_relh==false) || m_cliph)
 	{
 		/* example: cont= 500x400, style="width=150px" */
 		if(m_fixedw==true || m_relw==true || m_clipw)
